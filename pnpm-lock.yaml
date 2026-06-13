@@ -26,6 +26,8 @@ importers:
 
   packages/ui: {}
 
+  rd/formulation-lab: {}
+
 packages:
 
   '@babel/code-frame@7.29.7':

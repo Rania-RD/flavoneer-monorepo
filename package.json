@@ -5,6 +5,9 @@
   "packageManager": "pnpm@11.5.2",
   "scripts": {
     "dev": "pnpm --filter @flavoneer/landing dev",
+    "dev:landing": "pnpm --filter @flavoneer/landing dev",
+    "dev:lab": "pnpm --filter @flavoneer/formulation-lab dev",
+    "dev:all": "pnpm --parallel --filter @flavoneer/landing --filter @flavoneer/formulation-lab dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint"
   }

@@ -12,6 +12,11 @@ export const projectStatusValidator = v.union(
   v.literal("On Hold")
 );
 
+export const formulationStateValidator = v.union(
+  v.literal("Liquid"),
+  v.literal("Solid")
+);
+
 export const sharedRoleValidator = v.union(
   v.literal("viewer"),
   v.literal("editor")
@@ -258,6 +263,7 @@ export const enrichedProjectReturnValidator = v.object({
   category: v.optional(v.string()),
   gsfaCategoryCode: v.optional(v.string()),
   gsfaCategoryName: v.optional(v.string()),
+  formulationState: v.optional(formulationStateValidator),
   productType: v.optional(v.string()),
   processingMethod: v.optional(v.string()),
   targetOutcome: v.optional(v.string()),
@@ -687,6 +693,7 @@ export const versionSnapshotDataValidator = v.object({
   category: v.optional(v.string()),
   gsfaCategoryCode: v.optional(v.string()),
   gsfaCategoryName: v.optional(v.string()),
+  formulationState: v.optional(formulationStateValidator),
   releaseNotes: v.optional(v.string()),
   productType: v.optional(v.string()),
   processingMethod: v.optional(v.string()),

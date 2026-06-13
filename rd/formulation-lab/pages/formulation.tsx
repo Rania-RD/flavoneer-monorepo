@@ -61,6 +61,7 @@ import type {
   EnrichedProject,
   IngredientListItem,
   InventoryListItem,
+  FormulationState,
   PhaseColor,
   RecipePhase,
   RecipeStep,
@@ -409,29 +410,50 @@ const Formulation: React.FC = () => {
                     </span>
                   </h1>
                   {project && (
-                    <select
-                      className={`cursor-pointer appearance-none rounded-full border px-3 py-1.5 font-bold text-xs outline-none transition-colors ${
-                        (
-                          {
-                            Released:
-                              "cursor-not-allowed border-emerald-200 bg-emerald-100 text-emerald-800 opacity-90 dark:border-emerald-800/60 dark:bg-emerald-900/40 dark:text-emerald-300",
-                            "Under Review":
-                              "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/30 dark:text-amber-400",
-                            Draft:
-                              "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
-                          } as Record<string, string>
-                        )[project.status || "Draft"] ||
-                        "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                      }`}
-                      data-testid="formulation-status-select"
-                      disabled={project.status === "Released"}
-                      onChange={(e) => handleStatusChange(e.target.value)}
-                      value={project.status || "Draft"}
-                    >
-                      <option value="Draft">{t("draft")}</option>
-                      <option value="Under Review">{t("under_review")}</option>
-                      <option value="Released">{t("released")}</option>
-                    </select>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        className={`cursor-pointer appearance-none rounded-full border px-3 py-1.5 font-bold text-xs outline-none transition-colors ${
+                          (
+                            {
+                              Released:
+                                "cursor-not-allowed border-emerald-200 bg-emerald-100 text-emerald-800 opacity-90 dark:border-emerald-800/60 dark:bg-emerald-900/40 dark:text-emerald-300",
+                              "Under Review":
+                                "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/30 dark:text-amber-400",
+                              Draft:
+                                "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+                            } as Record<string, string>
+                          )[project.status || "Draft"] ||
+                          "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        }`}
+                        data-testid="formulation-status-select"
+                        disabled={project.status === "Released"}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        value={project.status || "Draft"}
+                      >
+                        <option value="Draft">{t("draft")}</option>
+                        <option value="Under Review">{t("under_review")}</option>
+                        <option value="Released">{t("released")}</option>
+                      </select>
+                      <label className="flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 font-bold text-cyan-800 text-xs dark:border-cyan-800/50 dark:bg-cyan-900/30 dark:text-cyan-300">
+                        <span>{t("formulation_state")}</span>
+                        <select
+                          className="cursor-pointer appearance-none bg-transparent font-bold outline-none"
+                          data-testid="formulation-state-select"
+                          disabled={!canEdit}
+                          onChange={(e) =>
+                            setProject({
+                              ...project,
+                              formulationState: e.target
+                                .value as FormulationState,
+                            })
+                          }
+                          value={project.formulationState || "Liquid"}
+                        >
+                          <option value="Liquid">{t("liquid")}</option>
+                          <option value="Solid">{t("solid")}</option>
+                        </select>
+                      </label>
+                    </div>
                   )}
                 </div>
                 <p className="flex items-center gap-2 font-medium text-gray-500 text-sm dark:text-slate-400">

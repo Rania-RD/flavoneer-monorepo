@@ -7,6 +7,7 @@ export function buildFormulationSavePayload(
 ) {
   const { _id, _creationTime, teamId, userId, updatedAt, ...data } = {
     ...project,
+    formulationState: project.formulationState || "Liquid",
     phases,
     ingredients,
   };

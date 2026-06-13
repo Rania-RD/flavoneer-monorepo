@@ -120,6 +120,8 @@ export interface TestResult {
   unit: string;
 }
 
+export type FormulationState = "Liquid" | "Solid";
+
 // Enriched project with joined relations (from backend query)
 export type BackendEnrichedProject = Exclude<
   FunctionReturnType<typeof api.projects.get>,
@@ -131,6 +133,7 @@ export interface EnrichedProject
     BackendEnrichedProject,
     "ingredients" | "phases" | "previousVersionIngredients"
   > {
+  formulationState?: FormulationState;
   ingredients: Ingredient[];
   phases?: RecipePhase[];
   previousVersionIngredients?: Ingredient[];

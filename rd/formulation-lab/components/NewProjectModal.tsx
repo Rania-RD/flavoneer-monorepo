@@ -71,6 +71,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
     gsfaCategoryCode: "",
     gsfaCategoryName: "",
     description: "",
+    formulationState: "Liquid",
     processingMethod: "",
     targetOutcome: "",
     nutritionalGoal: "",
@@ -125,6 +126,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
         category: formData.category,
         gsfaCategoryCode: formData.gsfaCategoryCode || undefined,
         gsfaCategoryName: formData.gsfaCategoryName || undefined,
+        formulationState: formData.formulationState,
         processingMethod: formData.processingMethod,
         targetOutcome: formData.targetOutcome,
         nutritionalGoal: formData.nutritionalGoal,
@@ -144,6 +146,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
         gsfaCategoryCode: "",
         gsfaCategoryName: "",
         description: "",
+        formulationState: "Liquid",
         processingMethod: "",
         targetOutcome: "",
         nutritionalGoal: "",
@@ -322,6 +325,22 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                         rows={3}
                         value={formData.description}
                       />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="font-semibold text-gray-700 text-sm">
+                        {t("formulation_state")}
+                      </label>
+                      <select
+                        className={inputClasses}
+                        data-testid="new-project-formulation-state-select"
+                        name="formulationState"
+                        onChange={handleInputChange}
+                        value={formData.formulationState}
+                      >
+                        <option value="Liquid">{t("liquid")}</option>
+                        <option value="Solid">{t("solid")}</option>
+                      </select>
                     </div>
 
                     <div className="space-y-1.5 border-gray-100 border-t pt-2">

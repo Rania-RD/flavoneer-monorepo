@@ -12,6 +12,7 @@ import { logTeamAction } from "./teamAuditLogs";
 import {
   batchCodeFormatValidator,
   enrichedProjectReturnValidator,
+  formulationStateValidator,
   ingredientValidator,
   phaseValidator,
   projectStatusValidator,
@@ -443,6 +444,7 @@ export const create = mutation({
     category: v.optional(v.string()),
     gsfaCategoryCode: v.optional(v.string()),
     gsfaCategoryName: v.optional(v.string()),
+    formulationState: v.optional(formulationStateValidator),
     processingMethod: v.optional(v.string()),
     targetOutcome: v.optional(v.string()),
     nutritionalGoal: v.optional(v.string()),
@@ -524,6 +526,7 @@ export const update = mutation({
     category: v.optional(v.string()),
     gsfaCategoryCode: v.optional(v.string()),
     gsfaCategoryName: v.optional(v.string()),
+    formulationState: v.optional(formulationStateValidator),
     processingMethod: v.optional(v.string()),
     targetOutcome: v.optional(v.string()),
     nutritionalGoal: v.optional(v.string()),

@@ -726,6 +726,7 @@ export const versionSnapshotDataValidator = v.object({
     )
   ),
   progress: v.optional(v.number()),
+  authorizedExecutor: v.optional(v.string()),
 });
 
 /** Project version snapshot ingredients — array of projectIngredient docs */

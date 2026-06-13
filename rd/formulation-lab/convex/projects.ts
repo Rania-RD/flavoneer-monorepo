@@ -281,7 +281,39 @@ async function saveProjectSnapshot(
     })
   );
 
-  const { _id, _creationTime, ...projectData } = project;
+  const snapshotData = Object.fromEntries(
+    Object.entries({
+      name: project.name,
+      version: project.version,
+      status: project.status,
+      lead: project.lead,
+      description: project.description,
+      category: project.category,
+      gsfaCategoryCode: project.gsfaCategoryCode,
+      gsfaCategoryName: project.gsfaCategoryName,
+      formulationState: project.formulationState,
+      releaseNotes: project.releaseNotes,
+      productType: project.productType,
+      processingMethod: project.processingMethod,
+      targetOutcome: project.targetOutcome,
+      nutritionalGoal: project.nutritionalGoal,
+      testingRequirements: project.testingRequirements,
+      processingTemp: project.processingTemp,
+      processingTime: project.processingTime,
+      targetTexture: project.targetTexture,
+      updatedAt: project.updatedAt,
+      batchCodePrefix: project.batchCodePrefix,
+      batchCodeFormat: project.batchCodeFormat,
+      userId: project.userId,
+      teamId: project.teamId,
+      releasedBy: project.releasedBy,
+      releasedAt: project.releasedAt,
+      formattedId: project.formattedId,
+      ingredients: project.ingredients,
+      progress: project.progress,
+      authorizedExecutor: project.authorizedExecutor,
+    }).filter(([, value]) => value !== undefined)
+  );
   const now = new Date();
   const snapshotName = `Auto-Save ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
 
@@ -289,7 +321,7 @@ async function saveProjectSnapshot(
     projectId,
     version: project.version,
     name: snapshotName,
-    data: projectData,
+    data: snapshotData,
     ingredients,
     phases: phasesWithSteps,
     createdAt: Date.now(),

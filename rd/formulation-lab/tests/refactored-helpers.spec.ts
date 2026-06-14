@@ -14,6 +14,7 @@ import {
   updatePhaseInPhases,
   updateStepInPhase,
 } from "../lib/formulation/editing";
+import { buildAggregatedIngredients } from "../lib/formulation/helpers";
 import {
   findCompositeDependencies,
   findProjectIdsUsingIngredientCode,
@@ -175,6 +176,25 @@ test.describe("ingredient dependency helpers", () => {
 });
 
 test.describe("formulation save payload helpers", () => {
+  test("keeps newly created draft ingredients available for formulation rows", () => {
+    expect(
+      buildAggregatedIngredients([
+        {
+          _id: "ing-draft",
+          name: "New Lab Ingredient",
+          status: "Draft",
+          conversions: [{ unit: "kg", grams: 1000 }],
+        },
+      ] as Parameters<typeof buildAggregatedIngredients>[0])
+    ).toEqual([
+      expect.objectContaining({
+        _id: "ing-draft",
+        name: "New Lab Ingredient",
+        unit: "kg",
+      }),
+    ]);
+  });
+
   test("strips Convex metadata and uses current phases and ingredients", () => {
     const project = {
       _id: "project-1",

@@ -2,7 +2,6 @@ import type { Id } from "../../convex/_generated/dataModel";
 import type {
   AggregatedIngredient,
   Ingredient,
-  IngredientListItem,
   InventoryListItem,
   PhaseColor,
   RecipePhase,
@@ -96,12 +95,23 @@ export interface FlatStepReference {
   stepNumber: number;
 }
 
+export interface FormulationIngredientSource {
+  _id: Id<"ingredients">;
+  allergenValues?: string[];
+  code?: string;
+  conversions?: Array<{ grams: number; unit: string }>;
+  insNumber?: string;
+  isAdditive?: boolean;
+  name: string;
+  normalizedInsNumber?: string;
+  status?: "Draft" | "Approved";
+}
+
 export function buildAggregatedIngredients(
-  ingredientsList: IngredientListItem[],
+  ingredientsList: FormulationIngredientSource[],
   inventoryItems?: InventoryListItem[]
 ): AggregatedIngredient[] {
   return ingredientsList
-    .filter((ing) => ing.status === "Approved")
     .map((ing) => {
       const relatedInv = inventoryItems
         ? inventoryItems.filter(

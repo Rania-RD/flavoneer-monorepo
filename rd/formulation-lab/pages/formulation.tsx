@@ -60,7 +60,6 @@ import {
 } from "../lib/formulation/editing";
 import type {
   EnrichedProject,
-  IngredientListItem,
   InventoryListItem,
   FormulationState,
   PhaseColor,
@@ -85,12 +84,13 @@ const Formulation: React.FC = () => {
   const inventoryItems = useQuery(api.inventory.list, {}) as
     | InventoryListItem[]
     | undefined;
-  const ingredientsList = (useQuery(api.ingredients.list) ??
-    []) as IngredientListItem[];
+  const formulationIngredientOptions =
+    useQuery(api.ingredients.listFormulationOptions, {}) ?? [];
 
   const aggregatedIngredients = useMemo(
-    () => buildAggregatedIngredients(ingredientsList, inventoryItems),
-    [ingredientsList, inventoryItems]
+    () =>
+      buildAggregatedIngredients(formulationIngredientOptions, inventoryItems),
+    [formulationIngredientOptions, inventoryItems]
   );
 
   // Map Convex doc to Project type

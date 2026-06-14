@@ -243,7 +243,7 @@ const Formulation: React.FC = () => {
   };
 
   const toggleFormulationAllergen = (allergenKey: string) => {
-    if (!project) {
+    if (!(project && canEdit)) {
       return;
     }
     const currentChecked = selectedFormulationAllergens.includes(allergenKey);
@@ -265,7 +265,7 @@ const Formulation: React.FC = () => {
   };
 
   const addExtraAllergen = () => {
-    if (!project) {
+    if (!(project && canEdit)) {
       return;
     }
     const value = extraAllergenInput.trim();
@@ -286,7 +286,7 @@ const Formulation: React.FC = () => {
   };
 
   const removeExtraAllergen = (value: string) => {
-    if (!project) {
+    if (!(project && canEdit)) {
       return;
     }
     setProject({
@@ -299,7 +299,7 @@ const Formulation: React.FC = () => {
   };
 
   const verifyFormulationAllergens = async () => {
-    if (!(project && projectId)) {
+    if (!(project && projectId && canEdit)) {
       return;
     }
     const nextProject = {
@@ -419,7 +419,13 @@ const Formulation: React.FC = () => {
 
   const { user } = usePermissions();
   const canEditBase = true; // hasPermission('edit_procedures') // Bypassing for local testing
-  const canEdit = canEditBase && project?.status !== "Released";
+  const lifecycleStatus = (
+    ["Draft", "Under Review", "Released"].includes(project?.status ?? "")
+      ? project?.status
+      : "Draft"
+  ) as "Draft" | "Under Review" | "Released";
+  const isReleased = lifecycleStatus === "Released";
+  const canEdit = canEditBase && !isReleased;
   // Allow sign off for local/test environments where roles might not be fully seeded
   const canSignOff = true; // role?.key === "admin" || role?.key === "supervisor";
   const handleSave = useFormulationSave({
@@ -435,6 +441,10 @@ const Formulation: React.FC = () => {
 
   const handleStatusChange = async (newStatus: string) => {
     if (!(project && projectId)) {
+      return;
+    }
+
+    if (lifecycleStatus === "Draft" && newStatus === "Released") {
       return;
     }
 
@@ -687,18 +697,45 @@ const Formulation: React.FC = () => {
                               Draft:
                                 "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
                             } as Record<string, string>
-                          )[project.status || "Draft"] ||
+                          )[lifecycleStatus] ||
                           "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                         }`}
                         data-testid="formulation-status-select"
-                        disabled={project.status === "Released"}
+                        disabled={isReleased}
                         onChange={(e) => handleStatusChange(e.target.value)}
-                        value={project.status || "Draft"}
+                        value={lifecycleStatus}
                       >
                         <option value="Draft">{t("draft")}</option>
                         <option value="Under Review">{t("under_review")}</option>
-                        <option value="Released">{t("released")}</option>
+                        <option
+                          disabled={lifecycleStatus === "Draft"}
+                          value="Released"
+                        >
+                          {t("released")}
+                        </option>
                       </select>
+                      {isReleased && (
+                        <>
+                          <span
+                            className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                            data-testid="latest-read-only-badge"
+                          >
+                            Latest (read only)
+                          </span>
+                          <button
+                            className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-700 text-xs transition-colors hover:bg-indigo-50 dark:border-indigo-800/50 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
+                            data-testid="create-new-version-button"
+                            onClick={() =>
+                              window.alert(
+                                "Create New Version will be available in a future update."
+                              )
+                            }
+                            type="button"
+                          >
+                            Create New Version
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -752,7 +789,7 @@ const Formulation: React.FC = () => {
         </div>
       </div>
 
-      {project.allergenReviewRequired && (
+      {project.allergenReviewRequired && canEdit && (
         <div className="border-amber-200 border-b bg-amber-50 px-6 py-3 dark:border-amber-800/50 dark:bg-amber-950/40">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3 text-amber-900 dark:text-amber-200">
@@ -957,7 +994,8 @@ const Formulation: React.FC = () => {
                 {t("allergen_region")}
               </label>
               <select
-                className="mb-4 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 font-bold text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                className="mb-4 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 font-bold text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-70 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                disabled={!canEdit}
                 id="formulation-allergen-region"
                 onChange={(event) =>
                   setProject({
@@ -976,12 +1014,17 @@ const Formulation: React.FC = () => {
               <div className="grid grid-cols-1 gap-2">
                 {ALLERGEN_LISTS[allergenRegion].map((allergenKey) => (
                   <div key={allergenKey}>
-                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-amber-100 bg-white px-3 py-2 text-amber-950 text-xs shadow-sm dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-100">
+                    <label
+                      className={`flex items-center gap-2 rounded-xl border border-amber-100 bg-white px-3 py-2 text-amber-950 text-xs shadow-sm dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-100 ${
+                        canEdit ? "cursor-pointer" : "cursor-not-allowed opacity-75"
+                      }`}
+                    >
                       <input
                         checked={selectedFormulationAllergens.includes(
                           allergenKey
                         )}
                         className="h-4 w-4 accent-amber-600"
+                        disabled={!canEdit}
                         onChange={() => toggleFormulationAllergen(allergenKey)}
                         type="checkbox"
                       />
@@ -992,7 +1035,11 @@ const Formulation: React.FC = () => {
                         <div className="mt-2 ms-6 grid grid-cols-1 gap-1">
                           {TREE_NUT_OPTIONS.map((subKey) => (
                             <label
-                              className="flex cursor-pointer items-center gap-2 text-amber-900 text-xs dark:text-amber-100/80"
+                              className={`flex items-center gap-2 text-amber-900 text-xs dark:text-amber-100/80 ${
+                                canEdit
+                                  ? "cursor-pointer"
+                                  : "cursor-not-allowed opacity-75"
+                              }`}
                               key={subKey}
                             >
                               <input
@@ -1000,6 +1047,7 @@ const Formulation: React.FC = () => {
                                   subKey
                                 )}
                                 className="h-3.5 w-3.5 accent-amber-600"
+                                disabled={!canEdit}
                                 onChange={() =>
                                   toggleFormulationAllergen(subKey)
                                 }
@@ -1024,7 +1072,8 @@ const Formulation: React.FC = () => {
                       {allergen}
                       <button
                         aria-label={t("remove_extra_allergen")}
-                        className="rounded-full p-0.5 hover:bg-amber-300 dark:hover:bg-amber-800"
+                        className="rounded-full p-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-amber-800"
+                        disabled={!canEdit}
                         onClick={() => removeExtraAllergen(allergen)}
                         type="button"
                       >
@@ -1037,7 +1086,8 @@ const Formulation: React.FC = () => {
 
               <div className="mt-4 flex gap-2">
                 <input
-                  className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-3 py-2 text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                  className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-3 py-2 text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-70 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                  disabled={!canEdit}
                   onChange={(event) => setExtraAllergenInput(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
@@ -1050,7 +1100,8 @@ const Formulation: React.FC = () => {
                   value={extraAllergenInput}
                 />
                 <button
-                  className="rounded-xl bg-amber-600 px-3 py-2 font-bold text-white text-xs transition-colors hover:bg-amber-700"
+                  className="rounded-xl bg-amber-600 px-3 py-2 font-bold text-white text-xs transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!canEdit}
                   onClick={addExtraAllergen}
                   type="button"
                 >
@@ -1059,7 +1110,8 @@ const Formulation: React.FC = () => {
               </div>
 
               <button
-                className="mt-4 w-full rounded-xl bg-slate-950 px-4 py-2.5 font-bold text-sm text-white transition-colors hover:bg-slate-800 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+                className="mt-4 w-full rounded-xl bg-slate-950 px-4 py-2.5 font-bold text-sm text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+                disabled={!canEdit}
                 onClick={verifyFormulationAllergens}
                 type="button"
               >
@@ -1073,7 +1125,7 @@ const Formulation: React.FC = () => {
         <div className="flex-1 overflow-y-auto scroll-smooth bg-gray-100/30 pb-32 dark:bg-[#0f172a]">
           <div className="fade-in zoom-in-95 mx-auto max-w-4xl animate-in space-y-16 p-6 duration-200 lg:p-12">
             {/* The Release Stamp */}
-            {project.status === "Released" && (
+            {isReleased && (
               <div className="relative flex flex-col items-center justify-center space-y-3 overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-6 text-center shadow-sm dark:border-emerald-800/50 dark:bg-emerald-900/20">
                 <div className="pointer-events-none absolute end-0 top-0 p-4 opacity-10">
                   <CheckCircle2

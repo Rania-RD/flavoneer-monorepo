@@ -50,8 +50,13 @@ function getCloneBaseName(name: string) {
     .replace(/\s*\(\s*copy\s*\)\s*$/i, "")
     .replace(/\s+-\s*copy\s*$/i, "")
     .replace(/\s+copy\s*$/i, "")
+    .replace(/\s+v?\d+(?:\.\d+)?\s*$/i, "")
     .trim();
   return cleaned || name.trim() || "Untitled Formulation";
+}
+
+function getVersionedCloneName(baseName: string, version: string) {
+  return `${baseName} ${version}`.trim();
 }
 
 async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
@@ -798,7 +803,8 @@ async function cloneProjectAsDraftVersion(
   }
 
   const newVersion = getNextMajorVersion(original.version);
-  const newName = getCloneBaseName(original.name);
+  const baseName = getCloneBaseName(original.name);
+  const newName = getVersionedCloneName(baseName, newVersion);
 
   const clonedProjectData = Object.fromEntries(
     Object.entries({

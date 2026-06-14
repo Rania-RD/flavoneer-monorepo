@@ -452,7 +452,8 @@ const Formulation: React.FC = () => {
       return;
     }
 
-    const notes = project.releaseNotes;
+    const nextReleaseNotes =
+      newStatus === "Draft" ? "" : project.releaseNotes;
 
     // Pass releasedBy if transitioning to Released
     const releasedBy =
@@ -464,7 +465,7 @@ const Formulation: React.FC = () => {
       await updateProjectMutation({
         id: projectId,
         status: newStatus as "Draft" | "Under Review" | "Released",
-        releaseNotes: notes,
+        releaseNotes: nextReleaseNotes,
         ...(releasedBy ? { releasedBy } : {}),
       });
 
@@ -472,6 +473,7 @@ const Formulation: React.FC = () => {
       setProject({
         ...project,
         status: newStatus as "Draft" | "Under Review" | "Released",
+        releaseNotes: nextReleaseNotes,
       });
 
       logActivity({
@@ -1108,30 +1110,22 @@ const Formulation: React.FC = () => {
             )}
 
             {/* Release Notes Area */}
-            {(project.status === "Draft" ||
-              project.status === "Under Review" ||
-              project.releaseNotes) && (
+            {project.status === "Under Review" && (
               <div className="space-y-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-[#1e293b]">
                 <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm dark:text-white">
                   <FileSignature className="text-indigo-500" size={16} />
 
                   {t("release_notes")}
                 </h3>
-                {project.status === "Released" ? (
-                  <p className="whitespace-pre-wrap rounded-xl border border-gray-100 bg-gray-50 p-4 text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                    {project.releaseNotes || t("no_release_notes_provided")}
-                  </p>
-                ) : (
-                  <textarea
-                    className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                    onBlur={() => handleSave()}
-                    onChange={(e) =>
-                      setProject({ ...project, releaseNotes: e.target.value })
-                    }
-                    placeholder={t("release_notes_placeholder")}
-                    value={project.releaseNotes || ""}
-                  />
-                )}
+                <textarea
+                  className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  onBlur={() => handleSave()}
+                  onChange={(e) =>
+                    setProject({ ...project, releaseNotes: e.target.value })
+                  }
+                  placeholder={t("release_notes_placeholder")}
+                  value={project.releaseNotes || ""}
+                />
               </div>
             )}
 

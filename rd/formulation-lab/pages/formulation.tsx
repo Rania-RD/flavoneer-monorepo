@@ -697,120 +697,6 @@ const Formulation: React.FC = () => {
                         <option value="Under Review">{t("under_review")}</option>
                         <option value="Released">{t("released")}</option>
                       </select>
-                      <section
-                        className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-                        data-testid="recipe-measures-section"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-black text-slate-500 text-[11px] uppercase tracking-wide dark:text-slate-400">
-                            Measures
-                          </span>
-                          <div className="flex rounded-full border border-cyan-200 bg-cyan-50 p-0.5 dark:border-cyan-800/50 dark:bg-cyan-950/40">
-                            {(["Liquid", "Solid"] as FormulationState[]).map(
-                              (state) => (
-                                <button
-                                  className={`rounded-full px-3 py-1 font-bold text-xs transition-colors ${
-                                    (project.formulationState || "Liquid") ===
-                                    state
-                                      ? "bg-cyan-600 text-white shadow-sm"
-                                      : "text-cyan-800 hover:bg-cyan-100 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
-                                  }`}
-                                  data-testid={`formulation-state-${state.toLowerCase()}-button`}
-                                  disabled={!canEdit}
-                                  key={state}
-                                  onClick={() =>
-                                    handleFormulationStateChange(state)
-                                  }
-                                  type="button"
-                                >
-                                  {state}
-                                </button>
-                              )
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex rounded-full border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800">
-                          {(
-                            [
-                              ["recipeMakes", "A Recipe makes..."],
-                              ["servingIs", "A Serving is..."],
-                            ] as [ServingSizeMode, string][]
-                          ).map(([mode, label]) => (
-                            <button
-                              className={`rounded-full px-3 py-1 font-bold text-xs transition-colors ${
-                                servingSizeMode === mode
-                                  ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                                  : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
-                              }`}
-                              data-testid={`serving-size-mode-${mode}-button`}
-                              disabled={!canEdit}
-                              key={mode}
-                              onClick={() => handleServingSizeModeChange(mode)}
-                              type="button"
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-
-                        <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                          <span>Amount</span>
-                          <input
-                            className="w-20 bg-transparent font-bold outline-none"
-                            data-testid="serving-size-amount-input"
-                            disabled={!canEdit}
-                            min="0"
-                            onChange={(e) =>
-                              handleServingAmountChange(e.target.value)
-                            }
-                            placeholder="0"
-                            step="any"
-                            type="number"
-                            value={servingSizeAmount ?? ""}
-                          />
-                        </label>
-
-                        <div className="flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 font-bold text-indigo-800 text-xs dark:border-indigo-800/50 dark:bg-indigo-950/40 dark:text-indigo-300">
-                          <span>Serving size weight</span>
-                          <span data-testid="serving-size-weight-display">
-                            {calculatedMeasures.servingSizeWeight}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-xs dark:border-slate-700 dark:bg-slate-800">
-                          <div className="border-slate-200 border-e px-3 py-1.5 dark:border-slate-700">
-                            <p className="font-bold text-slate-500 dark:text-slate-400">
-                              Batch Yield
-                            </p>
-                            <p
-                              className="font-black text-slate-900 dark:text-white"
-                              data-testid="batch-yield-display"
-                            >
-                              {calculatedMeasures.batchYield}
-                            </p>
-                          </div>
-                          <div className="px-3 py-1.5">
-                            <p className="font-bold text-slate-500 dark:text-slate-400">
-                              Batch Weight
-                            </p>
-                            <p
-                              className="font-black text-slate-900 dark:text-white"
-                              data-testid="batch-weight-display"
-                            >
-                              {calculatedBatchWeight}
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          aria-readonly="true"
-                          className="sr-only"
-                          data-testid="formulation-batch-weight-input"
-                          readOnly
-                          type="number"
-                          value={calculatedBatchWeight}
-                        />
-                      </section>
                     </div>
                   )}
                 </div>
@@ -1248,6 +1134,128 @@ const Formulation: React.FC = () => {
                 )}
               </div>
             )}
+
+            <section
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-[#1e293b]"
+              data-testid="recipe-measures-section"
+            >
+              <div className="flex flex-col gap-5 border-slate-100 border-b p-5 md:flex-row md:items-start md:justify-between dark:border-slate-700">
+                <div>
+                  <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
+                    Measures
+                  </p>
+                  <div className="mt-3 flex rounded-full border border-cyan-200 bg-cyan-50 p-1 dark:border-cyan-800/50 dark:bg-cyan-950/40">
+                    {(["Liquid", "Solid"] as FormulationState[]).map(
+                      (state) => (
+                        <button
+                          className={`rounded-full px-4 py-2 font-bold text-sm transition-colors ${
+                            (project.formulationState || "Liquid") === state
+                              ? "bg-cyan-600 text-white shadow-sm"
+                              : "text-cyan-800 hover:bg-cyan-100 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
+                          }`}
+                          data-testid={`formulation-state-${state.toLowerCase()}-button`}
+                          disabled={!canEdit}
+                          key={state}
+                          onClick={() => handleFormulationStateChange(state)}
+                          type="button"
+                        >
+                          {state}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                    <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Batch Yield
+                    </p>
+                    <p
+                      className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
+                      data-testid="batch-yield-display"
+                    >
+                      {calculatedMeasures.batchYield}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                    <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Batch Weight
+                    </p>
+                    <p
+                      className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
+                      data-testid="batch-weight-display"
+                    >
+                      {calculatedBatchWeight}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_220px_220px] lg:items-center">
+                <div className="flex flex-wrap rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
+                  {(
+                    [
+                      ["recipeMakes", "A Recipe makes..."],
+                      ["servingIs", "A Serving is..."],
+                    ] as [ServingSizeMode, string][]
+                  ).map(([mode, label]) => (
+                    <button
+                      className={`flex-1 rounded-xl px-4 py-2.5 font-bold text-sm transition-colors ${
+                        servingSizeMode === mode
+                          ? "bg-slate-950 text-white shadow-sm dark:bg-slate-100 dark:text-slate-950"
+                          : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+                      }`}
+                      data-testid={`serving-size-mode-${mode}-button`}
+                      disabled={!canEdit}
+                      key={mode}
+                      onClick={() => handleServingSizeModeChange(mode)}
+                      type="button"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                  <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
+                    Amount
+                  </span>
+                  <input
+                    className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
+                    data-testid="serving-size-amount-input"
+                    disabled={!canEdit}
+                    min="0"
+                    onChange={(e) => handleServingAmountChange(e.target.value)}
+                    placeholder="0"
+                    step="any"
+                    type="number"
+                    value={servingSizeAmount ?? ""}
+                  />
+                </label>
+
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-800/50 dark:bg-indigo-950/40">
+                  <p className="font-bold text-indigo-700 text-xs dark:text-indigo-300">
+                    Serving size weight
+                  </p>
+                  <p
+                    className="mt-1 font-black text-2xl text-indigo-950 dark:text-indigo-100"
+                    data-testid="serving-size-weight-display"
+                  >
+                    {calculatedMeasures.servingSizeWeight}
+                  </p>
+                </div>
+
+                <input
+                  aria-readonly="true"
+                  className="sr-only"
+                  data-testid="formulation-batch-weight-input"
+                  readOnly
+                  type="number"
+                  value={calculatedBatchWeight}
+                />
+              </div>
+            </section>
 
             {phases.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center rounded-4xl border border-gray-300 border-dashed bg-white p-8 text-center text-gray-400 dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-600">

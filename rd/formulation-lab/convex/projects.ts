@@ -45,6 +45,15 @@ function getNextMajorVersion(version: string) {
     : `${normalizedPrefix}${nextMajor}.0`;
 }
 
+function getCloneBaseName(name: string) {
+  const cleaned = name
+    .replace(/\s*\(\s*copy\s*\)\s*$/i, "")
+    .replace(/\s+-\s*copy\s*$/i, "")
+    .replace(/\s+copy\s*$/i, "")
+    .trim();
+  return cleaned || name.trim() || "Untitled Formulation";
+}
+
 async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
   // Join ingredients
   const allIngredients = await ctx.db
@@ -789,10 +798,11 @@ export const duplicate = mutation({
     }
 
     const newVersion = getNextMajorVersion(original.version);
+    const newName = getCloneBaseName(original.name);
 
     const clonedProjectData = Object.fromEntries(
       Object.entries({
-        name: original.name,
+        name: newName,
         version: newVersion,
         status: "Draft",
         lead: original.lead,
@@ -830,6 +840,12 @@ export const duplicate = mutation({
     ) as Omit<Doc<"projects">, "_id" | "_creationTime">;
 
     const newProjectId = await ctx.db.insert("projects", clonedProjectData);
+    await ctx.db.patch(newProjectId, {
+      name: newName,
+      version: newVersion,
+      status: "Draft",
+      allergenReviewRequired: false,
+    });
 
     // Copy ingredients
     const ings = await ctx.db

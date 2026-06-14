@@ -184,11 +184,16 @@ test.describe("formulation save payload helpers", () => {
           name: "New Lab Ingredient",
           status: "Draft",
           conversions: [{ unit: "kg", grams: 1000 }],
+          allergenValues: ["allergen_tree_nuts"],
+          subAllergenValues: {
+            allergen_tree_nuts: ["sub_allergen_walnut"],
+          },
         },
-      ] as Parameters<typeof buildAggregatedIngredients>[0])
+      ] as unknown as Parameters<typeof buildAggregatedIngredients>[0])
     ).toEqual([
       expect.objectContaining({
         _id: "ing-draft",
+        allergens: ["allergen_tree_nuts", "sub_allergen_walnut"],
         name: "New Lab Ingredient",
         unit: "kg",
       }),

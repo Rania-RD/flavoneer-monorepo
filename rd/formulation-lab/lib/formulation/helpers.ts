@@ -105,6 +105,7 @@ export interface FormulationIngredientSource {
   name: string;
   normalizedInsNumber?: string;
   status?: "Draft" | "Approved";
+  subAllergenValues?: Record<string, string[]>;
 }
 
 export function buildAggregatedIngredients(
@@ -131,13 +132,20 @@ export function buildAggregatedIngredients(
           ? new Date(Math.min(...expiries)).toISOString().split("T")[0]
           : null;
 
+      const allergens = new Set(ing.allergenValues || []);
+      for (const subAllergens of Object.values(ing.subAllergenValues || {})) {
+        for (const subAllergen of subAllergens) {
+          allergens.add(subAllergen);
+        }
+      }
+
       return {
         _id: ing._id,
         name: ing.name,
         unit: ing.conversions?.[0]?.unit || "g",
         stock: totalStock,
         nearestExpiry,
-        allergens: ing.allergenValues || [],
+        allergens: Array.from(allergens),
         isAdditive: ing.isAdditive,
         insNumber: ing.insNumber,
         normalizedInsNumber: ing.normalizedInsNumber,

@@ -108,6 +108,10 @@ const Formulation: React.FC = () => {
   );
   const [phases, setPhases] = useState<RecipePhase[]>([]);
   const [extraAllergenInput, setExtraAllergenInput] = useState("");
+  const [manualAllergenOverrides, setManualAllergenOverrides] = useState<
+    Record<string, boolean>
+  >({});
+  const allergenOverridesInitializedFor = useRef<string | null>(null);
   const additiveIngredientIds = useMemo(
     () => getAdditiveIngredientIds(phases, aggregatedIngredients),
     [phases, aggregatedIngredients]
@@ -200,34 +204,14 @@ const Formulation: React.FC = () => {
     });
   };
 
-  const markAllergenReviewRequired = (nextPhases = phases) => {
+  const markAllergenReviewRequired = () => {
     setProject((currentProject) => {
       if (!currentProject) {
         return currentProject;
       }
-      const nextDerivedIngredients = deriveIngredients(
-        nextPhases,
-        aggregatedIngredients
-      );
-      const nextSuggestedAllergens = new Set<string>();
-      for (const ingredient of nextDerivedIngredients) {
-        const source = aggregatedIngredients.find(
-          (item) => item._id === ingredient.id
-        );
-        for (const allergen of source?.allergens ?? []) {
-          nextSuggestedAllergens.add(allergen);
-        }
-      }
-      const nextAllergens = Array.from(
-        new Set([
-          ...(currentProject.formulationAllergens ?? []),
-          ...nextSuggestedAllergens,
-        ])
-      );
       return {
         ...currentProject,
         allergenReviewRequired: true,
-        formulationAllergens: nextAllergens,
       };
     });
   };
@@ -236,12 +220,20 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
-    const currentAllergens = project.formulationAllergens ?? suggestedAllergens;
+    const currentChecked = selectedFormulationAllergens.includes(allergenKey);
+    const nextChecked = !currentChecked;
+    const baselineChecked = baselineAllergens.includes(allergenKey);
+    setManualAllergenOverrides((currentOverrides) => {
+      const nextOverrides = { ...currentOverrides };
+      if (nextChecked === baselineChecked) {
+        delete nextOverrides[allergenKey];
+      } else {
+        nextOverrides[allergenKey] = nextChecked;
+      }
+      return nextOverrides;
+    });
     setProject({
       ...project,
-      formulationAllergens: currentAllergens.includes(allergenKey)
-        ? currentAllergens.filter((allergen) => allergen !== allergenKey)
-        : [...currentAllergens, allergenKey],
       allergenReviewRequired: true,
     });
   };
@@ -335,7 +327,7 @@ const Formulation: React.FC = () => {
       ),
     [derivedIngredients]
   );
-  const suggestedAllergens = useMemo(() => {
+  const baselineAllergens = useMemo(() => {
     const allergens = new Set<string>();
     for (const ingredient of derivedIngredients) {
       const source = aggregatedIngredients.find(
@@ -343,27 +335,69 @@ const Formulation: React.FC = () => {
       );
       for (const allergen of source?.allergens ?? []) {
         allergens.add(allergen);
+        if (TREE_NUT_OPTIONS.includes(allergen)) {
+          allergens.add("allergen_tree_nuts");
+        }
       }
     }
     return Array.from(allergens);
   }, [aggregatedIngredients, derivedIngredients]);
   const allergenRegion = (project?.allergenRegion || "FDA") as AllergenRegion;
-  const selectedFormulationAllergens =
-    project?.formulationAllergens ?? suggestedAllergens;
+  const selectedFormulationAllergens = useMemo(() => {
+    const selectedAllergens = new Set(baselineAllergens);
+    for (const [allergen, checked] of Object.entries(manualAllergenOverrides)) {
+      if (checked) {
+        selectedAllergens.add(allergen);
+      } else {
+        selectedAllergens.delete(allergen);
+      }
+    }
+    return Array.from(selectedAllergens);
+  }, [baselineAllergens, manualAllergenOverrides]);
   const extraFormulationAllergens = project?.formulationExtraAllergens ?? [];
 
   useEffect(() => {
-    if (!(project && suggestedAllergens.length > 0)) {
+    if (!project) {
       return;
     }
-    if (project.formulationAllergens !== undefined) {
+    if (allergenOverridesInitializedFor.current === project._id) {
+      return;
+    }
+    const savedAllergens = project.formulationAllergens;
+    if (!savedAllergens) {
+      allergenOverridesInitializedFor.current = project._id;
+      return;
+    }
+    const savedSet = new Set(savedAllergens);
+    const baselineSet = new Set(baselineAllergens);
+    const nextOverrides: Record<string, boolean> = {};
+    for (const allergen of new Set([...savedSet, ...baselineSet])) {
+      if (savedSet.has(allergen) !== baselineSet.has(allergen)) {
+        nextOverrides[allergen] = savedSet.has(allergen);
+      }
+    }
+    setManualAllergenOverrides(nextOverrides);
+    allergenOverridesInitializedFor.current = project._id;
+  }, [baselineAllergens, project]);
+
+  useEffect(() => {
+    if (!project) {
+      return;
+    }
+    const currentAllergens = project.formulationAllergens ?? [];
+    if (
+      currentAllergens.length === selectedFormulationAllergens.length &&
+      currentAllergens.every((allergen) =>
+        selectedFormulationAllergens.includes(allergen)
+      )
+    ) {
       return;
     }
     setProject({
       ...project,
-      formulationAllergens: suggestedAllergens,
+      formulationAllergens: selectedFormulationAllergens,
     });
-  }, [project, suggestedAllergens]);
+  }, [project, selectedFormulationAllergens]);
 
   const { user } = usePermissions();
   const canEditBase = true; // hasPermission('edit_procedures') // Bypassing for local testing
@@ -500,7 +534,7 @@ const Formulation: React.FC = () => {
     );
     setPhases(nextPhases);
     if (type === "weighing") {
-      markAllergenReviewRequired(nextPhases);
+      markAllergenReviewRequired();
     }
     setTimeout(() => scrollToItem(newStep.id), 100);
   };
@@ -523,7 +557,7 @@ const Formulation: React.FC = () => {
     );
     setPhases(nextPhases);
     if (type === "weighing") {
-      markAllergenReviewRequired(nextPhases);
+      markAllergenReviewRequired();
     }
     setTimeout(() => scrollToItem(newStep.id), 100);
   };
@@ -545,7 +579,7 @@ const Formulation: React.FC = () => {
       changedStep?.type === "weighing" &&
       ("ingredientId" in updates || "expectedWeight" in updates || "unit" in updates)
     ) {
-      markAllergenReviewRequired(nextPhases);
+      markAllergenReviewRequired();
     }
   };
 
@@ -559,7 +593,7 @@ const Formulation: React.FC = () => {
     const nextPhases = deleteStepFromPhase(phases, phaseId, stepId);
     setPhases(nextPhases);
     if (deletedStep?.type === "weighing") {
-      markAllergenReviewRequired(nextPhases);
+      markAllergenReviewRequired();
     }
   };
 

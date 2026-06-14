@@ -311,11 +311,11 @@ export function AddIngredientInfoTab({
           <input
             className={inputClasses}
             min="0"
-            name="price"
+            name="costPerKg"
             onChange={handleInputChange}
             step="any"
             type="number"
-            value={formData.price}
+            value={formData.costPerKg}
           />
         </div>
         <div>

@@ -106,7 +106,7 @@ export interface AggregatedIngredient {
   name: string;
   nearestExpiry: string | null;
   normalizedInsNumber?: string;
-  price?: number;
+  costPerKg?: number;
   stock: number;
   unit: string;
 }

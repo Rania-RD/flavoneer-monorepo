@@ -22,6 +22,7 @@ import {
 import {
   applyAllergenOverrides,
   buildAggregatedIngredients,
+  deriveIngredients,
   getFormulationBaselineAllergens,
 } from "../lib/formulation/helpers";
 import {
@@ -192,6 +193,7 @@ test.describe("formulation save payload helpers", () => {
           _id: "ing-draft",
           name: "New Lab Ingredient",
           status: "Draft",
+          costPerKg: 12.5,
           conversions: [{ unit: "kg", grams: 1000 }],
           allergenValues: ["allergen_tree_nuts"],
           subAllergenValues: {
@@ -205,6 +207,45 @@ test.describe("formulation save payload helpers", () => {
         allergens: ["allergen_tree_nuts", "sub_allergen_walnut"],
         name: "New Lab Ingredient",
         unit: "kg",
+        costPerKg: 12.5,
+      }),
+    ]);
+  });
+
+  test("carries ingredient cost per kg into derived formulation ingredients", () => {
+    const recipePhases = [
+      {
+        id: "phase-a",
+        name: "Prep",
+        color: "blue",
+        steps: [
+          {
+            id: "step-a",
+            type: "weighing",
+            label: "Add Cocoa",
+            ingredientId: "ing-cocoa",
+            expectedWeight: 250,
+          },
+        ],
+      },
+    ] as Parameters<typeof deriveIngredients>[0];
+    const aggregatedIngredients = [
+      {
+        _id: "ing-cocoa",
+        allergens: [],
+        costPerKg: 9.25,
+        name: "Cocoa",
+        nearestExpiry: null,
+        stock: 0,
+        unit: "g",
+      },
+    ] as Parameters<typeof deriveIngredients>[1];
+
+    expect(deriveIngredients(recipePhases, aggregatedIngredients)).toEqual([
+      expect.objectContaining({
+        id: "ing-cocoa",
+        costPerKg: 9.25,
+        weight: 250,
       }),
     ]);
   });

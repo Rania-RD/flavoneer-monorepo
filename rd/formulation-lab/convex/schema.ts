@@ -244,7 +244,9 @@ export default defineSchema({
     foodAdditiveId: v.optional(v.id("foodAdditives")),
     yieldAmount: v.number(), // Percentage e.g. 100
     moistureLoss: v.number(), // Percentage e.g. 0
-    price: v.optional(v.number()), // Cost per kg for formulation costing
+    costPerKg: v.optional(v.float64()),
+    // @deprecated - older records may still carry this value.
+    price: v.optional(v.number()),
     nutrientValues: v.optional(
       v.array(
         v.object({

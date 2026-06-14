@@ -100,10 +100,12 @@ export interface FormulationIngredientSource {
   allergenValues?: string[];
   code?: string;
   conversions?: Array<{ grams: number; unit: string }>;
+  costPerKg?: number;
   insNumber?: string;
   isAdditive?: boolean;
   name: string;
   normalizedInsNumber?: string;
+  /** @deprecated older ingredient docs used price before costPerKg was added. */
   price?: number;
   status?: "Draft" | "Approved";
   subAllergenValues?: Record<string, string[]>;
@@ -158,7 +160,7 @@ export function buildAggregatedIngredients(
         isAdditive: ing.isAdditive,
         insNumber: ing.insNumber,
         normalizedInsNumber: ing.normalizedInsNumber,
-        price: ing.price ?? fallbackPrice,
+        costPerKg: ing.costPerKg ?? ing.price ?? fallbackPrice,
       };
     });
 }
@@ -244,7 +246,7 @@ export function deriveIngredients(
             name: ingItem?.name || step.label.replace(ADD_REGEX, ""),
             weight: step.expectedWeight || 0,
             unit: step.unit || ingItem?.unit || "g",
-            costPerKg: ingItem?.price,
+            costPerKg: ingItem?.costPerKg,
           });
         }
       }

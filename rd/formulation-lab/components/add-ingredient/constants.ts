@@ -9,7 +9,7 @@ export const INITIAL_INGREDIENT_FORM_DATA: IngredientFormData = {
   isnEn: "",
   code: "",
   groupId: "group_other",
-  price: 0,
+  costPerKg: 0,
   yieldAmount: 100,
   moistureLoss: 0,
   density: 1.0,

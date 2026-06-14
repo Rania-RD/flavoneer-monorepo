@@ -24,6 +24,8 @@ import {
   MessageSquare,
   Plus,
   Save,
+  ShieldAlert,
+  X,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
@@ -31,6 +33,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { SortablePhaseItem } from "../components/formulation/sortable-phase-item";
+import {
+  ALLERGEN_LISTS,
+  TREE_NUT_OPTIONS,
+} from "../components/add-ingredient/constants";
+import type { AllergenRegion } from "../components/add-ingredient/types";
 import { ReviewPanel } from "../components/ReviewPanel";
 import VersionHistoryModal from "../components/VersionHistoryModal";
 import { api } from "../convex/_generated/api";
@@ -100,6 +107,11 @@ const Formulation: React.FC = () => {
     foundProject
   );
   const [phases, setPhases] = useState<RecipePhase[]>([]);
+  const [extraAllergenInput, setExtraAllergenInput] = useState("");
+  const [manualAllergenOverrides, setManualAllergenOverrides] = useState<
+    Record<string, boolean>
+  >({});
+  const allergenOverridesInitializedFor = useRef<string | null>(null);
   const additiveIngredientIds = useMemo(
     () => getAdditiveIngredientIds(phases, aggregatedIngredients),
     [phases, aggregatedIngredients]
@@ -192,6 +204,94 @@ const Formulation: React.FC = () => {
     });
   };
 
+  const markAllergenReviewRequired = () => {
+    setProject((currentProject) => {
+      if (!currentProject) {
+        return currentProject;
+      }
+      return {
+        ...currentProject,
+        allergenReviewRequired: true,
+      };
+    });
+  };
+
+  const toggleFormulationAllergen = (allergenKey: string) => {
+    if (!project) {
+      return;
+    }
+    const currentChecked = selectedFormulationAllergens.includes(allergenKey);
+    const nextChecked = !currentChecked;
+    const baselineChecked = baselineAllergens.includes(allergenKey);
+    setManualAllergenOverrides((currentOverrides) => {
+      const nextOverrides = { ...currentOverrides };
+      if (nextChecked === baselineChecked) {
+        delete nextOverrides[allergenKey];
+      } else {
+        nextOverrides[allergenKey] = nextChecked;
+      }
+      return nextOverrides;
+    });
+    setProject({
+      ...project,
+      allergenReviewRequired: true,
+    });
+  };
+
+  const addExtraAllergen = () => {
+    if (!project) {
+      return;
+    }
+    const value = extraAllergenInput.trim();
+    if (!value) {
+      return;
+    }
+    const currentExtras = project.formulationExtraAllergens ?? [];
+    if (currentExtras.includes(value)) {
+      setExtraAllergenInput("");
+      return;
+    }
+    setProject({
+      ...project,
+      formulationExtraAllergens: [...currentExtras, value],
+      allergenReviewRequired: true,
+    });
+    setExtraAllergenInput("");
+  };
+
+  const removeExtraAllergen = (value: string) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      formulationExtraAllergens: (project.formulationExtraAllergens ?? []).filter(
+        (allergen) => allergen !== value
+      ),
+      allergenReviewRequired: true,
+    });
+  };
+
+  const verifyFormulationAllergens = async () => {
+    if (!(project && projectId)) {
+      return;
+    }
+    const nextProject = {
+      ...project,
+      allergenReviewRequired: false,
+      formulationAllergens: selectedFormulationAllergens,
+      formulationExtraAllergens: extraFormulationAllergens,
+    };
+    setProject(nextProject);
+    await updateProjectMutation({
+      id: projectId,
+      allergenRegion,
+      allergenReviewRequired: false,
+      formulationAllergens: selectedFormulationAllergens,
+      formulationExtraAllergens: extraFormulationAllergens,
+    });
+  };
+
   // Store refs for scrolling to specific phases/steps
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -227,6 +327,77 @@ const Formulation: React.FC = () => {
       ),
     [derivedIngredients]
   );
+  const baselineAllergens = useMemo(() => {
+    const allergens = new Set<string>();
+    for (const ingredient of derivedIngredients) {
+      const source = aggregatedIngredients.find(
+        (item) => item._id === ingredient.id
+      );
+      for (const allergen of source?.allergens ?? []) {
+        allergens.add(allergen);
+        if (TREE_NUT_OPTIONS.includes(allergen)) {
+          allergens.add("allergen_tree_nuts");
+        }
+      }
+    }
+    return Array.from(allergens);
+  }, [aggregatedIngredients, derivedIngredients]);
+  const allergenRegion = (project?.allergenRegion || "FDA") as AllergenRegion;
+  const selectedFormulationAllergens = useMemo(() => {
+    const selectedAllergens = new Set(baselineAllergens);
+    for (const [allergen, checked] of Object.entries(manualAllergenOverrides)) {
+      if (checked) {
+        selectedAllergens.add(allergen);
+      } else {
+        selectedAllergens.delete(allergen);
+      }
+    }
+    return Array.from(selectedAllergens);
+  }, [baselineAllergens, manualAllergenOverrides]);
+  const extraFormulationAllergens = project?.formulationExtraAllergens ?? [];
+
+  useEffect(() => {
+    if (!project) {
+      return;
+    }
+    if (allergenOverridesInitializedFor.current === project._id) {
+      return;
+    }
+    const savedAllergens = project.formulationAllergens;
+    if (!savedAllergens) {
+      allergenOverridesInitializedFor.current = project._id;
+      return;
+    }
+    const savedSet = new Set(savedAllergens);
+    const baselineSet = new Set(baselineAllergens);
+    const nextOverrides: Record<string, boolean> = {};
+    for (const allergen of new Set([...savedSet, ...baselineSet])) {
+      if (savedSet.has(allergen) !== baselineSet.has(allergen)) {
+        nextOverrides[allergen] = savedSet.has(allergen);
+      }
+    }
+    setManualAllergenOverrides(nextOverrides);
+    allergenOverridesInitializedFor.current = project._id;
+  }, [baselineAllergens, project]);
+
+  useEffect(() => {
+    if (!project) {
+      return;
+    }
+    const currentAllergens = project.formulationAllergens ?? [];
+    if (
+      currentAllergens.length === selectedFormulationAllergens.length &&
+      currentAllergens.every((allergen) =>
+        selectedFormulationAllergens.includes(allergen)
+      )
+    ) {
+      return;
+    }
+    setProject({
+      ...project,
+      formulationAllergens: selectedFormulationAllergens,
+    });
+  }, [project, selectedFormulationAllergens]);
 
   const { user } = usePermissions();
   const canEditBase = true; // hasPermission('edit_procedures') // Bypassing for local testing
@@ -246,6 +417,11 @@ const Formulation: React.FC = () => {
 
   const handleStatusChange = async (newStatus: string) => {
     if (!(project && projectId)) {
+      return;
+    }
+
+    if (project.allergenReviewRequired) {
+      scrollToAllergens();
       return;
     }
 
@@ -313,6 +489,12 @@ const Formulation: React.FC = () => {
     }
   };
 
+  const scrollToAllergens = () => {
+    document
+      .getElementById("formulation-allergens")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const addPhase = () => {
     if (!canEdit) {
       return;
@@ -351,6 +533,9 @@ const Formulation: React.FC = () => {
       t("mini_spreadsheet")
     );
     setPhases(nextPhases);
+    if (type === "weighing") {
+      markAllergenReviewRequired();
+    }
     setTimeout(() => scrollToItem(newStep.id), 100);
   };
 
@@ -371,6 +556,9 @@ const Formulation: React.FC = () => {
       t("mini_spreadsheet")
     );
     setPhases(nextPhases);
+    if (type === "weighing") {
+      markAllergenReviewRequired();
+    }
     setTimeout(() => scrollToItem(newStep.id), 100);
   };
 
@@ -382,14 +570,31 @@ const Formulation: React.FC = () => {
     if (!canEdit) {
       return;
     }
-    setPhases(updateStepInPhase(phases, phaseId, stepId, updates));
+    const changedStep = phases
+      .find((phase) => phase.id === phaseId)
+      ?.steps.find((step) => step.id === stepId);
+    const nextPhases = updateStepInPhase(phases, phaseId, stepId, updates);
+    setPhases(nextPhases);
+    if (
+      changedStep?.type === "weighing" &&
+      ("ingredientId" in updates || "expectedWeight" in updates || "unit" in updates)
+    ) {
+      markAllergenReviewRequired();
+    }
   };
 
   const deleteStep = (phaseId: string, stepId: string) => {
     if (!canEdit) {
       return;
     }
-    setPhases(deleteStepFromPhase(phases, phaseId, stepId));
+    const deletedStep = phases
+      .find((phase) => phase.id === phaseId)
+      ?.steps.find((step) => step.id === stepId);
+    const nextPhases = deleteStepFromPhase(phases, phaseId, stepId);
+    setPhases(nextPhases);
+    if (deletedStep?.type === "weighing") {
+      markAllergenReviewRequired();
+    }
   };
 
   const reorderStep = (
@@ -560,7 +765,13 @@ const Formulation: React.FC = () => {
             <button
               className="flex items-center gap-2 rounded-3xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-indigo-600/20 shadow-lg transition-all hover:scale-[1.02] hover:bg-indigo-700 active:scale-[0.98] dark:bg-indigo-500"
               data-testid="save-formulation-button"
-              onClick={handleSave}
+              onClick={() => {
+                if (project.allergenReviewRequired) {
+                  scrollToAllergens();
+                  return;
+                }
+                handleSave();
+              }}
               type="button"
             >
               <Save size={20} />
@@ -569,6 +780,26 @@ const Formulation: React.FC = () => {
           )}
         </div>
       </div>
+
+      {project.allergenReviewRequired && (
+        <div className="border-amber-200 border-b bg-amber-50 px-6 py-3 dark:border-amber-800/50 dark:bg-amber-950/40">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3 text-amber-900 dark:text-amber-200">
+              <ShieldAlert className="shrink-0" size={20} />
+              <p className="font-bold text-sm">
+                {t("formulation_allergens_changed_prompt")}
+              </p>
+            </div>
+            <button
+              className="self-start rounded-xl border border-amber-300 bg-white px-4 py-2 font-bold text-amber-800 text-xs transition-colors hover:bg-amber-100 md:self-auto dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-100 dark:hover:bg-amber-900"
+              onClick={scrollToAllergens}
+              type="button"
+            >
+              {t("review_allergens")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Outline (25%) */}
@@ -726,6 +957,144 @@ const Formulation: React.FC = () => {
                 </div>
               </details>
             </div>
+
+            <section
+              className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm dark:border-amber-800/50 dark:bg-amber-950/20"
+              id="formulation-allergens"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="flex items-center gap-2 font-black text-amber-950 text-sm uppercase tracking-widest dark:text-amber-100">
+                    <ShieldAlert size={16} />
+                    {t("allergens")}
+                  </h2>
+                  <p className="mt-1 text-amber-800 text-xs dark:text-amber-200/80">
+                    {t("formulation_allergens_review_help")}
+                  </p>
+                </div>
+                {project.allergenReviewRequired && (
+                  <span className="rounded-full bg-amber-200 px-2 py-1 font-bold text-[10px] text-amber-900 uppercase dark:bg-amber-900 dark:text-amber-100">
+                    {t("review_required")}
+                  </span>
+                )}
+              </div>
+
+              <label
+                className="mb-3 block font-bold text-[10px] text-amber-900 uppercase tracking-wider dark:text-amber-100"
+                htmlFor="formulation-allergen-region"
+              >
+                {t("allergen_region")}
+              </label>
+              <select
+                className="mb-4 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 font-bold text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                id="formulation-allergen-region"
+                onChange={(event) =>
+                  setProject({
+                    ...project,
+                    allergenRegion: event.target.value,
+                    allergenReviewRequired: true,
+                  })
+                }
+                value={allergenRegion}
+              >
+                <option value="FDA">FDA</option>
+                <option value="EU">EU</option>
+                <option value="GSO">GSO</option>
+              </select>
+
+              <div className="grid grid-cols-1 gap-2">
+                {ALLERGEN_LISTS[allergenRegion].map((allergenKey) => (
+                  <div key={allergenKey}>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-amber-100 bg-white px-3 py-2 text-amber-950 text-xs shadow-sm dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-100">
+                      <input
+                        checked={selectedFormulationAllergens.includes(
+                          allergenKey
+                        )}
+                        className="h-4 w-4 accent-amber-600"
+                        onChange={() => toggleFormulationAllergen(allergenKey)}
+                        type="checkbox"
+                      />
+                      <span className="font-bold">{t(allergenKey)}</span>
+                    </label>
+                    {allergenKey === "allergen_tree_nuts" &&
+                      selectedFormulationAllergens.includes(allergenKey) && (
+                        <div className="mt-2 ms-6 grid grid-cols-1 gap-1">
+                          {TREE_NUT_OPTIONS.map((subKey) => (
+                            <label
+                              className="flex cursor-pointer items-center gap-2 text-amber-900 text-xs dark:text-amber-100/80"
+                              key={subKey}
+                            >
+                              <input
+                                checked={selectedFormulationAllergens.includes(
+                                  subKey
+                                )}
+                                className="h-3.5 w-3.5 accent-amber-600"
+                                onChange={() =>
+                                  toggleFormulationAllergen(subKey)
+                                }
+                                type="checkbox"
+                              />
+                              <span>{t(subKey)}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                ))}
+              </div>
+
+              {extraFormulationAllergens.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {extraFormulationAllergens.map((allergen) => (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full bg-amber-200 px-3 py-1 font-bold text-amber-950 text-xs dark:bg-amber-900 dark:text-amber-100"
+                      key={allergen}
+                    >
+                      {allergen}
+                      <button
+                        aria-label={t("remove_extra_allergen")}
+                        className="rounded-full p-0.5 hover:bg-amber-300 dark:hover:bg-amber-800"
+                        onClick={() => removeExtraAllergen(allergen)}
+                        type="button"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 flex gap-2">
+                <input
+                  className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-3 py-2 text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                  onChange={(event) => setExtraAllergenInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addExtraAllergen();
+                    }
+                  }}
+                  placeholder={t("extra_allergen_placeholder")}
+                  type="text"
+                  value={extraAllergenInput}
+                />
+                <button
+                  className="rounded-xl bg-amber-600 px-3 py-2 font-bold text-white text-xs transition-colors hover:bg-amber-700"
+                  onClick={addExtraAllergen}
+                  type="button"
+                >
+                  {t("add_allergen")}
+                </button>
+              </div>
+
+              <button
+                className="mt-4 w-full rounded-xl bg-slate-950 px-4 py-2.5 font-bold text-sm text-white transition-colors hover:bg-slate-800 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+                onClick={verifyFormulationAllergens}
+                type="button"
+              >
+                {t("verify_allergens")}
+              </button>
+            </section>
           </div>
         </div>
 

@@ -60,6 +60,7 @@ export const listFormulationOptions = query({
       status: ingredient.status,
       conversions: ingredient.conversions,
       allergenValues: ingredient.allergenValues,
+      subAllergenValues: ingredient.subAllergenValues,
       isAdditive: ingredient.isAdditive,
       insNumber: ingredient.insNumber,
       normalizedInsNumber: ingredient.normalizedInsNumber,

@@ -292,6 +292,8 @@ async function saveProjectSnapshot(
       gsfaCategoryCode: project.gsfaCategoryCode,
       gsfaCategoryName: project.gsfaCategoryName,
       formulationState: project.formulationState,
+      yield: project.yield,
+      batchWeight: project.batchWeight,
       releaseNotes: project.releaseNotes,
       productType: project.productType,
       processingMethod: project.processingMethod,
@@ -313,7 +315,7 @@ async function saveProjectSnapshot(
       progress: project.progress,
       authorizedExecutor: project.authorizedExecutor,
     }).filter(([, value]) => value !== undefined)
-  );
+  ) as Doc<"projectVersions">["data"];
   const now = new Date();
   const snapshotName = `Auto-Save ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
 
@@ -477,6 +479,8 @@ export const create = mutation({
     gsfaCategoryCode: v.optional(v.string()),
     gsfaCategoryName: v.optional(v.string()),
     formulationState: v.optional(formulationStateValidator),
+    yield: v.optional(v.number()),
+    batchWeight: v.optional(v.number()),
     processingMethod: v.optional(v.string()),
     targetOutcome: v.optional(v.string()),
     nutritionalGoal: v.optional(v.string()),
@@ -559,6 +563,8 @@ export const update = mutation({
     gsfaCategoryCode: v.optional(v.string()),
     gsfaCategoryName: v.optional(v.string()),
     formulationState: v.optional(formulationStateValidator),
+    yield: v.optional(v.number()),
+    batchWeight: v.optional(v.number()),
     processingMethod: v.optional(v.string()),
     targetOutcome: v.optional(v.string()),
     nutritionalGoal: v.optional(v.string()),

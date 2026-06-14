@@ -133,10 +133,12 @@ export interface EnrichedProject
     BackendEnrichedProject,
     "ingredients" | "phases" | "previousVersionIngredients"
   > {
+  batchWeight?: number;
   formulationState?: FormulationState;
   ingredients: Ingredient[];
   phases?: RecipePhase[];
   previousVersionIngredients?: Ingredient[];
+  yield?: number;
 }
 
 // Enriched lab report with joined results (from backend query)

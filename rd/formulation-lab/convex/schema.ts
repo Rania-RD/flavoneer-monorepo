@@ -39,6 +39,8 @@ export default defineSchema({
     gsfaCategoryCode: v.optional(v.string()),
     gsfaCategoryName: v.optional(v.string()),
     formulationState: v.optional(formulationStateValidator),
+    yield: v.optional(v.number()),
+    batchWeight: v.optional(v.number()),
     productType: v.optional(v.string()),
     processingMethod: v.optional(v.string()),
     targetOutcome: v.optional(v.string()),

@@ -181,6 +181,16 @@ const Formulation: React.FC = () => {
     });
   };
 
+  const handleProjectNumberChange = (field: "yield", value: string) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      [field]: value === "" ? undefined : Number(value),
+    });
+  };
+
   // Store refs for scrolling to specific phases/steps
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -206,6 +216,15 @@ const Formulation: React.FC = () => {
   const derivedIngredients = useMemo(
     () => deriveIngredients(phases, aggregatedIngredients),
     [phases, aggregatedIngredients]
+  );
+  const calculatedBatchWeight = useMemo(
+    () =>
+      Number(
+        derivedIngredients
+          .reduce((total, ingredient) => total + ingredient.weight, 0)
+          .toFixed(6)
+      ),
+    [derivedIngredients]
   );
 
   const { user } = usePermissions();
@@ -452,6 +471,36 @@ const Formulation: React.FC = () => {
                           <option value="Liquid">{t("liquid")}</option>
                           <option value="Solid">{t("solid")}</option>
                         </select>
+                      </label>
+                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        <span>{t("yield")}</span>
+                        <input
+                          className="w-20 bg-transparent font-bold outline-none"
+                          data-testid="formulation-yield-input"
+                          disabled={!canEdit}
+                          min="0"
+                          onChange={(e) =>
+                            handleProjectNumberChange("yield", e.target.value)
+                          }
+                          placeholder="0"
+                          step="any"
+                          type="number"
+                          value={project.yield ?? ""}
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        <span>{t("batch_weight")}</span>
+                        <input
+                          aria-readonly="true"
+                          className="w-24 cursor-not-allowed bg-transparent font-bold outline-none"
+                          data-testid="formulation-batch-weight-input"
+                          readOnly
+                          min="0"
+                          placeholder="0"
+                          step="any"
+                          type="number"
+                          value={calculatedBatchWeight}
+                        />
                       </label>
                     </div>
                   )}

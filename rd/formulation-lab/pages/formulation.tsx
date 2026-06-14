@@ -108,7 +108,10 @@ const Formulation: React.FC = () => {
   );
 
   // Map Convex doc to Project type
-  const foundProject: EnrichedProject | undefined = convexProject ?? undefined;
+  const foundProject: EnrichedProject | undefined =
+    convexProject && convexProject._id === projectId
+      ? convexProject
+      : undefined;
 
   const [project, setProject] = useState<EnrichedProject | undefined>(
     foundProject
@@ -136,6 +139,15 @@ const Formulation: React.FC = () => {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false);
   const [isCreatingNewVersion, setIsCreatingNewVersion] = useState(false);
+
+  useEffect(() => {
+    setProject(undefined);
+    setPhases([]);
+    setExtraAllergenInput("");
+    setManualAllergenOverrides({});
+    allergenOverridesInitializedFor.current = null;
+    setIsCreatingNewVersion(false);
+  }, [projectId]);
 
   // Dnd-Kit Phase Handlers
   const sensors = useSensors(
@@ -507,12 +519,15 @@ const Formulation: React.FC = () => {
     setIsCreatingNewVersion(true);
     try {
       const newProjectId = await duplicateProjectMutation({ id: projectId });
-      logActivity({
+      setProject(undefined);
+      setPhases([]);
+      setManualAllergenOverrides({});
+      navigate(`/project/${newProjectId}?tab=formulation`);
+      void logActivity({
         action: "Created New Draft Version",
         target: `${project.name} v${project.version}`,
         page: "Formulation",
       });
-      navigate(`/project/${newProjectId}?tab=formulation`);
     } catch (err: unknown) {
       setIsCreatingNewVersion(false);
       window.alert((err as Error).message || "Failed to create new version");
@@ -672,7 +687,11 @@ const Formulation: React.FC = () => {
   };
 
   if (!project) {
-    return <div>{t("project_not_found")}</div>;
+    return (
+      <div>
+        {convexProject === undefined ? t("loading") : t("project_not_found")}
+      </div>
+    );
   }
 
   return (

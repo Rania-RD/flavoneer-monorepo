@@ -38,10 +38,11 @@ function getNextMajorVersion(version: string) {
   }
 
   const [, prefix, major, minor] = match;
+  const normalizedPrefix = prefix ? "V" : "";
   const nextMajor = (Number.parseInt(major, 10) || 1) + 1;
   return minor === undefined
-    ? `${prefix}${nextMajor}`
-    : `${prefix}${nextMajor}.0`;
+    ? `${normalizedPrefix}${nextMajor}`
+    : `${normalizedPrefix}${nextMajor}.0`;
 }
 
 async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
@@ -787,19 +788,48 @@ export const duplicate = mutation({
       throw new Error("Project not found");
     }
 
-    const { _id, _creationTime, ...data } = original;
-    const newVersion = getNextMajorVersion(data.version);
+    const newVersion = getNextMajorVersion(original.version);
 
-    const newProjectId = await ctx.db.insert("projects", {
-      ...data,
-      status: "Draft",
-      version: newVersion,
-      releaseNotes: undefined,
-      releasedBy: undefined,
-      releasedAt: undefined,
-      formattedId: undefined,
-      updatedAt: new Date().toISOString(),
-    });
+    const clonedProjectData = Object.fromEntries(
+      Object.entries({
+        name: original.name,
+        version: newVersion,
+        status: "Draft",
+        lead: original.lead,
+        description: original.description,
+        category: original.category,
+        gsfaCategoryCode: original.gsfaCategoryCode,
+        gsfaCategoryName: original.gsfaCategoryName,
+        formulationState: original.formulationState,
+        yield: original.yield,
+        batchWeight: original.batchWeight,
+        servingSizeMode: original.servingSizeMode,
+        servingSizeAmount: original.servingSizeAmount,
+        allergenRegion: original.allergenRegion,
+        allergenReviewRequired: false,
+        formulationAllergens: original.formulationAllergens,
+        formulationAllergenOverrides: original.formulationAllergenOverrides,
+        formulationExtraAllergens: original.formulationExtraAllergens,
+        productType: original.productType,
+        processingMethod: original.processingMethod,
+        targetOutcome: original.targetOutcome,
+        nutritionalGoal: original.nutritionalGoal,
+        testingRequirements: original.testingRequirements,
+        processingTemp: original.processingTemp,
+        processingTime: original.processingTime,
+        targetTexture: original.targetTexture,
+        updatedAt: new Date().toISOString(),
+        batchCodePrefix: original.batchCodePrefix,
+        batchCodeFormat: original.batchCodeFormat,
+        userId: original.userId,
+        teamId: original.teamId,
+        ingredients: original.ingredients,
+        progress: original.progress,
+        authorizedExecutor: original.authorizedExecutor,
+      }).filter(([, value]) => value !== undefined)
+    ) as Omit<Doc<"projects">, "_id" | "_creationTime">;
+
+    const newProjectId = await ctx.db.insert("projects", clonedProjectData);
 
     // Copy ingredients
     const ings = await ctx.db

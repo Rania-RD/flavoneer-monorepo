@@ -65,6 +65,41 @@ export function calculateRecipeCosts(
   };
 }
 
+export function calculatePackagingCosts({
+  costPerServing,
+  packagingUnitPrice,
+}: {
+  costPerServing: number;
+  packagingUnitPrice?: number;
+}) {
+  const packagingCostPerUnit =
+    typeof packagingUnitPrice === "number" && packagingUnitPrice > 0
+      ? Number(packagingUnitPrice.toFixed(2))
+      : 0;
+  const finishedGoodCostPerUnit = Number(
+    (costPerServing + packagingCostPerUnit).toFixed(2)
+  );
+
+  return {
+    packagingCostPerUnit,
+    finishedGoodCostPerUnit,
+  };
+}
+
+export function isServingOverPackagingCapacity({
+  packagingCapacity,
+  servingSizeWeight,
+}: {
+  packagingCapacity?: number;
+  servingSizeWeight: number;
+}) {
+  return (
+    typeof packagingCapacity === "number" &&
+    packagingCapacity > 0 &&
+    servingSizeWeight > packagingCapacity
+  );
+}
+
 export function calculateProjectRDCost(
   existingTotal: number | undefined,
   existingBatchCost: number | undefined,
@@ -98,6 +133,11 @@ export function buildFormulationSavePayload(
     ingredients,
     servingCount
   );
+  const { packagingCostPerUnit, finishedGoodCostPerUnit } =
+    calculatePackagingCosts({
+      costPerServing,
+      packagingUnitPrice: project.packagingUnitPrice,
+    });
   const totalProjectRDCost = calculateProjectRDCost(
     project.totalProjectRDCost,
     project.batchCost,
@@ -108,6 +148,8 @@ export function buildFormulationSavePayload(
     batchWeight,
     batchCost,
     costPerServing,
+    packagingCostPerUnit,
+    finishedGoodCostPerUnit,
     totalProjectRDCost,
     yield: batchYield,
     formulationState: project.formulationState || "Liquid",

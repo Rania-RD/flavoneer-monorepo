@@ -7,8 +7,10 @@ import { getRunValidation } from "../hooks/run-execution/runValidation";
 import {
   buildFormulationSavePayload,
   calculateProjectRDCost,
+  calculatePackagingCosts,
   calculateRecipeCosts,
   calculateRecipeMeasures,
+  isServingOverPackagingCapacity,
 } from "../lib/formulation/save-payload";
 import {
   addStepAfterStepInPhase,
@@ -389,6 +391,33 @@ test.describe("formulation save payload helpers", () => {
       batchCost: 14,
       costPerServing: 1,
     });
+  });
+
+  test("adds packaging cost to finished good unit cost", () => {
+    expect(
+      calculatePackagingCosts({
+        costPerServing: 1.25,
+        packagingUnitPrice: 0.08,
+      })
+    ).toEqual({
+      packagingCostPerUnit: 0.08,
+      finishedGoodCostPerUnit: 1.33,
+    });
+  });
+
+  test("warns when serving weight exceeds packaging capacity", () => {
+    expect(
+      isServingOverPackagingCapacity({
+        packagingCapacity: 100,
+        servingSizeWeight: 150,
+      })
+    ).toBe(true);
+    expect(
+      isServingOverPackagingCapacity({
+        packagingCapacity: 250,
+        servingSizeWeight: 150,
+      })
+    ).toBe(false);
   });
 
   test("flags regulation compliance breaches from row percentage limits", () => {

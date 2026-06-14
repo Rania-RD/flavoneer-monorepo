@@ -145,6 +145,12 @@ export interface EnrichedProject
   formulationAllergens?: string[];
   formulationAllergenOverrides?: Record<string, boolean>;
   formulationExtraAllergens?: string[];
+  packagingItemName?: string;
+  packagingUnitPrice?: number;
+  packagingCapacity?: number;
+  packagingCapacityUnit?: string;
+  packagingCostPerUnit?: number;
+  finishedGoodCostPerUnit?: number;
   ingredients: Ingredient[];
   phases?: RecipePhase[];
   previousVersionIngredients?: Ingredient[];

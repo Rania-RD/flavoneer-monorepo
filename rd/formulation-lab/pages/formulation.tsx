@@ -46,8 +46,10 @@ import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
 import {
   calculateProjectRDCost,
+  calculatePackagingCosts,
   calculateRecipeCosts,
   calculateRecipeMeasures,
+  isServingOverPackagingCapacity,
 } from "../lib/formulation/save-payload";
 import {
   ALPHABET_MAP,
@@ -86,6 +88,19 @@ import type {
   StepDependency,
   StepType,
 } from "../types";
+
+const PACKAGING_OPTIONS = [
+  { name: "", unitPrice: 0, capacity: undefined },
+  { name: "100g Plastic Cup", unitPrice: 0.05, capacity: 100 },
+  { name: "150g Plastic Cup", unitPrice: 0.07, capacity: 150 },
+  { name: "250g Glass Jar", unitPrice: 0.22, capacity: 250 },
+  { name: "Foil Lid", unitPrice: 0.03, capacity: undefined },
+  { name: "Custom Packaging", unitPrice: 0, capacity: undefined },
+] satisfies Array<{
+  capacity?: number;
+  name: string;
+  unitPrice: number;
+}>;
 
 const Formulation: React.FC = () => {
   const { t } = useTranslation();
@@ -249,6 +264,38 @@ const Formulation: React.FC = () => {
     });
   };
 
+  const handlePackagingSelectionChange = (packagingItemName: string) => {
+    if (!project) {
+      return;
+    }
+    const option = PACKAGING_OPTIONS.find(
+      (item) => item.name === packagingItemName
+    );
+    setProject({
+      ...project,
+      packagingItemName,
+      packagingUnitPrice: option?.unitPrice ?? project.packagingUnitPrice,
+      packagingCapacity: option?.capacity,
+      packagingCapacityUnit: option?.capacity ? "g" : project.packagingCapacityUnit,
+    });
+  };
+
+  const handlePackagingNumberChange = (
+    field: "packagingUnitPrice" | "packagingCapacity",
+    value: string
+  ) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      [field]: value === "" ? undefined : Number(value),
+      ...(field === "packagingCapacity" && value !== ""
+        ? { packagingCapacityUnit: "g" }
+        : {}),
+    });
+  };
+
   const markAllergenReviewRequired = () => {
     setProject((currentProject) => {
       if (!currentProject) {
@@ -393,6 +440,18 @@ const Formulation: React.FC = () => {
       ),
     [calculatedMeasures.servingCount, derivedIngredients]
   );
+  const calculatedPackagingCosts = useMemo(
+    () =>
+      calculatePackagingCosts({
+        costPerServing: calculatedCosts.costPerServing,
+        packagingUnitPrice: project?.packagingUnitPrice,
+      }),
+    [calculatedCosts.costPerServing, project?.packagingUnitPrice]
+  );
+  const servingExceedsPackagingCapacity = isServingOverPackagingCapacity({
+    packagingCapacity: project?.packagingCapacity,
+    servingSizeWeight: calculatedMeasures.servingSizeWeight,
+  });
   const regulationBreaches = useMemo(() => {
     return phases.flatMap((phase) =>
       phase.steps.flatMap((step) => {
@@ -1466,6 +1525,130 @@ const Formulation: React.FC = () => {
                   value={calculatedBatchWeight}
                 />
               </div>
+            </section>
+
+            <section
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-[#1e293b]"
+              data-testid="recipe-packaging-section"
+            >
+              <div className="border-slate-100 border-b p-5 dark:border-slate-700">
+                <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
+                  Packaging
+                </p>
+                <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_180px_180px]">
+                  <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                    <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Packaging item
+                    </span>
+                    <select
+                      className="mt-1 w-full bg-transparent font-black text-slate-900 text-lg outline-none dark:text-white"
+                      data-testid="packaging-item-select"
+                      disabled={!canEdit}
+                      onChange={(event) =>
+                        handlePackagingSelectionChange(event.target.value)
+                      }
+                      value={project.packagingItemName ?? ""}
+                    >
+                      <option value="">Select packaging...</option>
+                      {PACKAGING_OPTIONS.filter((option) => option.name).map(
+                        (option) => (
+                          <option key={option.name} value={option.name}>
+                            {option.name}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </label>
+
+                  <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                    <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Unit price ($)
+                    </span>
+                    <input
+                      className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
+                      data-testid="packaging-unit-price-input"
+                      disabled={!canEdit}
+                      min="0"
+                      onChange={(event) =>
+                        handlePackagingNumberChange(
+                          "packagingUnitPrice",
+                          event.target.value
+                        )
+                      }
+                      placeholder="0.00"
+                      step="any"
+                      type="number"
+                      value={project.packagingUnitPrice ?? ""}
+                    />
+                  </label>
+
+                  <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                    <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Target capacity (g)
+                    </span>
+                    <input
+                      className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
+                      data-testid="packaging-capacity-input"
+                      disabled={!canEdit}
+                      min="0"
+                      onChange={(event) =>
+                        handlePackagingNumberChange(
+                          "packagingCapacity",
+                          event.target.value
+                        )
+                      }
+                      placeholder="0"
+                      step="any"
+                      type="number"
+                      value={project.packagingCapacity ?? ""}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid gap-4 p-5 md:grid-cols-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                  <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                    Ingredient Cost per Serving ($)
+                  </p>
+                  <p className="mt-1 font-black text-2xl text-slate-900 dark:text-white">
+                    {formatCurrency(calculatedCosts.costPerServing)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                  <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                    Packaging Cost per Unit ($)
+                  </p>
+                  <p
+                    className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
+                    data-testid="packaging-cost-per-unit-display"
+                  >
+                    {formatCurrency(calculatedPackagingCosts.packagingCostPerUnit)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/40">
+                  <p className="font-bold text-emerald-700 text-xs dark:text-emerald-300">
+                    Total Finished Good Cost per Unit ($)
+                  </p>
+                  <p
+                    className="mt-1 font-black text-2xl text-emerald-950 dark:text-emerald-100"
+                    data-testid="finished-good-cost-per-unit-display"
+                  >
+                    {formatCurrency(
+                      calculatedPackagingCosts.finishedGoodCostPerUnit
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {servingExceedsPackagingCapacity && (
+                <div
+                  className="mx-5 mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 font-bold text-amber-800 text-sm dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200"
+                  data-testid="packaging-capacity-warning"
+                >
+                  Warning: Serving size exceeds packaging capacity.
+                </div>
+              )}
             </section>
 
             {phases.length === 0 ? (

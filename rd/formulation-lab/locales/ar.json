@@ -525,6 +525,8 @@
   "formulation_state": "حالة التركيبة",
   "liquid": "سائل",
   "solid": "صلب",
+  "yield": "العائد",
+  "batch_weight": "وزن الدفعة",
   "review": "مراجعة",
   "sequence_editor": "محرر التسلسل",
   "released": "مُصدر",

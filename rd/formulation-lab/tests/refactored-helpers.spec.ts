@@ -181,6 +181,8 @@ test.describe("formulation save payload helpers", () => {
       teamId: "team-1",
       userId: "user-1",
       updatedAt: 2,
+      batchWeight: 999,
+      yield: 24,
       name: "Sauce",
       version: "1.0",
       status: "Draft",
@@ -192,13 +194,19 @@ test.describe("formulation save payload helpers", () => {
     } as unknown as EnrichedProject;
 
     const payload = buildFormulationSavePayload(project, phases, [
-      { id: "ing-sugar", name: "Sugar", weight: 100, unit: "g" },
+      { id: "ing-sugar", name: "Sugar", weight: 100.25, unit: "g" },
+      { id: "ing-salt", name: "Salt", weight: 4.75, unit: "g" },
     ]);
 
     expect(payload).toMatchObject({
       name: "Sauce",
+      batchWeight: 105,
+      yield: 24,
       phases,
-      ingredients: [{ id: "ing-sugar", name: "Sugar" }],
+      ingredients: [
+        { id: "ing-sugar", name: "Sugar" },
+        { id: "ing-salt", name: "Salt" },
+      ],
     });
     expect(payload).not.toHaveProperty("_id");
     expect(payload).not.toHaveProperty("_creationTime");

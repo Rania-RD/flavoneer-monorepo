@@ -525,6 +525,8 @@
   "formulation_state": "Formulation State",
   "liquid": "Liquid",
   "solid": "Solid",
+  "yield": "Yield",
+  "batch_weight": "Batch Weight",
   "review": "Review",
   "sequence_editor": "Sequence Editor",
   "released": "Released",

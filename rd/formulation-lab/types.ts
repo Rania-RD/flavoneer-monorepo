@@ -133,8 +133,12 @@ export interface EnrichedProject
     BackendEnrichedProject,
     "ingredients" | "phases" | "previousVersionIngredients"
   > {
+  allergenRegion?: string;
+  allergenReviewRequired?: boolean;
   batchWeight?: number;
   formulationState?: FormulationState;
+  formulationAllergens?: string[];
+  formulationExtraAllergens?: string[];
   ingredients: Ingredient[];
   phases?: RecipePhase[];
   previousVersionIngredients?: Ingredient[];

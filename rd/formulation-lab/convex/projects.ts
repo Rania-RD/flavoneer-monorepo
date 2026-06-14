@@ -788,127 +788,142 @@ export const remove = mutation({
   },
 });
 
+async function cloneProjectAsDraftVersion(
+  ctx: MutationCtx,
+  projectId: Id<"projects">
+) {
+  const original = await ctx.db.get(projectId);
+  if (!original) {
+    throw new Error("Project not found");
+  }
+
+  const newVersion = getNextMajorVersion(original.version);
+  const newName = getCloneBaseName(original.name);
+
+  const clonedProjectData = Object.fromEntries(
+    Object.entries({
+      name: newName,
+      version: newVersion,
+      status: "Draft",
+      lead: original.lead,
+      description: original.description,
+      category: original.category,
+      gsfaCategoryCode: original.gsfaCategoryCode,
+      gsfaCategoryName: original.gsfaCategoryName,
+      formulationState: original.formulationState,
+      yield: original.yield,
+      batchWeight: original.batchWeight,
+      servingSizeMode: original.servingSizeMode,
+      servingSizeAmount: original.servingSizeAmount,
+      allergenRegion: original.allergenRegion,
+      allergenReviewRequired: false,
+      formulationAllergens: original.formulationAllergens,
+      formulationAllergenOverrides: original.formulationAllergenOverrides,
+      formulationExtraAllergens: original.formulationExtraAllergens,
+      productType: original.productType,
+      processingMethod: original.processingMethod,
+      targetOutcome: original.targetOutcome,
+      nutritionalGoal: original.nutritionalGoal,
+      testingRequirements: original.testingRequirements,
+      processingTemp: original.processingTemp,
+      processingTime: original.processingTime,
+      targetTexture: original.targetTexture,
+      updatedAt: new Date().toISOString(),
+      batchCodePrefix: original.batchCodePrefix,
+      batchCodeFormat: original.batchCodeFormat,
+      userId: original.userId,
+      teamId: original.teamId,
+      ingredients: original.ingredients,
+      progress: original.progress,
+      authorizedExecutor: original.authorizedExecutor,
+    }).filter(([, value]) => value !== undefined)
+  ) as Omit<Doc<"projects">, "_id" | "_creationTime">;
+
+  const newProjectId = await ctx.db.insert("projects", clonedProjectData);
+  await ctx.db.patch(newProjectId, {
+    name: newName,
+    version: newVersion,
+    status: "Draft",
+    allergenReviewRequired: false,
+  });
+
+  // Copy ingredients
+  const ings = await ctx.db
+    .query("projectIngredients")
+    .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
+    .collect();
+  for (const ing of ings) {
+    const { _id: _, _creationTime: __, projectId: _pid, ...ingData } = ing;
+    await ctx.db.insert("projectIngredients", {
+      ...ingData,
+      projectId: newProjectId,
+    });
+  }
+
+  // Copy phases and steps
+  const phases = await ctx.db
+    .query("recipePhases")
+    .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
+    .collect();
+  for (const phase of phases) {
+    const {
+      _id: phaseOldId,
+      _creationTime: __,
+      projectId: _pid,
+      ...phaseData
+    } = phase;
+    const newPhaseId = await ctx.db.insert("recipePhases", {
+      ...phaseData,
+      projectId: newProjectId,
+    });
+    const steps = await ctx.db
+      .query("recipeSteps")
+      .withIndex("by_phaseId", (q) => q.eq("phaseId", phaseOldId))
+      .collect();
+    for (const step of steps) {
+      const {
+        _id: ___,
+        _creationTime: ____,
+        phaseId: _phid,
+        projectId: _spid,
+        ...stepData
+      } = step;
+      await ctx.db.insert("recipeSteps", {
+        ...stepData,
+        phaseId: newPhaseId,
+        projectId: newProjectId,
+      });
+    }
+  }
+
+  const dependencies = await ctx.db
+    .query("stepDependencies")
+    .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
+    .collect();
+  for (const dependency of dependencies) {
+    const { _id: _, _creationTime: __, projectId: _pid, ...dependencyData } =
+      dependency;
+    await ctx.db.insert("stepDependencies", {
+      ...dependencyData,
+      projectId: newProjectId,
+    });
+  }
+
+  return newProjectId;
+}
+
+export const createNewVersion = mutation({
+  args: { id: v.id("projects") },
+  returns: v.id("projects"),
+  handler: async (ctx, args) => {
+    return await cloneProjectAsDraftVersion(ctx, args.id);
+  },
+});
+
 export const duplicate = mutation({
   args: { id: v.id("projects") },
   returns: v.id("projects"),
   handler: async (ctx, args) => {
-    const original = await ctx.db.get(args.id);
-    if (!original) {
-      throw new Error("Project not found");
-    }
-
-    const newVersion = getNextMajorVersion(original.version);
-    const newName = getCloneBaseName(original.name);
-
-    const clonedProjectData = Object.fromEntries(
-      Object.entries({
-        name: newName,
-        version: newVersion,
-        status: "Draft",
-        lead: original.lead,
-        description: original.description,
-        category: original.category,
-        gsfaCategoryCode: original.gsfaCategoryCode,
-        gsfaCategoryName: original.gsfaCategoryName,
-        formulationState: original.formulationState,
-        yield: original.yield,
-        batchWeight: original.batchWeight,
-        servingSizeMode: original.servingSizeMode,
-        servingSizeAmount: original.servingSizeAmount,
-        allergenRegion: original.allergenRegion,
-        allergenReviewRequired: false,
-        formulationAllergens: original.formulationAllergens,
-        formulationAllergenOverrides: original.formulationAllergenOverrides,
-        formulationExtraAllergens: original.formulationExtraAllergens,
-        productType: original.productType,
-        processingMethod: original.processingMethod,
-        targetOutcome: original.targetOutcome,
-        nutritionalGoal: original.nutritionalGoal,
-        testingRequirements: original.testingRequirements,
-        processingTemp: original.processingTemp,
-        processingTime: original.processingTime,
-        targetTexture: original.targetTexture,
-        updatedAt: new Date().toISOString(),
-        batchCodePrefix: original.batchCodePrefix,
-        batchCodeFormat: original.batchCodeFormat,
-        userId: original.userId,
-        teamId: original.teamId,
-        ingredients: original.ingredients,
-        progress: original.progress,
-        authorizedExecutor: original.authorizedExecutor,
-      }).filter(([, value]) => value !== undefined)
-    ) as Omit<Doc<"projects">, "_id" | "_creationTime">;
-
-    const newProjectId = await ctx.db.insert("projects", clonedProjectData);
-    await ctx.db.patch(newProjectId, {
-      name: newName,
-      version: newVersion,
-      status: "Draft",
-      allergenReviewRequired: false,
-    });
-
-    // Copy ingredients
-    const ings = await ctx.db
-      .query("projectIngredients")
-      .withIndex("by_projectId", (q) => q.eq("projectId", args.id))
-      .collect();
-    for (const ing of ings) {
-      const { _id: _, _creationTime: __, projectId: _pid, ...ingData } = ing;
-      await ctx.db.insert("projectIngredients", {
-        ...ingData,
-        projectId: newProjectId,
-      });
-    }
-
-    // Copy phases and steps
-    const phases = await ctx.db
-      .query("recipePhases")
-      .withIndex("by_projectId", (q) => q.eq("projectId", args.id))
-      .collect();
-    for (const phase of phases) {
-      const {
-        _id: phaseOldId,
-        _creationTime: __,
-        projectId: _pid,
-        ...phaseData
-      } = phase;
-      const newPhaseId = await ctx.db.insert("recipePhases", {
-        ...phaseData,
-        projectId: newProjectId,
-      });
-      const steps = await ctx.db
-        .query("recipeSteps")
-        .withIndex("by_phaseId", (q) => q.eq("phaseId", phaseOldId))
-        .collect();
-      for (const step of steps) {
-        const {
-          _id: ___,
-          _creationTime: ____,
-          phaseId: _phid,
-          projectId: _spid,
-          ...stepData
-        } = step;
-        await ctx.db.insert("recipeSteps", {
-          ...stepData,
-          phaseId: newPhaseId,
-          projectId: newProjectId,
-        });
-      }
-    }
-
-    const dependencies = await ctx.db
-      .query("stepDependencies")
-      .withIndex("by_projectId", (q) => q.eq("projectId", args.id))
-      .collect();
-    for (const dependency of dependencies) {
-      const { _id: _, _creationTime: __, projectId: _pid, ...dependencyData } =
-        dependency;
-      await ctx.db.insert("stepDependencies", {
-        ...dependencyData,
-        projectId: newProjectId,
-      });
-    }
-
-    return newProjectId;
+    return await cloneProjectAsDraftVersion(ctx, args.id);
   },
 });

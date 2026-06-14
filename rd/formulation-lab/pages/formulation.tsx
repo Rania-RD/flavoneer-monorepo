@@ -93,7 +93,7 @@ const Formulation: React.FC = () => {
     projectId ? { id: projectId } : "skip"
   );
   const updateProjectMutation = useMutation(api.projects.update);
-  const duplicateProjectMutation = useMutation(api.projects.duplicate);
+  const createNewVersionMutation = useMutation(api.projects.createNewVersion);
   const logActivity = useMutation(api.activities.log);
   const inventoryItems = useQuery(api.inventory.list, {}) as
     | InventoryListItem[]
@@ -518,7 +518,7 @@ const Formulation: React.FC = () => {
 
     setIsCreatingNewVersion(true);
     try {
-      const newProjectId = await duplicateProjectMutation({ id: projectId });
+      const newProjectId = await createNewVersionMutation({ id: projectId });
       setProject(undefined);
       setPhases([]);
       setManualAllergenOverrides({});

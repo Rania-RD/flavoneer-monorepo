@@ -49,6 +49,7 @@ import {
 } from "../lib/formulation/helpers";
 import {
   addPhaseToPhases,
+  addStepAfterStepInPhase,
   addStepToPhase,
   deletePhaseFromPhases,
   deleteStepFromPhase,
@@ -345,6 +346,26 @@ const Formulation: React.FC = () => {
     const { phases: nextPhases, newStep } = addStepToPhase(
       phases,
       phaseId,
+      type,
+      t("ph_level"),
+      t("mini_spreadsheet")
+    );
+    setPhases(nextPhases);
+    setTimeout(() => scrollToItem(newStep.id), 100);
+  };
+
+  const addStepAfter = (
+    phaseId: string,
+    afterStepId: string,
+    type: StepType
+  ) => {
+    if (!canEdit) {
+      return;
+    }
+    const { phases: nextPhases, newStep } = addStepAfterStepInPhase(
+      phases,
+      phaseId,
+      afterStepId,
       type,
       t("ph_level"),
       t("mini_spreadsheet")
@@ -814,6 +835,7 @@ const Formulation: React.FC = () => {
                       <SortablePhaseItem
                         additiveLimits={additiveLimits}
                         addStep={addStep}
+                        addStepAfter={addStepAfter}
                         aggregatedIngredients={aggregatedIngredients}
                         canEdit={canEdit}
                         deletePhase={deletePhase}

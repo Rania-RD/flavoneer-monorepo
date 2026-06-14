@@ -44,6 +44,29 @@ export function addStepToPhase(
   };
 }
 
+export function addStepAfterStepInPhase(
+  phases: RecipePhase[],
+  phaseId: string,
+  afterStepId: string,
+  type: StepType,
+  criticalParamName: string,
+  spreadsheetLabel = "Mini Spreadsheet"
+): { phases: RecipePhase[]; newStep: RecipeStep } {
+  const newStep = createStep(type, criticalParamName, spreadsheetLabel);
+  return {
+    phases: phases.map((phase) => {
+      if (phase.id !== phaseId) {
+        return phase;
+      }
+      const afterIndex = phase.steps.findIndex((step) => step.id === afterStepId);
+      const steps = Array.from(phase.steps);
+      steps.splice(afterIndex > -1 ? afterIndex + 1 : steps.length, 0, newStep);
+      return { ...phase, steps };
+    }),
+    newStep,
+  };
+}
+
 export function updateStepInPhase(
   phases: RecipePhase[],
   phaseId: string,

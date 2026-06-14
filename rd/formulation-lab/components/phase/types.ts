@@ -39,6 +39,7 @@ export interface PhaseProps {
   isStepLocked: (stepKey: string) => boolean;
   letter: string;
   onAddStep: (type: StepType) => void;
+  onAddStepAfter: (stepId: string, type: StepType) => void;
   onDelete?: () => void;
   onDeleteStep: (stepId: string) => void;
   onReorderSteps?: (startIndex: number, endIndex: number) => void;

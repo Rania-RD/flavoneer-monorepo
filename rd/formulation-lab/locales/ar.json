@@ -527,6 +527,8 @@
   "solid": "صلب",
   "yield": "العائد",
   "batch_weight": "وزن الدفعة",
+  "add_ingredient_row": "إضافة صف مكون",
+  "delete_ingredient_row": "حذف صف المكون",
   "review": "مراجعة",
   "sequence_editor": "محرر التسلسل",
   "released": "مُصدر",

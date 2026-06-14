@@ -527,6 +527,8 @@
   "solid": "Solid",
   "yield": "Yield",
   "batch_weight": "Batch Weight",
+  "add_ingredient_row": "Add ingredient row",
+  "delete_ingredient_row": "Delete ingredient row",
   "review": "Review",
   "sequence_editor": "Sequence Editor",
   "released": "Released",

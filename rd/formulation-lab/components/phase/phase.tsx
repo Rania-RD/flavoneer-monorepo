@@ -28,6 +28,7 @@ export const Phase: React.FC<PhaseProps> = ({
   onDelete,
   onUpdateName,
   onAddStep,
+  onAddStepAfter,
   onUpdateStep,
   onDeleteStep,
   onReorderSteps,
@@ -167,6 +168,7 @@ export const Phase: React.FC<PhaseProps> = ({
                         letter={letter}
                         listeners={listeners}
                         onDeleteStep={onDeleteStep}
+                        onAddStepAfter={onAddStepAfter}
                         onSaveDependency={onSaveDependency}
                         onToggleDependencyMenu={handleToggleDependencyMenu}
                         onUpdateStep={onUpdateStep}

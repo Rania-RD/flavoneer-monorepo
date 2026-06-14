@@ -6,6 +6,7 @@ import {
 import { getRunValidation } from "../hooks/run-execution/runValidation";
 import { buildFormulationSavePayload } from "../lib/formulation/save-payload";
 import {
+  addStepAfterStepInPhase,
   deletePhaseFromPhases,
   deleteStepFromPhase,
   reorderPhases,
@@ -222,6 +223,26 @@ test.describe("formulation editing helpers", () => {
       "Prep"
     );
     expect(deletePhaseFromPhases(phases, "phase-a")).toHaveLength(1);
+  });
+
+  test("adds a new weighing row directly below the selected row", () => {
+    const { phases: nextPhases, newStep } = addStepAfterStepInPhase(
+      phases,
+      "phase-a",
+      "step-a1",
+      "weighing",
+      "pH Level"
+    );
+
+    expect(nextPhases[0].steps.map((step) => step.id)).toEqual([
+      "step-a1",
+      newStep.id,
+      "step-a2",
+    ]);
+    expect(newStep).toMatchObject({
+      type: "weighing",
+      expectedWeight: 0,
+    });
   });
 
   test("updates, deletes, and reorders steps inside one phase", () => {

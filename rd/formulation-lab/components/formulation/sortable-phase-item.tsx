@@ -23,6 +23,7 @@ import { Phase } from "../Phase";
 interface SortablePhaseItemProps {
   additiveLimits?: Record<string, unknown>;
   addStep: (phaseId: string, type: StepType) => void;
+  addStepAfter: (phaseId: string, afterStepId: string, type: StepType) => void;
   aggregatedIngredients: AggregatedIngredient[];
   canEdit: boolean;
   deletePhase: (phaseId: string) => void;
@@ -61,6 +62,7 @@ export const SortablePhaseItem = ({
   aggregatedIngredients,
   isStepLocked,
   addStep,
+  addStepAfter,
   deletePhase,
   deleteStep,
   reorderStep,
@@ -117,6 +119,9 @@ export const SortablePhaseItem = ({
         isStepLocked={isStepLocked}
         letter={phaseIdStr}
         onAddStep={(type: StepType) => addStep(phase.id, type)}
+        onAddStepAfter={(stepId: string, type: StepType) =>
+          addStepAfter(phase.id, stepId, type)
+        }
         onDelete={canEdit ? () => deletePhase(phase.id) : undefined}
         onDeleteStep={(stepId: string) => deleteStep(phase.id, stepId)}
         onReorderSteps={(startIndex: number, endIndex: number) =>

@@ -4,7 +4,10 @@ import {
   buildIngredientsUsage,
 } from "../hooks/run-execution/runPersistence";
 import { getRunValidation } from "../hooks/run-execution/runValidation";
-import { buildFormulationSavePayload } from "../lib/formulation/save-payload";
+import {
+  buildFormulationSavePayload,
+  calculateRecipeMeasures,
+} from "../lib/formulation/save-payload";
 import {
   addStepAfterStepInPhase,
   deletePhaseFromPhases,
@@ -14,7 +17,11 @@ import {
   updatePhaseInPhases,
   updateStepInPhase,
 } from "../lib/formulation/editing";
-import { buildAggregatedIngredients } from "../lib/formulation/helpers";
+import {
+  applyAllergenOverrides,
+  buildAggregatedIngredients,
+  getFormulationBaselineAllergens,
+} from "../lib/formulation/helpers";
 import {
   findCompositeDependencies,
   findProjectIdsUsingIngredientCode,
@@ -200,6 +207,46 @@ test.describe("formulation save payload helpers", () => {
     ]);
   });
 
+  test("recalculates allergen baseline from selected formulation ingredients", () => {
+    const aggregatedIngredients = [
+      {
+        _id: "ing-walnut",
+        name: "Walnuts",
+        allergens: ["sub_allergen_walnut"],
+        stock: 100,
+        unit: "g",
+      },
+    ] as unknown as Parameters<typeof getFormulationBaselineAllergens>[1];
+
+    expect(
+      getFormulationBaselineAllergens(
+        [{ id: "ing-walnut", name: "Walnuts", weight: 50, unit: "g" }],
+        aggregatedIngredients,
+        ["sub_allergen_walnut"]
+      )
+    ).toEqual(["sub_allergen_walnut", "allergen_tree_nuts"]);
+
+    expect(
+      getFormulationBaselineAllergens([], aggregatedIngredients, [
+        "sub_allergen_walnut",
+      ])
+    ).toEqual([]);
+  });
+
+  test("merges manual allergen overrides over the live baseline", () => {
+    expect(
+      applyAllergenOverrides(["allergen_tree_nuts"], {
+        allergen_tree_nuts: false,
+      })
+    ).toEqual([]);
+
+    expect(
+      applyAllergenOverrides([], {
+        allergen_tree_nuts: true,
+      })
+    ).toEqual(["allergen_tree_nuts"]);
+  });
+
   test("strips Convex metadata and uses current phases and ingredients", () => {
     const project = {
       _id: "project-1",
@@ -208,7 +255,8 @@ test.describe("formulation save payload helpers", () => {
       userId: "user-1",
       updatedAt: 2,
       batchWeight: 999,
-      yield: 24,
+      servingSizeAmount: 24,
+      servingSizeMode: "recipeMakes",
       name: "Sauce",
       version: "1.0",
       status: "Draft",
@@ -227,7 +275,9 @@ test.describe("formulation save payload helpers", () => {
     expect(payload).toMatchObject({
       name: "Sauce",
       batchWeight: 105,
-      yield: 24,
+      yield: 105,
+      servingSizeAmount: 24,
+      servingSizeMode: "recipeMakes",
       phases,
       ingredients: [
         { id: "ing-sugar", name: "Sugar" },
@@ -239,6 +289,20 @@ test.describe("formulation save payload helpers", () => {
     expect(payload).not.toHaveProperty("teamId");
     expect(payload).not.toHaveProperty("userId");
     expect(payload).not.toHaveProperty("updatedAt");
+  });
+
+  test("calculates recipe measures from serving mode and amount", () => {
+    expect(calculateRecipeMeasures(1000, "recipeMakes", 10)).toEqual({
+      batchYield: 1000,
+      servingCount: 10,
+      servingSizeWeight: 100,
+    });
+
+    expect(calculateRecipeMeasures(1000, "servingIs", 250)).toEqual({
+      batchYield: 1000,
+      servingCount: 4,
+      servingSizeWeight: 250,
+    });
   });
 });
 

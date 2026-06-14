@@ -121,6 +121,7 @@ export interface TestResult {
 }
 
 export type FormulationState = "Liquid" | "Solid";
+export type ServingSizeMode = "recipeMakes" | "servingIs";
 
 // Enriched project with joined relations (from backend query)
 export type BackendEnrichedProject = Exclude<
@@ -138,10 +139,13 @@ export interface EnrichedProject
   batchWeight?: number;
   formulationState?: FormulationState;
   formulationAllergens?: string[];
+  formulationAllergenOverrides?: Record<string, boolean>;
   formulationExtraAllergens?: string[];
   ingredients: Ingredient[];
   phases?: RecipePhase[];
   previousVersionIngredients?: Ingredient[];
+  servingSizeAmount?: number;
+  servingSizeMode?: ServingSizeMode;
   yield?: number;
 }
 

@@ -44,13 +44,18 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
+import { calculateRecipeMeasures } from "../lib/formulation/save-payload";
 import {
   ALPHABET_MAP,
+  applyAllergenOverrides,
+  areAllergenOverridesEqual,
+  areStringSelectionsEqual,
   buildAggregatedIngredients,
   COLORS,
   createInitialPhases,
   deriveIngredients,
   getAdditiveIngredientIds,
+  getFormulationBaselineAllergens,
   getFlatSteps,
   getIsStepLocked,
 } from "../lib/formulation/helpers";
@@ -72,6 +77,7 @@ import type {
   PhaseColor,
   RecipePhase,
   RecipeStep,
+  ServingSizeMode,
   StepDependency,
   StepType,
 } from "../types";
@@ -194,13 +200,33 @@ const Formulation: React.FC = () => {
     });
   };
 
-  const handleProjectNumberChange = (field: "yield", value: string) => {
+  const handleServingAmountChange = (value: string) => {
     if (!project) {
       return;
     }
     setProject({
       ...project,
-      [field]: value === "" ? undefined : Number(value),
+      servingSizeAmount: value === "" ? undefined : Number(value),
+    });
+  };
+
+  const handleFormulationStateChange = (formulationState: FormulationState) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      formulationState,
+    });
+  };
+
+  const handleServingSizeModeChange = (servingSizeMode: ServingSizeMode) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      servingSizeMode,
     });
   };
 
@@ -280,6 +306,7 @@ const Formulation: React.FC = () => {
       ...project,
       allergenReviewRequired: false,
       formulationAllergens: selectedFormulationAllergens,
+      formulationAllergenOverrides: manualAllergenOverrides,
       formulationExtraAllergens: extraFormulationAllergens,
     };
     setProject(nextProject);
@@ -288,6 +315,7 @@ const Formulation: React.FC = () => {
       allergenRegion,
       allergenReviewRequired: false,
       formulationAllergens: selectedFormulationAllergens,
+      formulationAllergenOverrides: manualAllergenOverrides,
       formulationExtraAllergens: extraFormulationAllergens,
     });
   };
@@ -327,32 +355,27 @@ const Formulation: React.FC = () => {
       ),
     [derivedIngredients]
   );
+  const servingSizeMode = project?.servingSizeMode ?? "recipeMakes";
+  const servingSizeAmount = project?.servingSizeAmount ?? project?.yield;
+  const calculatedMeasures = useMemo(
+    () =>
+      calculateRecipeMeasures(
+        calculatedBatchWeight,
+        servingSizeMode,
+        servingSizeAmount
+      ),
+    [calculatedBatchWeight, servingSizeAmount, servingSizeMode]
+  );
   const baselineAllergens = useMemo(() => {
-    const allergens = new Set<string>();
-    for (const ingredient of derivedIngredients) {
-      const source = aggregatedIngredients.find(
-        (item) => item._id === ingredient.id
-      );
-      for (const allergen of source?.allergens ?? []) {
-        allergens.add(allergen);
-        if (TREE_NUT_OPTIONS.includes(allergen)) {
-          allergens.add("allergen_tree_nuts");
-        }
-      }
-    }
-    return Array.from(allergens);
+    return getFormulationBaselineAllergens(
+      derivedIngredients,
+      aggregatedIngredients,
+      TREE_NUT_OPTIONS
+    );
   }, [aggregatedIngredients, derivedIngredients]);
   const allergenRegion = (project?.allergenRegion || "FDA") as AllergenRegion;
   const selectedFormulationAllergens = useMemo(() => {
-    const selectedAllergens = new Set(baselineAllergens);
-    for (const [allergen, checked] of Object.entries(manualAllergenOverrides)) {
-      if (checked) {
-        selectedAllergens.add(allergen);
-      } else {
-        selectedAllergens.delete(allergen);
-      }
-    }
-    return Array.from(selectedAllergens);
+    return applyAllergenOverrides(baselineAllergens, manualAllergenOverrides);
   }, [baselineAllergens, manualAllergenOverrides]);
   const extraFormulationAllergens = project?.formulationExtraAllergens ?? [];
 
@@ -363,41 +386,36 @@ const Formulation: React.FC = () => {
     if (allergenOverridesInitializedFor.current === project._id) {
       return;
     }
-    const savedAllergens = project.formulationAllergens;
-    if (!savedAllergens) {
-      allergenOverridesInitializedFor.current = project._id;
-      return;
-    }
-    const savedSet = new Set(savedAllergens);
-    const baselineSet = new Set(baselineAllergens);
-    const nextOverrides: Record<string, boolean> = {};
-    for (const allergen of new Set([...savedSet, ...baselineSet])) {
-      if (savedSet.has(allergen) !== baselineSet.has(allergen)) {
-        nextOverrides[allergen] = savedSet.has(allergen);
-      }
-    }
-    setManualAllergenOverrides(nextOverrides);
+    setManualAllergenOverrides(project.formulationAllergenOverrides ?? {});
     allergenOverridesInitializedFor.current = project._id;
-  }, [baselineAllergens, project]);
+  }, [project]);
 
   useEffect(() => {
-    if (!project) {
-      return;
-    }
-    const currentAllergens = project.formulationAllergens ?? [];
-    if (
-      currentAllergens.length === selectedFormulationAllergens.length &&
-      currentAllergens.every((allergen) =>
-        selectedFormulationAllergens.includes(allergen)
-      )
-    ) {
-      return;
-    }
-    setProject({
-      ...project,
-      formulationAllergens: selectedFormulationAllergens,
+    setProject((currentProject) => {
+      if (!currentProject) {
+        return currentProject;
+      }
+      const currentAllergens = currentProject.formulationAllergens ?? [];
+      const currentOverrides =
+        currentProject.formulationAllergenOverrides ?? {};
+      const allergensMatch = areStringSelectionsEqual(
+        currentAllergens,
+        selectedFormulationAllergens
+      );
+      const overridesMatch = areAllergenOverridesEqual(
+        currentOverrides,
+        manualAllergenOverrides
+      );
+      if (allergensMatch && overridesMatch) {
+        return currentProject;
+      }
+      return {
+        ...currentProject,
+        formulationAllergens: selectedFormulationAllergens,
+        formulationAllergenOverrides: manualAllergenOverrides,
+      };
     });
-  }, [project, selectedFormulationAllergens]);
+  }, [manualAllergenOverrides, selectedFormulationAllergens]);
 
   const { user } = usePermissions();
   const canEditBase = true; // hasPermission('edit_procedures') // Bypassing for local testing
@@ -434,7 +452,8 @@ const Formulation: React.FC = () => {
       return;
     }
 
-    const notes = project.releaseNotes;
+    const nextReleaseNotes =
+      newStatus === "Draft" ? "" : project.releaseNotes;
 
     // Pass releasedBy if transitioning to Released
     const releasedBy =
@@ -446,7 +465,7 @@ const Formulation: React.FC = () => {
       await updateProjectMutation({
         id: projectId,
         status: newStatus as "Draft" | "Under Review" | "Released",
-        releaseNotes: notes,
+        releaseNotes: nextReleaseNotes,
         ...(releasedBy ? { releasedBy } : {}),
       });
 
@@ -454,6 +473,7 @@ const Formulation: React.FC = () => {
       setProject({
         ...project,
         status: newStatus as "Draft" | "Under Review" | "Released",
+        releaseNotes: nextReleaseNotes,
       });
 
       logActivity({
@@ -679,55 +699,6 @@ const Formulation: React.FC = () => {
                         <option value="Under Review">{t("under_review")}</option>
                         <option value="Released">{t("released")}</option>
                       </select>
-                      <label className="flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 font-bold text-cyan-800 text-xs dark:border-cyan-800/50 dark:bg-cyan-900/30 dark:text-cyan-300">
-                        <span>{t("formulation_state")}</span>
-                        <select
-                          className="cursor-pointer appearance-none bg-transparent font-bold outline-none"
-                          data-testid="formulation-state-select"
-                          disabled={!canEdit}
-                          onChange={(e) =>
-                            setProject({
-                              ...project,
-                              formulationState: e.target
-                                .value as FormulationState,
-                            })
-                          }
-                          value={project.formulationState || "Liquid"}
-                        >
-                          <option value="Liquid">{t("liquid")}</option>
-                          <option value="Solid">{t("solid")}</option>
-                        </select>
-                      </label>
-                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        <span>{t("yield")}</span>
-                        <input
-                          className="w-20 bg-transparent font-bold outline-none"
-                          data-testid="formulation-yield-input"
-                          disabled={!canEdit}
-                          min="0"
-                          onChange={(e) =>
-                            handleProjectNumberChange("yield", e.target.value)
-                          }
-                          placeholder="0"
-                          step="any"
-                          type="number"
-                          value={project.yield ?? ""}
-                        />
-                      </label>
-                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        <span>{t("batch_weight")}</span>
-                        <input
-                          aria-readonly="true"
-                          className="w-24 cursor-not-allowed bg-transparent font-bold outline-none"
-                          data-testid="formulation-batch-weight-input"
-                          readOnly
-                          min="0"
-                          placeholder="0"
-                          step="any"
-                          type="number"
-                          value={calculatedBatchWeight}
-                        />
-                      </label>
                     </div>
                   )}
                 </div>
@@ -1139,32 +1110,146 @@ const Formulation: React.FC = () => {
             )}
 
             {/* Release Notes Area */}
-            {(project.status === "Draft" ||
-              project.status === "Under Review" ||
-              project.releaseNotes) && (
+            {project.status === "Under Review" && (
               <div className="space-y-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-[#1e293b]">
                 <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm dark:text-white">
                   <FileSignature className="text-indigo-500" size={16} />
 
                   {t("release_notes")}
                 </h3>
-                {project.status === "Released" ? (
-                  <p className="whitespace-pre-wrap rounded-xl border border-gray-100 bg-gray-50 p-4 text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                    {project.releaseNotes || t("no_release_notes_provided")}
-                  </p>
-                ) : (
-                  <textarea
-                    className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                    onBlur={() => handleSave()}
-                    onChange={(e) =>
-                      setProject({ ...project, releaseNotes: e.target.value })
-                    }
-                    placeholder={t("release_notes_placeholder")}
-                    value={project.releaseNotes || ""}
-                  />
-                )}
+                <textarea
+                  className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  onBlur={() => handleSave()}
+                  onChange={(e) =>
+                    setProject({ ...project, releaseNotes: e.target.value })
+                  }
+                  placeholder={t("release_notes_placeholder")}
+                  value={project.releaseNotes || ""}
+                />
               </div>
             )}
+
+            <section
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-[#1e293b]"
+              data-testid="recipe-measures-section"
+            >
+              <div className="flex flex-col gap-5 border-slate-100 border-b p-5 md:flex-row md:items-start md:justify-between dark:border-slate-700">
+                <div>
+                  <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
+                    Measures
+                  </p>
+                  <div className="mt-3 flex rounded-full border border-cyan-200 bg-cyan-50 p-1 dark:border-cyan-800/50 dark:bg-cyan-950/40">
+                    {(["Liquid", "Solid"] as FormulationState[]).map(
+                      (state) => (
+                        <button
+                          className={`rounded-full px-4 py-2 font-bold text-sm transition-colors ${
+                            (project.formulationState || "Liquid") === state
+                              ? "bg-cyan-600 text-white shadow-sm"
+                              : "text-cyan-800 hover:bg-cyan-100 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
+                          }`}
+                          data-testid={`formulation-state-${state.toLowerCase()}-button`}
+                          disabled={!canEdit}
+                          key={state}
+                          onClick={() => handleFormulationStateChange(state)}
+                          type="button"
+                        >
+                          {state}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                    <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Batch Yield
+                    </p>
+                    <p
+                      className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
+                      data-testid="batch-yield-display"
+                    >
+                      {calculatedMeasures.batchYield}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                    <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Batch Weight
+                    </p>
+                    <p
+                      className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
+                      data-testid="batch-weight-display"
+                    >
+                      {calculatedBatchWeight}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_220px_220px] lg:items-center">
+                <div className="flex flex-wrap rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
+                  {(
+                    [
+                      ["recipeMakes", "A Recipe makes..."],
+                      ["servingIs", "A Serving is..."],
+                    ] as [ServingSizeMode, string][]
+                  ).map(([mode, label]) => (
+                    <button
+                      className={`flex-1 rounded-xl px-4 py-2.5 font-bold text-sm transition-colors ${
+                        servingSizeMode === mode
+                          ? "bg-slate-950 text-white shadow-sm dark:bg-slate-100 dark:text-slate-950"
+                          : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+                      }`}
+                      data-testid={`serving-size-mode-${mode}-button`}
+                      disabled={!canEdit}
+                      key={mode}
+                      onClick={() => handleServingSizeModeChange(mode)}
+                      type="button"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                  <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
+                    Amount
+                  </span>
+                  <input
+                    className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
+                    data-testid="serving-size-amount-input"
+                    disabled={!canEdit}
+                    min="0"
+                    onChange={(e) => handleServingAmountChange(e.target.value)}
+                    placeholder="0"
+                    step="any"
+                    type="number"
+                    value={servingSizeAmount ?? ""}
+                  />
+                </label>
+
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-800/50 dark:bg-indigo-950/40">
+                  <p className="font-bold text-indigo-700 text-xs dark:text-indigo-300">
+                    Serving size weight
+                  </p>
+                  <p
+                    className="mt-1 font-black text-2xl text-indigo-950 dark:text-indigo-100"
+                    data-testid="serving-size-weight-display"
+                  >
+                    {calculatedMeasures.servingSizeWeight}
+                  </p>
+                </div>
+
+                <input
+                  aria-readonly="true"
+                  className="sr-only"
+                  data-testid="formulation-batch-weight-input"
+                  readOnly
+                  type="number"
+                  value={calculatedBatchWeight}
+                />
+              </div>
+            </section>
 
             {phases.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center rounded-4xl border border-gray-300 border-dashed bg-white p-8 text-center text-gray-400 dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-600">

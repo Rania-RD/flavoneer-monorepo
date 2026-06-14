@@ -7,6 +7,7 @@ import {
   Clock,
   GripVertical,
   Lock,
+  Plus,
   Scale,
   Settings,
   ShieldCheck,
@@ -43,6 +44,7 @@ interface StepCardProps {
   letter: string;
   listeners: DraggableSyntheticListeners | undefined;
   onDeleteStep: (stepId: string) => void;
+  onAddStepAfter: (stepId: string, type: StepType) => void;
   onSaveDependency: (
     stepKey: string,
     dependsOn: string[],
@@ -76,6 +78,7 @@ export const StepCard = ({
   letter,
   listeners,
   onDeleteStep,
+  onAddStepAfter,
   onSaveDependency,
   onToggleDependencyMenu,
   onUpdateStep,
@@ -174,7 +177,7 @@ export const StepCard = ({
             </button>
           )}
 
-          {!readOnly && (
+          {!readOnly && step.type !== "weighing" && (
             <button
               aria-label={t("delete_step")}
               className="shrink-0 rounded-xl p-2 text-gray-400 transition-colors hover:text-red-500"
@@ -309,6 +312,30 @@ export const StepCard = ({
                     </option>
                   ))}
                 </select>
+                {!readOnly && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      aria-label={t("add_ingredient_row")}
+                      className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                      data-testid="add-ingredient-row-button"
+                      onClick={() => onAddStepAfter(step.id, "weighing")}
+                      title={t("add_ingredient_row")}
+                      type="button"
+                    >
+                      <Plus size={16} />
+                    </button>
+                    <button
+                      aria-label={t("delete_ingredient_row")}
+                      className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-800/50 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                      data-testid="delete-ingredient-row-button"
+                      onClick={() => onDeleteStep(step.id)}
+                      title={t("delete_ingredient_row")}
+                      type="button"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

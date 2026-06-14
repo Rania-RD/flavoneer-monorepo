@@ -49,6 +49,7 @@ import {
 } from "../lib/formulation/helpers";
 import {
   addPhaseToPhases,
+  addStepAfterStepInPhase,
   addStepToPhase,
   deletePhaseFromPhases,
   deleteStepFromPhase,
@@ -59,7 +60,6 @@ import {
 } from "../lib/formulation/editing";
 import type {
   EnrichedProject,
-  IngredientListItem,
   InventoryListItem,
   FormulationState,
   PhaseColor,
@@ -84,12 +84,13 @@ const Formulation: React.FC = () => {
   const inventoryItems = useQuery(api.inventory.list, {}) as
     | InventoryListItem[]
     | undefined;
-  const ingredientsList = (useQuery(api.ingredients.list) ??
-    []) as IngredientListItem[];
+  const formulationIngredientOptions =
+    useQuery(api.ingredients.listFormulationOptions, {}) ?? [];
 
   const aggregatedIngredients = useMemo(
-    () => buildAggregatedIngredients(ingredientsList, inventoryItems),
-    [ingredientsList, inventoryItems]
+    () =>
+      buildAggregatedIngredients(formulationIngredientOptions, inventoryItems),
+    [formulationIngredientOptions, inventoryItems]
   );
 
   // Map Convex doc to Project type
@@ -345,6 +346,26 @@ const Formulation: React.FC = () => {
     const { phases: nextPhases, newStep } = addStepToPhase(
       phases,
       phaseId,
+      type,
+      t("ph_level"),
+      t("mini_spreadsheet")
+    );
+    setPhases(nextPhases);
+    setTimeout(() => scrollToItem(newStep.id), 100);
+  };
+
+  const addStepAfter = (
+    phaseId: string,
+    afterStepId: string,
+    type: StepType
+  ) => {
+    if (!canEdit) {
+      return;
+    }
+    const { phases: nextPhases, newStep } = addStepAfterStepInPhase(
+      phases,
+      phaseId,
+      afterStepId,
       type,
       t("ph_level"),
       t("mini_spreadsheet")
@@ -814,6 +835,7 @@ const Formulation: React.FC = () => {
                       <SortablePhaseItem
                         additiveLimits={additiveLimits}
                         addStep={addStep}
+                        addStepAfter={addStepAfter}
                         aggregatedIngredients={aggregatedIngredients}
                         canEdit={canEdit}
                         deletePhase={deletePhase}

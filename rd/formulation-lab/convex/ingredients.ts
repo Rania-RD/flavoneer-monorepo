@@ -40,6 +40,33 @@ export const list = query({
   },
 });
 
+export const listFormulationOptions = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated call to ingredients:listFormulationOptions");
+    }
+
+    const ingredients = await ctx.db
+      .query("ingredients")
+      .order("desc")
+      .collect();
+
+    return ingredients.map((ingredient) => ({
+      _id: ingredient._id,
+      name: ingredient.name,
+      code: ingredient.code,
+      status: ingredient.status,
+      conversions: ingredient.conversions,
+      allergenValues: ingredient.allergenValues,
+      isAdditive: ingredient.isAdditive,
+      insNumber: ingredient.insNumber,
+      normalizedInsNumber: ingredient.normalizedInsNumber,
+    }));
+  },
+});
+
 export const create = mutation({
   args: {
     name: v.string(),

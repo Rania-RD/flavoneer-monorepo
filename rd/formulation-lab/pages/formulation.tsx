@@ -44,6 +44,7 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
+import { calculateRecipeMeasures } from "../lib/formulation/save-payload";
 import {
   ALPHABET_MAP,
   applyAllergenOverrides,
@@ -76,6 +77,7 @@ import type {
   PhaseColor,
   RecipePhase,
   RecipeStep,
+  ServingSizeMode,
   StepDependency,
   StepType,
 } from "../types";
@@ -198,13 +200,33 @@ const Formulation: React.FC = () => {
     });
   };
 
-  const handleProjectNumberChange = (field: "yield", value: string) => {
+  const handleServingAmountChange = (value: string) => {
     if (!project) {
       return;
     }
     setProject({
       ...project,
-      [field]: value === "" ? undefined : Number(value),
+      servingSizeAmount: value === "" ? undefined : Number(value),
+    });
+  };
+
+  const handleFormulationStateChange = (formulationState: FormulationState) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      formulationState,
+    });
+  };
+
+  const handleServingSizeModeChange = (servingSizeMode: ServingSizeMode) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      servingSizeMode,
     });
   };
 
@@ -332,6 +354,17 @@ const Formulation: React.FC = () => {
           .toFixed(6)
       ),
     [derivedIngredients]
+  );
+  const servingSizeMode = project?.servingSizeMode ?? "recipeMakes";
+  const servingSizeAmount = project?.servingSizeAmount ?? project?.yield;
+  const calculatedMeasures = useMemo(
+    () =>
+      calculateRecipeMeasures(
+        calculatedBatchWeight,
+        servingSizeMode,
+        servingSizeAmount
+      ),
+    [calculatedBatchWeight, servingSizeAmount, servingSizeMode]
   );
   const baselineAllergens = useMemo(() => {
     return getFormulationBaselineAllergens(
@@ -664,55 +697,120 @@ const Formulation: React.FC = () => {
                         <option value="Under Review">{t("under_review")}</option>
                         <option value="Released">{t("released")}</option>
                       </select>
-                      <label className="flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 font-bold text-cyan-800 text-xs dark:border-cyan-800/50 dark:bg-cyan-900/30 dark:text-cyan-300">
-                        <span>{t("formulation_state")}</span>
-                        <select
-                          className="cursor-pointer appearance-none bg-transparent font-bold outline-none"
-                          data-testid="formulation-state-select"
-                          disabled={!canEdit}
-                          onChange={(e) =>
-                            setProject({
-                              ...project,
-                              formulationState: e.target
-                                .value as FormulationState,
-                            })
-                          }
-                          value={project.formulationState || "Liquid"}
-                        >
-                          <option value="Liquid">{t("liquid")}</option>
-                          <option value="Solid">{t("solid")}</option>
-                        </select>
-                      </label>
-                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        <span>{t("yield")}</span>
-                        <input
-                          className="w-20 bg-transparent font-bold outline-none"
-                          data-testid="formulation-yield-input"
-                          disabled={!canEdit}
-                          min="0"
-                          onChange={(e) =>
-                            handleProjectNumberChange("yield", e.target.value)
-                          }
-                          placeholder="0"
-                          step="any"
-                          type="number"
-                          value={project.yield ?? ""}
-                        />
-                      </label>
-                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        <span>{t("batch_weight")}</span>
+                      <section
+                        className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                        data-testid="recipe-measures-section"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-slate-500 text-[11px] uppercase tracking-wide dark:text-slate-400">
+                            Measures
+                          </span>
+                          <div className="flex rounded-full border border-cyan-200 bg-cyan-50 p-0.5 dark:border-cyan-800/50 dark:bg-cyan-950/40">
+                            {(["Liquid", "Solid"] as FormulationState[]).map(
+                              (state) => (
+                                <button
+                                  className={`rounded-full px-3 py-1 font-bold text-xs transition-colors ${
+                                    (project.formulationState || "Liquid") ===
+                                    state
+                                      ? "bg-cyan-600 text-white shadow-sm"
+                                      : "text-cyan-800 hover:bg-cyan-100 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
+                                  }`}
+                                  data-testid={`formulation-state-${state.toLowerCase()}-button`}
+                                  disabled={!canEdit}
+                                  key={state}
+                                  onClick={() =>
+                                    handleFormulationStateChange(state)
+                                  }
+                                  type="button"
+                                >
+                                  {state}
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex rounded-full border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800">
+                          {(
+                            [
+                              ["recipeMakes", "A Recipe makes..."],
+                              ["servingIs", "A Serving is..."],
+                            ] as [ServingSizeMode, string][]
+                          ).map(([mode, label]) => (
+                            <button
+                              className={`rounded-full px-3 py-1 font-bold text-xs transition-colors ${
+                                servingSizeMode === mode
+                                  ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                                  : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+                              }`}
+                              data-testid={`serving-size-mode-${mode}-button`}
+                              disabled={!canEdit}
+                              key={mode}
+                              onClick={() => handleServingSizeModeChange(mode)}
+                              type="button"
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          <span>Amount</span>
+                          <input
+                            className="w-20 bg-transparent font-bold outline-none"
+                            data-testid="serving-size-amount-input"
+                            disabled={!canEdit}
+                            min="0"
+                            onChange={(e) =>
+                              handleServingAmountChange(e.target.value)
+                            }
+                            placeholder="0"
+                            step="any"
+                            type="number"
+                            value={servingSizeAmount ?? ""}
+                          />
+                        </label>
+
+                        <div className="flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 font-bold text-indigo-800 text-xs dark:border-indigo-800/50 dark:bg-indigo-950/40 dark:text-indigo-300">
+                          <span>Serving size weight</span>
+                          <span data-testid="serving-size-weight-display">
+                            {calculatedMeasures.servingSizeWeight}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-xs dark:border-slate-700 dark:bg-slate-800">
+                          <div className="border-slate-200 border-e px-3 py-1.5 dark:border-slate-700">
+                            <p className="font-bold text-slate-500 dark:text-slate-400">
+                              Batch Yield
+                            </p>
+                            <p
+                              className="font-black text-slate-900 dark:text-white"
+                              data-testid="batch-yield-display"
+                            >
+                              {calculatedMeasures.batchYield}
+                            </p>
+                          </div>
+                          <div className="px-3 py-1.5">
+                            <p className="font-bold text-slate-500 dark:text-slate-400">
+                              Batch Weight
+                            </p>
+                            <p
+                              className="font-black text-slate-900 dark:text-white"
+                              data-testid="batch-weight-display"
+                            >
+                              {calculatedBatchWeight}
+                            </p>
+                          </div>
+                        </div>
                         <input
                           aria-readonly="true"
-                          className="w-24 cursor-not-allowed bg-transparent font-bold outline-none"
+                          className="sr-only"
                           data-testid="formulation-batch-weight-input"
                           readOnly
-                          min="0"
-                          placeholder="0"
-                          step="any"
                           type="number"
                           value={calculatedBatchWeight}
                         />
-                      </label>
+                      </section>
                     </div>
                   )}
                 </div>

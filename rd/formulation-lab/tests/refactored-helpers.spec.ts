@@ -4,7 +4,10 @@ import {
   buildIngredientsUsage,
 } from "../hooks/run-execution/runPersistence";
 import { getRunValidation } from "../hooks/run-execution/runValidation";
-import { buildFormulationSavePayload } from "../lib/formulation/save-payload";
+import {
+  buildFormulationSavePayload,
+  calculateRecipeMeasures,
+} from "../lib/formulation/save-payload";
 import {
   addStepAfterStepInPhase,
   deletePhaseFromPhases,
@@ -252,7 +255,8 @@ test.describe("formulation save payload helpers", () => {
       userId: "user-1",
       updatedAt: 2,
       batchWeight: 999,
-      yield: 24,
+      servingSizeAmount: 24,
+      servingSizeMode: "recipeMakes",
       name: "Sauce",
       version: "1.0",
       status: "Draft",
@@ -271,7 +275,9 @@ test.describe("formulation save payload helpers", () => {
     expect(payload).toMatchObject({
       name: "Sauce",
       batchWeight: 105,
-      yield: 24,
+      yield: 105,
+      servingSizeAmount: 24,
+      servingSizeMode: "recipeMakes",
       phases,
       ingredients: [
         { id: "ing-sugar", name: "Sugar" },
@@ -283,6 +289,20 @@ test.describe("formulation save payload helpers", () => {
     expect(payload).not.toHaveProperty("teamId");
     expect(payload).not.toHaveProperty("userId");
     expect(payload).not.toHaveProperty("updatedAt");
+  });
+
+  test("calculates recipe measures from serving mode and amount", () => {
+    expect(calculateRecipeMeasures(1000, "recipeMakes", 10)).toEqual({
+      batchYield: 1000,
+      servingCount: 10,
+      servingSizeWeight: 100,
+    });
+
+    expect(calculateRecipeMeasures(1000, "servingIs", 250)).toEqual({
+      batchYield: 1000,
+      servingCount: 4,
+      servingSizeWeight: 250,
+    });
   });
 });
 

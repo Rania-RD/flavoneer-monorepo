@@ -17,6 +17,11 @@ export const formulationStateValidator = v.union(
   v.literal("Solid")
 );
 
+export const servingSizeModeValidator = v.union(
+  v.literal("recipeMakes"),
+  v.literal("servingIs")
+);
+
 export const sharedRoleValidator = v.union(
   v.literal("viewer"),
   v.literal("editor")
@@ -266,6 +271,8 @@ export const enrichedProjectReturnValidator = v.object({
   formulationState: v.optional(formulationStateValidator),
   yield: v.optional(v.number()),
   batchWeight: v.optional(v.number()),
+  servingSizeMode: v.optional(servingSizeModeValidator),
+  servingSizeAmount: v.optional(v.number()),
   allergenRegion: v.optional(v.string()),
   allergenReviewRequired: v.optional(v.boolean()),
   formulationAllergens: v.optional(v.array(v.string())),
@@ -703,6 +710,8 @@ export const versionSnapshotDataValidator = v.object({
   formulationState: v.optional(formulationStateValidator),
   yield: v.optional(v.number()),
   batchWeight: v.optional(v.number()),
+  servingSizeMode: v.optional(servingSizeModeValidator),
+  servingSizeAmount: v.optional(v.number()),
   allergenRegion: v.optional(v.string()),
   allergenReviewRequired: v.optional(v.boolean()),
   formulationAllergens: v.optional(v.array(v.string())),

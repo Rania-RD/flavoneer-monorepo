@@ -16,6 +16,7 @@ import {
   ingredientValidator,
   phaseValidator,
   projectStatusValidator,
+  servingSizeModeValidator,
 } from "./validators";
 
 // ── Helpers ──────────────────────────────────────────
@@ -294,6 +295,8 @@ async function saveProjectSnapshot(
       formulationState: project.formulationState,
       yield: project.yield,
       batchWeight: project.batchWeight,
+      servingSizeMode: project.servingSizeMode,
+      servingSizeAmount: project.servingSizeAmount,
       allergenRegion: project.allergenRegion,
       allergenReviewRequired: project.allergenReviewRequired,
       formulationAllergens: project.formulationAllergens,
@@ -486,6 +489,8 @@ export const create = mutation({
     formulationState: v.optional(formulationStateValidator),
     yield: v.optional(v.number()),
     batchWeight: v.optional(v.number()),
+    servingSizeMode: v.optional(servingSizeModeValidator),
+    servingSizeAmount: v.optional(v.number()),
     allergenRegion: v.optional(v.string()),
     allergenReviewRequired: v.optional(v.boolean()),
     formulationAllergens: v.optional(v.array(v.string())),
@@ -575,6 +580,8 @@ export const update = mutation({
     formulationState: v.optional(formulationStateValidator),
     yield: v.optional(v.number()),
     batchWeight: v.optional(v.number()),
+    servingSizeMode: v.optional(servingSizeModeValidator),
+    servingSizeAmount: v.optional(v.number()),
     allergenRegion: v.optional(v.string()),
     allergenReviewRequired: v.optional(v.boolean()),
     formulationAllergens: v.optional(v.array(v.string())),

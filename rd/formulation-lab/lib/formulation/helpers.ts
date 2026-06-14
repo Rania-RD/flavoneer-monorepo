@@ -248,6 +248,55 @@ export function deriveIngredients(
   }));
 }
 
+export function getFormulationBaselineAllergens(
+  ingredients: Ingredient[],
+  aggregatedIngredients: AggregatedIngredient[],
+  treeNutOptions: string[]
+): string[] {
+  const allergens = new Set<string>();
+  for (const ingredient of ingredients) {
+    const source = aggregatedIngredients.find(
+      (item) => item._id === ingredient.id
+    );
+    for (const allergen of source?.allergens ?? []) {
+      allergens.add(allergen);
+      if (treeNutOptions.includes(allergen)) {
+        allergens.add("allergen_tree_nuts");
+      }
+    }
+  }
+  return Array.from(allergens);
+}
+
+export function applyAllergenOverrides(
+  baselineAllergens: string[],
+  manualOverrides: Record<string, boolean>
+): string[] {
+  const selectedAllergens = new Set(baselineAllergens);
+  for (const [allergen, checked] of Object.entries(manualOverrides)) {
+    if (checked) {
+      selectedAllergens.add(allergen);
+    } else {
+      selectedAllergens.delete(allergen);
+    }
+  }
+  return Array.from(selectedAllergens);
+}
+
+export function areStringSelectionsEqual(a: string[], b: string[]) {
+  return a.length === b.length && a.every((value) => b.includes(value));
+}
+
+export function areAllergenOverridesEqual(
+  a: Record<string, boolean>,
+  b: Record<string, boolean>
+) {
+  return (
+    Object.keys(a).length === Object.keys(b).length &&
+    Object.entries(a).every(([allergen, checked]) => b[allergen] === checked)
+  );
+}
+
 export function createInitialPhases(
   ingredients: Ingredient[],
   phaseName: string

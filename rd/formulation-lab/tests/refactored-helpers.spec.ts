@@ -14,7 +14,11 @@ import {
   updatePhaseInPhases,
   updateStepInPhase,
 } from "../lib/formulation/editing";
-import { buildAggregatedIngredients } from "../lib/formulation/helpers";
+import {
+  applyAllergenOverrides,
+  buildAggregatedIngredients,
+  getFormulationBaselineAllergens,
+} from "../lib/formulation/helpers";
 import {
   findCompositeDependencies,
   findProjectIdsUsingIngredientCode,
@@ -198,6 +202,46 @@ test.describe("formulation save payload helpers", () => {
         unit: "kg",
       }),
     ]);
+  });
+
+  test("recalculates allergen baseline from selected formulation ingredients", () => {
+    const aggregatedIngredients = [
+      {
+        _id: "ing-walnut",
+        name: "Walnuts",
+        allergens: ["sub_allergen_walnut"],
+        stock: 100,
+        unit: "g",
+      },
+    ] as unknown as Parameters<typeof getFormulationBaselineAllergens>[1];
+
+    expect(
+      getFormulationBaselineAllergens(
+        [{ id: "ing-walnut", name: "Walnuts", weight: 50, unit: "g" }],
+        aggregatedIngredients,
+        ["sub_allergen_walnut"]
+      )
+    ).toEqual(["sub_allergen_walnut", "allergen_tree_nuts"]);
+
+    expect(
+      getFormulationBaselineAllergens([], aggregatedIngredients, [
+        "sub_allergen_walnut",
+      ])
+    ).toEqual([]);
+  });
+
+  test("merges manual allergen overrides over the live baseline", () => {
+    expect(
+      applyAllergenOverrides(["allergen_tree_nuts"], {
+        allergen_tree_nuts: false,
+      })
+    ).toEqual([]);
+
+    expect(
+      applyAllergenOverrides([], {
+        allergen_tree_nuts: true,
+      })
+    ).toEqual(["allergen_tree_nuts"]);
   });
 
   test("strips Convex metadata and uses current phases and ingredients", () => {

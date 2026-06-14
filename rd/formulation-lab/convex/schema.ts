@@ -44,6 +44,7 @@ export default defineSchema({
     allergenRegion: v.optional(v.string()),
     allergenReviewRequired: v.optional(v.boolean()),
     formulationAllergens: v.optional(v.array(v.string())),
+    formulationAllergenOverrides: v.optional(v.record(v.string(), v.boolean())),
     formulationExtraAllergens: v.optional(v.array(v.string())),
     productType: v.optional(v.string()),
     processingMethod: v.optional(v.string()),

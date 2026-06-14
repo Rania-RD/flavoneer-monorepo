@@ -138,6 +138,7 @@ export interface EnrichedProject
   batchWeight?: number;
   formulationState?: FormulationState;
   formulationAllergens?: string[];
+  formulationAllergenOverrides?: Record<string, boolean>;
   formulationExtraAllergens?: string[];
   ingredients: Ingredient[];
   phases?: RecipePhase[];

@@ -46,11 +46,15 @@ import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
 import {
   ALPHABET_MAP,
+  applyAllergenOverrides,
+  areAllergenOverridesEqual,
+  areStringSelectionsEqual,
   buildAggregatedIngredients,
   COLORS,
   createInitialPhases,
   deriveIngredients,
   getAdditiveIngredientIds,
+  getFormulationBaselineAllergens,
   getFlatSteps,
   getIsStepLocked,
 } from "../lib/formulation/helpers";
@@ -280,6 +284,7 @@ const Formulation: React.FC = () => {
       ...project,
       allergenReviewRequired: false,
       formulationAllergens: selectedFormulationAllergens,
+      formulationAllergenOverrides: manualAllergenOverrides,
       formulationExtraAllergens: extraFormulationAllergens,
     };
     setProject(nextProject);
@@ -288,6 +293,7 @@ const Formulation: React.FC = () => {
       allergenRegion,
       allergenReviewRequired: false,
       formulationAllergens: selectedFormulationAllergens,
+      formulationAllergenOverrides: manualAllergenOverrides,
       formulationExtraAllergens: extraFormulationAllergens,
     });
   };
@@ -328,31 +334,15 @@ const Formulation: React.FC = () => {
     [derivedIngredients]
   );
   const baselineAllergens = useMemo(() => {
-    const allergens = new Set<string>();
-    for (const ingredient of derivedIngredients) {
-      const source = aggregatedIngredients.find(
-        (item) => item._id === ingredient.id
-      );
-      for (const allergen of source?.allergens ?? []) {
-        allergens.add(allergen);
-        if (TREE_NUT_OPTIONS.includes(allergen)) {
-          allergens.add("allergen_tree_nuts");
-        }
-      }
-    }
-    return Array.from(allergens);
+    return getFormulationBaselineAllergens(
+      derivedIngredients,
+      aggregatedIngredients,
+      TREE_NUT_OPTIONS
+    );
   }, [aggregatedIngredients, derivedIngredients]);
   const allergenRegion = (project?.allergenRegion || "FDA") as AllergenRegion;
   const selectedFormulationAllergens = useMemo(() => {
-    const selectedAllergens = new Set(baselineAllergens);
-    for (const [allergen, checked] of Object.entries(manualAllergenOverrides)) {
-      if (checked) {
-        selectedAllergens.add(allergen);
-      } else {
-        selectedAllergens.delete(allergen);
-      }
-    }
-    return Array.from(selectedAllergens);
+    return applyAllergenOverrides(baselineAllergens, manualAllergenOverrides);
   }, [baselineAllergens, manualAllergenOverrides]);
   const extraFormulationAllergens = project?.formulationExtraAllergens ?? [];
 
@@ -363,41 +353,36 @@ const Formulation: React.FC = () => {
     if (allergenOverridesInitializedFor.current === project._id) {
       return;
     }
-    const savedAllergens = project.formulationAllergens;
-    if (!savedAllergens) {
-      allergenOverridesInitializedFor.current = project._id;
-      return;
-    }
-    const savedSet = new Set(savedAllergens);
-    const baselineSet = new Set(baselineAllergens);
-    const nextOverrides: Record<string, boolean> = {};
-    for (const allergen of new Set([...savedSet, ...baselineSet])) {
-      if (savedSet.has(allergen) !== baselineSet.has(allergen)) {
-        nextOverrides[allergen] = savedSet.has(allergen);
-      }
-    }
-    setManualAllergenOverrides(nextOverrides);
+    setManualAllergenOverrides(project.formulationAllergenOverrides ?? {});
     allergenOverridesInitializedFor.current = project._id;
-  }, [baselineAllergens, project]);
+  }, [project]);
 
   useEffect(() => {
-    if (!project) {
-      return;
-    }
-    const currentAllergens = project.formulationAllergens ?? [];
-    if (
-      currentAllergens.length === selectedFormulationAllergens.length &&
-      currentAllergens.every((allergen) =>
-        selectedFormulationAllergens.includes(allergen)
-      )
-    ) {
-      return;
-    }
-    setProject({
-      ...project,
-      formulationAllergens: selectedFormulationAllergens,
+    setProject((currentProject) => {
+      if (!currentProject) {
+        return currentProject;
+      }
+      const currentAllergens = currentProject.formulationAllergens ?? [];
+      const currentOverrides =
+        currentProject.formulationAllergenOverrides ?? {};
+      const allergensMatch = areStringSelectionsEqual(
+        currentAllergens,
+        selectedFormulationAllergens
+      );
+      const overridesMatch = areAllergenOverridesEqual(
+        currentOverrides,
+        manualAllergenOverrides
+      );
+      if (allergensMatch && overridesMatch) {
+        return currentProject;
+      }
+      return {
+        ...currentProject,
+        formulationAllergens: selectedFormulationAllergens,
+        formulationAllergenOverrides: manualAllergenOverrides,
+      };
     });
-  }, [project, selectedFormulationAllergens]);
+  }, [manualAllergenOverrides, selectedFormulationAllergens]);
 
   const { user } = usePermissions();
   const canEditBase = true; // hasPermission('edit_procedures') // Bypassing for local testing

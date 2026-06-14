@@ -119,8 +119,11 @@ export function buildFormulationSavePayload(
   phases: RecipePhase[],
   ingredients: Ingredient[]
 ) {
+  const persistedIngredients = ingredients.map(
+    ({ nutritionPer100g: _nutritionPer100g, ...ingredient }) => ingredient
+  );
   const batchWeight = Number(
-    ingredients
+    persistedIngredients
       .reduce((total, ingredient) => total + ingredient.weight, 0)
       .toFixed(6)
   );
@@ -130,7 +133,7 @@ export function buildFormulationSavePayload(
     project.servingSizeAmount ?? project.yield
   );
   const { costPerServing, batchCost } = calculateRecipeCosts(
-    ingredients,
+    persistedIngredients,
     servingCount
   );
   const { packagingCostPerUnit, finishedGoodCostPerUnit } =
@@ -156,7 +159,7 @@ export function buildFormulationSavePayload(
     servingSizeMode: project.servingSizeMode || "recipeMakes",
     servingSizeAmount: project.servingSizeAmount ?? project.yield,
     phases,
-    ingredients,
+    ingredients: persistedIngredients,
   };
 
   return data;

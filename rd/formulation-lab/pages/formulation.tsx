@@ -60,6 +60,7 @@ import {
   COLORS,
   createInitialPhases,
   calculateRegulationCompliance,
+  calculateNutritionFacts,
   deriveIngredients,
   getAdditiveIngredientIds,
   getFormulationBaselineAllergens,
@@ -432,6 +433,23 @@ const Formulation: React.FC = () => {
       ),
     [calculatedBatchWeight, servingSizeAmount, servingSizeMode]
   );
+  const nutritionFacts = useMemo(
+    () =>
+      calculateNutritionFacts(
+        derivedIngredients,
+        calculatedMeasures.servingSizeWeight,
+        calculatedBatchWeight
+      ),
+    [
+      calculatedBatchWeight,
+      calculatedMeasures.servingSizeWeight,
+      derivedIngredients,
+    ]
+  );
+  const ingredientStatement = derivedIngredients
+    .map((ingredient) => ingredient.name)
+    .filter(Boolean)
+    .join(", ");
   const calculatedCosts = useMemo(
     () =>
       calculateRecipeCosts(
@@ -1308,6 +1326,69 @@ const Formulation: React.FC = () => {
               >
                 {t("verify_allergens")}
               </button>
+            </section>
+
+            <section
+              className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+              data-testid="nutrition-label-section"
+            >
+              <div className="border-2 border-black bg-white p-3 font-sans text-black shadow-sm">
+                <h2 className="border-black border-b-8 pb-1 font-black text-4xl leading-none tracking-tight">
+                  Nutrition Facts
+                </h2>
+                <div className="border-black border-b py-1 font-bold text-sm">
+                  Serving size{" "}
+                  <span className="float-right">
+                    {calculatedMeasures.servingSizeWeight.toFixed(0)}g
+                  </span>
+                </div>
+                <div className="border-black border-b-4 py-1">
+                  <p className="font-bold text-xs">Amount per serving</p>
+                  <div className="flex items-end justify-between">
+                    <span className="font-black text-2xl">Calories</span>
+                    <span
+                      className="font-black text-3xl"
+                      data-testid="nutrition-calories"
+                    >
+                      {nutritionFacts.calories}
+                    </span>
+                  </div>
+                </div>
+                <div className="border-black border-b py-1 text-right font-black text-xs">
+                  % Daily Value*
+                </div>
+                <div className="border-black border-b py-1 font-bold text-sm">
+                  Total Fat{" "}
+                  <span data-testid="nutrition-fat">{nutritionFacts.fat}g</span>
+                </div>
+                <div className="border-black border-b py-1 font-bold text-sm">
+                  Total Carbohydrate{" "}
+                  <span data-testid="nutrition-carbohydrates">
+                    {nutritionFacts.carbohydrates}g
+                  </span>
+                </div>
+                <div className="border-black border-b py-1 font-bold text-sm">
+                  Protein{" "}
+                  <span data-testid="nutrition-protein">
+                    {nutritionFacts.protein}g
+                  </span>
+                </div>
+                <div className="pt-2 text-[10px] leading-tight">
+                  * Daily Values are reference estimates. Final label review
+                  should use the selected regulatory market.
+                </div>
+                <div className="mt-3 border-black border-t-4 pt-2">
+                  <p className="font-black text-[11px] uppercase tracking-wide">
+                    Ingredients
+                  </p>
+                  <p
+                    className="mt-1 text-[11px] leading-snug"
+                    data-testid="nutrition-ingredient-statement"
+                  >
+                    {ingredientStatement || "No ingredients selected."}
+                  </p>
+                </div>
+              </div>
             </section>
           </div>
         </div>

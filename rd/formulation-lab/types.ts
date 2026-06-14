@@ -106,6 +106,7 @@ export interface AggregatedIngredient {
   name: string;
   nearestExpiry: string | null;
   normalizedInsNumber?: string;
+  price?: number;
   stock: number;
   unit: string;
 }
@@ -137,6 +138,8 @@ export interface EnrichedProject
   allergenRegion?: string;
   allergenReviewRequired?: boolean;
   batchWeight?: number;
+  batchCost?: number;
+  costPerServing?: number;
   formulationState?: FormulationState;
   formulationAllergens?: string[];
   formulationAllergenOverrides?: Record<string, boolean>;
@@ -146,6 +149,7 @@ export interface EnrichedProject
   previousVersionIngredients?: Ingredient[];
   servingSizeAmount?: number;
   servingSizeMode?: ServingSizeMode;
+  totalProjectRDCost?: number;
   yield?: number;
 }
 

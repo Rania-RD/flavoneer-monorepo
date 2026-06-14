@@ -31,6 +31,7 @@ export const hydrateIngredientFormData = (
   isnEn: ingredient.isnEn || "",
   code: ingredient.code || "",
   groupId: ingredient.groupId || "group_other",
+  price: ingredient.price ?? 0,
   yieldAmount: ingredient.yieldAmount ?? 100,
   moistureLoss: ingredient.moistureLoss ?? 0,
   density: ingredient.density ?? 1.0,
@@ -153,7 +154,13 @@ export const getIngredientValidationMessage = ({
   const yieldAmount = Number(formData.yieldAmount);
   const moistureLoss = Number(formData.moistureLoss);
   const density = Number(formData.density);
-  if (Number.isNaN(yieldAmount) || Number.isNaN(moistureLoss) || Number.isNaN(density)) {
+  const price = Number(formData.price);
+  if (
+    Number.isNaN(yieldAmount) ||
+    Number.isNaN(moistureLoss) ||
+    Number.isNaN(density) ||
+    Number.isNaN(price)
+  ) {
     return { key: "invalid_manufacturing_numbers" };
   }
 
@@ -244,6 +251,7 @@ export const buildIngredientSavePayload = ({
     groupId: formData.groupId,
     isAdditive,
     insNumber: isAdditive ? normalizeInsNumber(insNumber) : undefined,
+    price: Number(formData.price) || 0,
     yieldAmount: Number(formData.yieldAmount),
     moistureLoss: Number(formData.moistureLoss),
     density: Number(formData.density),

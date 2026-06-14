@@ -59,6 +59,7 @@ export const listFormulationOptions = query({
       code: ingredient.code,
       status: ingredient.status,
       conversions: ingredient.conversions,
+      price: ingredient.price,
       allergenValues: ingredient.allergenValues,
       subAllergenValues: ingredient.subAllergenValues,
       isAdditive: ingredient.isAdditive,
@@ -80,6 +81,7 @@ export const create = mutation({
     insNumber: v.optional(v.string()),
     yieldAmount: v.number(),
     moistureLoss: v.number(),
+    price: v.optional(v.number()),
     nutrientValues: v.optional(
       v.array(
         v.object({
@@ -160,6 +162,7 @@ export const update = mutation({
     insNumber: v.optional(v.string()),
     yieldAmount: v.number(),
     moistureLoss: v.number(),
+    price: v.optional(v.number()),
     nutrientValues: v.optional(
       v.array(
         v.object({

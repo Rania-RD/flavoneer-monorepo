@@ -42,6 +42,9 @@ export default defineSchema({
     formulationState: v.optional(formulationStateValidator),
     yield: v.optional(v.number()),
     batchWeight: v.optional(v.number()),
+    batchCost: v.optional(v.number()),
+    costPerServing: v.optional(v.number()),
+    totalProjectRDCost: v.optional(v.number()),
     servingSizeMode: v.optional(servingSizeModeValidator),
     servingSizeAmount: v.optional(v.number()),
     allergenRegion: v.optional(v.string()),
@@ -241,6 +244,7 @@ export default defineSchema({
     foodAdditiveId: v.optional(v.id("foodAdditives")),
     yieldAmount: v.number(), // Percentage e.g. 100
     moistureLoss: v.number(), // Percentage e.g. 0
+    price: v.optional(v.number()), // Cost per kg for formulation costing
     nutrientValues: v.optional(
       v.array(
         v.object({

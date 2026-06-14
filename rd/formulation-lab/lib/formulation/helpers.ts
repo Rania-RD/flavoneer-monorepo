@@ -104,6 +104,7 @@ export interface FormulationIngredientSource {
   isAdditive?: boolean;
   name: string;
   normalizedInsNumber?: string;
+  price?: number;
   status?: "Draft" | "Approved";
   subAllergenValues?: Record<string, string[]>;
 }
@@ -124,6 +125,14 @@ export function buildAggregatedIngredients(
         (sum, inv) => sum + (inv.stock || 0),
         0
       );
+      const inventoryPrices = relatedInv
+        .map((inv) => inv.price)
+        .filter((price): price is number => typeof price === "number");
+      const fallbackPrice =
+        inventoryPrices.length > 0
+          ? inventoryPrices.reduce((sum, price) => sum + price, 0) /
+            inventoryPrices.length
+          : undefined;
       const expiries = relatedInv
         .map((inv) => new Date(inv.expiryDate).getTime())
         .filter((time) => !Number.isNaN(time));
@@ -149,6 +158,7 @@ export function buildAggregatedIngredients(
         isAdditive: ing.isAdditive,
         insNumber: ing.insNumber,
         normalizedInsNumber: ing.normalizedInsNumber,
+        price: ing.price ?? fallbackPrice,
       };
     });
 }
@@ -234,6 +244,7 @@ export function deriveIngredients(
             name: ingItem?.name || step.label.replace(ADD_REGEX, ""),
             weight: step.expectedWeight || 0,
             unit: step.unit || ingItem?.unit || "g",
+            costPerKg: ingItem?.price,
           });
         }
       }

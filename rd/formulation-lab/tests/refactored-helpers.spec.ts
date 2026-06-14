@@ -22,6 +22,7 @@ import {
 import {
   applyAllergenOverrides,
   buildAggregatedIngredients,
+  calculateRegulationCompliance,
   deriveIngredients,
   getFormulationBaselineAllergens,
 } from "../lib/formulation/helpers";
@@ -387,6 +388,32 @@ test.describe("formulation save payload helpers", () => {
     ).toEqual({
       batchCost: 14,
       costPerServing: 1,
+    });
+  });
+
+  test("flags regulation compliance breaches from row percentage limits", () => {
+    expect(
+      calculateRegulationCompliance({
+        batchWeight: 1000,
+        maxLimitPercent: 5,
+        weight: 75,
+      })
+    ).toEqual({
+      actualPercent: 7.5,
+      effectiveMaxLimitPercent: 5,
+      exceedsLimit: true,
+    });
+
+    expect(
+      calculateRegulationCompliance({
+        additiveLimit: { status: "found", mgPerKg: 1000 },
+        batchWeight: 1000,
+        weight: 50,
+      })
+    ).toEqual({
+      actualPercent: 5,
+      effectiveMaxLimitPercent: 0.1,
+      exceedsLimit: true,
     });
   });
 

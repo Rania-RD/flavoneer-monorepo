@@ -296,6 +296,55 @@ export function applyAllergenOverrides(
   return Array.from(selectedAllergens);
 }
 
+export interface AdditiveLimitResult {
+  mgPerKg?: number;
+  status?: string;
+}
+
+export interface RegulationComplianceResult {
+  actualPercent: number;
+  effectiveMaxLimitPercent?: number;
+  exceedsLimit: boolean;
+}
+
+export function additiveMgPerKgToPercent(mgPerKg?: number): number | undefined {
+  if (typeof mgPerKg !== "number" || !Number.isFinite(mgPerKg)) {
+    return undefined;
+  }
+  return mgPerKg / 10_000;
+}
+
+export function calculateRegulationCompliance({
+  additiveLimit,
+  batchWeight,
+  maxLimitPercent,
+  weight,
+}: {
+  additiveLimit?: AdditiveLimitResult;
+  batchWeight: number;
+  maxLimitPercent?: number;
+  weight: number;
+}): RegulationComplianceResult {
+  const actualPercent =
+    batchWeight > 0 && weight > 0 ? (weight / batchWeight) * 100 : 0;
+  const linkedLimitPercent =
+    additiveLimit?.status === "found"
+      ? additiveMgPerKgToPercent(additiveLimit.mgPerKg)
+      : undefined;
+  const effectiveMaxLimitPercent =
+    typeof maxLimitPercent === "number" && Number.isFinite(maxLimitPercent)
+      ? maxLimitPercent
+      : linkedLimitPercent;
+
+  return {
+    actualPercent,
+    effectiveMaxLimitPercent,
+    exceedsLimit:
+      typeof effectiveMaxLimitPercent === "number" &&
+      actualPercent > effectiveMaxLimitPercent,
+  };
+}
+
 export function areStringSelectionsEqual(a: string[], b: string[]) {
   return a.length === b.length && a.every((value) => b.includes(value));
 }

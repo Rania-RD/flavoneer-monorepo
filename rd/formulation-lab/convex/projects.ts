@@ -118,6 +118,7 @@ async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
               isCompleted: s.isCompleted ?? false,
               ingredientId: s.ingredientId,
               expectedWeight: s.expectedWeight,
+              maxLimitPercent: s.maxLimitPercent,
               actualWeight: s.actualWeight,
               unit: s.unit,
               tolerance: s.tolerance,
@@ -204,6 +205,7 @@ async function replacePhases(
       notes?: string;
       ingredientId?: string;
       expectedWeight?: number;
+      maxLimitPercent?: number;
       unit?: string;
       tolerance?: number;
       durationSeconds?: number;
@@ -264,6 +266,7 @@ async function replacePhases(
         notes: step.notes,
         ingredientId: step.ingredientId,
         expectedWeight: step.expectedWeight,
+        maxLimitPercent: step.maxLimitPercent,
         actualWeight: step.actualWeight,
         unit: step.unit,
         tolerance: step.tolerance,

@@ -32,6 +32,7 @@ export interface PhaseProps {
   additiveLimits?: Record<string, unknown>;
   aggregatedIngredients?: AggregatedIngredient[];
   availableStepsToDependOn: AvailableDependencyStep[];
+  batchWeight: number;
   colorStyle: PhaseColorStyle;
   dragHandleProps?: DraggableAttributes & DraggableSyntheticListeners;
   getDependency: (stepKey: string) => StepDependency | undefined;

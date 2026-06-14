@@ -57,6 +57,7 @@ import {
   buildAggregatedIngredients,
   COLORS,
   createInitialPhases,
+  calculateRegulationCompliance,
   deriveIngredients,
   getAdditiveIngredientIds,
   getFormulationBaselineAllergens,
@@ -392,6 +393,41 @@ const Formulation: React.FC = () => {
       ),
     [calculatedMeasures.servingCount, derivedIngredients]
   );
+  const regulationBreaches = useMemo(() => {
+    return phases.flatMap((phase) =>
+      phase.steps.flatMap((step) => {
+        if (step.type !== "weighing" || !step.ingredientId) {
+          return [];
+        }
+        const ingredient = aggregatedIngredients.find(
+          (item) => item._id === step.ingredientId
+        );
+        const additiveLimit =
+          ingredient && additiveLimits?.[ingredient._id];
+        const compliance = calculateRegulationCompliance({
+          additiveLimit:
+            additiveLimit && typeof additiveLimit === "object"
+              ? additiveLimit
+              : undefined,
+          batchWeight: calculatedBatchWeight,
+          maxLimitPercent: step.maxLimitPercent,
+          weight: step.expectedWeight || 0,
+        });
+        return compliance.exceedsLimit
+          ? [
+              {
+                actualPercent: compliance.actualPercent,
+                ingredientName: ingredient?.name || step.label,
+                maxLimitPercent: compliance.effectiveMaxLimitPercent,
+                phaseName: phase.name,
+                stepId: step.id,
+              },
+            ]
+          : [];
+      })
+    );
+  }, [additiveLimits, aggregatedIngredients, calculatedBatchWeight, phases]);
+  const hasRegulationBreaches = regulationBreaches.length > 0;
   const totalProjectRDCost = calculateProjectRDCost(
     project?.totalProjectRDCost,
     project?.batchCost,
@@ -481,6 +517,17 @@ const Formulation: React.FC = () => {
 
     if (project.allergenReviewRequired) {
       scrollToAllergens();
+      return;
+    }
+
+    if (newStatus === "Released" && hasRegulationBreaches) {
+      const firstBreach = regulationBreaches[0];
+      if (firstBreach) {
+        scrollToItem(firstBreach.stepId);
+      }
+      window.alert(
+        "Cannot release recipe: one or more ingredients exceed their regulation limit."
+      );
       return;
     }
 
@@ -772,7 +819,10 @@ const Formulation: React.FC = () => {
                         <option value="Draft">{t("draft")}</option>
                         <option value="Under Review">{t("under_review")}</option>
                         <option
-                          disabled={lifecycleStatus === "Draft"}
+                          disabled={
+                            lifecycleStatus === "Draft" ||
+                            hasRegulationBreaches
+                          }
                           value="Released"
                         >
                           {t("released")}
@@ -807,6 +857,25 @@ const Formulation: React.FC = () => {
 
                   {t("sequence_editor")}
                 </p>
+                {hasRegulationBreaches && (
+                  <div className="mt-3 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200">
+                    <ShieldAlert className="mt-0.5 shrink-0" size={18} />
+                    <div>
+                      <p className="font-black text-sm">
+                        Regulation limit exceeded. Release is blocked.
+                      </p>
+                      <p className="mt-1 text-xs">
+                        {regulationBreaches
+                          .slice(0, 2)
+                          .map(
+                            (breach) =>
+                              `${breach.ingredientName}: ${breach.actualPercent.toFixed(3)}% / max ${(breach.maxLimitPercent ?? 0).toFixed(3)}%`
+                          )
+                          .join(" • ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1439,6 +1508,7 @@ const Formulation: React.FC = () => {
                         addStep={addStep}
                         addStepAfter={addStepAfter}
                         aggregatedIngredients={aggregatedIngredients}
+                        batchWeight={calculatedBatchWeight}
                         canEdit={canEdit}
                         deletePhase={deletePhase}
                         deleteStep={deleteStep}

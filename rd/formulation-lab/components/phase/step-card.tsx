@@ -6,6 +6,7 @@ import {
   CheckSquare,
   Clock,
   GripVertical,
+  AlertTriangle,
   Lock,
   Plus,
   Scale,
@@ -20,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { MASS_UNITS } from "../../convex/units";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { SpreadsheetFormulaContext } from "../../lib/spreadsheet/formula-engine";
+import { calculateRegulationCompliance } from "../../lib/formulation/helpers";
 import type {
   AggregatedIngredient,
   RecipeStep,
@@ -58,6 +60,7 @@ interface StepCardProps {
   step: RecipeStep;
   stepIndex: number;
   formulationContext?: SpreadsheetFormulaContext;
+  batchWeight: number;
 }
 const typeIcons: Record<StepType, React.ReactNode> = {
   weighing: <Scale size={16} />,
@@ -88,6 +91,7 @@ export const StepCard = ({
   step,
   stepIndex,
   formulationContext,
+  batchWeight,
 }: StepCardProps) => {
   const { t } = useTranslation();
   const stepIdStr = `${letter}${stepIndex + 1}`;
@@ -99,6 +103,25 @@ export const StepCard = ({
   const additiveLimit = selectedItem?.isAdditive
     ? additiveLimits?.[selectedItem._id]
     : undefined;
+  const regulationCompliance =
+    step.type === "weighing"
+      ? calculateRegulationCompliance({
+          additiveLimit:
+            additiveLimit && typeof additiveLimit === "object"
+              ? additiveLimit
+              : undefined,
+          batchWeight,
+          maxLimitPercent: step.maxLimitPercent,
+          weight: step.expectedWeight || 0,
+        })
+      : undefined;
+  const exceedsRegulationLimit =
+    regulationCompliance?.exceedsLimit ?? false;
+  const cardBorderClass = exceedsRegulationLimit
+    ? ""
+    : isLocked
+      ? "border-amber-300 dark:border-amber-700/50"
+      : "border-gray-200/50 dark:border-slate-700/50";
 
   const typeLabels: Record<StepType, string> = {
     weighing: t("weighing"),
@@ -130,11 +153,11 @@ export const StepCard = ({
   }
   return (
     <div
-      className={`rounded-2xl border bg-white/60 p-5 shadow-sm dark:bg-[#1e293b]/60 ${
-        isLocked
-          ? "border-amber-300 dark:border-amber-700/50"
-          : "border-gray-200/50 dark:border-slate-700/50"
-      } relative transition-all duration-200 hover:shadow-md`}
+      className={`rounded-2xl border p-5 shadow-sm ${
+        exceedsRegulationLimit
+          ? "border-red-200 bg-red-50/80 dark:border-red-800/60 dark:bg-red-950/20"
+          : "bg-white/60 dark:bg-[#1e293b]/60"
+      } ${cardBorderClass} relative transition-all duration-200 hover:shadow-md`}
     >
       <div className="mb-5 flex items-center gap-4">
         {!(readOnly || isLocked) && (
@@ -339,11 +362,69 @@ export const StepCard = ({
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <label
+                className="block cursor-pointer px-1 font-bold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400"
+                htmlFor={`max-limit-${step.id}`}
+              >
+                Max Limit (%)
+              </label>
+              <input
+                className={`w-full rounded-xl border bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 dark:bg-[#0f172a] dark:text-white ${
+                  exceedsRegulationLimit
+                    ? "border-red-300 focus:ring-red-500 dark:border-red-700"
+                    : "border-gray-200 focus:ring-blue-500 dark:border-slate-700"
+                }`}
+                disabled={readOnly}
+                id={`max-limit-${step.id}`}
+                min="0"
+                name={`maxLimitPercent-${step.id}`}
+                onChange={(event) =>
+                  onUpdateStep(step.id, {
+                    maxLimitPercent:
+                      event.target.value === ""
+                        ? undefined
+                        : Number.parseFloat(event.target.value),
+                  })
+                }
+                placeholder={
+                  regulationCompliance?.effectiveMaxLimitPercent !== undefined
+                    ? regulationCompliance.effectiveMaxLimitPercent.toFixed(4)
+                    : "0"
+                }
+                step="any"
+                type="number"
+                value={step.maxLimitPercent ?? ""}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="block px-1 font-bold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400">
+                Actual %
+              </span>
+              <div
+                className={`rounded-xl border px-4 py-2.5 font-black text-md shadow-sm ${
+                  exceedsRegulationLimit
+                    ? "border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/40 dark:text-red-200"
+                    : "border-gray-200 bg-gray-50 text-gray-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                }`}
+                data-testid="ingredient-actual-percent"
+              >
+                {regulationCompliance?.actualPercent.toFixed(3) ?? "0.000"}%
+              </div>
+            </div>
+
             <IngredientInfoBanner
               additiveLimit={additiveLimit}
               expectedWeight={step.expectedWeight}
               selectedItem={selectedItem}
             />
+            {exceedsRegulationLimit && (
+              <div className="lg:col-span-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-100 px-4 py-3 font-bold text-red-700 text-sm dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+                <AlertTriangle size={18} />
+                Exceeds Regulation Limit!
+              </div>
+            )}
           </>
         )}
 

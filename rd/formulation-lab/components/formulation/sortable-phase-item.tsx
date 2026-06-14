@@ -25,6 +25,7 @@ interface SortablePhaseItemProps {
   addStep: (phaseId: string, type: StepType) => void;
   addStepAfter: (phaseId: string, afterStepId: string, type: StepType) => void;
   aggregatedIngredients: AggregatedIngredient[];
+  batchWeight: number;
   canEdit: boolean;
   deletePhase: (phaseId: string) => void;
   deleteStep: (phaseId: string, stepId: string) => void;
@@ -60,6 +61,7 @@ export const SortablePhaseItem = ({
   stepDependencies,
   additiveLimits,
   aggregatedIngredients,
+  batchWeight,
   isStepLocked,
   addStep,
   addStepAfter,
@@ -109,6 +111,7 @@ export const SortablePhaseItem = ({
         additiveLimits={additiveLimits}
         aggregatedIngredients={aggregatedIngredients}
         availableStepsToDependOn={flatSteps}
+        batchWeight={batchWeight}
         colorStyle={pColor}
         dragHandleProps={
           { ...attributes, ...listeners } as DraggableAttributes &

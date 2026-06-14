@@ -100,10 +100,12 @@ export interface FormulationIngredientSource {
   allergenValues?: string[];
   code?: string;
   conversions?: Array<{ grams: number; unit: string }>;
+  costPerKg?: number;
   insNumber?: string;
   isAdditive?: boolean;
   name: string;
   normalizedInsNumber?: string;
+  /** @deprecated older ingredient docs used price before costPerKg was added. */
   price?: number;
   status?: "Draft" | "Approved";
   subAllergenValues?: Record<string, string[]>;
@@ -158,7 +160,7 @@ export function buildAggregatedIngredients(
         isAdditive: ing.isAdditive,
         insNumber: ing.insNumber,
         normalizedInsNumber: ing.normalizedInsNumber,
-        price: ing.price ?? fallbackPrice,
+        costPerKg: ing.costPerKg ?? ing.price ?? fallbackPrice,
       };
     });
 }
@@ -244,7 +246,7 @@ export function deriveIngredients(
             name: ingItem?.name || step.label.replace(ADD_REGEX, ""),
             weight: step.expectedWeight || 0,
             unit: step.unit || ingItem?.unit || "g",
-            costPerKg: ingItem?.price,
+            costPerKg: ingItem?.costPerKg,
           });
         }
       }
@@ -292,6 +294,55 @@ export function applyAllergenOverrides(
     }
   }
   return Array.from(selectedAllergens);
+}
+
+export interface AdditiveLimitResult {
+  mgPerKg?: number;
+  status?: string;
+}
+
+export interface RegulationComplianceResult {
+  actualPercent: number;
+  effectiveMaxLimitPercent?: number;
+  exceedsLimit: boolean;
+}
+
+export function additiveMgPerKgToPercent(mgPerKg?: number): number | undefined {
+  if (typeof mgPerKg !== "number" || !Number.isFinite(mgPerKg)) {
+    return undefined;
+  }
+  return mgPerKg / 10_000;
+}
+
+export function calculateRegulationCompliance({
+  additiveLimit,
+  batchWeight,
+  maxLimitPercent,
+  weight,
+}: {
+  additiveLimit?: AdditiveLimitResult;
+  batchWeight: number;
+  maxLimitPercent?: number;
+  weight: number;
+}): RegulationComplianceResult {
+  const actualPercent =
+    batchWeight > 0 && weight > 0 ? (weight / batchWeight) * 100 : 0;
+  const linkedLimitPercent =
+    additiveLimit?.status === "found"
+      ? additiveMgPerKgToPercent(additiveLimit.mgPerKg)
+      : undefined;
+  const effectiveMaxLimitPercent =
+    typeof maxLimitPercent === "number" && Number.isFinite(maxLimitPercent)
+      ? maxLimitPercent
+      : linkedLimitPercent;
+
+  return {
+    actualPercent,
+    effectiveMaxLimitPercent,
+    exceedsLimit:
+      typeof effectiveMaxLimitPercent === "number" &&
+      actualPercent > effectiveMaxLimitPercent,
+  };
 }
 
 export function areStringSelectionsEqual(a: string[], b: string[]) {

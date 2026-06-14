@@ -149,6 +149,7 @@ export default defineSchema({
     notes: v.optional(v.string()),
     ingredientId: v.optional(v.string()),
     expectedWeight: v.optional(v.number()),
+    maxLimitPercent: v.optional(v.number()),
     unit: v.optional(v.string()),
     tolerance: v.optional(v.number()),
     durationSeconds: v.optional(v.number()),
@@ -244,7 +245,9 @@ export default defineSchema({
     foodAdditiveId: v.optional(v.id("foodAdditives")),
     yieldAmount: v.number(), // Percentage e.g. 100
     moistureLoss: v.number(), // Percentage e.g. 0
-    price: v.optional(v.number()), // Cost per kg for formulation costing
+    costPerKg: v.optional(v.float64()),
+    // @deprecated - older records may still carry this value.
+    price: v.optional(v.number()),
     nutrientValues: v.optional(
       v.array(
         v.object({
@@ -525,6 +528,7 @@ export default defineSchema({
     notes: v.optional(v.string()),
     ingredientId: v.optional(v.string()),
     expectedWeight: v.optional(v.number()),
+    maxLimitPercent: v.optional(v.number()),
     actualWeight: v.optional(v.number()),
     unit: v.optional(v.string()),
     tolerance: v.optional(v.number()),

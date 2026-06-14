@@ -36,6 +36,7 @@ export const updateStep = mutation({
     notes: v.optional(v.string()),
     ingredientId: v.optional(v.string()),
     expectedWeight: v.optional(v.number()),
+    maxLimitPercent: v.optional(v.number()),
     unit: v.optional(v.string()),
     tolerance: v.optional(v.number()),
     durationSeconds: v.optional(v.number()),

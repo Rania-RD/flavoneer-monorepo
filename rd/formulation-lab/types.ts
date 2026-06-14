@@ -70,6 +70,7 @@ export interface RecipeStep {
   isCompleted?: boolean;
   isLocked?: boolean;
   label: string;
+  maxLimitPercent?: number;
   notes?: string;
   onFail?: {
     action: "redirect_dispose" | "report_reason";
@@ -106,7 +107,7 @@ export interface AggregatedIngredient {
   name: string;
   nearestExpiry: string | null;
   normalizedInsNumber?: string;
-  price?: number;
+  costPerKg?: number;
   stock: number;
   unit: string;
 }

@@ -38,6 +38,7 @@ export const Phase: React.FC<PhaseProps> = ({
   isStepLocked,
   readOnly = false,
   aggregatedIngredients = [],
+  batchWeight,
   additiveLimits,
   isDraggingPhase = false,
   dragHandleProps,
@@ -162,6 +163,7 @@ export const Phase: React.FC<PhaseProps> = ({
                         additiveLimits={additiveLimits}
                         aggregatedIngredients={aggregatedIngredients}
                         attributes={attributes}
+                        batchWeight={batchWeight}
                         colorStyle={colorStyle}
                         dependency={dependency}
                         isLocked={isLocked}

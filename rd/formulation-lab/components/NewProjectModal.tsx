@@ -120,7 +120,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       const newProject = {
         name: formData.name,
         version: "1.0",
-        status: ProjectStatus.TESTING,
+        status: ProjectStatus.DRAFT,
         lead: profile.name || "Unknown",
         description: formData.description,
         ingredients: [],

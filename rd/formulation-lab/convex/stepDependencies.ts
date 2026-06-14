@@ -33,10 +33,13 @@ export const saveDependency = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     // Check if dependency already exists for this step
-    const existing = await ctx.db
+    const sameStepDependencies = await ctx.db
       .query("stepDependencies")
       .withIndex("by_stepKey", (q) => q.eq("stepKey", args.stepKey))
-      .first();
+      .collect();
+    const existing = sameStepDependencies.find(
+      (dependency) => dependency.projectId === args.projectId
+    );
 
     if (existing) {
       // If empty array, we can either delete or just clear it. Let's delete it so we don't pollute the DB

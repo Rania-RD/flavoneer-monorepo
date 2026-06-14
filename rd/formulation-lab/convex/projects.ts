@@ -29,6 +29,21 @@ type RecipeStepType =
   | "conditional"
   | "spreadsheet_note";
 
+function getNextMajorVersion(version: string) {
+  const trimmed = version.trim();
+  const match = trimmed.match(/^([vV]?)(\d+)(?:\.(\d+))?$/);
+
+  if (!match) {
+    return "V2";
+  }
+
+  const [, prefix, major, minor] = match;
+  const nextMajor = (Number.parseInt(major, 10) || 1) + 1;
+  return minor === undefined
+    ? `${prefix}${nextMajor}`
+    : `${prefix}${nextMajor}.0`;
+}
+
 async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
   // Join ingredients
   const allIngredients = await ctx.db
@@ -773,15 +788,17 @@ export const duplicate = mutation({
     }
 
     const { _id, _creationTime, ...data } = original;
-    const versionParts = data.version.split(".");
-    const newMinor = Number.parseInt(versionParts[1] || "0", 10) + 1;
-    const newVersion = `${versionParts[0]}.${newMinor}`;
+    const newVersion = getNextMajorVersion(data.version);
 
-    // Insert project
     const newProjectId = await ctx.db.insert("projects", {
       ...data,
-      name: `${data.name} (Copy)`,
+      status: "Draft",
       version: newVersion,
+      releaseNotes: undefined,
+      releasedBy: undefined,
+      releasedAt: undefined,
+      formattedId: undefined,
+      updatedAt: new Date().toISOString(),
     });
 
     // Copy ingredients
@@ -831,6 +848,19 @@ export const duplicate = mutation({
           projectId: newProjectId,
         });
       }
+    }
+
+    const dependencies = await ctx.db
+      .query("stepDependencies")
+      .withIndex("by_projectId", (q) => q.eq("projectId", args.id))
+      .collect();
+    for (const dependency of dependencies) {
+      const { _id: _, _creationTime: __, projectId: _pid, ...dependencyData } =
+        dependency;
+      await ctx.db.insert("stepDependencies", {
+        ...dependencyData,
+        projectId: newProjectId,
+      });
     }
 
     return newProjectId;

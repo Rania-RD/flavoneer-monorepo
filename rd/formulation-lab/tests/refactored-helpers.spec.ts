@@ -6,6 +6,8 @@ import {
 import { getRunValidation } from "../hooks/run-execution/runValidation";
 import {
   buildFormulationSavePayload,
+  calculateProjectRDCost,
+  calculateRecipeCosts,
   calculateRecipeMeasures,
 } from "../lib/formulation/save-payload";
 import {
@@ -268,13 +270,28 @@ test.describe("formulation save payload helpers", () => {
     } as unknown as EnrichedProject;
 
     const payload = buildFormulationSavePayload(project, phases, [
-      { id: "ing-sugar", name: "Sugar", weight: 100.25, unit: "g" },
-      { id: "ing-salt", name: "Salt", weight: 4.75, unit: "g" },
+      {
+        id: "ing-sugar",
+        name: "Sugar",
+        weight: 100.25,
+        unit: "g",
+        costPerKg: 2,
+      },
+      {
+        id: "ing-salt",
+        name: "Salt",
+        weight: 4.75,
+        unit: "g",
+        costPerKg: 10,
+      },
     ]);
 
     expect(payload).toMatchObject({
       name: "Sauce",
       batchWeight: 105,
+      batchCost: 0.25,
+      costPerServing: 0.01,
+      totalProjectRDCost: 0.25,
       yield: 105,
       servingSizeAmount: 24,
       servingSizeMode: "recipeMakes",
@@ -303,6 +320,39 @@ test.describe("formulation save payload helpers", () => {
       servingCount: 4,
       servingSizeWeight: 250,
     });
+  });
+
+  test("calculates recipe costs from ingredient cost per kg", () => {
+    expect(
+      calculateRecipeCosts(
+        [
+          {
+            id: "ing-flour",
+            name: "Flour",
+            weight: 500,
+            unit: "g",
+            costPerKg: 4,
+          },
+          {
+            id: "ing-oil",
+            name: "Oil",
+            weight: 1.5,
+            unit: "kg",
+            costPerKg: 8,
+          },
+        ],
+        14
+      )
+    ).toEqual({
+      batchCost: 14,
+      costPerServing: 1,
+    });
+  });
+
+  test("adds a cloned draft batch cost to the prior project R&D total once", () => {
+    expect(calculateProjectRDCost(undefined, undefined, 12.5)).toBe(12.5);
+    expect(calculateProjectRDCost(20, undefined, 12.5)).toBe(32.5);
+    expect(calculateProjectRDCost(32.5, 12.5, 12.5)).toBe(32.5);
   });
 });
 

@@ -303,7 +303,21 @@ export function AddIngredientInfoTab({
         {t("manufacturing")}
       </h3>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div>
+          <label className={labelClasses}>
+            Cost per kg ($)
+          </label>
+          <input
+            className={inputClasses}
+            min="0"
+            name="price"
+            onChange={handleInputChange}
+            step="any"
+            type="number"
+            value={formData.price}
+          />
+        </div>
         <div>
           <label className={labelClasses}>
             {t("yield_percentage")}

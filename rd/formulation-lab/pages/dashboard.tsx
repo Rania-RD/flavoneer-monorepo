@@ -56,7 +56,7 @@ const Dashboard: React.FC = () => {
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
   const removeProject = useMutation(api.projects.remove);
-  const duplicateProject = useMutation(api.projects.duplicate);
+  const createNewVersion = useMutation(api.projects.createNewVersion);
   const createNewRun = useMutation(api.runs.createNewRun);
   const logActivity = useMutation(api.activities.log);
 
@@ -110,12 +110,13 @@ const Dashboard: React.FC = () => {
   };
 
   const handleDuplicateProject = async (project: EnrichedProject) => {
-    await duplicateProject({ id: project._id });
+    const newProjectId = await createNewVersion({ id: project._id });
     logActivity({
-      action: "Duplicated Project",
+      action: "Created New Draft Version",
       target: project.name,
       page: "Dashboard",
     });
+    navigate(`/project/${newProjectId}?tab=formulation`);
   };
 
   const handleDeleteProject = async (projectId: Id<"projects">) => {

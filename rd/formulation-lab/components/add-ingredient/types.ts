@@ -12,6 +12,7 @@ export interface IngredientFormData {
   isnEn: string;
   moistureLoss: number;
   name: string;
+  price: number;
   yieldAmount: number;
 }
 
@@ -53,6 +54,7 @@ export interface IngredientSavePayload {
   moistureLoss: number;
   name: string;
   nutrientValues: { nutrientName: string; unit: string; value: number }[];
+  price: number;
   subAllergenValues: Record<string, string[]>;
   subIngredients?: { ingredientId: Id<"ingredients">; percentage: number }[];
   teamId?: Id<"teams">;

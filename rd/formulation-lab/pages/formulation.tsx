@@ -44,7 +44,11 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
-import { calculateRecipeMeasures } from "../lib/formulation/save-payload";
+import {
+  calculateProjectRDCost,
+  calculateRecipeCosts,
+  calculateRecipeMeasures,
+} from "../lib/formulation/save-payload";
 import {
   ALPHABET_MAP,
   applyAllergenOverrides,
@@ -93,7 +97,7 @@ const Formulation: React.FC = () => {
     projectId ? { id: projectId } : "skip"
   );
   const updateProjectMutation = useMutation(api.projects.update);
-  const duplicateProjectMutation = useMutation(api.projects.duplicate);
+  const createNewVersionMutation = useMutation(api.projects.createNewVersion);
   const logActivity = useMutation(api.activities.log);
   const inventoryItems = useQuery(api.inventory.list, {}) as
     | InventoryListItem[]
@@ -108,7 +112,10 @@ const Formulation: React.FC = () => {
   );
 
   // Map Convex doc to Project type
-  const foundProject: EnrichedProject | undefined = convexProject ?? undefined;
+  const foundProject: EnrichedProject | undefined =
+    convexProject && convexProject._id === projectId
+      ? convexProject
+      : undefined;
 
   const [project, setProject] = useState<EnrichedProject | undefined>(
     foundProject
@@ -136,6 +143,15 @@ const Formulation: React.FC = () => {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false);
   const [isCreatingNewVersion, setIsCreatingNewVersion] = useState(false);
+
+  useEffect(() => {
+    setProject(undefined);
+    setPhases([]);
+    setExtraAllergenInput("");
+    setManualAllergenOverrides({});
+    allergenOverridesInitializedFor.current = null;
+    setIsCreatingNewVersion(false);
+  }, [projectId]);
 
   // Dnd-Kit Phase Handlers
   const sensors = useSensors(
@@ -368,6 +384,19 @@ const Formulation: React.FC = () => {
       ),
     [calculatedBatchWeight, servingSizeAmount, servingSizeMode]
   );
+  const calculatedCosts = useMemo(
+    () =>
+      calculateRecipeCosts(
+        derivedIngredients,
+        calculatedMeasures.servingCount
+      ),
+    [calculatedMeasures.servingCount, derivedIngredients]
+  );
+  const totalProjectRDCost = calculateProjectRDCost(
+    project?.totalProjectRDCost,
+    project?.batchCost,
+    calculatedCosts.batchCost
+  );
   const baselineAllergens = useMemo(() => {
     return getFormulationBaselineAllergens(
       derivedIngredients,
@@ -506,13 +535,16 @@ const Formulation: React.FC = () => {
 
     setIsCreatingNewVersion(true);
     try {
-      const newProjectId = await duplicateProjectMutation({ id: projectId });
-      logActivity({
+      const newProjectId = await createNewVersionMutation({ id: projectId });
+      setProject(undefined);
+      setPhases([]);
+      setManualAllergenOverrides({});
+      navigate(`/project/${newProjectId}?tab=formulation`);
+      void logActivity({
         action: "Created New Draft Version",
         target: `${project.name} v${project.version}`,
         page: "Formulation",
       });
-      navigate(`/project/${newProjectId}?tab=formulation`);
     } catch (err: unknown) {
       setIsCreatingNewVersion(false);
       window.alert((err as Error).message || "Failed to create new version");
@@ -672,8 +704,18 @@ const Formulation: React.FC = () => {
   };
 
   if (!project) {
-    return <div>{t("project_not_found")}</div>;
+    return (
+      <div>
+        {convexProject === undefined ? t("loading") : t("project_not_found")}
+      </div>
+    );
   }
+
+  const formatCurrency = (value: number) =>
+    `$${value.toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    })}`;
 
   return (
     <div className="-m-4 flex min-h-dvh flex-col bg-white sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
@@ -1234,6 +1276,17 @@ const Formulation: React.FC = () => {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/40">
+                    <p className="font-bold text-emerald-700 text-xs dark:text-emerald-300">
+                      Total Project R&D Cost
+                    </p>
+                    <p
+                      className="mt-1 font-black text-2xl text-emerald-950 dark:text-emerald-100"
+                      data-testid="total-project-rd-cost-display"
+                    >
+                      {formatCurrency(totalProjectRDCost)}
+                    </p>
+                  </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
                       Batch Yield
@@ -1254,6 +1307,28 @@ const Formulation: React.FC = () => {
                       data-testid="batch-weight-display"
                     >
                       {calculatedBatchWeight}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                    <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Batch Cost ($)
+                    </p>
+                    <p
+                      className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
+                      data-testid="batch-cost-display"
+                    >
+                      {formatCurrency(calculatedCosts.batchCost)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+                    <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
+                      Cost per Serving ($)
+                    </p>
+                    <p
+                      className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
+                      data-testid="cost-per-serving-display"
+                    >
+                      {formatCurrency(calculatedCosts.costPerServing)}
                     </p>
                   </div>
                 </div>

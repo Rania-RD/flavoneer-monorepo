@@ -200,15 +200,28 @@ const Formulation: React.FC = () => {
     });
   };
 
-  const markAllergenReviewRequired = () => {
+  const markAllergenReviewRequired = (nextPhases = phases) => {
     setProject((currentProject) => {
       if (!currentProject) {
         return currentProject;
       }
+      const nextDerivedIngredients = deriveIngredients(
+        nextPhases,
+        aggregatedIngredients
+      );
+      const nextSuggestedAllergens = new Set<string>();
+      for (const ingredient of nextDerivedIngredients) {
+        const source = aggregatedIngredients.find(
+          (item) => item._id === ingredient.id
+        );
+        for (const allergen of source?.allergens ?? []) {
+          nextSuggestedAllergens.add(allergen);
+        }
+      }
       const nextAllergens = Array.from(
         new Set([
           ...(currentProject.formulationAllergens ?? []),
-          ...suggestedAllergens,
+          ...nextSuggestedAllergens,
         ])
       );
       return {
@@ -267,12 +280,20 @@ const Formulation: React.FC = () => {
     });
   };
 
-  const verifyFormulationAllergens = () => {
-    if (!project) {
+  const verifyFormulationAllergens = async () => {
+    if (!(project && projectId)) {
       return;
     }
-    setProject({
+    const nextProject = {
       ...project,
+      allergenReviewRequired: false,
+      formulationAllergens: selectedFormulationAllergens,
+      formulationExtraAllergens: extraFormulationAllergens,
+    };
+    setProject(nextProject);
+    await updateProjectMutation({
+      id: projectId,
+      allergenRegion,
       allergenReviewRequired: false,
       formulationAllergens: selectedFormulationAllergens,
       formulationExtraAllergens: extraFormulationAllergens,
@@ -332,19 +353,15 @@ const Formulation: React.FC = () => {
   const extraFormulationAllergens = project?.formulationExtraAllergens ?? [];
 
   useEffect(() => {
-    if (!(project?.allergenReviewRequired && suggestedAllergens.length > 0)) {
+    if (!(project && suggestedAllergens.length > 0)) {
       return;
     }
-    const currentAllergens = project.formulationAllergens ?? [];
-    const mergedAllergens = Array.from(
-      new Set([...currentAllergens, ...suggestedAllergens])
-    );
-    if (mergedAllergens.length === currentAllergens.length) {
+    if (project.formulationAllergens !== undefined) {
       return;
     }
     setProject({
       ...project,
-      formulationAllergens: mergedAllergens,
+      formulationAllergens: suggestedAllergens,
     });
   }, [project, suggestedAllergens]);
 
@@ -483,7 +500,7 @@ const Formulation: React.FC = () => {
     );
     setPhases(nextPhases);
     if (type === "weighing") {
-      markAllergenReviewRequired();
+      markAllergenReviewRequired(nextPhases);
     }
     setTimeout(() => scrollToItem(newStep.id), 100);
   };
@@ -506,7 +523,7 @@ const Formulation: React.FC = () => {
     );
     setPhases(nextPhases);
     if (type === "weighing") {
-      markAllergenReviewRequired();
+      markAllergenReviewRequired(nextPhases);
     }
     setTimeout(() => scrollToItem(newStep.id), 100);
   };
@@ -522,12 +539,13 @@ const Formulation: React.FC = () => {
     const changedStep = phases
       .find((phase) => phase.id === phaseId)
       ?.steps.find((step) => step.id === stepId);
-    setPhases(updateStepInPhase(phases, phaseId, stepId, updates));
+    const nextPhases = updateStepInPhase(phases, phaseId, stepId, updates);
+    setPhases(nextPhases);
     if (
       changedStep?.type === "weighing" &&
       ("ingredientId" in updates || "expectedWeight" in updates || "unit" in updates)
     ) {
-      markAllergenReviewRequired();
+      markAllergenReviewRequired(nextPhases);
     }
   };
 
@@ -538,9 +556,10 @@ const Formulation: React.FC = () => {
     const deletedStep = phases
       .find((phase) => phase.id === phaseId)
       ?.steps.find((step) => step.id === stepId);
-    setPhases(deleteStepFromPhase(phases, phaseId, stepId));
+    const nextPhases = deleteStepFromPhase(phases, phaseId, stepId);
+    setPhases(nextPhases);
     if (deletedStep?.type === "weighing") {
-      markAllergenReviewRequired();
+      markAllergenReviewRequired(nextPhases);
     }
   };
 
@@ -934,7 +953,6 @@ const Formulation: React.FC = () => {
               </label>
               <select
                 className="mb-4 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 font-bold text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
-                disabled={!canEdit}
                 id="formulation-allergen-region"
                 onChange={(event) =>
                   setProject({
@@ -959,7 +977,6 @@ const Formulation: React.FC = () => {
                           allergenKey
                         )}
                         className="h-4 w-4 accent-amber-600"
-                        disabled={!canEdit}
                         onChange={() => toggleFormulationAllergen(allergenKey)}
                         type="checkbox"
                       />
@@ -978,7 +995,6 @@ const Formulation: React.FC = () => {
                                   subKey
                                 )}
                                 className="h-3.5 w-3.5 accent-amber-600"
-                                disabled={!canEdit}
                                 onChange={() =>
                                   toggleFormulationAllergen(subKey)
                                 }
@@ -1001,57 +1017,49 @@ const Formulation: React.FC = () => {
                       key={allergen}
                     >
                       {allergen}
-                      {canEdit && (
-                        <button
-                          aria-label={t("remove_extra_allergen")}
-                          className="rounded-full p-0.5 hover:bg-amber-300 dark:hover:bg-amber-800"
-                          onClick={() => removeExtraAllergen(allergen)}
-                          type="button"
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
+                      <button
+                        aria-label={t("remove_extra_allergen")}
+                        className="rounded-full p-0.5 hover:bg-amber-300 dark:hover:bg-amber-800"
+                        onClick={() => removeExtraAllergen(allergen)}
+                        type="button"
+                      >
+                        <X size={12} />
+                      </button>
                     </span>
                   ))}
                 </div>
               )}
 
-              {canEdit && (
-                <div className="mt-4 flex gap-2">
-                  <input
-                    className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-3 py-2 text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
-                    onChange={(event) =>
-                      setExtraAllergenInput(event.target.value)
+              <div className="mt-4 flex gap-2">
+                <input
+                  className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-3 py-2 text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                  onChange={(event) => setExtraAllergenInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addExtraAllergen();
                     }
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        addExtraAllergen();
-                      }
-                    }}
-                    placeholder={t("extra_allergen_placeholder")}
-                    type="text"
-                    value={extraAllergenInput}
-                  />
-                  <button
-                    className="rounded-xl bg-amber-600 px-3 py-2 font-bold text-white text-xs transition-colors hover:bg-amber-700"
-                    onClick={addExtraAllergen}
-                    type="button"
-                  >
-                    {t("add_allergen")}
-                  </button>
-                </div>
-              )}
-
-              {canEdit && (
+                  }}
+                  placeholder={t("extra_allergen_placeholder")}
+                  type="text"
+                  value={extraAllergenInput}
+                />
                 <button
-                  className="mt-4 w-full rounded-xl bg-slate-950 px-4 py-2.5 font-bold text-sm text-white transition-colors hover:bg-slate-800 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
-                  onClick={verifyFormulationAllergens}
+                  className="rounded-xl bg-amber-600 px-3 py-2 font-bold text-white text-xs transition-colors hover:bg-amber-700"
+                  onClick={addExtraAllergen}
                   type="button"
                 >
-                  {t("verify_allergens")}
+                  {t("add_allergen")}
                 </button>
-              )}
+              </div>
+
+              <button
+                className="mt-4 w-full rounded-xl bg-slate-950 px-4 py-2.5 font-bold text-sm text-white transition-colors hover:bg-slate-800 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+                onClick={verifyFormulationAllergens}
+                type="button"
+              >
+                {t("verify_allergens")}
+              </button>
             </section>
           </div>
         </div>

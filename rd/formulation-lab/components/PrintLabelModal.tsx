@@ -112,7 +112,7 @@ const PrintLabelModal: React.FC<PrintLabelModalProps> = ({ item, onClose }) => {
       item.usedIn && item.usedIn.length > 0
         ? `
       <div dir={isRTL ? "rtl" : "ltr"} style="margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6;">
-        <div dir={isRTL ? "rtl" : "ltr"} style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;margin-bottom:6px;">Used In</div>
+        <div dir={isRTL ? "rtl" : "ltr"} style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;margin-bottom:6px;">${t("used_in")}</div>
         <div dir={isRTL ? "rtl" : "ltr"} style="display:flex;flex-wrap:wrap;gap:6px;">
           ${item.usedIn
             .map(
@@ -127,10 +127,10 @@ const PrintLabelModal: React.FC<PrintLabelModalProps> = ({ item, onClose }) => {
 
     const labelHtml = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${isRTL ? "ar" : "en"}" dir="${isRTL ? "rtl" : "ltr"}">
 <head>
   <meta charset="UTF-8" />
-  <title>Label — ${item.name} (${item.batchId})</title>
+  <title>${t("print_label")} - ${item.name} (${item.batchId})</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -259,7 +259,7 @@ const PrintLabelModal: React.FC<PrintLabelModalProps> = ({ item, onClose }) => {
     </div>
     <div dir={isRTL ? "rtl" : "ltr"} class="no-print">
       <br/>
-      <button class="print-btn" onclick="window.print()" style="display:flex;align-items:center;gap:6px;margin:0 auto;">${renderToString(<Printer size={16} />)}<span>Print Label</span></button>
+      <button class="print-btn" onclick="window.print()" style="display:flex;align-items:center;gap:6px;margin:0 auto;">${renderToString(<Printer size={16} />)}<span>${t("print_label")}</span></button>
     </div>
   </div>
 </body>

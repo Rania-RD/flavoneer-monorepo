@@ -26,6 +26,7 @@ const RecentReports: React.FC = () => {
 
   const runsResponse = useQuery(api.runs.list, {
     paginationOpts: { numItems: 50, cursor: null },
+    language,
   });
   const runsRaw = runsResponse?.page;
   const updateStatus = useMutation(api.labReports.updateStatus);

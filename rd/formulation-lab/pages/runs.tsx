@@ -45,7 +45,7 @@ const Runs: React.FC = () => {
 
   const { results: runsRaw } = usePaginatedQuery(
     api.runs.list,
-    activeTeamId ? { teamId: activeTeamId } : {},
+    activeTeamId ? { teamId: activeTeamId, language } : { language },
     { initialNumItems: 50 }
   );
 

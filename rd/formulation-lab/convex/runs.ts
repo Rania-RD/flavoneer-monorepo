@@ -8,10 +8,12 @@ import {
   query,
 } from "./_generated/server";
 import { authComponent } from "./auth";
+import { makeLocalizedString, selectLocalizedString } from "./localization";
 import { logTeamAction } from "./teamAuditLogs";
 import { convertUnits } from "./units";
 import {
   enrichedRunReturnValidator,
+  languageValidator,
   phaseValidator,
   runIngredientUsageValidator,
   signatureTypeValidator,
@@ -19,21 +21,47 @@ import {
 
 // ── Helpers ──────────────────────────────────────────
 
-function formatDuration(startTime: number, endTime: number): string {
+function formatDuration(
+  startTime: number,
+  endTime: number,
+  language?: string
+): string {
   const totalSec = Math.round((endTime - startTime) / 1000);
   const minutes = Math.floor(totalSec / 60);
   const seconds = totalSec % 60;
+  if (language === "ar") {
+    return `${minutes} د ${seconds} ث`;
+  }
   return `${minutes}m ${seconds}s`;
 }
 
-async function enrichRun(ctx: QueryCtx, run: Doc<"runs">) {
+async function enrichRun(ctx: QueryCtx, run: Doc<"runs">, language?: string) {
   // Look up project name from projectId
-  let projectName = "";
+  let projectName = selectLocalizedString(
+    run.projectName,
+    run.projectNameI18n,
+    language
+  );
+  let projectNameI18n = makeLocalizedString(
+    run.projectName,
+    run.projectNameI18n
+  );
   try {
     const project = await ctx.db.get(run.projectId);
-    projectName = project?.name ?? "";
+    if (project) {
+      projectName = selectLocalizedString(
+        project.name,
+        project.nameI18n,
+        language
+      );
+      projectNameI18n = makeLocalizedString(project.name, project.nameI18n);
+    }
   } catch {
-    projectName = run.projectName ?? "";
+    projectName = selectLocalizedString(
+      run.projectName,
+      run.projectNameI18n,
+      language
+    );
   }
 
   // Join run-scoped phases + steps
@@ -52,15 +80,18 @@ async function enrichRun(ctx: QueryCtx, run: Doc<"runs">) {
           .collect();
         return {
           id: phase.phaseKey,
-          name: phase.name,
+          name: selectLocalizedString(phase.name, phase.nameI18n, language),
+          nameI18n: makeLocalizedString(phase.name, phase.nameI18n),
           color: phase.color,
           steps: stepDocs
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((s) => ({
               id: s.stepKey,
               type: s.type,
-              label: s.label,
-              notes: s.notes,
+              label: selectLocalizedString(s.label, s.labelI18n, language),
+              labelI18n: makeLocalizedString(s.label, s.labelI18n),
+              notes: selectLocalizedString(s.notes, s.notesI18n, language),
+              notesI18n: makeLocalizedString(s.notes, s.notesI18n),
               isCompleted: s.isCompleted ?? false,
               ingredientId: s.ingredientId,
               expectedWeight: s.expectedWeight,
@@ -83,9 +114,12 @@ async function enrichRun(ctx: QueryCtx, run: Doc<"runs">) {
   return {
     ...run,
     projectName,
+    projectNameI18n,
     durationString: run.endTime
-      ? formatDuration(run.startTime, run.endTime)
-      : "In progress",
+      ? formatDuration(run.startTime, run.endTime, language)
+      : language === "ar"
+        ? "قيد التنفيذ"
+        : "In progress",
     phases: phases.length > 0 ? phases : undefined,
   };
 }
@@ -176,6 +210,7 @@ export const list = query({
   args: {
     teamId: v.optional(v.id("teams")),
     paginationOpts: paginationOptsValidator,
+    language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
     const authUserId = (await ctx.auth.getUserIdentity())?.subject;
@@ -236,7 +271,7 @@ export const list = query({
 
     const page = await Promise.all(
       visibleRuns.map(async (r) => {
-        const enriched = await enrichRun(ctx, r);
+        const enriched = await enrichRun(ctx, r, args.language);
         return {
           ...enriched,
           sharedRole: sharedRunMap.get(r._id) || undefined,
@@ -249,7 +284,7 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id("runs") },
+  args: { id: v.id("runs"), language: v.optional(languageValidator) },
   returns: v.union(enrichedRunReturnValidator, v.null()),
   handler: async (ctx, args) => {
     const run = await ctx.db.get(args.id);
@@ -302,20 +337,23 @@ export const get = query({
       }
     }
 
-    const enriched = await enrichRun(ctx, run);
+    const enriched = await enrichRun(ctx, run, args.language);
     return { ...enriched, sharedRole };
   },
 });
 
 export const getByProject = query({
-  args: { projectId: v.id("projects") },
+  args: {
+    projectId: v.id("projects"),
+    language: v.optional(languageValidator),
+  },
   returns: v.array(enrichedRunReturnValidator),
   handler: async (ctx, args) => {
     const runs = await ctx.db
       .query("runs")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
       .collect();
-    return Promise.all(runs.map((r) => enrichRun(ctx, r)));
+    return Promise.all(runs.map((r) => enrichRun(ctx, r, args.language)));
   },
 });
 
@@ -338,6 +376,8 @@ export const startRun = mutation({
     // 1. Insert the run record (endTime will be set when finished)
     const runId = await ctx.db.insert("runs", {
       ...runData,
+      projectName: project?.name ?? "",
+      projectNameI18n: makeLocalizedString(project?.name, project?.nameI18n),
       data: {},
       userId: authUserId || undefined,
       teamId: project?.teamId || undefined,
@@ -351,6 +391,7 @@ export const startRun = mutation({
           runId,
           phaseKey: phase.id,
           name: phase.name,
+          nameI18n: makeLocalizedString(phase.name, phase.nameI18n),
           color: phase.color,
           sortOrder: pi,
         });
@@ -362,7 +403,9 @@ export const startRun = mutation({
             stepKey: step.id,
             type: step.type,
             label: step.label,
+            labelI18n: makeLocalizedString(step.label, step.labelI18n),
             notes: step.notes,
+            notesI18n: makeLocalizedString(step.notes, step.notesI18n),
             ingredientId: step.ingredientId,
             expectedWeight: step.expectedWeight,
             maxLimitPercent: step.maxLimitPercent,
@@ -421,6 +464,7 @@ export const createNewRun = mutation({
     const runId = await ctx.db.insert("runs", {
       projectId: args.formulationId,
       projectName: project.name,
+      projectNameI18n: makeLocalizedString(project.name, project.nameI18n),
       batchCode,
       startTime: Date.now(),
       status: "In Progress",
@@ -451,6 +495,7 @@ export const createNewRun = mutation({
         runId,
         phaseKey: phase.phaseKey,
         name: phase.name,
+        nameI18n: makeLocalizedString(phase.name, phase.nameI18n),
         color: phase.color,
         sortOrder: phase.sortOrder,
       });
@@ -467,7 +512,9 @@ export const createNewRun = mutation({
           stepKey: step.stepKey,
           type: step.type,
           label: step.label,
+          labelI18n: makeLocalizedString(step.label, step.labelI18n),
           notes: step.notes,
+          notesI18n: makeLocalizedString(step.notes, step.notesI18n),
           ingredientId: step.ingredientId,
           expectedWeight: step.expectedWeight,
           maxLimitPercent: step.maxLimitPercent,

@@ -918,7 +918,7 @@ const Formulation: React.FC = () => {
                             className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
                             data-testid="latest-read-only-badge"
                           >
-                            Latest (read only)
+                            {t("latest_read_only")}
                           </span>
                           <button
                             className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-700 text-xs transition-colors hover:bg-indigo-50 disabled:cursor-wait disabled:opacity-70 dark:border-indigo-800/50 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
@@ -928,8 +928,8 @@ const Formulation: React.FC = () => {
                             type="button"
                           >
                             {isCreatingNewVersion
-                              ? "Creating..."
-                              : "Create New Version"}
+                              ? t("creating")
+                              : t("create_new_version")}
                           </button>
                         </>
                       )}
@@ -946,7 +946,7 @@ const Formulation: React.FC = () => {
                     <ShieldAlert className="mt-0.5 shrink-0" size={18} />
                     <div>
                       <p className="font-black text-sm">
-                        Regulation limit exceeded. Release is blocked.
+                        {t("regulation_limit_release_blocked")}
                       </p>
                       <p className="mt-1 text-xs">
                         {regulationBreaches
@@ -1222,9 +1222,9 @@ const Formulation: React.FC = () => {
                 }
                 value={allergenRegion}
               >
-                <option value="FDA">FDA</option>
-                <option value="EU">EU</option>
-                <option value="GSO">GSO</option>
+                <option value="FDA">{t("region_fda")}</option>
+                <option value="EU">{t("region_eu")}</option>
+                <option value="GSO">{t("region_gso")}</option>
               </select>
 
               <div className="grid grid-cols-1 gap-2">
@@ -1345,18 +1345,18 @@ const Formulation: React.FC = () => {
             >
               <div className="border-2 border-black bg-white p-3 font-sans text-black shadow-sm">
                 <h2 className="border-black border-b-8 pb-1 font-black text-4xl leading-none tracking-tight">
-                  Nutrition Facts
+                  {t("nutrition_facts")}
                 </h2>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Serving size{" "}
+                  {t("serving_size")}{" "}
                   <span className="float-right">
                     {calculatedMeasures.servingSizeWeight.toFixed(0)}g
                   </span>
                 </div>
                 <div className="border-black border-b-4 py-1">
-                  <p className="font-bold text-xs">Amount per serving</p>
+                  <p className="font-bold text-xs">{t("amount_per_serving")}</p>
                   <div className="flex items-end justify-between">
-                    <span className="font-black text-2xl">Calories</span>
+                    <span className="font-black text-2xl">{t("calories")}</span>
                     <span
                       className="font-black text-3xl"
                       data-testid="nutrition-calories"
@@ -1366,37 +1366,36 @@ const Formulation: React.FC = () => {
                   </div>
                 </div>
                 <div className="border-black border-b py-1 text-right font-black text-xs">
-                  % Daily Value*
+                  {t("daily_value_percent")}
                 </div>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Total Fat{" "}
+                  {t("total_fat")}{" "}
                   <span data-testid="nutrition-fat">{nutritionFacts.fat}g</span>
                 </div>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Total Carbohydrate{" "}
+                  {t("total_carbohydrate")}{" "}
                   <span data-testid="nutrition-carbohydrates">
                     {nutritionFacts.carbohydrates}g
                   </span>
                 </div>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Protein{" "}
+                  {t("protein")}{" "}
                   <span data-testid="nutrition-protein">
                     {nutritionFacts.protein}g
                   </span>
                 </div>
                 <div className="pt-2 text-[10px] leading-tight">
-                  * Daily Values are reference estimates. Final label review
-                  should use the selected regulatory market.
+                  {t("daily_values_reference_note")}
                 </div>
                 <div className="mt-3 border-black border-t-4 pt-2">
                   <p className="font-black text-[11px] uppercase tracking-wide">
-                    Ingredients
+                    {t("ingredients")}
                   </p>
                   <p
                     className="mt-1 text-[11px] leading-snug"
                     data-testid="nutrition-ingredient-statement"
                   >
-                    {ingredientStatement || "No ingredients selected."}
+                    {ingredientStatement || t("no_ingredients_selected")}
                   </p>
                 </div>
               </div>
@@ -1471,7 +1470,7 @@ const Formulation: React.FC = () => {
               <div className="flex flex-col gap-5 border-slate-100 border-b p-5 md:flex-row md:items-start md:justify-between dark:border-slate-700">
                 <div>
                   <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
-                    Measures
+                    {t("measures")}
                   </p>
                   <div className="mt-3 flex rounded-full border border-cyan-200 bg-cyan-50 p-1 dark:border-cyan-800/50 dark:bg-cyan-950/40">
                     {(["Liquid", "Solid"] as FormulationState[]).map(
@@ -1488,7 +1487,7 @@ const Formulation: React.FC = () => {
                           onClick={() => handleFormulationStateChange(state)}
                           type="button"
                         >
-                          {state}
+                          {t(state === "Liquid" ? "liquid" : "solid")}
                         </button>
                       )
                     )}
@@ -1498,7 +1497,7 @@ const Formulation: React.FC = () => {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/40">
                     <p className="font-bold text-emerald-700 text-xs dark:text-emerald-300">
-                      Total Project R&D Cost
+                      {t("total_project_rd_cost")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-emerald-950 dark:text-emerald-100"
@@ -1509,7 +1508,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Batch Yield
+                      {t("batch_yield")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1520,7 +1519,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Batch Weight
+                      {t("batch_weight")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1531,7 +1530,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Batch Cost ($)
+                      {t("batch_cost_usd")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1542,7 +1541,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Cost per Serving ($)
+                      {t("cost_per_serving_usd")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1558,8 +1557,8 @@ const Formulation: React.FC = () => {
                 <div className="flex flex-wrap rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
                   {(
                     [
-                      ["recipeMakes", "A Recipe makes..."],
-                      ["servingIs", "A Serving is..."],
+                      ["recipeMakes", t("a_recipe_makes")],
+                      ["servingIs", t("a_serving_is")],
                     ] as [ServingSizeMode, string][]
                   ).map(([mode, label]) => (
                     <button
@@ -1581,7 +1580,7 @@ const Formulation: React.FC = () => {
 
                 <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                   <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                    Amount
+                    {t("amount")}
                   </span>
                   <input
                     className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
@@ -1598,7 +1597,7 @@ const Formulation: React.FC = () => {
 
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-800/50 dark:bg-indigo-950/40">
                   <p className="font-bold text-indigo-700 text-xs dark:text-indigo-300">
-                    Serving size weight
+                    {t("serving_size_weight")}
                   </p>
                   <p
                     className="mt-1 font-black text-2xl text-indigo-950 dark:text-indigo-100"
@@ -1625,12 +1624,12 @@ const Formulation: React.FC = () => {
             >
               <div className="border-slate-100 border-b p-5 dark:border-slate-700">
                 <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
-                  Packaging
+                  {t("packaging")}
                 </p>
                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_180px_180px]">
                   <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                     <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Packaging item
+                      {t("packaging_item")}
                     </span>
                     <select
                       className="mt-1 w-full bg-transparent font-black text-lg text-slate-900 outline-none dark:text-white"
@@ -1641,7 +1640,7 @@ const Formulation: React.FC = () => {
                       }
                       value={project.packagingItemName ?? ""}
                     >
-                      <option value="">Select packaging...</option>
+                      <option value="">{t("select_packaging")}</option>
                       {PACKAGING_OPTIONS.filter((option) => option.name).map(
                         (option) => (
                           <option key={option.name} value={option.name}>
@@ -1654,7 +1653,7 @@ const Formulation: React.FC = () => {
 
                   <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                     <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Unit price ($)
+                      {t("unit_price_usd")}
                     </span>
                     <input
                       className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
@@ -1676,7 +1675,7 @@ const Formulation: React.FC = () => {
 
                   <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                     <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Target capacity (g)
+                      {t("target_capacity_g")}
                     </span>
                     <input
                       className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
@@ -1701,7 +1700,7 @@ const Formulation: React.FC = () => {
               <div className="grid gap-4 p-5 md:grid-cols-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                   <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                    Ingredient Cost per Serving ($)
+                    {t("ingredient_cost_per_serving_usd")}
                   </p>
                   <p className="mt-1 font-black text-2xl text-slate-900 dark:text-white">
                     {formatCurrency(calculatedCosts.costPerServing)}
@@ -1709,7 +1708,7 @@ const Formulation: React.FC = () => {
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                   <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                    Packaging Cost per Unit ($)
+                    {t("packaging_cost_per_unit_usd")}
                   </p>
                   <p
                     className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1722,7 +1721,7 @@ const Formulation: React.FC = () => {
                 </div>
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/40">
                   <p className="font-bold text-emerald-700 text-xs dark:text-emerald-300">
-                    Total Finished Good Cost per Unit ($)
+                    {t("total_finished_good_cost_per_unit_usd")}
                   </p>
                   <p
                     className="mt-1 font-black text-2xl text-emerald-950 dark:text-emerald-100"
@@ -1740,7 +1739,7 @@ const Formulation: React.FC = () => {
                   className="mx-5 mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 font-bold text-amber-800 text-sm dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200"
                   data-testid="packaging-capacity-warning"
                 >
-                  Warning: Serving size exceeds packaging capacity.
+                  {t("serving_size_exceeds_packaging_capacity")}
                 </div>
               )}
             </section>

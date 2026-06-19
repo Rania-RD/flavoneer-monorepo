@@ -115,8 +115,7 @@ export const StepCard = ({
           weight: step.expectedWeight || 0,
         })
       : undefined;
-  const exceedsRegulationLimit =
-    regulationCompliance?.exceedsLimit ?? false;
+  const exceedsRegulationLimit = regulationCompliance?.exceedsLimit ?? false;
   const cardBorderClass = exceedsRegulationLimit
     ? ""
     : isLocked
@@ -276,7 +275,9 @@ export const StepCard = ({
                   onUpdateStep(step.id, {
                     ingredientId: event.target.value,
                     label: ingredientItem
-                      ? t("add_ingredient_step_label", { name: ingredientItem.name })
+                      ? t("add_ingredient_step_label", {
+                          name: ingredientItem.name,
+                        })
                       : t("weighing"),
                     unit: ingredientItem?.unit || step.unit || "g",
                   });
@@ -367,7 +368,7 @@ export const StepCard = ({
                 className="block cursor-pointer px-1 font-bold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400"
                 htmlFor={`max-limit-${step.id}`}
               >
-                Max Limit (%)
+                {t("max_limit_percent")}
               </label>
               <input
                 className={`w-full rounded-xl border bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 dark:bg-[#0f172a] dark:text-white ${
@@ -400,7 +401,7 @@ export const StepCard = ({
 
             <div className="space-y-1.5">
               <span className="block px-1 font-bold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400">
-                Actual %
+                {t("actual_percent")}
               </span>
               <div
                 className={`rounded-xl border px-4 py-2.5 font-black text-md shadow-sm ${
@@ -422,7 +423,7 @@ export const StepCard = ({
             {exceedsRegulationLimit && (
               <div className="lg:col-span-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-100 px-4 py-3 font-bold text-red-700 text-sm dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
                 <AlertTriangle size={18} />
-                Exceeds Regulation Limit!
+                {t("exceeds_regulation_limit")}
               </div>
             )}
           </>

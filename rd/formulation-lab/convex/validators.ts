@@ -345,6 +345,7 @@ export const enrichedRunReturnValidator = v.object({
   _creationTime: v.number(),
   projectId: v.id("projects"),
   projectName: v.string(),
+  projectNameI18n: v.optional(localizedStringValidator),
   batchCode: v.string(),
   startTime: v.number(),
   endTime: v.optional(v.number()),

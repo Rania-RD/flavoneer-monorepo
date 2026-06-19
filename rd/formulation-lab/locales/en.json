@@ -1009,7 +1009,7 @@
   "ingredient_name": "Ingredient Name",
   "inclusion_percent": "Inclusion %",
   "ingredient_function": "Ingredient Function",
-  "assign_function_placeholder": "Placeholder - assign function",
+  "assign_function_placeholder": "Defined by specification",
   "no_formulation_ingredients_available": "No formulation ingredients available.",
   "physical_specifications": "Physical Specifications",
   "viscosity": "Viscosity",

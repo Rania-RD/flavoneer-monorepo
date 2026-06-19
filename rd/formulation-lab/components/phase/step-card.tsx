@@ -152,13 +152,13 @@ export const StepCard = ({
   }
   return (
     <div
-      className={`rounded-2xl border p-5 shadow-sm ${
+      className={`relative border p-4 ${
         exceedsRegulationLimit
-          ? "border-red-200 bg-red-50/80 dark:border-red-800/60 dark:bg-red-950/20"
-          : "bg-white/60 dark:bg-[#1e293b]/60"
-      } ${cardBorderClass} relative transition-all duration-200 hover:shadow-md`}
+          ? "border-red-300 bg-red-50 dark:border-red-800/60 dark:bg-red-950/20"
+          : "bg-white dark:bg-slate-950"
+      } ${cardBorderClass} transition-colors`}
     >
-      <div className="mb-5 flex items-center gap-4">
+      <div className="mb-4 flex items-center gap-3">
         {!(readOnly || isLocked) && (
           <div
             className="cursor-grab text-gray-400 hover:text-gray-600 active:cursor-grabbing dark:text-slate-500 dark:hover:text-slate-300"
@@ -170,11 +170,11 @@ export const StepCard = ({
         )}
         <div className="flex items-center gap-3">
           <div
-            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-black/5 font-bold text-md shadow-sm dark:border-white/5 ${colorStyle.bg} ${colorStyle.text} ${colorStyle.darkBg || ""} ${colorStyle.darkText || ""}`}
+            className={`flex h-9 w-9 flex-shrink-0 items-center justify-center border border-black/5 font-semibold text-sm dark:border-white/5 ${colorStyle.bg} ${colorStyle.text} ${colorStyle.darkBg || ""} ${colorStyle.darkText || ""}`}
           >
             {stepIdStr}
           </div>
-          <div className="flex items-center gap-1.5 rounded-md border border-blue-100 bg-blue-50 px-2 py-1 font-bold text-[10px] text-blue-700 uppercase tracking-widest dark:border-blue-800/30 dark:bg-blue-900/30 dark:text-blue-300">
+          <div className="flex items-center gap-1.5 border border-sky-200 bg-sky-50 px-2 py-1 font-semibold text-[10px] text-sky-700 uppercase tracking-widest dark:border-sky-800/30 dark:bg-sky-950/30 dark:text-sky-300">
             {typeIcons[step.type]} {typeLabels[step.type]}
           </div>
         </div>
@@ -185,7 +185,7 @@ export const StepCard = ({
           {!readOnly && previousSteps.length > 0 && (
             <button
               aria-label={t("configure_dependencies")}
-              className={`flex items-center gap-1.5 rounded-xl border p-2 transition-colors ${isLocked ? lockedDependencyButtonClass : dependencyButtonClass}`}
+              className={`flex items-center gap-1.5 border p-2 transition-colors ${isLocked ? lockedDependencyButtonClass : dependencyButtonClass}`}
               onClick={() => onToggleDependencyMenu(step.id)}
               title={t("configure_dependencies")}
               type="button"
@@ -202,7 +202,7 @@ export const StepCard = ({
           {!readOnly && step.type !== "weighing" && (
             <button
               aria-label={t("delete_step")}
-              className="shrink-0 rounded-xl p-2 text-gray-400 transition-colors hover:text-red-500"
+              className="shrink-0 p-2 text-gray-400 transition-colors hover:text-red-500"
               onClick={() => onDeleteStep(step.id)}
               title={t("delete_step")}
               type="button"
@@ -227,13 +227,13 @@ export const StepCard = ({
         {!(step.type === "weighing" || step.type === "spreadsheet_note") && (
           <div className="space-y-1.5">
             <label
-              className="block cursor-pointer px-1 font-bold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400"
+              className="block cursor-pointer px-1 font-semibold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400"
               htmlFor={`step-label-${step.id}`}
             >
               {stepLabelText}
             </label>
             <input
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+              className="enterprise-input w-full"
               disabled={readOnly}
               id={`step-label-${step.id}`}
               name={`stepLabel-${step.id}`}
@@ -257,13 +257,13 @@ export const StepCard = ({
           <>
             <div className="space-y-1.5">
               <label
-                className="block cursor-pointer px-1 font-bold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400"
+                className="block cursor-pointer px-1 font-semibold text-[10px] text-gray-500 uppercase tracking-wider dark:text-slate-400"
                 htmlFor={`ingredient-select-${step.id}`}
               >
                 {t("linked_inventory_item")}
               </label>
               <select
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="enterprise-input w-full"
                 data-testid="step-ingredient-select"
                 disabled={readOnly}
                 id={`ingredient-select-${step.id}`}
@@ -303,7 +303,7 @@ export const StepCard = ({
               </label>
               <div className="flex items-center gap-2">
                 <input
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                  className="enterprise-input w-full font-semibold"
                   data-testid="step-target-quantity-input"
                   disabled={readOnly}
                   id={`target-qty-${step.id}`}
@@ -320,7 +320,7 @@ export const StepCard = ({
                 />
                 <select
                   aria-label={t("unit_for_step", { stepId: step.id })}
-                  className="w-20 cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  className="enterprise-input w-20 cursor-pointer font-semibold"
                   disabled={readOnly}
                   name={`unit-${step.id}`}
                   onChange={(event) =>
@@ -340,7 +340,7 @@ export const StepCard = ({
                   <div className="flex shrink-0 items-center gap-1">
                     <button
                       aria-label={t("add_ingredient_row")}
-                      className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                      className="border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
                       data-testid="add-ingredient-row-button"
                       onClick={() => onAddStepAfter(step.id, "weighing")}
                       title={t("add_ingredient_row")}
@@ -350,7 +350,7 @@ export const StepCard = ({
                     </button>
                     <button
                       aria-label={t("delete_ingredient_row")}
-                      className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-800/50 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                      className="border border-red-200 bg-red-50 p-2.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-800/50 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
                       data-testid="delete-ingredient-row-button"
                       onClick={() => onDeleteStep(step.id)}
                       title={t("delete_ingredient_row")}
@@ -371,7 +371,7 @@ export const StepCard = ({
                 {t("max_limit_percent")}
               </label>
               <input
-                className={`w-full rounded-xl border bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 dark:bg-[#0f172a] dark:text-white ${
+                className={`w-full border bg-white px-4 py-2.5 font-semibold text-gray-900 text-md transition-colors focus:outline-none focus:ring-1 dark:bg-slate-950 dark:text-white ${
                   exceedsRegulationLimit
                     ? "border-red-300 focus:ring-red-500 dark:border-red-700"
                     : "border-gray-200 focus:ring-blue-500 dark:border-slate-700"
@@ -404,7 +404,7 @@ export const StepCard = ({
                 {t("actual_percent")}
               </span>
               <div
-                className={`rounded-xl border px-4 py-2.5 font-black text-md shadow-sm ${
+                className={`border px-4 py-2.5 font-semibold text-md ${
                   exceedsRegulationLimit
                     ? "border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/40 dark:text-red-200"
                     : "border-gray-200 bg-gray-50 text-gray-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
@@ -421,7 +421,7 @@ export const StepCard = ({
               selectedItem={selectedItem}
             />
             {exceedsRegulationLimit && (
-              <div className="lg:col-span-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-100 px-4 py-3 font-bold text-red-700 text-sm dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+              <div className="flex items-center gap-2 border border-red-200 bg-red-100 px-4 py-3 font-semibold text-red-700 text-sm lg:col-span-2 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
                 <AlertTriangle size={18} />
                 {t("exceeds_regulation_limit")}
               </div>
@@ -439,7 +439,7 @@ export const StepCard = ({
             </label>
             <div className="flex items-center gap-2">
               <input
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="enterprise-input w-full font-semibold"
                 disabled={readOnly}
                 id={`duration-${step.id}`}
                 name={`durationSeconds-${step.id}`}
@@ -467,7 +467,7 @@ export const StepCard = ({
                 {t("process_temp_c")}
               </label>
               <input
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="enterprise-input w-full font-semibold"
                 disabled={readOnly}
                 id={`process-temp-${step.id}`}
                 name={`processTemp-${step.id}`}
@@ -489,7 +489,7 @@ export const StepCard = ({
                 {t("process_speed_rpm_hz")}
               </label>
               <input
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="enterprise-input w-full font-semibold"
                 disabled={readOnly}
                 id={`process-speed-${step.id}`}
                 name={`processSpeed-${step.id}`}

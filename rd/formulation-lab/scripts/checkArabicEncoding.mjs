@@ -2,7 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const AR_LOCALE = path.join(ROOT, "locales", "ar.json");
+const LOCALE_FILES = [
+  path.join(ROOT, "locales", "ar.json"),
+  path.join(ROOT, "locales", "en.json"),
+];
 const QUESTION_MARK_RUN_REGEX = /\?{3,}/;
 const MOJIBAKE_REGEX = /(?:Ø|Ù|�)/;
 
@@ -30,12 +33,14 @@ function visitValue(value, trail) {
   }
 }
 
-if (!fs.existsSync(AR_LOCALE)) {
-  console.error(`Arabic locale file was not found: ${AR_LOCALE}`);
-  process.exit(1);
+for (const localeFile of LOCALE_FILES) {
+  if (!fs.existsSync(localeFile)) {
+    console.error(`Locale file was not found: ${localeFile}`);
+    process.exit(1);
+  }
+  const localeName = path.basename(localeFile, ".json");
+  visitValue(JSON.parse(fs.readFileSync(localeFile, "utf8")), localeName);
 }
-
-visitValue(JSON.parse(fs.readFileSync(AR_LOCALE, "utf8")), "ar");
 
 if (violations.length > 0) {
   console.error("Arabic encoding guard failed:");

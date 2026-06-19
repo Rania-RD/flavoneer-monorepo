@@ -2,8 +2,15 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  html {
+    text-rendering: geometricPrecision;
+  }
+
   body {
-    @apply bg-stone-50 text-gray-900 font-sans antialiased;
+    @apply bg-slate-100 text-slate-900 font-sans antialiased;
+    font-feature-settings:
+      "ss01" 1,
+      "tnum" 1;
   }
 
   :lang(ar) {
@@ -13,6 +20,51 @@
 
 .dark body {
   @apply bg-[#0f172a] text-slate-50;
+}
+
+@layer components {
+  .enterprise-page {
+    @apply min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  .enterprise-panel {
+    @apply border border-slate-300 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900;
+    border-radius: 6px;
+  }
+
+  .enterprise-panel-muted {
+    @apply border border-slate-300 bg-slate-50 shadow-none dark:border-slate-800 dark:bg-slate-900/70;
+    border-radius: 6px;
+  }
+
+  .enterprise-toolbar {
+    @apply border border-slate-300 bg-white px-4 py-3 shadow-none dark:border-slate-800 dark:bg-slate-900;
+    border-radius: 6px;
+  }
+
+  .enterprise-button {
+    @apply inline-flex items-center justify-center gap-2 border border-slate-400 bg-white px-3 py-2 font-semibold text-slate-800 text-sm transition-colors hover:border-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800;
+    border-radius: 4px;
+  }
+
+  .enterprise-button-primary {
+    @apply inline-flex items-center justify-center gap-2 border border-slate-950 bg-slate-950 px-3 py-2 font-semibold text-sm text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500;
+    border-radius: 4px;
+  }
+
+  .enterprise-input {
+    @apply border border-slate-300 bg-white px-3 py-2 font-medium text-slate-900 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-slate-700 focus:ring-1 focus:ring-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:ring-sky-500;
+    border-radius: 4px;
+  }
+
+  .enterprise-badge {
+    @apply inline-flex items-center border border-slate-300 bg-slate-100 px-2 py-1 font-semibold text-[11px] text-slate-700 uppercase tracking-wide dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    border-radius: 3px;
+  }
+
+  .enterprise-section-title {
+    @apply font-semibold text-slate-950 text-sm uppercase tracking-wide dark:text-slate-100;
+  }
 }
 
 #portal {
@@ -38,7 +90,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: #e2e8f0;
-  border-radius: 10px;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -51,4 +103,37 @@
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #finished-good-spec-sheet,
+  #finished-good-spec-sheet * {
+    visibility: visible;
+  }
+
+  #finished-good-spec-sheet {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .spec-no-print {
+    display: none !important;
+  }
+
+  .spec-print-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }

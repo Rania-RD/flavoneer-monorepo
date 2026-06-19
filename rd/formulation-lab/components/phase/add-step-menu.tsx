@@ -28,22 +28,19 @@ export const AddStepMenu = ({
   return (
     <div className="relative z-0 pt-2">
       <button
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 border-dashed bg-white/50 px-5 py-4 font-bold text-gray-600 text-sm shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-600 dark:border-slate-700 dark:bg-[#1e293b]/50 dark:text-slate-400 dark:hover:border-indigo-800/50 dark:hover:bg-indigo-900/10 dark:hover:text-indigo-400"
+        className="flex w-full items-center justify-center gap-2 border border-slate-300 border-dashed bg-white px-4 py-3 font-semibold text-slate-600 text-sm transition-colors hover:border-sky-500 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-sky-800 dark:hover:bg-sky-950/30 dark:hover:text-sky-300"
         data-testid="add-content-button"
         onClick={onToggle}
         type="button"
       >
-        <Plus size={18} />{" "}
-        {isOpen
-          ? t("cancel")
-          : t("add_content")}
+        <Plus size={18} /> {isOpen ? t("cancel") : t("add_content")}
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <MotionDiv
             animate="visible"
-            className="absolute start-0 top-full z-[100] mt-2 w-full origin-top overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#1e293b]"
+            className="absolute start-0 top-full z-[100] mt-2 w-full origin-top overflow-hidden border border-slate-300 bg-white shadow-none dark:border-slate-700 dark:bg-slate-950"
             exit="exit"
             initial="hidden"
             variants={dropdownVariants}
@@ -123,7 +120,7 @@ export const AddStepMenu = ({
                 onClick={() => onAddStep("conditional")}
                 type="button"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                <div className="flex h-8 w-8 items-center justify-center border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800/50 dark:bg-sky-950/30 dark:text-sky-400">
                   <CheckSquare size={16} />
                 </div>
                 <div>
@@ -141,7 +138,7 @@ export const AddStepMenu = ({
                 onClick={() => onAddStep("spreadsheet_note")}
                 type="button"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-teal-100 bg-teal-50 text-teal-600 shadow-sm dark:border-teal-800/50 dark:bg-teal-900/30 dark:text-teal-400">
+                <div className="flex h-8 w-8 items-center justify-center border border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800/50 dark:bg-teal-950/30 dark:text-teal-400">
                   <Table2 size={16} />
                 </div>
                 <div>

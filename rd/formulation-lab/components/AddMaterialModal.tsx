@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Package,
@@ -12,7 +13,6 @@ import {
   Thermometer,
   Truck,
   X,
-  ChevronDown,
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -48,11 +48,11 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const { isRTL } = useSettings();
+  const { isRTL, language } = useSettings();
   const { teams, activeTeamId } = useTeam();
   const createItem = useMutation(api.inventory.create);
   const logActivity = useMutation(api.activities.log);
-  const ingredientsRaw = useQuery(api.ingredients.list) ?? [];
+  const ingredientsRaw = useQuery(api.ingredients.list, { language }) ?? [];
 
   const [activeTab, setActiveTab] = useState<"info" | "stock">("info");
   const [batchIdTouched, setBatchIdTouched] = useState(false);
@@ -75,13 +75,15 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── Batch ID auto-generation ────────────────────────────
-  const getInitials = useCallback((text: string): string => {
-    return text
-      .trim()
-      .split(/\s+/)
-      .map((word) => word.charAt(0).toUpperCase())
-      .join("");
-  }, []);
+  const getInitials = useCallback(
+    (text: string): string =>
+      text
+        .trim()
+        .split(/\s+/)
+        .map((word) => word.charAt(0).toUpperCase())
+        .join(""),
+    []
+  );
 
   const generateBatchId = useCallback((): string => {
     const activeTeam = teams.find((tm) => tm._id === activeTeamId);
@@ -146,7 +148,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
     if (isOpen) {
       resetForm();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const validateForm = () => {
@@ -332,45 +334,60 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                       </label>
                       <div className="relative">
                         <select
-                          required
                           className={`${inputClasses} cursor-pointer appearance-none border-indigo-300 bg-white font-bold text-indigo-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-indigo-700/50 dark:bg-slate-800 dark:text-indigo-300`}
                           data-testid="material-ingredient-code-select"
                           id="ingredientCode"
                           name="ingredientCode"
                           onChange={(e) => {
                             const code = e.target.value;
-                            const ing = ingredientsRaw.find((i) => i.code === code && i.status === "Approved");
+                            const ing = ingredientsRaw.find(
+                              (i) => i.code === code && i.status === "Approved"
+                            );
                             if (ing) {
-                               const cat = CATEGORIES.find(c => `group_${c.toLowerCase().replace(/ /g, "_")}` === ing.groupId) || CATEGORIES[0];
-                               setFormData(prev => ({
-                                  ...prev,
-                                  ingredientCode: code,
-                                  ingredientId: ing._id,
-                                  name: ing.name,
-                                  description: ing.commonName || prev.description,
-                                  category: cat
-                               }));
+                              const cat =
+                                CATEGORIES.find(
+                                  (c) =>
+                                    `group_${c.toLowerCase().replace(/ /g, "_")}` ===
+                                    ing.groupId
+                                ) || CATEGORIES[0];
+                              setFormData((prev) => ({
+                                ...prev,
+                                ingredientCode: code,
+                                ingredientId: ing._id,
+                                name: ing.name,
+                                description: ing.commonName || prev.description,
+                                category: cat,
+                              }));
                             } else {
-                               setFormData(prev => ({
-                                  ...prev,
-                                  ingredientCode: code,
-                                  ingredientId: "",
-                               }));
+                              setFormData((prev) => ({
+                                ...prev,
+                                ingredientCode: code,
+                                ingredientId: "",
+                              }));
                             }
                           }}
+                          required
                           value={formData.ingredientCode}
                         >
                           {(() => {
-                            const approvedOpts = ingredientsRaw.filter((i) => i.code && i.status === "Approved");
+                            const approvedOpts = ingredientsRaw.filter(
+                              (i) => i.code && i.status === "Approved"
+                            );
                             return (
                               <>
                                 {approvedOpts.length === 0 ? (
-                                  <option disabled hidden value="">{t("no_approved_ingredients")}</option>
+                                  <option disabled hidden value="">
+                                    {t("no_approved_ingredients")}
+                                  </option>
                                 ) : (
-                                  <option disabled hidden value="">{t("select_library_ingredient")}</option>
+                                  <option disabled hidden value="">
+                                    {t("select_library_ingredient")}
+                                  </option>
                                 )}
                                 {approvedOpts.map((i) => (
-                                  <option key={i.code} value={i.code}>{i.code} - {i.name}</option>
+                                  <option key={i.code} value={i.code}>
+                                    {i.code} - {i.name}
+                                  </option>
                                 ))}
                               </>
                             );
@@ -380,7 +397,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                           <ChevronDown size={16} />
                         </div>
                       </div>
-                      <p className="ms-1 mt-2 flex items-center gap-2 font-medium text-xs text-indigo-600 dark:text-indigo-400">
+                      <p className="ms-1 mt-2 flex items-center gap-2 font-medium text-indigo-600 text-xs dark:text-indigo-400">
                         <CheckCircle2 size={14} />
                         {t("required_links_batch_to_library")}
                       </p>
@@ -392,32 +409,32 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                           {t("materialName")}
                         </label>
                         <input
-                          className={`${inputClasses} bg-gray-100 dark:bg-slate-800 cursor-not-allowed opacity-70`}
+                          className={`${inputClasses} cursor-not-allowed bg-gray-100 opacity-70 dark:bg-slate-800`}
                           data-testid="material-name-input"
-                          readOnly
                           name="name"
                           onChange={handleInputChange}
                           placeholder={t("example_xanthan_gum")}
+                          readOnly
                           required
                           value={formData.name}
                         />
                       </div>
                       <div>
-                        <label className={labelClasses}>
-                          {t("category")}
-                        </label>
+                        <label className={labelClasses}>{t("category")}</label>
                         <div className="relative">
                           <select
-                            className={`${inputClasses} appearance-none bg-gray-100 dark:bg-slate-800 cursor-not-allowed opacity-70`}
+                            className={`${inputClasses} cursor-not-allowed appearance-none bg-gray-100 opacity-70 dark:bg-slate-800`}
                             disabled
                             name="category"
                             onChange={handleInputChange}
                             value={formData.category}
                           >
                             {CATEGORIES.map((c) => (
-                               <option key={c} value={c}>
-                                 {t(`category_${c.toLowerCase().replace(/ /g, "_")}`)}
-                               </option>
+                              <option key={c} value={c}>
+                                {t(
+                                  `category_${c.toLowerCase().replace(/ /g, "_")}`
+                                )}
+                              </option>
                             ))}
                           </select>
                           <div className="pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -443,24 +460,22 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 
                     {/* Batch ID with auto-generate */}
                     <div>
-                      <label className={labelClasses}>
-                        {t("batchId")}
-                      </label>
+                      <label className={labelClasses}>{t("batchId")}</label>
                       <div className="flex items-center gap-2">
                         <input
-                          className={`${inputClasses} flex-1 font-mono bg-gray-100 dark:bg-slate-800 cursor-not-allowed opacity-70`}
-                          readOnly
+                          className={`${inputClasses} flex-1 cursor-not-allowed bg-gray-100 font-mono opacity-70 dark:bg-slate-800`}
                           name="batchId"
                           onChange={handleInputChange}
                           placeholder={t("example_batch_id")}
+                          readOnly
                           required
                           value={formData.batchId}
                         />
                         <button
-                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] border border-gray-200 bg-gray-50 text-gray-400 opacity-50 cursor-not-allowed transition-all dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-500"
+                          className="flex h-12 w-12 shrink-0 cursor-not-allowed items-center justify-center rounded-[1rem] border border-gray-200 bg-gray-50 text-gray-400 opacity-50 transition-all dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-500"
+                          disabled
                           title={t("regenerate_batch_id_locked")}
                           type="button"
-                          disabled
                         >
                           <RefreshCw size={16} />
                         </button>
@@ -476,11 +491,9 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 
                     {/* Description */}
                     <div>
-                      <label className={labelClasses}>
-                        {t("description")}
-                      </label>
+                      <label className={labelClasses}>{t("description")}</label>
                       <textarea
-                        className={`${inputClasses} resize-none ${!formData.ingredientId ? "bg-gray-100 dark:bg-slate-800 cursor-not-allowed opacity-70" : ""}`}
+                        className={`${inputClasses} resize-none ${formData.ingredientId ? "" : "cursor-not-allowed bg-gray-100 opacity-70 dark:bg-slate-800"}`}
                         disabled={!formData.ingredientId}
                         name="description"
                         onChange={handleInputChange}
@@ -494,7 +507,9 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 
                 {/* ── Tab 2: Stock & Expiry ────────────────── */}
                 {activeTab === "stock" && (
-                  <div className={`fade-in slide-in-from-end-4 animate-in space-y-6 duration-300 ${!formData.ingredientId ? "opacity-50 pointer-events-none grayscale" : ""}`}>
+                  <div
+                    className={`fade-in slide-in-from-end-4 animate-in space-y-6 duration-300 ${formData.ingredientId ? "" : "pointer-events-none opacity-50 grayscale"}`}
+                  >
                     {/* Quantity & Unit */}
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                       <div>
@@ -515,9 +530,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                         />
                       </div>
                       <div>
-                        <label className={labelClasses}>
-                          {t("unit")}
-                        </label>
+                        <label className={labelClasses}>{t("unit")}</label>
                         <div className="relative">
                           <select
                             className={`${inputClasses} cursor-pointer appearance-none`}
@@ -594,9 +607,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 
                     {/* Expiry Date */}
                     <div>
-                      <label className={labelClasses}>
-                        {t("expiryDate")}
-                      </label>
+                      <label className={labelClasses}>{t("expiryDate")}</label>
                       <div className="relative">
                         <input
                           className={inputClasses}
@@ -731,20 +742,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                   {t("cancel")}
                 </button>
 
-                {activeTab !== "stock" ? (
-                  <button
-                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
-                    data-testid="material-next-step-button"
-                    onClick={nextTab}
-                    type="button"
-                  >
-                    {t("nextStep")}
-                    <ChevronRight
-                      className={isRTL ? "me-1 -scale-x-100 transform" : "ms-1"}
-                      size={16}
-                    />
-                  </button>
-                ) : (
+                {activeTab === "stock" ? (
                   <button
                     className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
                     data-testid="material-submit-button"
@@ -760,6 +758,19 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                         {t("addMaterial")}
                       </>
                     )}
+                  </button>
+                ) : (
+                  <button
+                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+                    data-testid="material-next-step-button"
+                    onClick={nextTab}
+                    type="button"
+                  >
+                    {t("nextStep")}
+                    <ChevronRight
+                      className={isRTL ? "me-1 -scale-x-100 transform" : "ms-1"}
+                      size={16}
+                    />
                   </button>
                 )}
               </div>

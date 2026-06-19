@@ -18,7 +18,7 @@ import { buildRunsHistory } from "../lib/runs/history";
 import type { EnrichedProject, RunListItem } from "../types";
 
 const Runs: React.FC = () => {
-  const { profile } = useSettings();
+  const { language, profile } = useSettings();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -38,8 +38,8 @@ const Runs: React.FC = () => {
   } = usePaginatedQuery(
     api.projects.listByTeam,
     activeTeamId
-      ? { teamId: activeTeamId, status: "Released" }
-      : { status: "Released" },
+      ? { teamId: activeTeamId, status: "Released", language }
+      : { status: "Released", language },
     { initialNumItems: 50 }
   );
 

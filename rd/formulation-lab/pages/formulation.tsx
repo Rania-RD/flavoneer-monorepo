@@ -32,41 +32,19 @@ import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { SortablePhaseItem } from "../components/formulation/sortable-phase-item";
 import {
   ALLERGEN_LISTS,
   TREE_NUT_OPTIONS,
 } from "../components/add-ingredient/constants";
 import type { AllergenRegion } from "../components/add-ingredient/types";
+import { SortablePhaseItem } from "../components/formulation/sortable-phase-item";
 import { ReviewPanel } from "../components/ReviewPanel";
 import VersionHistoryModal from "../components/VersionHistoryModal";
+import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
-import {
-  calculateProjectRDCost,
-  calculatePackagingCosts,
-  calculateRecipeCosts,
-  calculateRecipeMeasures,
-  isServingOverPackagingCapacity,
-} from "../lib/formulation/save-payload";
-import {
-  ALPHABET_MAP,
-  applyAllergenOverrides,
-  areAllergenOverridesEqual,
-  areStringSelectionsEqual,
-  buildAggregatedIngredients,
-  COLORS,
-  createInitialPhases,
-  calculateRegulationCompliance,
-  calculateNutritionFacts,
-  deriveIngredients,
-  getAdditiveIngredientIds,
-  getFormulationBaselineAllergens,
-  getFlatSteps,
-  getIsStepLocked,
-} from "../lib/formulation/helpers";
 import {
   addPhaseToPhases,
   addStepAfterStepInPhase,
@@ -78,10 +56,33 @@ import {
   updatePhaseInPhases,
   updateStepInPhase,
 } from "../lib/formulation/editing";
+import {
+  ALPHABET_MAP,
+  applyAllergenOverrides,
+  areAllergenOverridesEqual,
+  areStringSelectionsEqual,
+  buildAggregatedIngredients,
+  COLORS,
+  calculateNutritionFacts,
+  calculateRegulationCompliance,
+  createInitialPhases,
+  deriveIngredients,
+  getAdditiveIngredientIds,
+  getFlatSteps,
+  getFormulationBaselineAllergens,
+  getIsStepLocked,
+} from "../lib/formulation/helpers";
+import {
+  calculatePackagingCosts,
+  calculateProjectRDCost,
+  calculateRecipeCosts,
+  calculateRecipeMeasures,
+  isServingOverPackagingCapacity,
+} from "../lib/formulation/save-payload";
 import type {
   EnrichedProject,
-  InventoryListItem,
   FormulationState,
+  InventoryListItem,
   PhaseColor,
   RecipePhase,
   RecipeStep,
@@ -105,22 +106,23 @@ const PACKAGING_OPTIONS = [
 
 const Formulation: React.FC = () => {
   const { t } = useTranslation();
+  const { language } = useSettings();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const projectId = id as Id<"projects"> | undefined;
 
   const convexProject = useQuery(
     api.projects.get,
-    projectId ? { id: projectId } : "skip"
+    projectId ? { id: projectId, language } : "skip"
   );
   const updateProjectMutation = useMutation(api.projects.update);
   const createNewVersionMutation = useMutation(api.projects.createNewVersion);
   const logActivity = useMutation(api.activities.log);
-  const inventoryItems = useQuery(api.inventory.list, {}) as
+  const inventoryItems = useQuery(api.inventory.list, { language }) as
     | InventoryListItem[]
     | undefined;
   const formulationIngredientOptions =
-    useQuery(api.ingredients.listFormulationOptions, {}) ?? [];
+    useQuery(api.ingredients.listFormulationOptions, { language }) ?? [];
 
   const aggregatedIngredients = useMemo(
     () =>
@@ -277,7 +279,9 @@ const Formulation: React.FC = () => {
       packagingItemName,
       packagingUnitPrice: option?.unitPrice ?? project.packagingUnitPrice,
       packagingCapacity: option?.capacity,
-      packagingCapacityUnit: option?.capacity ? "g" : project.packagingCapacityUnit,
+      packagingCapacityUnit: option?.capacity
+        ? "g"
+        : project.packagingCapacityUnit,
     });
   };
 
@@ -358,9 +362,9 @@ const Formulation: React.FC = () => {
     }
     setProject({
       ...project,
-      formulationExtraAllergens: (project.formulationExtraAllergens ?? []).filter(
-        (allergen) => allergen !== value
-      ),
+      formulationExtraAllergens: (
+        project.formulationExtraAllergens ?? []
+      ).filter((allergen) => allergen !== value),
       allergenReviewRequired: true,
     });
   };
@@ -452,10 +456,7 @@ const Formulation: React.FC = () => {
     .join(", ");
   const calculatedCosts = useMemo(
     () =>
-      calculateRecipeCosts(
-        derivedIngredients,
-        calculatedMeasures.servingCount
-      ),
+      calculateRecipeCosts(derivedIngredients, calculatedMeasures.servingCount),
     [calculatedMeasures.servingCount, derivedIngredients]
   );
   const calculatedPackagingCosts = useMemo(
@@ -470,57 +471,61 @@ const Formulation: React.FC = () => {
     packagingCapacity: project?.packagingCapacity,
     servingSizeWeight: calculatedMeasures.servingSizeWeight,
   });
-  const regulationBreaches = useMemo(() => {
-    return phases.flatMap((phase) =>
-      phase.steps.flatMap((step) => {
-        if (step.type !== "weighing" || !step.ingredientId) {
-          return [];
-        }
-        const ingredient = aggregatedIngredients.find(
-          (item) => item._id === step.ingredientId
-        );
-        const additiveLimit =
-          ingredient && additiveLimits?.[ingredient._id];
-        const compliance = calculateRegulationCompliance({
-          additiveLimit:
-            additiveLimit && typeof additiveLimit === "object"
-              ? additiveLimit
-              : undefined,
-          batchWeight: calculatedBatchWeight,
-          maxLimitPercent: step.maxLimitPercent,
-          weight: step.expectedWeight || 0,
-        });
-        return compliance.exceedsLimit
-          ? [
-              {
-                actualPercent: compliance.actualPercent,
-                ingredientName: ingredient?.name || step.label,
-                maxLimitPercent: compliance.effectiveMaxLimitPercent,
-                phaseName: phase.name,
-                stepId: step.id,
-              },
-            ]
-          : [];
-      })
-    );
-  }, [additiveLimits, aggregatedIngredients, calculatedBatchWeight, phases]);
+  const regulationBreaches = useMemo(
+    () =>
+      phases.flatMap((phase) =>
+        phase.steps.flatMap((step) => {
+          if (step.type !== "weighing" || !step.ingredientId) {
+            return [];
+          }
+          const ingredient = aggregatedIngredients.find(
+            (item) => item._id === step.ingredientId
+          );
+          const additiveLimit = ingredient && additiveLimits?.[ingredient._id];
+          const compliance = calculateRegulationCompliance({
+            additiveLimit:
+              additiveLimit && typeof additiveLimit === "object"
+                ? additiveLimit
+                : undefined,
+            batchWeight: calculatedBatchWeight,
+            maxLimitPercent: step.maxLimitPercent,
+            weight: step.expectedWeight || 0,
+          });
+          return compliance.exceedsLimit
+            ? [
+                {
+                  actualPercent: compliance.actualPercent,
+                  ingredientName: ingredient?.name || step.label,
+                  maxLimitPercent: compliance.effectiveMaxLimitPercent,
+                  phaseName: phase.name,
+                  stepId: step.id,
+                },
+              ]
+            : [];
+        })
+      ),
+    [additiveLimits, aggregatedIngredients, calculatedBatchWeight, phases]
+  );
   const hasRegulationBreaches = regulationBreaches.length > 0;
   const totalProjectRDCost = calculateProjectRDCost(
     project?.totalProjectRDCost,
     project?.batchCost,
     calculatedCosts.batchCost
   );
-  const baselineAllergens = useMemo(() => {
-    return getFormulationBaselineAllergens(
-      derivedIngredients,
-      aggregatedIngredients,
-      TREE_NUT_OPTIONS
-    );
-  }, [aggregatedIngredients, derivedIngredients]);
+  const baselineAllergens = useMemo(
+    () =>
+      getFormulationBaselineAllergens(
+        derivedIngredients,
+        aggregatedIngredients,
+        TREE_NUT_OPTIONS
+      ),
+    [aggregatedIngredients, derivedIngredients]
+  );
   const allergenRegion = (project?.allergenRegion || "FDA") as AllergenRegion;
-  const selectedFormulationAllergens = useMemo(() => {
-    return applyAllergenOverrides(baselineAllergens, manualAllergenOverrides);
-  }, [baselineAllergens, manualAllergenOverrides]);
+  const selectedFormulationAllergens = useMemo(
+    () => applyAllergenOverrides(baselineAllergens, manualAllergenOverrides),
+    [baselineAllergens, manualAllergenOverrides]
+  );
   const extraFormulationAllergens = project?.formulationExtraAllergens ?? [];
 
   useEffect(() => {
@@ -617,8 +622,7 @@ const Formulation: React.FC = () => {
       return;
     }
 
-    const nextReleaseNotes =
-      newStatus === "Draft" ? "" : project.releaseNotes;
+    const nextReleaseNotes = newStatus === "Draft" ? "" : project.releaseNotes;
 
     // Pass releasedBy if transitioning to Released
     const releasedBy =
@@ -653,7 +657,7 @@ const Formulation: React.FC = () => {
   };
 
   const handleCreateNewVersion = async () => {
-    if (!(project && projectId) || !isReleased || isCreatingNewVersion) {
+    if (!(project && projectId && isReleased) || isCreatingNewVersion) {
       return;
     }
 
@@ -785,7 +789,9 @@ const Formulation: React.FC = () => {
     setPhases(nextPhases);
     if (
       changedStep?.type === "weighing" &&
-      ("ingredientId" in updates || "expectedWeight" in updates || "unit" in updates)
+      ("ingredientId" in updates ||
+        "expectedWeight" in updates ||
+        "unit" in updates)
     ) {
       markAllergenReviewRequired();
     }
@@ -894,11 +900,12 @@ const Formulation: React.FC = () => {
                         value={lifecycleStatus}
                       >
                         <option value="Draft">{t("draft")}</option>
-                        <option value="Under Review">{t("under_review")}</option>
+                        <option value="Under Review">
+                          {t("under_review")}
+                        </option>
                         <option
                           disabled={
-                            lifecycleStatus === "Draft" ||
-                            hasRegulationBreaches
+                            lifecycleStatus === "Draft" || hasRegulationBreaches
                           }
                           value="Released"
                         >
@@ -1225,7 +1232,9 @@ const Formulation: React.FC = () => {
                   <div key={allergenKey}>
                     <label
                       className={`flex items-center gap-2 rounded-xl border border-amber-100 bg-white px-3 py-2 text-amber-950 text-xs shadow-sm dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-100 ${
-                        canEdit ? "cursor-pointer" : "cursor-not-allowed opacity-75"
+                        canEdit
+                          ? "cursor-pointer"
+                          : "cursor-not-allowed opacity-75"
                       }`}
                     >
                       <input
@@ -1241,7 +1250,7 @@ const Formulation: React.FC = () => {
                     </label>
                     {allergenKey === "allergen_tree_nuts" &&
                       selectedFormulationAllergens.includes(allergenKey) && (
-                        <div className="mt-2 ms-6 grid grid-cols-1 gap-1">
+                        <div className="ms-6 mt-2 grid grid-cols-1 gap-1">
                           {TREE_NUT_OPTIONS.map((subKey) => (
                             <label
                               className={`flex items-center gap-2 text-amber-900 text-xs dark:text-amber-100/80 ${
@@ -1297,7 +1306,9 @@ const Formulation: React.FC = () => {
                 <input
                   className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-3 py-2 text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-70 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
                   disabled={!canEdit}
-                  onChange={(event) => setExtraAllergenInput(event.target.value)}
+                  onChange={(event) =>
+                    setExtraAllergenInput(event.target.value)
+                  }
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
@@ -1622,7 +1633,7 @@ const Formulation: React.FC = () => {
                       Packaging item
                     </span>
                     <select
-                      className="mt-1 w-full bg-transparent font-black text-slate-900 text-lg outline-none dark:text-white"
+                      className="mt-1 w-full bg-transparent font-black text-lg text-slate-900 outline-none dark:text-white"
                       data-testid="packaging-item-select"
                       disabled={!canEdit}
                       onChange={(event) =>
@@ -1704,7 +1715,9 @@ const Formulation: React.FC = () => {
                     className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
                     data-testid="packaging-cost-per-unit-display"
                   >
-                    {formatCurrency(calculatedPackagingCosts.packagingCostPerUnit)}
+                    {formatCurrency(
+                      calculatedPackagingCosts.packagingCostPerUnit
+                    )}
                   </p>
                 </div>
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/40">
@@ -1777,6 +1790,10 @@ const Formulation: React.FC = () => {
                         deletePhase={deletePhase}
                         deleteStep={deleteStep}
                         flatSteps={flatSteps}
+                        formulationContext={{
+                          ingredients: derivedIngredients,
+                          phases,
+                        }}
                         handleSaveDependency={handleSaveDependency}
                         isStepLocked={isStepLocked}
                         itemRefs={itemRefs}
@@ -1789,10 +1806,6 @@ const Formulation: React.FC = () => {
                         stepDependencies={stepDependencies}
                         updatePhase={updatePhase}
                         updateStep={updateStep}
-                        formulationContext={{
-                          ingredients: derivedIngredients,
-                          phases,
-                        }}
                       />
                     );
                   })}

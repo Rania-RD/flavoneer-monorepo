@@ -8,12 +8,19 @@ import {
   query,
 } from "./_generated/server";
 import { authComponent } from "./auth";
+import {
+  localizeArray,
+  makeLocalizedString,
+  selectLocalizedString,
+} from "./localization";
 import { logTeamAction } from "./teamAuditLogs";
 import {
   batchCodeFormatValidator,
   enrichedProjectReturnValidator,
   formulationStateValidator,
   ingredientValidator,
+  languageValidator,
+  localizedStringValidator,
   phaseValidator,
   projectStatusValidator,
   servingSizeModeValidator,
@@ -59,7 +66,41 @@ function getVersionedCloneName(baseName: string, version: string) {
   return `${baseName} ${version}`.trim();
 }
 
-async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
+function withProjectLocalizedFields<T extends Record<string, unknown>>(
+  data: T
+) {
+  const output = { ...data } as Record<string, unknown>;
+  const fields = [
+    "name",
+    "description",
+    "category",
+    "gsfaCategoryName",
+    "packagingItemName",
+    "productType",
+    "processingMethod",
+    "targetOutcome",
+    "nutritionalGoal",
+    "targetTexture",
+  ];
+
+  for (const field of fields) {
+    const i18nField = `${field}I18n`;
+    if (field in output || i18nField in output) {
+      output[i18nField] = makeLocalizedString(
+        output[field] as string | undefined,
+        output[i18nField] as { ar?: string; en?: string } | undefined
+      );
+    }
+  }
+
+  return output as T;
+}
+
+async function enrichProject(
+  ctx: QueryCtx,
+  project: Doc<"projects">,
+  language?: string
+) {
   // Join ingredients
   const allIngredients = await ctx.db
     .query("projectIngredients")
@@ -71,7 +112,8 @@ async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((i) => ({
       id: i.ingredientKey,
-      name: i.name,
+      name: selectLocalizedString(i.name, i.nameI18n, language),
+      nameI18n: makeLocalizedString(i.name, i.nameI18n),
       weight: i.weight,
       unit: i.unit,
       percentage: i.percentage,
@@ -83,7 +125,8 @@ async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((i) => ({
       id: i.ingredientKey,
-      name: i.name,
+      name: selectLocalizedString(i.name, i.nameI18n, language),
+      nameI18n: makeLocalizedString(i.name, i.nameI18n),
       weight: i.weight,
       unit: i.unit,
       percentage: i.percentage,
@@ -106,15 +149,18 @@ async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
           .collect();
         return {
           id: phase.phaseKey,
-          name: phase.name,
+          name: selectLocalizedString(phase.name, phase.nameI18n, language),
+          nameI18n: makeLocalizedString(phase.name, phase.nameI18n),
           color: phase.color,
           steps: stepDocs
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((s) => ({
               id: s.stepKey,
               type: s.type,
-              label: s.label,
-              notes: s.notes,
+              label: selectLocalizedString(s.label, s.labelI18n, language),
+              labelI18n: makeLocalizedString(s.label, s.labelI18n),
+              notes: selectLocalizedString(s.notes, s.notesI18n, language),
+              notesI18n: makeLocalizedString(s.notes, s.notesI18n),
               isCompleted: s.isCompleted ?? false,
               ingredientId: s.ingredientId,
               expectedWeight: s.expectedWeight,
@@ -136,6 +182,91 @@ async function enrichProject(ctx: QueryCtx, project: Doc<"projects">) {
 
   return {
     ...project,
+    name: selectLocalizedString(project.name, project.nameI18n, language),
+    nameI18n: makeLocalizedString(project.name, project.nameI18n),
+    description: selectLocalizedString(
+      project.description,
+      project.descriptionI18n,
+      language
+    ),
+    descriptionI18n: makeLocalizedString(
+      project.description,
+      project.descriptionI18n
+    ),
+    category: selectLocalizedString(
+      project.category,
+      project.categoryI18n,
+      language
+    ),
+    categoryI18n: makeLocalizedString(project.category, project.categoryI18n),
+    gsfaCategoryName: selectLocalizedString(
+      project.gsfaCategoryName,
+      project.gsfaCategoryNameI18n,
+      language
+    ),
+    gsfaCategoryNameI18n: makeLocalizedString(
+      project.gsfaCategoryName,
+      project.gsfaCategoryNameI18n
+    ),
+    packagingItemName: selectLocalizedString(
+      project.packagingItemName,
+      project.packagingItemNameI18n,
+      language
+    ),
+    packagingItemNameI18n: makeLocalizedString(
+      project.packagingItemName,
+      project.packagingItemNameI18n
+    ),
+    productType: selectLocalizedString(
+      project.productType,
+      project.productTypeI18n,
+      language
+    ),
+    productTypeI18n: makeLocalizedString(
+      project.productType,
+      project.productTypeI18n
+    ),
+    processingMethod: selectLocalizedString(
+      project.processingMethod,
+      project.processingMethodI18n,
+      language
+    ),
+    processingMethodI18n: makeLocalizedString(
+      project.processingMethod,
+      project.processingMethodI18n
+    ),
+    targetOutcome: selectLocalizedString(
+      project.targetOutcome,
+      project.targetOutcomeI18n,
+      language
+    ),
+    targetOutcomeI18n: makeLocalizedString(
+      project.targetOutcome,
+      project.targetOutcomeI18n
+    ),
+    nutritionalGoal: selectLocalizedString(
+      project.nutritionalGoal,
+      project.nutritionalGoalI18n,
+      language
+    ),
+    nutritionalGoalI18n: makeLocalizedString(
+      project.nutritionalGoal,
+      project.nutritionalGoalI18n
+    ),
+    testingRequirements: localizeArray(
+      project.testingRequirements,
+      project.testingRequirementsI18n,
+      language
+    ),
+    targetTexture: selectLocalizedString(
+      project.targetTexture,
+      project.targetTextureI18n,
+      language
+    ),
+    targetTextureI18n: makeLocalizedString(
+      project.targetTexture,
+      project.targetTextureI18n
+    ),
     updatedAt: project.updatedAt ?? "",
     ingredients,
     phases: phases.length > 0 ? phases : undefined,
@@ -152,6 +283,7 @@ async function replaceIngredients(
   ingredients: Array<{
     id: string;
     name: string;
+    nameI18n?: { ar?: string; en?: string };
     weight: number;
     unit?: string;
     percentage?: number;
@@ -178,6 +310,7 @@ async function replaceIngredients(
       projectId,
       ingredientKey: item.id,
       name: item.name,
+      nameI18n: makeLocalizedString(item.name, item.nameI18n),
       weight: item.weight,
       unit: item.unit,
       percentage: item.percentage,
@@ -197,12 +330,15 @@ async function replacePhases(
   phases: Array<{
     id: string;
     name: string;
+    nameI18n?: { ar?: string; en?: string };
     color: string;
     steps: Array<{
       id: string;
       type: string;
       label: string;
+      labelI18n?: { ar?: string; en?: string };
       notes?: string;
+      notesI18n?: { ar?: string; en?: string };
       ingredientId?: string;
       expectedWeight?: number;
       maxLimitPercent?: number;
@@ -252,6 +388,7 @@ async function replacePhases(
       projectId,
       phaseKey: phase.id,
       name: phase.name,
+      nameI18n: makeLocalizedString(phase.name, phase.nameI18n),
       color: phase.color,
       sortOrder: pi,
     });
@@ -263,7 +400,9 @@ async function replacePhases(
         stepKey: step.id,
         type: step.type as RecipeStepType,
         label: step.label,
+        labelI18n: makeLocalizedString(step.label, step.labelI18n),
         notes: step.notes,
+        notesI18n: makeLocalizedString(step.notes, step.notesI18n),
         ingredientId: step.ingredientId,
         expectedWeight: step.expectedWeight,
         maxLimitPercent: step.maxLimitPercent,
@@ -318,19 +457,24 @@ async function saveProjectSnapshot(
   const snapshotData = Object.fromEntries(
     Object.entries({
       name: project.name,
+      nameI18n: project.nameI18n,
       version: project.version,
       status: project.status,
       lead: project.lead,
       description: project.description,
+      descriptionI18n: project.descriptionI18n,
       category: project.category,
+      categoryI18n: project.categoryI18n,
       gsfaCategoryCode: project.gsfaCategoryCode,
       gsfaCategoryName: project.gsfaCategoryName,
+      gsfaCategoryNameI18n: project.gsfaCategoryNameI18n,
       formulationState: project.formulationState,
       yield: project.yield,
       batchWeight: project.batchWeight,
       batchCost: project.batchCost,
       costPerServing: project.costPerServing,
       packagingItemName: project.packagingItemName,
+      packagingItemNameI18n: project.packagingItemNameI18n,
       packagingUnitPrice: project.packagingUnitPrice,
       packagingCapacity: project.packagingCapacity,
       packagingCapacityUnit: project.packagingCapacityUnit,
@@ -346,13 +490,19 @@ async function saveProjectSnapshot(
       formulationExtraAllergens: project.formulationExtraAllergens,
       releaseNotes: project.releaseNotes,
       productType: project.productType,
+      productTypeI18n: project.productTypeI18n,
       processingMethod: project.processingMethod,
+      processingMethodI18n: project.processingMethodI18n,
       targetOutcome: project.targetOutcome,
+      targetOutcomeI18n: project.targetOutcomeI18n,
       nutritionalGoal: project.nutritionalGoal,
+      nutritionalGoalI18n: project.nutritionalGoalI18n,
       testingRequirements: project.testingRequirements,
+      testingRequirementsI18n: project.testingRequirementsI18n,
       processingTemp: project.processingTemp,
       processingTime: project.processingTime,
       targetTexture: project.targetTexture,
+      targetTextureI18n: project.targetTextureI18n,
       updatedAt: project.updatedAt,
       batchCodePrefix: project.batchCodePrefix,
       batchCodeFormat: project.batchCodeFormat,
@@ -388,6 +538,7 @@ export const list = query({
   args: {
     paginationOpts: paginationOptsValidator,
     status: v.optional(projectStatusValidator),
+    language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
     let result: {
@@ -404,7 +555,7 @@ export const list = query({
       result = await ctx.db.query("projects").paginate(args.paginationOpts);
     }
     const page = await Promise.all(
-      result.page.map((p) => enrichProject(ctx, p))
+      result.page.map((p) => enrichProject(ctx, p, args.language))
     );
     return { ...result, page };
   },
@@ -415,6 +566,7 @@ export const listByTeam = query({
     paginationOpts: paginationOptsValidator,
     teamId: v.optional(v.id("teams")),
     status: v.optional(projectStatusValidator),
+    language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
     let result: {
@@ -445,14 +597,14 @@ export const listByTeam = query({
       result = await ctx.db.query("projects").paginate(args.paginationOpts);
     }
     const page = await Promise.all(
-      result.page.map((p) => enrichProject(ctx, p))
+      result.page.map((p) => enrichProject(ctx, p, args.language))
     );
     return { ...result, page };
   },
 });
 
 export const get = query({
-  args: { id: v.id("projects") },
+  args: { id: v.id("projects"), language: v.optional(languageValidator) },
   returns: v.union(enrichedProjectReturnValidator, v.null()),
   handler: async (ctx, args) => {
     const project = await ctx.db.get(args.id);
@@ -513,7 +665,7 @@ export const get = query({
       }
     }
 
-    const enriched = await enrichProject(ctx, project);
+    const enriched = await enrichProject(ctx, project, args.language);
     return { ...enriched, sharedRole };
   },
 });
@@ -521,19 +673,24 @@ export const get = query({
 export const create = mutation({
   args: {
     name: v.string(),
+    nameI18n: v.optional(localizedStringValidator),
     version: v.string(),
     status: projectStatusValidator,
     lead: v.string(),
     description: v.string(),
+    descriptionI18n: v.optional(localizedStringValidator),
     category: v.optional(v.string()),
+    categoryI18n: v.optional(localizedStringValidator),
     gsfaCategoryCode: v.optional(v.string()),
     gsfaCategoryName: v.optional(v.string()),
+    gsfaCategoryNameI18n: v.optional(localizedStringValidator),
     formulationState: v.optional(formulationStateValidator),
     yield: v.optional(v.number()),
     batchWeight: v.optional(v.number()),
     batchCost: v.optional(v.number()),
     costPerServing: v.optional(v.number()),
     packagingItemName: v.optional(v.string()),
+    packagingItemNameI18n: v.optional(localizedStringValidator),
     packagingUnitPrice: v.optional(v.number()),
     packagingCapacity: v.optional(v.number()),
     packagingCapacityUnit: v.optional(v.string()),
@@ -547,13 +704,20 @@ export const create = mutation({
     formulationAllergens: v.optional(v.array(v.string())),
     formulationAllergenOverrides: v.optional(v.record(v.string(), v.boolean())),
     formulationExtraAllergens: v.optional(v.array(v.string())),
+    productType: v.optional(v.string()),
+    productTypeI18n: v.optional(localizedStringValidator),
     processingMethod: v.optional(v.string()),
+    processingMethodI18n: v.optional(localizedStringValidator),
     targetOutcome: v.optional(v.string()),
+    targetOutcomeI18n: v.optional(localizedStringValidator),
     nutritionalGoal: v.optional(v.string()),
+    nutritionalGoalI18n: v.optional(localizedStringValidator),
     testingRequirements: v.optional(v.array(v.string())),
+    testingRequirementsI18n: v.optional(v.array(localizedStringValidator)),
     processingTemp: v.optional(v.number()),
     processingTime: v.optional(v.string()),
     targetTexture: v.optional(v.string()),
+    targetTextureI18n: v.optional(localizedStringValidator),
     // Use shared validators
     ingredients: v.array(ingredientValidator),
     previousVersionIngredients: v.optional(v.array(ingredientValidator)),
@@ -589,7 +753,7 @@ export const create = mutation({
 
     // 2. Insert the project row
     const projectId = await ctx.db.insert("projects", {
-      ...projectData,
+      ...withProjectLocalizedFields(projectData),
       batchCodePrefix: generatedBatchCodePrefix,
       userId: projectData.userId ?? null,
       teamId: projectData.teamId ?? null,
@@ -621,19 +785,24 @@ export const update = mutation({
   args: {
     id: v.id("projects"),
     name: v.optional(v.string()),
+    nameI18n: v.optional(localizedStringValidator),
     version: v.optional(v.string()),
     status: v.optional(projectStatusValidator),
     lead: v.optional(v.string()),
     description: v.optional(v.string()),
+    descriptionI18n: v.optional(localizedStringValidator),
     category: v.optional(v.string()),
+    categoryI18n: v.optional(localizedStringValidator),
     gsfaCategoryCode: v.optional(v.string()),
     gsfaCategoryName: v.optional(v.string()),
+    gsfaCategoryNameI18n: v.optional(localizedStringValidator),
     formulationState: v.optional(formulationStateValidator),
     yield: v.optional(v.number()),
     batchWeight: v.optional(v.number()),
     batchCost: v.optional(v.number()),
     costPerServing: v.optional(v.number()),
     packagingItemName: v.optional(v.string()),
+    packagingItemNameI18n: v.optional(localizedStringValidator),
     packagingUnitPrice: v.optional(v.number()),
     packagingCapacity: v.optional(v.number()),
     packagingCapacityUnit: v.optional(v.string()),
@@ -647,13 +816,20 @@ export const update = mutation({
     formulationAllergens: v.optional(v.array(v.string())),
     formulationAllergenOverrides: v.optional(v.record(v.string(), v.boolean())),
     formulationExtraAllergens: v.optional(v.array(v.string())),
+    productType: v.optional(v.string()),
+    productTypeI18n: v.optional(localizedStringValidator),
     processingMethod: v.optional(v.string()),
+    processingMethodI18n: v.optional(localizedStringValidator),
     targetOutcome: v.optional(v.string()),
+    targetOutcomeI18n: v.optional(localizedStringValidator),
     nutritionalGoal: v.optional(v.string()),
+    nutritionalGoalI18n: v.optional(localizedStringValidator),
     testingRequirements: v.optional(v.array(v.string())),
+    testingRequirementsI18n: v.optional(v.array(localizedStringValidator)),
     processingTemp: v.optional(v.number()),
     processingTime: v.optional(v.string()),
     targetTexture: v.optional(v.string()),
+    targetTextureI18n: v.optional(localizedStringValidator),
     ingredients: v.optional(v.array(ingredientValidator)),
     previousVersionIngredients: v.optional(v.array(ingredientValidator)),
     phases: v.optional(v.array(phaseValidator)),
@@ -701,10 +877,12 @@ export const update = mutation({
     }
 
     // Update project scalar fields
+    const normalizedUpdates = withProjectLocalizedFields({
+      ...updates,
+      ...releaseMetadata,
+    });
     const filtered = Object.fromEntries(
-      Object.entries({ ...updates, ...releaseMetadata }).filter(
-        ([_, v]) => v !== undefined
-      )
+      Object.entries(normalizedUpdates).filter(([_, v]) => v !== undefined)
     );
     if (Object.keys(filtered).length > 0) {
       await ctx.db.patch(id, filtered);
@@ -835,22 +1013,39 @@ async function cloneProjectAsDraftVersion(
   const newVersion = getNextMajorVersion(original.version);
   const baseName = getCloneBaseName(original.name);
   const newName = getVersionedCloneName(baseName, newVersion);
+  const newNameI18n = {
+    en: getVersionedCloneName(
+      getCloneBaseName(original.nameI18n?.en || original.name),
+      newVersion
+    ),
+    ar: getVersionedCloneName(
+      getCloneBaseName(
+        original.nameI18n?.ar || original.nameI18n?.en || original.name
+      ),
+      newVersion
+    ),
+  };
 
   const clonedProjectData = Object.fromEntries(
     Object.entries({
       name: newName,
+      nameI18n: newNameI18n,
       version: newVersion,
       status: "Draft",
       lead: original.lead,
       description: original.description,
+      descriptionI18n: original.descriptionI18n,
       category: original.category,
+      categoryI18n: original.categoryI18n,
       gsfaCategoryCode: original.gsfaCategoryCode,
       gsfaCategoryName: original.gsfaCategoryName,
+      gsfaCategoryNameI18n: original.gsfaCategoryNameI18n,
       formulationState: original.formulationState,
       yield: original.yield,
       batchWeight: original.batchWeight,
       totalProjectRDCost: original.totalProjectRDCost ?? original.batchCost,
       packagingItemName: original.packagingItemName,
+      packagingItemNameI18n: original.packagingItemNameI18n,
       packagingUnitPrice: original.packagingUnitPrice,
       packagingCapacity: original.packagingCapacity,
       packagingCapacityUnit: original.packagingCapacityUnit,
@@ -864,13 +1059,19 @@ async function cloneProjectAsDraftVersion(
       formulationAllergenOverrides: original.formulationAllergenOverrides,
       formulationExtraAllergens: original.formulationExtraAllergens,
       productType: original.productType,
+      productTypeI18n: original.productTypeI18n,
       processingMethod: original.processingMethod,
+      processingMethodI18n: original.processingMethodI18n,
       targetOutcome: original.targetOutcome,
+      targetOutcomeI18n: original.targetOutcomeI18n,
       nutritionalGoal: original.nutritionalGoal,
+      nutritionalGoalI18n: original.nutritionalGoalI18n,
       testingRequirements: original.testingRequirements,
+      testingRequirementsI18n: original.testingRequirementsI18n,
       processingTemp: original.processingTemp,
       processingTime: original.processingTime,
       targetTexture: original.targetTexture,
+      targetTextureI18n: original.targetTextureI18n,
       updatedAt: new Date().toISOString(),
       batchCodePrefix: original.batchCodePrefix,
       batchCodeFormat: original.batchCodeFormat,
@@ -885,6 +1086,7 @@ async function cloneProjectAsDraftVersion(
   const newProjectId = await ctx.db.insert("projects", clonedProjectData);
   await ctx.db.patch(newProjectId, {
     name: newName,
+    nameI18n: newNameI18n,
     version: newVersion,
     status: "Draft",
     allergenReviewRequired: false,
@@ -944,8 +1146,12 @@ async function cloneProjectAsDraftVersion(
     .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
     .collect();
   for (const dependency of dependencies) {
-    const { _id: _, _creationTime: __, projectId: _pid, ...dependencyData } =
-      dependency;
+    const {
+      _id: _,
+      _creationTime: __,
+      projectId: _pid,
+      ...dependencyData
+    } = dependency;
     await ctx.db.insert("stepDependencies", {
       ...dependencyData,
       projectId: newProjectId,
@@ -958,15 +1164,11 @@ async function cloneProjectAsDraftVersion(
 export const createNewVersion = mutation({
   args: { id: v.id("projects") },
   returns: v.id("projects"),
-  handler: async (ctx, args) => {
-    return await cloneProjectAsDraftVersion(ctx, args.id);
-  },
+  handler: async (ctx, args) => await cloneProjectAsDraftVersion(ctx, args.id),
 });
 
 export const duplicate = mutation({
   args: { id: v.id("projects") },
   returns: v.id("projects"),
-  handler: async (ctx, args) => {
-    return await cloneProjectAsDraftVersion(ctx, args.id);
-  },
+  handler: async (ctx, args) => await cloneProjectAsDraftVersion(ctx, args.id),
 });

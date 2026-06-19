@@ -1,4 +1,5 @@
 import type { Id } from "../../convex/_generated/dataModel";
+import type { LocalizedString } from "../../lib/i18n-data";
 
 export type AllergenRegion = "FDA" | "EU" | "GSO";
 export type NutritionLegislation = "FDA" | "EU" | "SFDA";
@@ -6,13 +7,14 @@ export type NutritionLegislation = "FDA" | "EU" | "SFDA";
 export interface IngredientFormData {
   code: string;
   commonName: string;
+  costPerKg: number;
   density: number;
   groupId: string;
   isnAr: string;
   isnEn: string;
   moistureLoss: number;
   name: string;
-  costPerKg: number;
+  nameAr: string;
   yieldAmount: number;
 }
 
@@ -42,7 +44,9 @@ export interface IngredientSavePayload {
   allergenVerified: boolean;
   code: string;
   commonName: string;
+  commonNameI18n: LocalizedString;
   conversions: { grams: number; unit: string }[];
+  costPerKg: number;
   coverImageId?: Id<"_storage">;
   density: number;
   groupId: string;
@@ -53,8 +57,8 @@ export interface IngredientSavePayload {
   isnEn: string;
   moistureLoss: number;
   name: string;
+  nameI18n: LocalizedString;
   nutrientValues: { nutrientName: string; unit: string; value: number }[];
-  costPerKg: number;
   subAllergenValues: Record<string, string[]>;
   subIngredients?: { ingredientId: Id<"ingredients">; percentage: number }[];
   teamId?: Id<"teams">;

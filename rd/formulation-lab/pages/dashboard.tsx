@@ -12,6 +12,7 @@ import OnboardingView from "../components/OnboardingView";
 import ProfileHeader from "../components/ProfileHeader";
 import ProjectCard from "../components/ProjectCard";
 import ProjectDetailsModal from "../components/ProjectDetailsModal";
+import { useSettings } from "../context/SettingsContext";
 import { useTeam } from "../context/TeamContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
@@ -25,6 +26,7 @@ const MotionDiv = motion.div as React.FC<
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
+  const { language } = useSettings();
 
   const [filter, setFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,7 +48,7 @@ const Dashboard: React.FC = () => {
     loadMore: loadMoreProjects,
   } = usePaginatedQuery(
     api.projects.listByTeam,
-    activeTeamId ? { teamId: activeTeamId } : {},
+    activeTeamId ? { teamId: activeTeamId, language } : { language },
     { initialNumItems: 50 }
   );
   const teamMembersRaw = useQuery(

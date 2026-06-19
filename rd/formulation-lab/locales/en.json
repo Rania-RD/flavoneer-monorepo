@@ -763,7 +763,6 @@
   "expiry_date_future": "Expiry date must be in the future.",
   "failed_to_save_material": "Failed to save material. Please try again.",
   "no_stock_history_available": "No stock history available.",
-
   "out_of_sync": "Out of Sync",
   "dependency_warning_desc": "Your changes affect downstream items",
   "dependency_impact_message": "Editing core values will unbalance the nutritional logic for the following items:",
@@ -932,5 +931,14 @@
   "minimum_value_for_parameter": "Minimum value for parameter {{stepId}}",
   "no_approved_ingredients": "No approved ingredients available.",
   "please_fill_required_fields": "Please fill all mandatory fields",
-  "switch": "Switch"
+  "switch": "Switch",
+  "name_en": "Name (English)",
+  "name_ar": "Name (Arabic)",
+  "cost_per_kg_usd": "Cost per Kg ($)",
+  "brief_description_en": "Brief Description (English)",
+  "brief_description_ar": "Brief Description (Arabic)",
+  "describe_goal_placeholder_ar": "صف هدف المشروع ومعايير النجاح",
+  "project_title_en": "Project Title (English)",
+  "project_title_ar": "Project Title (Arabic)",
+  "example_project_name_ar": "مثال: مشروب بروتيني نباتي"
 }

@@ -4,19 +4,21 @@ import type React from "react";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
+import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useToast } from "../hooks/useToast";
 
 const NewRunGuard: React.FC = () => {
   const { t } = useTranslation();
+  const { language } = useSettings();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const project = useQuery(
     api.projects.get,
-    id ? { id: id as Id<"projects"> } : "skip"
+    id ? { id: id as Id<"projects">, language } : "skip"
   );
   const createNewRun = useMutation(api.runs.createNewRun);
   const logActivity = useMutation(api.activities.log);

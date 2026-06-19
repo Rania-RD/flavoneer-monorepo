@@ -12,7 +12,7 @@ import ReportsDropdown from "./ReportsDropdown";
 
 const RecentReports: React.FC = () => {
   const { t } = useTranslation();
-  const { profile } = useSettings();
+  const { language, profile } = useSettings();
   const { user, role } = usePermissions();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -20,6 +20,7 @@ const RecentReports: React.FC = () => {
   // Convex Hooks
   const reportsResponse = useQuery(api.labReports.list, {
     paginationOpts: { numItems: 50, cursor: null },
+    language,
   });
   const reportsRaw = reportsResponse?.page;
 

@@ -20,6 +20,7 @@ import type * as ingredients from "../ingredients.js";
 import type * as inventory from "../inventory.js";
 import type * as labReports from "../labReports.js";
 import type * as labTestResults from "../labTestResults.js";
+import type * as localization from "../localization.js";
 import type * as permissions from "../permissions.js";
 import type * as projectIngredients from "../projectIngredients.js";
 import type * as projectVersions from "../projectVersions.js";
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   inventory: typeof inventory;
   labReports: typeof labReports;
   labTestResults: typeof labTestResults;
+  localization: typeof localization;
   permissions: typeof permissions;
   projectIngredients: typeof projectIngredients;
   projectVersions: typeof projectVersions;

@@ -763,7 +763,6 @@
   "expiry_date_future": "تاريخ الصلاحية يجب أن يكون في المستقبل.",
   "failed_to_save_material": "فشل حفظ المادة. يرجى المحاولة مرة أخرى.",
   "no_stock_history_available": "لا توجد سجلات مخزون متاحة.",
-
   "out_of_sync": "حالة عدم تزامن للتبعيات",
   "dependency_warning_desc": "التعديلات التي قمت بها تؤثر على العناصر المرتبطة بهذا المكون",
   "dependency_impact_message": "تعديل القيم الأساسية سيؤدي إلى خلل في الحسابات التغذوية للعناصر التالية:",
@@ -932,5 +931,14 @@
   "minimum_value_for_parameter": "القيمة الدنيا للمعامل {{stepId}}",
   "no_approved_ingredients": "لا توجد مكونات معتمدة متاحة.",
   "please_fill_required_fields": "يرجى تعبئة جميع الحقول الإلزامية",
-  "switch": "تبديل"
+  "switch": "تبديل",
+  "name_en": "الاسم بالإنجليزية",
+  "name_ar": "الاسم بالعربية",
+  "cost_per_kg_usd": "تكلفة الكيلوغرام ($)",
+  "brief_description_en": "الوصف الموجز بالإنجليزية",
+  "brief_description_ar": "الوصف الموجز بالعربية",
+  "describe_goal_placeholder_ar": "صف هدف المشروع ومعايير النجاح",
+  "project_title_en": "عنوان المشروع بالإنجليزية",
+  "project_title_ar": "عنوان المشروع بالعربية",
+  "example_project_name_ar": "مثال: مشروب بروتيني نباتي"
 }

@@ -1,10 +1,14 @@
-import { Image as ImageIcon, Plus, Trash2, FlaskConical } from "lucide-react";
 import type { TFunction } from "i18next";
+import { FlaskConical, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import type React from "react";
 import { normalizeInsNumber } from "../../convex/regulatoryHelpers";
 import type { IngredientListItem } from "../../types";
 import { Switch } from "../ui/Switch";
-import type { ConversionDraft, IngredientFormData, SubIngredientDraft } from "./types";
+import type {
+  ConversionDraft,
+  IngredientFormData,
+  SubIngredientDraft,
+} from "./types";
 
 interface AddIngredientInfoTabProps {
   additiveMatch: { name?: string } | null | undefined;
@@ -15,8 +19,11 @@ interface AddIngredientInfoTabProps {
   formData: IngredientFormData;
   handleAddConversion: () => void;
   handleAddSubIngredient: () => void;
+  handleBlur: (field: string) => void;
   handleConversionChange: (id: string, field: string, value: string) => void;
-  handleInputChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  handleInputChange: (
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
   handleRemoveConversion: (id: string) => void;
   handleRemoveSubIngredient: (id: string) => void;
   handleSubIngredientChange: (id: string, field: string, value: string) => void;
@@ -35,7 +42,6 @@ interface AddIngredientInfoTabProps {
   t: TFunction;
   totalSubPercentage: number;
   touchedFields: Record<string, boolean>;
-  handleBlur: (field: string) => void;
 }
 
 export function AddIngredientInfoTab({
@@ -70,11 +76,11 @@ export function AddIngredientInfoTab({
   handleBlur,
 }: AddIngredientInfoTabProps) {
   return (
-<div className="fade-in slide-in-from-end-4 animate-in space-y-6 duration-300">
+    <div className="fade-in slide-in-from-end-4 animate-in space-y-6 duration-300">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
           <label className={labelClasses}>
-            {t("name")} <span className="text-red-500">*</span>
+            {t("name_en")} <span className="text-red-500">*</span>
           </label>
           <input
             autoFocus
@@ -86,13 +92,28 @@ export function AddIngredientInfoTab({
             value={formData.name}
           />
           {touchedFields.name && !formData.name.trim() && (
-            <p className="mt-1 text-xs text-red-500">{t("field_required")}</p>
+            <p className="mt-1 text-red-500 text-xs">{t("field_required")}</p>
           )}
         </div>
         <div>
           <label className={labelClasses}>
-            {t("common_name")}
+            {t("name_ar")} <span className="text-red-500">*</span>
           </label>
+          <input
+            className={`${inputClasses} ${touchedFields.nameAr && !formData.nameAr.trim() ? "border-red-300 bg-red-50 focus:ring-red-500/50" : ""}`}
+            dir="rtl"
+            name="nameAr"
+            onBlur={() => handleBlur("nameAr")}
+            onChange={handleInputChange}
+            required
+            value={formData.nameAr}
+          />
+          {touchedFields.nameAr && !formData.nameAr.trim() && (
+            <p className="mt-1 text-red-500 text-xs">{t("field_required")}</p>
+          )}
+        </div>
+        <div>
+          <label className={labelClasses}>{t("common_name")}</label>
           <input
             className={inputClasses}
             name="commonName"
@@ -116,7 +137,7 @@ export function AddIngredientInfoTab({
             value={formData.code}
           />
           {touchedFields.code && !formData.code.trim() && (
-            <p className="mt-1 text-xs text-red-500">{t("field_required")}</p>
+            <p className="mt-1 text-red-500 text-xs">{t("field_required")}</p>
           )}
         </div>
         <div>
@@ -131,15 +152,11 @@ export function AddIngredientInfoTab({
             required
             value={formData.groupId}
           >
-            <option value="group_other">
-              {t("group_other")}
-            </option>
+            <option value="group_other">{t("group_other")}</option>
             <option value="group_water_liquids">
               {t("group_water_liquids")}
             </option>
-            <option value="group_dairy_eggs">
-              {t("group_dairy_eggs")}
-            </option>
+            <option value="group_dairy_eggs">{t("group_dairy_eggs")}</option>
             <option value="group_grains_baked">
               {t("group_grains_baked")}
             </option>
@@ -149,9 +166,7 @@ export function AddIngredientInfoTab({
             <option value="group_fruits_vegetables">
               {t("group_fruits_vegetables")}
             </option>
-            <option value="group_fats_oils">
-              {t("group_fats_oils")}
-            </option>
+            <option value="group_fats_oils">{t("group_fats_oils")}</option>
             <option value="group_sugars_sweeteners">
               {t("group_sugars_sweeteners")}
             </option>
@@ -190,15 +205,11 @@ export function AddIngredientInfoTab({
         {isAdditive && (
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className={labelClasses}>
-                {t("ins_number")}
-              </label>
+              <label className={labelClasses}>{t("ins_number")}</label>
               <input
                 className={inputClasses}
                 dir="ltr"
-                onBlur={() =>
-                  setInsNumber(normalizeInsNumber(insNumber))
-                }
+                onBlur={() => setInsNumber(normalizeInsNumber(insNumber))}
                 onChange={(event) => {
                   setInsNumber(event.target.value);
                   markDirty();
@@ -235,9 +246,7 @@ export function AddIngredientInfoTab({
             <img
               alt={t("cover_preview")}
               className="h-20 w-20 rounded-xl border border-gray-200 object-cover dark:border-slate-600"
-              src={
-                coverImagePreview || existingCoverImageUrl || ""
-              }
+              src={coverImagePreview || existingCoverImageUrl || ""}
             />
           ) : (
             <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-400 dark:border-slate-600 dark:bg-slate-700/50">
@@ -305,9 +314,7 @@ export function AddIngredientInfoTab({
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div>
-          <label className={labelClasses}>
-            Cost per kg ($)
-          </label>
+          <label className={labelClasses}>{t("cost_per_kg_usd")}</label>
           <input
             className={inputClasses}
             min="0"
@@ -319,9 +326,7 @@ export function AddIngredientInfoTab({
           />
         </div>
         <div>
-          <label className={labelClasses}>
-            {t("yield_percentage")}
-          </label>
+          <label className={labelClasses}>{t("yield_percentage")}</label>
           <input
             className={inputClasses}
             name="yieldAmount"
@@ -386,18 +391,12 @@ export function AddIngredientInfoTab({
             <div className="flex items-center gap-3" key={c.id}>
               <div className="relative flex-1">
                 <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-4">
-                  <span className="font-bold text-gray-500">
-                    1
-                  </span>
+                  <span className="font-bold text-gray-500">1</span>
                 </div>
                 <input
                   className={`${inputClasses} ps-10`}
                   onChange={(e) =>
-                    handleConversionChange(
-                      c.id,
-                      "unit",
-                      e.target.value
-                    )
+                    handleConversionChange(c.id, "unit", e.target.value)
                   }
                   placeholder={t("conversion_unit")}
                   value={c.unit}
@@ -408,19 +407,13 @@ export function AddIngredientInfoTab({
               </div>
               <div className="relative w-32 text-end">
                 <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-4">
-                  <span className="font-bold text-gray-500">
-                    g
-                  </span>
+                  <span className="font-bold text-gray-500">g</span>
                 </div>
                 <input
                   className={`${inputClasses} pe-10 text-end`}
                   min="0.01"
                   onChange={(e) =>
-                    handleConversionChange(
-                      c.id,
-                      "grams",
-                      e.target.value
-                    )
+                    handleConversionChange(c.id, "grams", e.target.value)
                   }
                   placeholder={t("conversion_grams")}
                   step="any"
@@ -447,7 +440,13 @@ export function AddIngredientInfoTab({
             {t("is_composite")}
           </h3>
         </div>
-        <Switch checked={isComposite} onChange={(val) => { setIsComposite(val); markDirty(); }} />
+        <Switch
+          checked={isComposite}
+          onChange={(val) => {
+            setIsComposite(val);
+            markDirty();
+          }}
+        />
       </div>
 
       {isComposite && (
@@ -468,10 +467,7 @@ export function AddIngredientInfoTab({
           {subIngredients.length > 0 && (
             <div className="space-y-3">
               {subIngredients.map((s) => (
-                <div
-                  className="flex items-center gap-3"
-                  key={s.id}
-                >
+                <div className="flex items-center gap-3" key={s.id}>
                   <div className="flex-1">
                     <select
                       className={`${inputClasses} cursor-pointer`}
@@ -496,9 +492,7 @@ export function AddIngredientInfoTab({
                   </div>
                   <div className="relative w-28 shrink-0">
                     <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-4">
-                      <span className="font-bold text-gray-500">
-                        %
-                      </span>
+                      <span className="font-bold text-gray-500">%</span>
                     </div>
                     <input
                       className={`${inputClasses} pe-8 text-end`}
@@ -519,9 +513,7 @@ export function AddIngredientInfoTab({
                   </div>
                   <button
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] bg-red-50 text-red-500 transition hover:bg-red-100 dark:bg-red-500/20 dark:hover:bg-red-500/30"
-                    onClick={() =>
-                      handleRemoveSubIngredient(s.id)
-                    }
+                    onClick={() => handleRemoveSubIngredient(s.id)}
                     type="button"
                   >
                     <Trash2 size={18} />

@@ -5,11 +5,13 @@ import {
 } from "../lib/ingredients/dependencies";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { makeLocalizedString, selectLocalizedString } from "./localization";
 import { normalizeInsNumber } from "./regulatoryHelpers";
+import { languageValidator, localizedStringValidator } from "./validators";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { language: v.optional(languageValidator) },
+  handler: async (ctx, args) => {
     // Basic validation to ensure the user is logged in
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -31,6 +33,12 @@ export const list = query({
         }
         return {
           ...ing,
+          name: selectLocalizedString(ing.name, ing.nameI18n, args.language),
+          commonName: selectLocalizedString(
+            ing.commonName,
+            ing.commonNameI18n,
+            args.language
+          ),
           coverImageUrl,
         };
       })
@@ -41,11 +49,13 @@ export const list = query({
 });
 
 export const listFormulationOptions = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { language: v.optional(languageValidator) },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Unauthenticated call to ingredients:listFormulationOptions");
+      throw new Error(
+        "Unauthenticated call to ingredients:listFormulationOptions"
+      );
     }
 
     const ingredients = await ctx.db
@@ -55,7 +65,12 @@ export const listFormulationOptions = query({
 
     return ingredients.map((ingredient) => ({
       _id: ingredient._id,
-      name: ingredient.name,
+      name: selectLocalizedString(
+        ingredient.name,
+        ingredient.nameI18n,
+        args.language
+      ),
+      nameI18n: makeLocalizedString(ingredient.name, ingredient.nameI18n),
       code: ingredient.code,
       status: ingredient.status,
       conversions: ingredient.conversions,
@@ -73,7 +88,9 @@ export const listFormulationOptions = query({
 export const create = mutation({
   args: {
     name: v.string(),
+    nameI18n: v.optional(localizedStringValidator),
     commonName: v.optional(v.string()),
+    commonNameI18n: v.optional(localizedStringValidator),
     groupId: v.optional(v.string()),
     isnAr: v.optional(v.string()),
     isnEn: v.optional(v.string()),
@@ -138,6 +155,8 @@ export const create = mutation({
 
     const newIngredientId = await ctx.db.insert("ingredients", {
       ...args,
+      nameI18n: makeLocalizedString(args.name, args.nameI18n),
+      commonNameI18n: makeLocalizedString(args.commonName, args.commonNameI18n),
       insNumber: normalizedInsNumber || undefined,
       normalizedInsNumber: normalizedInsNumber || undefined,
       foodAdditiveId: matchedAdditive?._id,
@@ -154,7 +173,9 @@ export const update = mutation({
   args: {
     id: v.id("ingredients"),
     name: v.string(),
+    nameI18n: v.optional(localizedStringValidator),
     commonName: v.optional(v.string()),
+    commonNameI18n: v.optional(localizedStringValidator),
     groupId: v.optional(v.string()),
     isnAr: v.optional(v.string()),
     isnEn: v.optional(v.string()),
@@ -220,6 +241,8 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...rest,
+      nameI18n: makeLocalizedString(args.name, args.nameI18n),
+      commonNameI18n: makeLocalizedString(args.commonName, args.commonNameI18n),
       insNumber: normalizedInsNumber || undefined,
       normalizedInsNumber: normalizedInsNumber || undefined,
       foodAdditiveId: matchedAdditive?._id,
@@ -376,7 +399,9 @@ export const remove = mutation({
     }
 
     if (composites.length > 0 || formulas.length > 0) {
-      throw new Error("عذراً، لا يمكنك حذف هذا المكون لأنه مستخدم في تركيبات أو مشاريع أخرى.");
+      throw new Error(
+        "عذراً، لا يمكنك حذف هذا المكون لأنه مستخدم في تركيبات أو مشاريع أخرى."
+      );
     }
 
     await ctx.db.delete(args.id);

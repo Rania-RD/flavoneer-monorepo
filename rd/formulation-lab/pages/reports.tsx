@@ -28,7 +28,7 @@ const Reports: React.FC = () => {
   const [filter, setFilter] = useState("All");
   const [showNewModal, setShowNewModal] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string>();
-  const { profile } = useSettings();
+  const { language, profile } = useSettings();
   const { user, role } = usePermissions();
   const { toast } = useToast();
 
@@ -37,7 +37,11 @@ const Reports: React.FC = () => {
     results: reportsUntyped,
     status: reportsStatus,
     loadMore: loadMoreReports,
-  } = usePaginatedQuery(api.labReports.list, {}, { initialNumItems: 50 });
+  } = usePaginatedQuery(
+    api.labReports.list,
+    { language },
+    { initialNumItems: 50 }
+  );
 
   const { results: runsRaw } = usePaginatedQuery(
     api.runs.list,
@@ -46,9 +50,9 @@ const Reports: React.FC = () => {
   );
   const formulationIngredientOptions = useQuery(
     api.ingredients.listFormulationOptions,
-    {}
+    { language }
   );
-  const inventoryItems = useQuery(api.inventory.list, {});
+  const inventoryItems = useQuery(api.inventory.list, { language });
 
   const updateStatus = useMutation(api.labReports.updateStatus);
 
@@ -98,7 +102,7 @@ const Reports: React.FC = () => {
   );
   const activeFormulation = useQuery(
     api.projects.get,
-    activeReport?.projectId ? { id: activeReport.projectId } : "skip"
+    activeReport?.projectId ? { id: activeReport.projectId, language } : "skip"
   ) as EnrichedProject | null | undefined;
   const aggregatedIngredients = useMemo(
     () =>

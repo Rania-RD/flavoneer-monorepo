@@ -16,7 +16,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 import SidebarItem from "./SidebarItem";
 
-type SidebarProps = Record<string, never>;
+type SidebarProps = {};
 
 const Sidebar: React.FC<SidebarProps> = () => {
   const { t } = useTranslation();
@@ -40,12 +40,15 @@ const Sidebar: React.FC<SidebarProps> = () => {
 
   return (
     <>
-      <aside className="fixed start-4 top-4 z-30 hidden h-fit max-h-[calc(100vh-2rem)] w-14 flex-col items-center overflow-y-auto overflow-x-hidden border border-slate-300 bg-white py-4 transition-colors [-ms-overflow-style:'none'] [scrollbar-width:'none'] md:flex dark:border-slate-800 dark:bg-slate-950 [&::-webkit-scrollbar]:hidden">
-        <div className="mb-5 flex h-9 w-9 flex-shrink-0 items-center justify-center bg-slate-950 text-white dark:bg-sky-600">
+      {/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
+      <aside className="fixed start-6 top-6 z-30 hidden h-fit max-h-[calc(100vh-3rem)] w-16 flex-col items-center overflow-y-auto overflow-x-hidden rounded-[2.5rem] border border-gray-100/50 bg-white py-6 shadow-sm transition-all duration-300 [-ms-overflow-style:'none'] [scrollbar-width:'none'] md:flex dark:border-slate-700 dark:bg-[#1e293b] [&::-webkit-scrollbar]:hidden">
+        {/* Logo (Static) */}
+        <div className="mb-6 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gray-900 text-white shadow-gray-900/20 shadow-lg dark:bg-indigo-500 dark:shadow-indigo-500/20">
           <FlaskConical size={20} strokeWidth={2.5} />
         </div>
 
-        <nav className="flex w-full flex-1 flex-col items-center gap-y-2">
+        {/* Navigation (Scrollable) */}
+        <nav className="flex w-full flex-1 flex-col items-center gap-y-4">
           {navItems.map((item) => (
             <SidebarItem
               active={isActivePath(item.path)}
@@ -57,7 +60,8 @@ const Sidebar: React.FC<SidebarProps> = () => {
           ))}
         </nav>
 
-        <div className="mt-auto flex w-full flex-col items-center gap-y-2 border-slate-200 border-t pt-3 dark:border-slate-800">
+        {/* Footer (Static) */}
+        <div className="mt-auto flex w-full flex-col items-center gap-y-4 pt-4">
           <SidebarItem
             active={isActivePath("/settings")}
             icon={Settings}
@@ -73,12 +77,13 @@ const Sidebar: React.FC<SidebarProps> = () => {
         </div>
       </aside>
 
-      <nav className="safe-area-bottom fixed start-0 end-0 bottom-0 z-50 flex h-18 items-center justify-around border-slate-300 border-t bg-white px-4 pb-2 md:hidden dark:border-slate-800 dark:bg-slate-950">
+      {/* --- MOBILE BOTTOM NAVIGATION (Hidden on Desktop) --- */}
+      <nav className="safe-area-bottom fixed start-0 end-0 bottom-0 z-50 flex h-20 items-center justify-around border-gray-100 border-t bg-white px-4 pb-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:hidden dark:border-slate-700 dark:bg-[#1e293b]">
         {navItems.slice(0, 5).map((item) => {
           const active = isActivePath(item.path);
           return (
             <Link
-              className={`flex flex-col items-center gap-1 border border-transparent p-2 transition-colors ${
+              className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-colors ${
                 active
                   ? "text-gray-900 dark:text-indigo-400"
                   : "text-gray-400 dark:text-slate-500"
@@ -92,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
           );
         })}
         <Link
-          className={`flex flex-col items-center gap-1 border border-transparent p-2 transition-colors ${
+          className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-colors ${
             isActivePath("/settings")
               ? "text-gray-900 dark:text-indigo-400"
               : "text-gray-400 dark:text-slate-500"

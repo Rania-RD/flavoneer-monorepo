@@ -294,22 +294,61 @@ export default function FinishedGoodSpecificationSheet({
 
   return (
     <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @media print {
+          @page {
+            size: A4;
+            margin: 12mm;
+          }
+
+          body * {
+            visibility: hidden;
+          }
+
+          #finished-good-spec-sheet,
+          #finished-good-spec-sheet * {
+            visibility: visible;
+          }
+
+          #finished-good-spec-sheet {
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            margin: 0 !important;
+            box-shadow: none !important;
+          }
+
+          .spec-no-print {
+            display: none !important;
+          }
+
+          .spec-print-avoid {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+        }
+      `,
+        }}
+      />
+
       <section
-        className="enterprise-panel p-4 sm:p-5"
+        className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950"
         id="finished-good-spec-sheet"
       >
         <div className="spec-no-print mb-5 flex flex-col gap-3 border-slate-200 border-b pb-5 lg:flex-row lg:items-center lg:justify-between dark:border-slate-800">
           <div>
-            <p className="font-semibold text-sky-700 text-xs uppercase tracking-[0.18em] dark:text-sky-300">
+            <p className="font-bold text-blue-700 text-xs uppercase tracking-[0.22em] dark:text-blue-300">
               {t("finished_good_specification_sheet")}
             </p>
-            <h2 className="mt-1 font-semibold text-2xl text-slate-950 dark:text-white">
+            <h2 className="mt-1 font-bold text-2xl text-slate-950 dark:text-white">
               {t("food_product_specification_sheet")}
             </h2>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <select
-              className="enterprise-input min-w-[260px]"
+              className="min-w-[260px] rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-800 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40"
               onChange={(event) => onSelectReport(event.target.value)}
               value={selectedReportId || ""}
             >
@@ -320,7 +359,7 @@ export default function FinishedGoodSpecificationSheet({
               ))}
             </select>
             <button
-              className="enterprise-button-primary"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-bold text-sm text-white transition hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
               onClick={onPrint}
               type="button"
             >
@@ -331,29 +370,29 @@ export default function FinishedGoodSpecificationSheet({
         </div>
 
         {isLoading && (
-          <div className="border border-slate-300 border-dashed p-6 text-center font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <div className="rounded-2xl border border-slate-300 border-dashed p-8 text-center font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-400">
             {t("loading_active_formulation_data")}
           </div>
         )}
 
         {!(isLoading || (activeFormulation && activeReport)) && (
-          <div className="border border-slate-300 border-dashed p-6 text-center font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <div className="rounded-2xl border border-slate-300 border-dashed p-8 text-center font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-400">
             {t("select_report_for_finished_good_spec")}
           </div>
         )}
 
         {!isLoading && activeFormulation && activeReport && (
           <div className="space-y-5 text-slate-900 dark:text-slate-100 print:space-y-3">
-            <header className="spec-print-avoid grid gap-4 border border-slate-300 bg-slate-50 p-4 lg:grid-cols-[1.2fr_1fr] dark:border-slate-800 dark:bg-slate-900/60">
+            <header className="spec-print-avoid grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 lg:grid-cols-[1.2fr_1fr] dark:border-slate-800 dark:bg-slate-900/60">
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center bg-sky-700 font-semibold text-lg text-white">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-blue-700 font-black text-white text-xl">
                   FG
                 </div>
                 <div>
-                  <p className="font-semibold text-sky-700 text-xs uppercase tracking-[0.16em] dark:text-sky-300">
+                  <p className="font-bold text-blue-700 text-xs uppercase tracking-[0.2em] dark:text-blue-300">
                     {t("document_control")}
                   </p>
-                  <h3 className="mt-2 font-semibold text-2xl text-slate-950 leading-tight dark:text-white">
+                  <h3 className="mt-2 font-black text-3xl text-slate-950 leading-tight dark:text-white">
                     {activeFormulation.name}
                   </h3>
                   <p className="mt-1 font-semibold text-slate-500 text-sm dark:text-slate-400">
@@ -362,35 +401,35 @@ export default function FinishedGoodSpecificationSheet({
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+                <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
                   <p className="font-bold text-[11px] text-slate-500 uppercase">
                     {t("doc_code")}
                   </p>
-                  <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                  <p className="mt-1 font-black text-slate-950 dark:text-white">
                     {docCode}
                   </p>
                 </div>
-                <div className="border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+                <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
                   <p className="font-bold text-[11px] text-slate-500 uppercase">
                     {t("effective_date")}
                   </p>
-                  <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                  <p className="mt-1 font-black text-slate-950 dark:text-white">
                     {formatDate(activeReport.date)}
                   </p>
                 </div>
-                <div className="border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+                <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
                   <p className="font-bold text-[11px] text-slate-500 uppercase">
                     {t("version_tag")}
                   </p>
-                  <p className="mt-1 font-semibold text-sky-700 dark:text-sky-300">
+                  <p className="mt-1 font-black text-blue-700 dark:text-blue-300">
                     {versionTag}
                   </p>
                 </div>
-                <div className="border border-emerald-200 bg-emerald-50 p-3 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
                   <p className="font-bold text-[11px] uppercase">
                     {t("regulation_status")}
                   </p>
-                  <p className="mt-1 flex items-center gap-1.5 font-semibold">
+                  <p className="mt-1 flex items-center gap-1.5 font-black">
                     <ShieldCheck size={16} />
                     {t("compliant")}
                   </p>
@@ -398,7 +437,7 @@ export default function FinishedGoodSpecificationSheet({
               </div>
             </header>
 
-            <section className="spec-print-avoid grid gap-3 border border-slate-300 p-4 sm:grid-cols-2 lg:grid-cols-4 dark:border-slate-800">
+            <section className="spec-print-avoid grid gap-3 rounded-2xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4 dark:border-slate-800">
               {[
                 [t("legal_name"), legalName],
                 [t("target_shelf_life"), shelfLife],
@@ -418,15 +457,15 @@ export default function FinishedGoodSpecificationSheet({
 
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)]">
               <main className="space-y-5">
-                <section className="spec-print-avoid border border-slate-300 p-4 dark:border-slate-800">
-                  <h4 className="font-semibold text-base text-slate-950 dark:text-white">
+                <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+                  <h4 className="font-black text-lg text-slate-950 dark:text-white">
                     {t("product_description")}
                   </h4>
                   <ul className="mt-3 grid gap-2 text-sm">
                     {productBullets.map((bullet) => (
                       <li className="flex gap-2" key={bullet}>
                         <Check
-                          className="mt-0.5 shrink-0 text-sky-700"
+                          className="mt-0.5 shrink-0 text-blue-700"
                           size={16}
                         />
                         <span>{bullet}</span>
@@ -435,18 +474,18 @@ export default function FinishedGoodSpecificationSheet({
                   </ul>
                 </section>
 
-                <section className="spec-print-avoid border border-slate-300 p-4 dark:border-slate-800">
-                  <h4 className="font-semibold text-base text-slate-950 dark:text-white">
+                <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+                  <h4 className="font-black text-lg text-slate-950 dark:text-white">
                     {t("ingredient_statement")}
                   </h4>
-                  <p className="mt-3 border border-slate-200 bg-slate-50 p-3 font-medium text-slate-700 text-sm leading-6 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+                  <p className="mt-3 rounded-xl bg-slate-50 p-4 font-semibold text-slate-700 text-sm leading-6 dark:bg-slate-900 dark:text-slate-200">
                     {ingredientStatement}
                   </p>
                 </section>
 
-                <section className="spec-print-avoid overflow-hidden border border-slate-300 dark:border-slate-800">
+                <section className="spec-print-avoid overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div className="border-slate-200 border-b bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-                    <h4 className="font-semibold text-base text-slate-950 dark:text-white">
+                    <h4 className="font-black text-lg text-slate-950 dark:text-white">
                       {t("industrial_formulation_table")}
                     </h4>
                   </div>
@@ -500,8 +539,8 @@ export default function FinishedGoodSpecificationSheet({
                 </section>
 
                 <section className="spec-print-avoid grid gap-4 md:grid-cols-2">
-                  <div className="border border-slate-300 p-4 dark:border-slate-800">
-                    <h4 className="font-semibold text-base text-slate-950 dark:text-white">
+                  <div className="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+                    <h4 className="font-black text-lg text-slate-950 dark:text-white">
                       {t("physical_specifications")}
                     </h4>
                     <div className="mt-4 space-y-3 text-sm">
@@ -546,8 +585,8 @@ export default function FinishedGoodSpecificationSheet({
                     </div>
                   </div>
 
-                  <div className="border border-slate-300 p-4 dark:border-slate-800">
-                    <h4 className="font-semibold text-base text-slate-950 dark:text-white">
+                  <div className="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+                    <h4 className="font-black text-lg text-slate-950 dark:text-white">
                       {t("chemical_specifications")}
                     </h4>
                     <div className="mt-4 space-y-3 text-sm">
@@ -579,9 +618,9 @@ export default function FinishedGoodSpecificationSheet({
                   </div>
                 </section>
 
-                <section className="spec-print-avoid overflow-hidden border border-slate-300 dark:border-slate-800">
+                <section className="spec-print-avoid overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div className="border-slate-200 border-b bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-                    <h4 className="font-semibold text-base text-slate-950 dark:text-white">
+                    <h4 className="font-black text-lg text-slate-950 dark:text-white">
                       {t("nutritional_information")}
                     </h4>
                   </div>
@@ -617,18 +656,18 @@ export default function FinishedGoodSpecificationSheet({
                   </table>
                 </section>
 
-                <section className="spec-print-avoid border border-slate-300 p-4 dark:border-slate-800">
-                  <h4 className="font-semibold text-base text-slate-950 dark:text-white">
+                <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+                  <h4 className="font-black text-lg text-slate-950 dark:text-white">
                     {t("regulatory_claims_checklist")}
                   </h4>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {claims.map((claim) => (
                       <div
-                        className="flex items-center gap-3 border border-slate-200 p-3 dark:border-slate-800"
+                        className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-800"
                         key={claim.label}
                       >
                         <span
-                          className={`flex h-6 w-6 items-center justify-center border ${
+                          className={`flex h-6 w-6 items-center justify-center rounded-md border ${
                             claim.checked
                               ? "border-emerald-600 bg-emerald-600 text-white"
                               : "border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900"
@@ -643,41 +682,41 @@ export default function FinishedGoodSpecificationSheet({
                 </section>
               </main>
 
-              <aside className="space-y-3 border border-sky-200 bg-sky-50 p-4 text-sky-950 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-50">
-                <div className="border border-sky-100 bg-white p-3 dark:border-sky-900/40 dark:bg-slate-950">
-                  <p className="font-semibold text-sky-700 text-xs uppercase dark:text-sky-300">
+              <aside className="space-y-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-blue-950 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-50">
+                <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
+                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
                     {t("shelf_life")}
                   </p>
-                  <p className="mt-2 font-semibold text-xl">{shelfLife}</p>
+                  <p className="mt-2 font-black text-2xl">{shelfLife}</p>
                 </div>
-                <div className="border border-sky-100 bg-white p-3 dark:border-sky-900/40 dark:bg-slate-950">
-                  <p className="font-semibold text-sky-700 text-xs uppercase dark:text-sky-300">
+                <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
+                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
                     {t("suggestive_storage")}
                   </p>
                   <p className="mt-2 font-bold text-lg">{storageConditions}</p>
                 </div>
-                <div className="border border-amber-200 bg-amber-50 p-3 text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
-                  <p className="font-semibold text-xs uppercase tracking-wide">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+                  <p className="font-black text-xs uppercase tracking-wide">
                     {t("allergens")}
                   </p>
                   <p className="mt-2 font-bold text-sm leading-6">
                     {allergenText}
                   </p>
                 </div>
-                <div className="border border-sky-100 bg-white p-3 dark:border-sky-900/40 dark:bg-slate-950">
-                  <p className="font-semibold text-sky-700 text-xs uppercase dark:text-sky-300">
+                <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
+                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
                     {t("package_content")}
                   </p>
                   <p className="mt-2 font-bold text-sm leading-6">
                     {packageContent}
                   </p>
-                  <p className="mt-3 border border-slate-200 bg-slate-50 p-3 font-semibold text-slate-600 text-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                  <p className="mt-3 rounded-xl bg-slate-50 p-3 font-semibold text-slate-600 text-xs dark:bg-slate-900 dark:text-slate-300">
                     {t("total_finished_good_cost_per_unit")}{" "}
                     {formatMoney(packagingCosts.finishedGoodCostPerUnit)}
                   </p>
                 </div>
-                <div className="border border-sky-100 bg-white p-3 dark:border-sky-900/40 dark:bg-slate-950">
-                  <p className="font-semibold text-sky-700 text-xs uppercase dark:text-sky-300">
+                <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
+                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
                     {t("nutrition_facts")}
                   </p>
                   <div className="mt-3 border-2 border-black bg-white p-3 text-black">
@@ -717,8 +756,8 @@ export default function FinishedGoodSpecificationSheet({
                     ))}
                   </div>
                 </div>
-                <div className="border border-sky-100 bg-white p-3 dark:border-sky-900/40 dark:bg-slate-950">
-                  <p className="font-semibold text-sky-700 text-xs uppercase dark:text-sky-300">
+                <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
+                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
                     {t("microbiological_specification")}
                   </p>
                   <div className="mt-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
@@ -742,18 +781,18 @@ export default function FinishedGoodSpecificationSheet({
                     ))}
                   </div>
                 </div>
-                <div className="bg-sky-950 p-3 text-white">
-                  <p className="font-semibold text-sky-200 text-xs uppercase">
+                <div className="rounded-2xl bg-blue-900 p-4 text-white shadow-sm">
+                  <p className="font-bold text-blue-200 text-xs uppercase">
                     {t("metadata_footer")}
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-sky-200">{t("version_no")}</p>
-                      <p className="font-semibold">{versionTag}</p>
+                      <p className="text-blue-200">{t("version_no")}</p>
+                      <p className="font-black">{versionTag}</p>
                     </div>
                     <div>
-                      <p className="text-sky-200">{t("issue_date")}</p>
-                      <p className="font-semibold">
+                      <p className="text-blue-200">{t("issue_date")}</p>
+                      <p className="font-black">
                         {formatDate(activeReport.date)}
                       </p>
                     </div>
@@ -762,8 +801,8 @@ export default function FinishedGoodSpecificationSheet({
               </aside>
             </div>
 
-            <section className="spec-print-avoid border border-slate-300 p-4 dark:border-slate-800">
-              <h4 className="mb-4 flex items-center gap-2 font-semibold text-base text-slate-950 dark:text-white">
+            <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+              <h4 className="mb-4 flex items-center gap-2 font-black text-lg text-slate-950 dark:text-white">
                 <FileText size={18} />
                 {t("signoff_authorization")}
               </h4>

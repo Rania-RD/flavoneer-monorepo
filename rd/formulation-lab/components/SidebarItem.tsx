@@ -36,10 +36,10 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     setIsHovered(true);
   };
 
-  const commonClasses = `w-9 h-9 border flex items-center justify-center transition-colors group relative flex-shrink-0 ${
+  const commonClasses = `w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group relative flex-shrink-0 ${
     active
-      ? "border-slate-950 bg-slate-950 text-white dark:border-sky-600 dark:bg-sky-600"
-      : "border-transparent text-slate-400 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+      ? "bg-black dark:bg-indigo-600 text-white shadow-lg shadow-black/20 dark:shadow-indigo-600/30 scale-105"
+      : "text-gray-400 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-200"
   } ${className || ""}`;
 
   const iconElement = (

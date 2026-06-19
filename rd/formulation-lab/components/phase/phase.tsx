@@ -83,9 +83,9 @@ export const Phase: React.FC<PhaseProps> = ({
 
   return (
     <div
-      className={`relative space-y-4 border bg-white p-4 transition-colors lg:p-5 ${colorStyle.border} ${colorStyle.darkBorder || ""} ${isAnyMenuOpen ? "z-[100] ring-1 ring-sky-600/30" : "z-10 hover:z-20"} dark:bg-slate-950`}
+      className={`space-y-6 ${colorStyle.bg} ${colorStyle.darkBg || ""} rounded-[2.5rem] border p-6 shadow-sm lg:p-8 ${colorStyle.border} ${colorStyle.darkBorder || ""} relative transition-all ${isAnyMenuOpen ? "z-[100] scale-[1.01] shadow-lg ring-2 ring-indigo-500/20" : "z-10 hover:z-20"}`}
     >
-      <div className="relative z-10 flex flex-col items-start gap-3 border-slate-200 border-b pb-4 md:flex-row md:items-center dark:border-slate-800">
+      <div className="relative z-10 flex flex-col items-start gap-4 border-gray-200/50 border-b pb-6 md:flex-row md:items-center dark:border-slate-700/50">
         {!readOnly && (
           <div
             className="cursor-grab text-gray-400 hover:text-gray-600 active:cursor-grabbing dark:text-slate-500 dark:hover:text-slate-300"
@@ -95,7 +95,7 @@ export const Phase: React.FC<PhaseProps> = ({
           </div>
         )}
         <div
-          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center border font-semibold text-lg dark:border-transparent ${colorStyle.bg} ${colorStyle.text} ${colorStyle.darkBg || ""} ${colorStyle.darkText || ""} ${colorStyle.border}`}
+          className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[1.2rem] border font-black text-2xl shadow-sm dark:border-transparent ${colorStyle.bg} ${colorStyle.text} ${colorStyle.darkBg || ""} ${colorStyle.darkText || ""} ${colorStyle.border}`}
         >
           {letter}
         </div>
@@ -107,7 +107,7 @@ export const Phase: React.FC<PhaseProps> = ({
             {t("phase_module")}
           </label>
           <input
-            className="w-full border-0 bg-transparent p-0 font-semibold text-2xl text-slate-950 placeholder-slate-400 focus:ring-0 dark:text-white dark:placeholder-slate-500"
+            className="w-full border-0 bg-transparent p-0 font-black text-3xl text-gray-900 placeholder-gray-400 focus:ring-0 dark:text-white dark:placeholder-slate-500"
             disabled={readOnly}
             id={`phase-name-${phase.id}`}
             name="phaseName"
@@ -119,7 +119,7 @@ export const Phase: React.FC<PhaseProps> = ({
         {!readOnly && onDelete && (
           <button
             aria-label={t("delete_phase")}
-            className="enterprise-button self-start p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 md:self-center dark:hover:bg-red-950/30"
+            className="self-start rounded-2xl border border-gray-200/50 bg-white/50 p-3 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 md:self-center dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-red-900/30"
             onClick={onDelete}
             title={t("delete_phase")}
             type="button"
@@ -139,7 +139,7 @@ export const Phase: React.FC<PhaseProps> = ({
             items={phase.steps.map((step) => step.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-3">
+            <div className="space-y-4">
               {phase.steps.map((step, stepIndex) => {
                 const dependency = getDependency(step.id);
                 const isLocked = isStepLocked(step.id);

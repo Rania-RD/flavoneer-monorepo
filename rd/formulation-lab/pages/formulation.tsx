@@ -848,12 +848,13 @@ const Formulation: React.FC = () => {
     })}`;
 
   return (
-    <div className="-m-3 flex min-h-dvh flex-col bg-slate-100 sm:-m-4 dark:bg-slate-950">
-      <div className="relative z-10 flex shrink-0 flex-col justify-between gap-4 border-slate-300 border-b bg-white px-4 py-3 md:flex-row md:items-center dark:border-slate-800 dark:bg-slate-950">
+    <div className="-m-4 flex min-h-dvh flex-col bg-white sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
+      {/* Header - Sticky */}
+      <div className="relative z-10 flex shrink-0 flex-col justify-between gap-4 border-gray-100 border-b bg-white px-8 py-4 shadow-sm md:flex-row md:items-center dark:border-slate-800 dark:bg-[#0f172a]">
         <div className="flex items-center space-x-4">
           <button
             aria-label={t("go_back")}
-            className="enterprise-button h-9 w-9 cursor-pointer p-0"
+            className="cursor-pointer rounded-full border border-gray-200 bg-gray-50 p-3 text-gray-500 transition-colors hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
             onClick={() => {
               if (window.history.length > 2) {
                 navigate(-1);
@@ -871,14 +872,16 @@ const Formulation: React.FC = () => {
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <h1 className="flex items-center gap-3 font-semibold text-2xl text-slate-950 dark:text-white">
+                  <h1 className="flex items-center gap-3 font-bold text-3xl text-gray-900 dark:text-white">
                     {project?.name || t("formulation_builder")}
-                    <span className="enterprise-badge">v{project.version}</span>
+                    <span className="rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1 font-medium text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                      v{project.version}
+                    </span>
                   </h1>
                   {project && (
                     <div className="flex flex-wrap items-center gap-2">
                       <select
-                        className={`cursor-pointer appearance-none border px-3 py-1.5 font-semibold text-xs outline-none transition-colors ${
+                        className={`cursor-pointer appearance-none rounded-full border px-3 py-1.5 font-bold text-xs outline-none transition-colors ${
                           (
                             {
                               Released:
@@ -912,13 +915,13 @@ const Formulation: React.FC = () => {
                       {isReleased && (
                         <>
                           <span
-                            className="enterprise-badge border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+                            className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
                             data-testid="latest-read-only-badge"
                           >
                             {t("latest_read_only")}
                           </span>
                           <button
-                            className="enterprise-button text-xs disabled:cursor-wait"
+                            className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-700 text-xs transition-colors hover:bg-indigo-50 disabled:cursor-wait disabled:opacity-70 dark:border-indigo-800/50 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
                             data-testid="create-new-version-button"
                             disabled={isCreatingNewVersion}
                             onClick={handleCreateNewVersion}
@@ -939,10 +942,10 @@ const Formulation: React.FC = () => {
                   {t("sequence_editor")}
                 </p>
                 {hasRegulationBreaches && (
-                  <div className="mt-3 flex max-w-3xl items-start gap-3 border border-red-300 bg-red-50 px-4 py-3 text-red-800 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200">
+                  <div className="mt-3 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200">
                     <ShieldAlert className="mt-0.5 shrink-0" size={18} />
                     <div>
-                      <p className="font-semibold text-sm">
+                      <p className="font-black text-sm">
                         {t("regulation_limit_release_blocked")}
                       </p>
                       <p className="mt-1 text-xs">
@@ -962,9 +965,10 @@ const Formulation: React.FC = () => {
           </div>
         </div>
 
+        {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <button
-            className="enterprise-button"
+            className="flex items-center gap-2 rounded-3xl border border-indigo-200 bg-white px-6 py-3 font-bold text-indigo-600 transition-all hover:scale-[1.02] hover:bg-indigo-50 active:scale-[0.98] dark:border-indigo-800/50 dark:bg-[#1e293b] dark:text-indigo-400 dark:hover:bg-indigo-900/30"
             onClick={() => setIsReviewPanelOpen(true)}
             type="button"
           >
@@ -973,7 +977,7 @@ const Formulation: React.FC = () => {
           </button>
 
           <button
-            className="enterprise-button"
+            className="flex items-center gap-2 rounded-3xl border border-gray-200 bg-white px-6 py-3 font-bold text-gray-700 transition-all hover:scale-[1.02] hover:bg-gray-50 active:scale-[0.98] dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-300 dark:hover:bg-slate-800"
             onClick={() => setIsVersionHistoryOpen(true)}
             type="button"
           >
@@ -983,7 +987,7 @@ const Formulation: React.FC = () => {
 
           {canEdit && (
             <button
-              className="enterprise-button-primary"
+              className="flex items-center gap-2 rounded-3xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-indigo-600/20 shadow-lg transition-all hover:scale-[1.02] hover:bg-indigo-700 active:scale-[0.98] dark:bg-indigo-500"
               data-testid="save-formulation-button"
               onClick={() => {
                 if (project.allergenReviewRequired) {

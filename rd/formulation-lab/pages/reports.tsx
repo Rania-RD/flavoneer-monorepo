@@ -80,6 +80,7 @@ const Reports: React.FC = () => {
   const recentReports =
     reportsUntyped && runsRaw ? validRecentReports.slice(0, 3) : [];
 
+  // Mock Data for "Texture Analysis" (Pie Chart)
   const textureData = [
     { name: t("firmness"), value: 40 },
     { name: t("springiness"), value: 30 },
@@ -198,24 +199,25 @@ const Reports: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="enterprise-toolbar flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <h1 className="font-semibold text-3xl text-slate-950 tracking-tight dark:text-white">
+          <h1 className="font-bold text-4xl text-gray-900 tracking-tight dark:text-white">
             {t("lab_reports")}
           </h1>
-          <p className="mt-1 font-medium text-slate-500 text-sm dark:text-slate-400">
+          <p className="mt-2 font-medium text-gray-500 dark:text-slate-400">
             {t("qc_analysis_performance_metrics")}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {["All", "Passed", "Failed"].map((filterType) => (
               <button
-                className={`border px-3 py-1.5 font-semibold text-xs uppercase tracking-wide transition-colors ${
+                className={`rounded-full px-5 py-2.5 font-bold text-sm transition-all ${
                   filter === filterType
-                    ? "border-slate-950 bg-slate-950 text-white dark:border-sky-600 dark:bg-sky-600"
-                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    ? "bg-gray-900 text-white dark:bg-indigo-600"
+                    : "bg-white text-gray-500 hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                 }`}
                 key={filterType}
                 onClick={() => setFilter(filterType)}
@@ -226,7 +228,7 @@ const Reports: React.FC = () => {
             ))}
           </div>
           <button
-            className="enterprise-button-primary"
+            className="flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 font-bold text-sm text-white shadow-indigo-600/20 shadow-lg transition-colors hover:bg-indigo-700"
             onClick={() => setShowNewModal(true)}
             type="button"
           >
@@ -248,30 +250,34 @@ const Reports: React.FC = () => {
         selectedReportId={selectedReportId}
       />
 
-      <div className="grid auto-rows-min grid-cols-1 gap-3 md:grid-cols-4">
+      {/* Bento Grid */}
+      <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-4">
+        {/* Medium Card: Recent Reports Quick Access */}
         <div className="col-span-1 min-h-[300px] md:col-span-2">
-          <div className="enterprise-panel h-full p-4">
-            <div className="mb-4">
-              <h3 className="enterprise-section-title">{t("recentReports")}</h3>
+          <div className="h-full rounded-[2.5rem] border border-black/5 bg-vivid-blue p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
+            <div className="mb-6">
+              <h3 className="font-bold text-charcoal dark:text-slate-100">
+                {t("recentReports")}
+              </h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {recentReports.map((report, _i) => (
                 <div
-                  className="group relative flex cursor-pointer items-center gap-3 border border-slate-200 bg-white p-3 transition-colors hover:border-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-slate-600"
+                  className="group relative flex cursor-pointer items-center gap-4 rounded-2xl border border-white/50 bg-white/40 p-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:z-20 hover:scale-[1.02] hover:shadow-xl dark:border-slate-700 dark:bg-[#1e293b]"
                   key={report._id}
                 >
                   <div
-                    className={`flex h-8 w-8 items-center justify-center border ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                       _i % 2 === 0
-                        ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
-                        : "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950/30 dark:text-orange-300"
+                        ? "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300"
+                        : "bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300"
                     }`}
                   >
-                    <FlaskConical className="stroke-[2.2]" size={16} />
+                    <FlaskConical className="stroke-[2.5]" size={20} />
                   </div>
 
                   <div className="min-w-0 flex-1 text-start">
-                    <h4 className="truncate font-semibold text-slate-900 text-sm transition-colors group-hover:text-sky-700 dark:text-slate-100 dark:group-hover:text-sky-400">
+                    <h4 className="truncate font-bold text-charcoal text-sm transition-colors group-hover:text-action-pink dark:text-slate-100 dark:group-hover:text-blue-400">
                       {report.projectName}
                     </h4>
                     <div className="mt-0.5 flex items-center gap-2">
@@ -308,9 +314,10 @@ const Reports: React.FC = () => {
           </div>
         </div>
 
-        <div className="enterprise-panel col-span-1 flex flex-col justify-between p-4 md:col-span-2">
-          <h3 className="enterprise-section-title mb-3 flex items-center gap-2">
-            <div className="h-2 w-2 bg-sky-600" />
+        {/* Medium Card: Texture Analysis */}
+        <div className="col-span-1 flex flex-col justify-between rounded-[2.5rem] border border-gray-100 bg-white p-6 shadow-sm md:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="mb-4 flex items-center gap-2 font-bold text-gray-900 dark:text-white">
+            <div className="h-2 w-2 rounded-full bg-purple-500" />
 
             {t("texture_profile")}
           </h3>
@@ -335,10 +342,7 @@ const Reports: React.FC = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "4px",
-                  }}
+                  contentStyle={{ borderRadius: "12px", border: "none" }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -350,28 +354,29 @@ const Reports: React.FC = () => {
           </div>
         </div>
 
-        <div className="col-span-1 mt-1 grid grid-cols-1 gap-3 md:col-span-4 lg:grid-cols-2">
+        {/* List of Reports */}
+        <div className="col-span-1 mt-4 grid grid-cols-1 gap-4 md:col-span-4 lg:grid-cols-2">
           {filteredReports.map((report) => {
             const run = runMap.get(report.runId);
             return (
               <div
-                className="enterprise-panel group flex cursor-pointer items-center gap-4 p-4 transition-colors hover:border-slate-500 dark:hover:border-slate-600"
+                className="group flex cursor-pointer items-center gap-6 rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-gray-200 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                 key={report._id}
               >
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center border font-semibold text-lg">
+                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[1.2rem] font-bold text-xl">
                   {report.status === "Approved" && (
-                    <div className="flex h-full w-full items-center justify-center bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400">
+                    <div className="flex h-full w-full items-center justify-center rounded-[1.2rem] bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                       {t("a_initial")}
                     </div>
                   )}
                   {report.status === "Failed" && (
-                    <div className="flex h-full w-full items-center justify-center bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400">
+                    <div className="flex h-full w-full items-center justify-center rounded-[1.2rem] bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
                       {t("f_initial")}
                     </div>
                   )}
                   {report.status !== "Approved" &&
                     report.status !== "Failed" && (
-                      <div className="flex h-full w-full items-center justify-center bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400">
+                      <div className="flex h-full w-full items-center justify-center rounded-[1.2rem] bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
                         {t("pending_initial")}
                       </div>
                     )}
@@ -379,7 +384,7 @@ const Reports: React.FC = () => {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between">
-                    <h4 className="truncate font-semibold text-slate-900 text-base transition-colors group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-400">
+                    <h4 className="truncate font-bold text-gray-900 text-lg transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                       {report.projectName}
                     </h4>
                     <span className="font-mono text-gray-400 text-xs dark:text-slate-500">
@@ -394,7 +399,7 @@ const Reports: React.FC = () => {
                         className="text-indigo-500 dark:text-indigo-400"
                         size={12}
                       />
-                      <span className="border border-sky-200 bg-sky-50 px-2 py-0.5 font-mono font-semibold text-sky-700 text-xs dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-400">
+                      <span className="rounded-md bg-indigo-50 px-2 py-0.5 font-bold font-mono text-indigo-600 text-xs dark:bg-indigo-900/20 dark:text-indigo-400">
                         {run.batchCode}
                       </span>
                       <span className="text-gray-400 text-xs dark:text-slate-500">
@@ -411,7 +416,7 @@ const Reports: React.FC = () => {
                   <div className="mt-3 flex gap-2">
                     {report.results.slice(0, 2).map((res) => (
                       <span
-                        className="border border-slate-200 bg-slate-50 px-2 py-1 font-medium text-slate-600 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1 font-medium text-gray-600 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                         key={`${report._id}-res-${res.parameter}`}
                       >
                         {res.parameter}:{" "}

@@ -1,26 +1,47 @@
 import type { EnrichedProject, Ingredient, RecipePhase } from "../../types";
 
+export type ServingSizeUnit = "g" | "kg" | "mg" | "ml";
+
+const SERVING_UNIT_TO_GRAMS: Record<ServingSizeUnit, number> = {
+  g: 1,
+  kg: 1000,
+  mg: 0.001,
+  ml: 1,
+};
+
+export function normalizeServingAmountToGrams(
+  amount: number,
+  unit: ServingSizeUnit = "g"
+) {
+  return Number((amount * SERVING_UNIT_TO_GRAMS[unit]).toFixed(6));
+}
+
 export function calculateRecipeMeasures(
   batchWeight: number,
   servingSizeMode: EnrichedProject["servingSizeMode"],
-  servingSizeAmount?: number
+  servingSizeAmount?: number,
+  servingSizeUnit: ServingSizeUnit = "g"
 ) {
   const amount =
     typeof servingSizeAmount === "number" && servingSizeAmount > 0
       ? servingSizeAmount
       : 0;
   const mode = servingSizeMode ?? "recipeMakes";
+  const normalizedServingAmount =
+    mode === "servingIs"
+      ? normalizeServingAmountToGrams(amount, servingSizeUnit)
+      : amount;
   const servingSizeWeight =
-    amount > 0
+    normalizedServingAmount > 0
       ? mode === "recipeMakes"
-        ? batchWeight / amount
-        : amount
+        ? batchWeight / normalizedServingAmount
+        : normalizedServingAmount
       : 0;
   const servingCount =
-    amount > 0
+    normalizedServingAmount > 0
       ? mode === "recipeMakes"
-        ? amount
-        : batchWeight / amount
+        ? normalizedServingAmount
+        : batchWeight / normalizedServingAmount
       : 0;
   const batchYield = Number((servingCount * servingSizeWeight).toFixed(6));
 
@@ -130,7 +151,8 @@ export function buildFormulationSavePayload(
   const { batchYield, servingCount } = calculateRecipeMeasures(
     batchWeight,
     project.servingSizeMode,
-    project.servingSizeAmount ?? project.yield
+    project.servingSizeAmount ?? project.yield,
+    project.servingSizeUnit ?? "g"
   );
   const { costPerServing, batchCost } = calculateRecipeCosts(
     persistedIngredients,
@@ -158,6 +180,7 @@ export function buildFormulationSavePayload(
     formulationState: project.formulationState || "Liquid",
     servingSizeMode: project.servingSizeMode || "recipeMakes",
     servingSizeAmount: project.servingSizeAmount ?? project.yield,
+    servingSizeUnit: project.servingSizeUnit || "g",
     phases,
     ingredients: persistedIngredients,
   };

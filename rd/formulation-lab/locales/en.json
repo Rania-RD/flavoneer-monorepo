@@ -1049,5 +1049,7 @@
   "of_which_saturates": "of which saturates",
   "of_which_sugars": "of which sugars",
   "salt": "Salt",
-  "not_measured": "Not measured"
+  "not_measured": "Not measured",
+  "serving_size_unit": "Serving size unit",
+  "servings": "servings"
 }

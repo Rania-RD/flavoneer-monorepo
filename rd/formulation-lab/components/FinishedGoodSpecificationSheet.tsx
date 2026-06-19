@@ -9,6 +9,7 @@ import {
   calculatePackagingCosts,
   calculateRecipeCosts,
   calculateRecipeMeasures,
+  type ServingSizeUnit,
 } from "../lib/formulation/save-payload";
 import type {
   AggregatedIngredient,
@@ -170,7 +171,8 @@ export default function FinishedGoodSpecificationSheet({
   const measures = calculateRecipeMeasures(
     batchWeight,
     activeFormulation?.servingSizeMode,
-    activeFormulation?.servingSizeAmount ?? activeFormulation?.yield
+    activeFormulation?.servingSizeAmount ?? activeFormulation?.yield,
+    (activeFormulation?.servingSizeUnit ?? "g") as ServingSizeUnit
   );
   const recipeCosts = calculateRecipeCosts(
     liveIngredients,

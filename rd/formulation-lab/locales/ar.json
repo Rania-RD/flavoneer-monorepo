@@ -1049,5 +1049,7 @@
   "of_which_saturates": "منها دهون مشبعة",
   "of_which_sugars": "منها سكريات",
   "salt": "الملح",
-  "not_measured": "غير مقاس"
+  "not_measured": "غير مقاس",
+  "serving_size_unit": "وحدة حجم الحصة",
+  "servings": "حصص"
 }

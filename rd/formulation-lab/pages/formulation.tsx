@@ -71,12 +71,13 @@ import {
   getIsStepLocked,
 } from "../lib/formulation/helpers";
 import {
+  buildFormulationSavePayload,
   calculatePackagingCosts,
   calculateProjectRDCost,
   calculateRecipeCosts,
   calculateRecipeMeasures,
-  buildFormulationSavePayload,
   isServingOverPackagingCapacity,
+  type ServingSizeUnit,
 } from "../lib/formulation/save-payload";
 import type {
   EnrichedProject,
@@ -102,6 +103,8 @@ const PACKAGING_OPTIONS = [
   name: string;
   unitPrice: number;
 }>;
+
+const SERVING_SIZE_UNITS = ["g", "kg", "mg", "ml"] as const;
 
 const Formulation: React.FC = () => {
   const { t } = useTranslation();
@@ -257,6 +260,16 @@ const Formulation: React.FC = () => {
     setProject({
       ...project,
       servingSizeAmount: value === "" ? undefined : Number(value),
+    });
+  };
+
+  const handleServingSizeUnitChange = (servingSizeUnit: ServingSizeUnit) => {
+    if (!project) {
+      return;
+    }
+    setProject({
+      ...project,
+      servingSizeUnit,
     });
   };
 
@@ -443,14 +456,16 @@ const Formulation: React.FC = () => {
   );
   const servingSizeMode = project?.servingSizeMode ?? "recipeMakes";
   const servingSizeAmount = project?.servingSizeAmount ?? project?.yield;
+  const servingSizeUnit = (project?.servingSizeUnit ?? "g") as ServingSizeUnit;
   const calculatedMeasures = useMemo(
     () =>
       calculateRecipeMeasures(
         calculatedBatchWeight,
         servingSizeMode,
-        servingSizeAmount
+        servingSizeAmount,
+        servingSizeUnit
       ),
-    [calculatedBatchWeight, servingSizeAmount, servingSizeMode]
+    [calculatedBatchWeight, servingSizeAmount, servingSizeMode, servingSizeUnit]
   );
   const nutritionFacts = useMemo(
     () =>
@@ -1653,17 +1668,45 @@ const Formulation: React.FC = () => {
                   <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
                     {t("amount")}
                   </span>
-                  <input
-                    className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
-                    data-testid="serving-size-amount-input"
-                    disabled={!canEdit}
-                    min="0"
-                    onChange={(e) => handleServingAmountChange(e.target.value)}
-                    placeholder="0"
-                    step="any"
-                    type="number"
-                    value={servingSizeAmount ?? ""}
-                  />
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      className="min-w-0 flex-1 bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
+                      data-testid="serving-size-amount-input"
+                      disabled={!canEdit}
+                      min="0"
+                      onChange={(e) =>
+                        handleServingAmountChange(e.target.value)
+                      }
+                      placeholder="0"
+                      step="any"
+                      type="number"
+                      value={servingSizeAmount ?? ""}
+                    />
+                    {servingSizeMode === "servingIs" ? (
+                      <select
+                        aria-label={t("serving_size_unit")}
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-black text-slate-700 text-xs uppercase outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900/40"
+                        data-testid="serving-size-unit-select"
+                        disabled={!canEdit}
+                        onChange={(e) =>
+                          handleServingSizeUnitChange(
+                            e.target.value as ServingSizeUnit
+                          )
+                        }
+                        value={servingSizeUnit}
+                      >
+                        {SERVING_SIZE_UNITS.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="rounded-lg bg-slate-100 px-2 py-1 font-black text-slate-500 text-xs uppercase dark:bg-slate-800 dark:text-slate-300">
+                        {t("servings")}
+                      </span>
+                    )}
+                  </div>
                 </label>
 
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-800/50 dark:bg-indigo-950/40">
@@ -1674,7 +1717,7 @@ const Formulation: React.FC = () => {
                     className="mt-1 font-black text-2xl text-indigo-950 dark:text-indigo-100"
                     data-testid="serving-size-weight-display"
                   >
-                    {calculatedMeasures.servingSizeWeight}
+                    {calculatedMeasures.servingSizeWeight} g
                   </p>
                 </div>
 

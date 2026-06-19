@@ -22,6 +22,13 @@ export const servingSizeModeValidator = v.union(
   v.literal("servingIs")
 );
 
+export const servingSizeUnitValidator = v.union(
+  v.literal("g"),
+  v.literal("kg"),
+  v.literal("mg"),
+  v.literal("ml")
+);
+
 export const sharedRoleValidator = v.union(
   v.literal("viewer"),
   v.literal("editor")
@@ -302,6 +309,7 @@ export const enrichedProjectReturnValidator = v.object({
   totalProjectRDCost: v.optional(v.number()),
   servingSizeMode: v.optional(servingSizeModeValidator),
   servingSizeAmount: v.optional(v.number()),
+  servingSizeUnit: v.optional(servingSizeUnitValidator),
   allergenRegion: v.optional(v.string()),
   allergenReviewRequired: v.optional(v.boolean()),
   formulationAllergens: v.optional(v.array(v.string())),
@@ -780,6 +788,7 @@ export const versionSnapshotDataValidator = v.object({
   totalProjectRDCost: v.optional(v.number()),
   servingSizeMode: v.optional(servingSizeModeValidator),
   servingSizeAmount: v.optional(v.number()),
+  servingSizeUnit: v.optional(servingSizeUnitValidator),
   allergenRegion: v.optional(v.string()),
   allergenReviewRequired: v.optional(v.boolean()),
   formulationAllergens: v.optional(v.array(v.string())),

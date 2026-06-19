@@ -24,6 +24,7 @@ import {
   phaseValidator,
   projectStatusValidator,
   servingSizeModeValidator,
+  servingSizeUnitValidator,
 } from "./validators";
 
 // ── Helpers ──────────────────────────────────────────
@@ -483,6 +484,7 @@ async function saveProjectSnapshot(
       totalProjectRDCost: project.totalProjectRDCost,
       servingSizeMode: project.servingSizeMode,
       servingSizeAmount: project.servingSizeAmount,
+      servingSizeUnit: project.servingSizeUnit,
       allergenRegion: project.allergenRegion,
       allergenReviewRequired: project.allergenReviewRequired,
       formulationAllergens: project.formulationAllergens,
@@ -699,6 +701,7 @@ export const create = mutation({
     totalProjectRDCost: v.optional(v.number()),
     servingSizeMode: v.optional(servingSizeModeValidator),
     servingSizeAmount: v.optional(v.number()),
+    servingSizeUnit: v.optional(servingSizeUnitValidator),
     allergenRegion: v.optional(v.string()),
     allergenReviewRequired: v.optional(v.boolean()),
     formulationAllergens: v.optional(v.array(v.string())),
@@ -811,6 +814,7 @@ export const update = mutation({
     totalProjectRDCost: v.optional(v.number()),
     servingSizeMode: v.optional(servingSizeModeValidator),
     servingSizeAmount: v.optional(v.number()),
+    servingSizeUnit: v.optional(servingSizeUnitValidator),
     allergenRegion: v.optional(v.string()),
     allergenReviewRequired: v.optional(v.boolean()),
     formulationAllergens: v.optional(v.array(v.string())),
@@ -1053,6 +1057,7 @@ async function cloneProjectAsDraftVersion(
       finishedGoodCostPerUnit: original.finishedGoodCostPerUnit,
       servingSizeMode: original.servingSizeMode,
       servingSizeAmount: original.servingSizeAmount,
+      servingSizeUnit: original.servingSizeUnit,
       allergenRegion: original.allergenRegion,
       allergenReviewRequired: false,
       formulationAllergens: original.formulationAllergens,

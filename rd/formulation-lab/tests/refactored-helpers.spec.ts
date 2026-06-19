@@ -7,8 +7,10 @@ import { getRunValidation } from "../hooks/run-execution/runValidation";
 import {
   buildFormulationSavePayload,
   calculateProjectRDCost,
+  calculatePackagingCosts,
   calculateRecipeCosts,
   calculateRecipeMeasures,
+  isServingOverPackagingCapacity,
 } from "../lib/formulation/save-payload";
 import {
   addStepAfterStepInPhase,
@@ -23,6 +25,7 @@ import {
   applyAllergenOverrides,
   buildAggregatedIngredients,
   calculateRegulationCompliance,
+  calculateNutritionFacts,
   deriveIngredients,
   getFormulationBaselineAllergens,
 } from "../lib/formulation/helpers";
@@ -251,6 +254,53 @@ test.describe("formulation save payload helpers", () => {
     ]);
   });
 
+  test("maps database nutrients onto formulation rows and scales nutrition facts", () => {
+    const aggregatedIngredients = buildAggregatedIngredients([
+      {
+        _id: "ing-milk",
+        name: "Milk",
+        costPerKg: 2,
+        nutrientValues: [
+          { nutrientName: "Calories", value: 60, unit: "kcal" },
+          { nutrientName: "Protein", value: 3.2, unit: "g" },
+          { nutrientName: "Total Fat", value: 3.4, unit: "g" },
+          { nutrientName: "Carbohydrates", value: 4.8, unit: "g" },
+        ],
+      },
+    ] as unknown as Parameters<typeof buildAggregatedIngredients>[0]);
+    const recipePhases = [
+      {
+        id: "phase-a",
+        name: "Prep",
+        color: "blue",
+        steps: [
+          {
+            id: "step-a",
+            type: "weighing",
+            label: "Add Milk",
+            ingredientId: "ing-milk",
+            expectedWeight: 200,
+            unit: "g",
+          },
+        ],
+      },
+    ] as Parameters<typeof deriveIngredients>[0];
+    const ingredients = deriveIngredients(recipePhases, aggregatedIngredients);
+
+    expect(ingredients[0].nutritionPer100g).toEqual({
+      calories: 60,
+      protein: 3.2,
+      fat: 3.4,
+      carbohydrates: 4.8,
+    });
+    expect(calculateNutritionFacts(ingredients, 100, 200)).toEqual({
+      calories: 60,
+      protein: 3.2,
+      fat: 3.4,
+      carbohydrates: 4.8,
+    });
+  });
+
   test("recalculates allergen baseline from selected formulation ingredients", () => {
     const aggregatedIngredients = [
       {
@@ -389,6 +439,33 @@ test.describe("formulation save payload helpers", () => {
       batchCost: 14,
       costPerServing: 1,
     });
+  });
+
+  test("adds packaging cost to finished good unit cost", () => {
+    expect(
+      calculatePackagingCosts({
+        costPerServing: 1.25,
+        packagingUnitPrice: 0.08,
+      })
+    ).toEqual({
+      packagingCostPerUnit: 0.08,
+      finishedGoodCostPerUnit: 1.33,
+    });
+  });
+
+  test("warns when serving weight exceeds packaging capacity", () => {
+    expect(
+      isServingOverPackagingCapacity({
+        packagingCapacity: 100,
+        servingSizeWeight: 150,
+      })
+    ).toBe(true);
+    expect(
+      isServingOverPackagingCapacity({
+        packagingCapacity: 250,
+        servingSizeWeight: 150,
+      })
+    ).toBe(false);
   });
 
   test("flags regulation compliance breaches from row percentage limits", () => {

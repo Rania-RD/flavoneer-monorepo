@@ -104,6 +104,11 @@ export interface FormulationIngredientSource {
   insNumber?: string;
   isAdditive?: boolean;
   name: string;
+  nutrientValues?: Array<{
+    nutrientName: string;
+    unit: string;
+    value: number;
+  }>;
   normalizedInsNumber?: string;
   /** @deprecated older ingredient docs used price before costPerKg was added. */
   price?: number;
@@ -159,10 +164,96 @@ export function buildAggregatedIngredients(
         allergens: Array.from(allergens),
         isAdditive: ing.isAdditive,
         insNumber: ing.insNumber,
+        nutritionPer100g: normalizeNutritionPer100g(ing.nutrientValues),
         normalizedInsNumber: ing.normalizedInsNumber,
         costPerKg: ing.costPerKg ?? ing.price ?? fallbackPrice,
       };
     });
+}
+
+function normalizeNutrientKey(name: string) {
+  return name.toLowerCase().replace(/[^a-z]/g, "");
+}
+
+export function normalizeNutritionPer100g(
+  nutrients?: Array<{ nutrientName: string; value: number }>
+) {
+  const nutrition = {
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbohydrates: 0,
+  };
+
+  for (const nutrient of nutrients ?? []) {
+    const key = normalizeNutrientKey(nutrient.nutrientName);
+    if (key.includes("calorie") || key === "kcal" || key === "energy") {
+      nutrition.calories = nutrient.value;
+    } else if (key.includes("protein")) {
+      nutrition.protein = nutrient.value;
+    } else if (
+      key.includes("carbohydrate") ||
+      key.includes("carb") ||
+      key.includes("cho")
+    ) {
+      nutrition.carbohydrates = nutrient.value;
+    } else if (key.includes("totalfat") || key === "fat") {
+      nutrition.fat = nutrient.value;
+    }
+  }
+
+  return nutrition;
+}
+
+const UNIT_TO_GRAMS: Record<string, number> = {
+  g: 1,
+  gram: 1,
+  grams: 1,
+  kg: 1000,
+  kilogram: 1000,
+  kilograms: 1000,
+};
+
+function ingredientWeightInGrams(ingredient: Ingredient) {
+  const unitFactor = UNIT_TO_GRAMS[(ingredient.unit || "g").toLowerCase()] ?? 1;
+  return ingredient.weight * unitFactor;
+}
+
+export function calculateNutritionFacts(
+  ingredients: Ingredient[],
+  servingSizeWeight: number,
+  batchWeight: number
+) {
+  const batchTotals = ingredients.reduce(
+    (totals, ingredient) => {
+      const nutrition = ingredient.nutritionPer100g;
+      if (!nutrition) {
+        return totals;
+      }
+      const weightFactor = ingredientWeightInGrams(ingredient) / 100;
+      return {
+        calories: totals.calories + nutrition.calories * weightFactor,
+        protein: totals.protein + nutrition.protein * weightFactor,
+        fat: totals.fat + nutrition.fat * weightFactor,
+        carbohydrates:
+          totals.carbohydrates + nutrition.carbohydrates * weightFactor,
+      };
+    },
+    { calories: 0, protein: 0, fat: 0, carbohydrates: 0 }
+  );
+  const servingFactor =
+    batchWeight > 0 && servingSizeWeight > 0
+      ? servingSizeWeight / batchWeight
+      : 0;
+
+  return {
+    calories: Math.round(batchTotals.calories * servingFactor),
+    protein: Number((batchTotals.protein * servingFactor).toFixed(1)),
+    fat: Number((batchTotals.fat * servingFactor).toFixed(1)),
+    carbohydrates: Number(
+      (batchTotals.carbohydrates * servingFactor).toFixed(1)
+    ),
+  };
 }
 
 export function getAdditiveIngredientIds(
@@ -247,6 +338,7 @@ export function deriveIngredients(
             weight: step.expectedWeight || 0,
             unit: step.unit || ingItem?.unit || "g",
             costPerKg: ingItem?.costPerKg,
+            nutritionPer100g: ingItem?.nutritionPer100g,
           });
         }
       }

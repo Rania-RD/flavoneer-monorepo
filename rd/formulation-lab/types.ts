@@ -50,6 +50,7 @@ export interface Ingredient {
   costPerKg?: number;
   id: string;
   name: string;
+  nutritionPer100g?: NutritionPer100g;
   percentage?: number;
   unit?: string;
   weight: number;
@@ -106,10 +107,18 @@ export interface AggregatedIngredient {
   isAdditive?: boolean;
   name: string;
   nearestExpiry: string | null;
+  nutritionPer100g?: NutritionPer100g;
   normalizedInsNumber?: string;
   costPerKg?: number;
   stock: number;
   unit: string;
+}
+
+export interface NutritionPer100g {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbohydrates: number;
 }
 
 export interface TestResult {
@@ -145,6 +154,12 @@ export interface EnrichedProject
   formulationAllergens?: string[];
   formulationAllergenOverrides?: Record<string, boolean>;
   formulationExtraAllergens?: string[];
+  packagingItemName?: string;
+  packagingUnitPrice?: number;
+  packagingCapacity?: number;
+  packagingCapacityUnit?: string;
+  packagingCostPerUnit?: number;
+  finishedGoodCostPerUnit?: number;
   ingredients: Ingredient[];
   phases?: RecipePhase[];
   previousVersionIngredients?: Ingredient[];

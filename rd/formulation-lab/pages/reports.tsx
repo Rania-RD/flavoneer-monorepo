@@ -1,5 +1,5 @@
 import { pdf } from "@react-pdf/renderer";
-import { useMutation, usePaginatedQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import {
   Activity,
   CheckCircle,
@@ -8,9 +8,10 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import FinishedGoodSpecificationSheet from "../components/FinishedGoodSpecificationSheet";
 import InfiniteScrollObserver from "../components/InfiniteScrollObserver";
 import NewLabReportModal from "../components/NewLabReportModal";
 import { ReportPDF } from "../components/ReportPDF";
@@ -19,12 +20,14 @@ import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
-import type { EnrichedLabReport } from "../types";
+import { buildAggregatedIngredients } from "../lib/formulation/helpers";
+import type { EnrichedLabReport, EnrichedProject } from "../types";
 
 const Reports: React.FC = () => {
   const { t } = useTranslation();
   const [filter, setFilter] = useState("All");
   const [showNewModal, setShowNewModal] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string>();
   const { profile } = useSettings();
   const { user, role } = usePermissions();
   const { toast } = useToast();
@@ -41,6 +44,11 @@ const Reports: React.FC = () => {
     {},
     { initialNumItems: 50 }
   );
+  const formulationIngredientOptions = useQuery(
+    api.ingredients.listFormulationOptions,
+    {}
+  );
+  const inventoryItems = useQuery(api.inventory.list, {});
 
   const updateStatus = useMutation(api.labReports.updateStatus);
 
@@ -85,6 +93,35 @@ const Reports: React.FC = () => {
     const hasValidRun = runMap.has(r.runId);
     return matchesFilter && hasValidRun;
   });
+  const activeReport = filteredReports.find(
+    (report) => report._id === selectedReportId
+  );
+  const activeFormulation = useQuery(
+    api.projects.get,
+    activeReport?.projectId ? { id: activeReport.projectId } : "skip"
+  ) as EnrichedProject | null | undefined;
+  const aggregatedIngredients = useMemo(
+    () =>
+      buildAggregatedIngredients(
+        formulationIngredientOptions ?? [],
+        inventoryItems
+      ),
+    [formulationIngredientOptions, inventoryItems]
+  );
+
+  useEffect(() => {
+    if (filteredReports.length === 0) {
+      return;
+    }
+    if (
+      !(
+        selectedReportId &&
+        filteredReports.some((report) => report._id === selectedReportId)
+      )
+    ) {
+      setSelectedReportId(filteredReports[0]._id);
+    }
+  }, [filteredReports, selectedReportId]);
 
   const handleReportAction = async (
     action: string,
@@ -197,6 +234,17 @@ const Reports: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <FinishedGoodSpecificationSheet
+        activeFormulation={activeFormulation}
+        activeReport={activeReport}
+        aggregatedIngredients={aggregatedIngredients}
+        isLoading={Boolean(activeReport) && activeFormulation === undefined}
+        onPrint={() => window.print()}
+        onSelectReport={setSelectedReportId}
+        reports={filteredReports}
+        selectedReportId={selectedReportId}
+      />
 
       {/* Bento Grid */}
       <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-4">

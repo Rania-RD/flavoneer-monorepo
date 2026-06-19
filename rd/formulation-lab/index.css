@@ -52,3 +52,36 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #finished-good-spec-sheet,
+  #finished-good-spec-sheet * {
+    visibility: visible;
+  }
+
+  #finished-good-spec-sheet {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .spec-no-print {
+    display: none !important;
+  }
+
+  .spec-print-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

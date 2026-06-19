@@ -23,7 +23,6 @@ import {
   History,
   MessageSquare,
   Plus,
-  Save,
   ShieldAlert,
   X,
 } from "lucide-react";
@@ -43,7 +42,6 @@ import VersionHistoryModal from "../components/VersionHistoryModal";
 import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
-import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
 import {
   addPhaseToPhases,
@@ -77,6 +75,7 @@ import {
   calculateProjectRDCost,
   calculateRecipeCosts,
   calculateRecipeMeasures,
+  buildFormulationSavePayload,
   isServingOverPackagingCapacity,
 } from "../lib/formulation/save-payload";
 import type {
@@ -162,6 +161,13 @@ const Formulation: React.FC = () => {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false);
   const [isCreatingNewVersion, setIsCreatingNewVersion] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const loadedProjectIdRef = useRef<string | null>(null);
+  const lastAutosaveSignatureRef = useRef("");
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autosaveRunRef = useRef(0);
 
   useEffect(() => {
     setProject(undefined);
@@ -169,6 +175,13 @@ const Formulation: React.FC = () => {
     setExtraAllergenInput("");
     setManualAllergenOverrides({});
     allergenOverridesInitializedFor.current = null;
+    loadedProjectIdRef.current = null;
+    lastAutosaveSignatureRef.current = "";
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    setAutosaveStatus("idle");
     setIsCreatingNewVersion(false);
   }, [projectId]);
 
@@ -397,7 +410,9 @@ const Formulation: React.FC = () => {
   // Initialize Phases
   // biome-ignore lint/correctness/useExhaustiveDependencies: Initialize from Convex query once
   useEffect(() => {
-    if (foundProject) {
+    if (foundProject && loadedProjectIdRef.current !== foundProject._id) {
+      loadedProjectIdRef.current = foundProject._id;
+      lastAutosaveSignatureRef.current = "";
       setProject(foundProject);
       if (foundProject.phases && foundProject.phases.length > 0) {
         setPhases(foundProject.phases);
@@ -577,16 +592,72 @@ const Formulation: React.FC = () => {
   const canEdit = canEditBase && !isReleased;
   // Allow sign off for local/test environments where roles might not be fully seeded
   const canSignOff = true; // role?.key === "admin" || role?.key === "supervisor";
-  const handleSave = useFormulationSave({
+  const autosavePayload = useMemo(
+    () =>
+      project
+        ? buildFormulationSavePayload(project, phases, derivedIngredients)
+        : undefined,
+    [derivedIngredients, phases, project]
+  );
+  const autosaveSignature = useMemo(
+    () => (autosavePayload ? JSON.stringify(autosavePayload) : ""),
+    [autosavePayload]
+  );
+
+  useEffect(() => {
+    if (!(project && projectId && canEdit && autosavePayload)) {
+      return;
+    }
+
+    if (!lastAutosaveSignatureRef.current) {
+      lastAutosaveSignatureRef.current = autosaveSignature;
+      setAutosaveStatus("saved");
+      return;
+    }
+
+    if (lastAutosaveSignatureRef.current === autosaveSignature) {
+      return;
+    }
+
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+
+    setAutosaveStatus("saving");
+    const runId = autosaveRunRef.current + 1;
+    autosaveRunRef.current = runId;
+    autosaveTimerRef.current = setTimeout(() => {
+      updateProjectMutation({
+        id: projectId,
+        ...autosavePayload,
+      })
+        .then(() => {
+          if (autosaveRunRef.current === runId) {
+            lastAutosaveSignatureRef.current = autosaveSignature;
+            setAutosaveStatus("saved");
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          if (autosaveRunRef.current === runId) {
+            setAutosaveStatus("error");
+          }
+        });
+    }, 500);
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, [
+    autosavePayload,
+    autosaveSignature,
     canEdit,
-    ingredients: derivedIngredients,
-    logAction: "Updated Formulation",
-    logPage: "Formulation",
-    phases,
     project,
     projectId,
-    successMessage: "Formulation saved successfully!",
-  });
+    updateProjectMutation,
+  ]);
 
   const handleStatusChange = async (newStatus: string) => {
     if (!(project && projectId)) {
@@ -986,21 +1057,22 @@ const Formulation: React.FC = () => {
           </button>
 
           {canEdit && (
-            <button
-              className="flex items-center gap-2 rounded-3xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-indigo-600/20 shadow-lg transition-all hover:scale-[1.02] hover:bg-indigo-700 active:scale-[0.98] dark:bg-indigo-500"
-              data-testid="save-formulation-button"
-              onClick={() => {
-                if (project.allergenReviewRequired) {
-                  scrollToAllergens();
-                  return;
-                }
-                handleSave();
-              }}
-              type="button"
+            <div
+              className={`rounded-3xl border px-4 py-3 font-bold text-xs uppercase tracking-wide ${
+                autosaveStatus === "error"
+                  ? "border-red-200 bg-red-50 text-red-700 dark:border-red-800/50 dark:bg-red-950/30 dark:text-red-300"
+                  : autosaveStatus === "saving"
+                    ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+              }`}
+              data-testid="autosave-status"
             >
-              <Save size={20} />
-              <span>{t("save_formulation")}</span>
-            </button>
+              {autosaveStatus === "error"
+                ? t("autosave_error")
+                : autosaveStatus === "saving"
+                  ? t("autosave_saving")
+                  : t("autosave_saved")}
+            </div>
           )}
         </div>
       </div>
@@ -1453,7 +1525,6 @@ const Formulation: React.FC = () => {
                 </h3>
                 <textarea
                   className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  onBlur={() => handleSave()}
                   onChange={(e) =>
                     setProject({ ...project, releaseNotes: e.target.value })
                   }

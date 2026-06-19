@@ -1,5 +1,5 @@
 import { Check, FileText, Printer, ShieldCheck } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   calculateNutritionFacts,
@@ -32,6 +32,9 @@ const TREE_NUT_ALLERGENS = [
 const ALLERGEN_PREFIX_REGEX = /^allergen_/i;
 const UNDERSCORE_REGEX = /_/g;
 const TITLE_CASE_WORD_REGEX = /\b\w/g;
+const KCAL_TO_KJ = 4.184;
+
+type NutritionRegulationArea = "FDA" | "EU";
 
 interface FinishedGoodSpecificationSheetProps {
   activeFormulation?: EnrichedProject | null;
@@ -144,6 +147,8 @@ export default function FinishedGoodSpecificationSheet({
   selectedReportId,
 }: FinishedGoodSpecificationSheetProps) {
   const { t } = useTranslation();
+  const [nutritionRegulationArea, setNutritionRegulationArea] =
+    useState<NutritionRegulationArea>("FDA");
   const liveIngredients = useMemo(
     () =>
       attachLiveIngredientData(
@@ -179,6 +184,14 @@ export default function FinishedGoodSpecificationSheet({
     liveIngredients,
     measures.servingSizeWeight,
     batchWeight
+  );
+  const nutritionFactsPer100g = calculateNutritionFacts(
+    liveIngredients,
+    100,
+    batchWeight
+  );
+  const energyKjPer100g = Math.round(
+    nutritionFactsPer100g.calories * KCAL_TO_KJ
   );
   const baselineAllergens = getFormulationBaselineAllergens(
     liveIngredients,
@@ -294,45 +307,6 @@ export default function FinishedGoodSpecificationSheet({
 
   return (
     <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @media print {
-          @page {
-            size: A4;
-            margin: 12mm;
-          }
-
-          body * {
-            visibility: hidden;
-          }
-
-          #finished-good-spec-sheet,
-          #finished-good-spec-sheet * {
-            visibility: visible;
-          }
-
-          #finished-good-spec-sheet {
-            position: absolute;
-            inset: 0 auto auto 0;
-            width: 100%;
-            margin: 0 !important;
-            box-shadow: none !important;
-          }
-
-          .spec-no-print {
-            display: none !important;
-          }
-
-          .spec-print-avoid {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-        }
-      `,
-        }}
-      />
-
       <section
         className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950"
         id="finished-good-spec-sheet"
@@ -358,6 +332,23 @@ export default function FinishedGoodSpecificationSheet({
                 </option>
               ))}
             </select>
+            <label className="flex min-w-[190px] flex-col gap-1 text-slate-600 text-xs dark:text-slate-300">
+              <span className="font-black uppercase tracking-wide">
+                {t("regulation_area")}
+              </span>
+              <select
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-800 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40"
+                onChange={(event) =>
+                  setNutritionRegulationArea(
+                    event.target.value as NutritionRegulationArea
+                  )
+                }
+                value={nutritionRegulationArea}
+              >
+                <option value="FDA">{t("fda_us")}</option>
+                <option value="EU">{t("eu_europe")}</option>
+              </select>
+            </label>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-bold text-sm text-white transition hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
               onClick={onPrint}
@@ -719,42 +710,112 @@ export default function FinishedGoodSpecificationSheet({
                   <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
                     {t("nutrition_facts")}
                   </p>
-                  <div className="mt-3 border-2 border-black bg-white p-3 text-black">
-                    <h5 className="border-black border-b-8 pb-1 font-black text-3xl leading-none">
-                      {t("nutrition_facts")}
-                    </h5>
-                    <div className="border-black border-b py-1 font-bold text-sm">
-                      {t("serving_size")}{" "}
-                      {formatNumber(measures.servingSizeWeight, 1)}g
-                    </div>
-                    <div className="flex items-end justify-between border-black border-b-4 py-1">
-                      <span className="font-black text-xl">
-                        {t("calories")}
-                      </span>
-                      <span className="font-black text-3xl">
-                        {nutritionFacts.calories}
-                      </span>
-                    </div>
-                    {[
-                      [t("total_fat"), `${formatNumber(nutritionFacts.fat)}g`],
-                      [
-                        t("total_carbohydrate"),
-                        `${formatNumber(nutritionFacts.carbohydrates)}g`,
-                      ],
-                      [
-                        t("protein"),
-                        `${formatNumber(nutritionFacts.protein)}g`,
-                      ],
-                    ].map(([label, value]) => (
-                      <div
-                        className="flex justify-between border-black border-b py-1 font-bold text-sm"
-                        key={label}
-                      >
-                        <span>{label}</span>
-                        <span>{value}</span>
+                  {nutritionRegulationArea === "FDA" ? (
+                    <div className="mt-3 border-2 border-black bg-white p-3 text-black">
+                      <h5 className="border-black border-b-8 pb-1 font-black text-3xl leading-none">
+                        {t("nutrition_facts")}
+                      </h5>
+                      <div className="border-black border-b py-1 font-bold text-sm">
+                        {t("serving_size")}{" "}
+                        {formatNumber(measures.servingSizeWeight, 1)}g
                       </div>
-                    ))}
-                  </div>
+                      <div className="border-black border-b-4 py-1">
+                        <p className="font-bold text-[11px] uppercase">
+                          {t("amount_per_serving")}
+                        </p>
+                        <div className="flex items-end justify-between">
+                          <span className="font-black text-xl">
+                            {t("calories")}
+                          </span>
+                          <span className="font-black text-3xl">
+                            {nutritionFacts.calories}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="border-black border-b py-1 text-right font-black text-[11px]">
+                        {t("daily_value_percent")}
+                      </div>
+                      {[
+                        [
+                          t("total_fat"),
+                          `${formatNumber(nutritionFacts.fat)}g`,
+                          "0%",
+                        ],
+                        [
+                          t("total_carbohydrate"),
+                          `${formatNumber(nutritionFacts.carbohydrates)}g`,
+                          "0%",
+                        ],
+                        [
+                          t("protein"),
+                          `${formatNumber(nutritionFacts.protein)}g`,
+                          "",
+                        ],
+                      ].map(([label, value, dailyValue]) => (
+                        <div
+                          className="grid grid-cols-[1fr_auto_auto] gap-2 border-black border-b py-1 font-bold text-sm"
+                          key={label}
+                        >
+                          <span>{label}</span>
+                          <span>{value}</span>
+                          <span>{dailyValue}</span>
+                        </div>
+                      ))}
+                      <p className="mt-2 text-[10px] leading-tight">
+                        {t("daily_values_reference_note")}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-3 overflow-hidden border border-slate-950 bg-white text-black">
+                      <div className="border-slate-950 border-b bg-slate-100 px-3 py-2">
+                        <h5 className="font-black text-lg uppercase">
+                          {t("nutrition_facts")}
+                        </h5>
+                        <p className="font-bold text-xs">{t("per_100g")}</p>
+                      </div>
+                      <table className="w-full border-collapse text-sm">
+                        <tbody>
+                          {[
+                            [
+                              t("energy"),
+                              `${energyKjPer100g} kJ / ${nutritionFactsPer100g.calories} kcal`,
+                            ],
+                            [
+                              t("total_fat"),
+                              `${formatNumber(nutritionFactsPer100g.fat)} g`,
+                            ],
+                            [t("of_which_saturates"), t("not_measured")],
+                            [
+                              t("carbohydrates"),
+                              `${formatNumber(
+                                nutritionFactsPer100g.carbohydrates
+                              )} g`,
+                            ],
+                            [t("of_which_sugars"), t("not_measured")],
+                            [
+                              t("protein"),
+                              `${formatNumber(
+                                nutritionFactsPer100g.protein
+                              )} g`,
+                            ],
+                            [t("salt"), t("not_measured")],
+                          ].map(([label, value]) => (
+                            <tr
+                              className="border-slate-300 border-b last:border-b-0"
+                              key={label}
+                            >
+                              <th className="px-3 py-2 text-left font-bold">
+                                {label}
+                              </th>
+                              <td className="px-3 py-2 text-right font-semibold">
+                                {value}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
                   <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">

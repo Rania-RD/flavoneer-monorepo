@@ -1038,5 +1038,16 @@
   "prepared_by_rd": "Prepared by R&D",
   "reviewed_by_qa": "Reviewed by QA",
   "approved_by_plant_manager": "Approved by Plant Manager",
-  "signature_date": "Signature / Date"
+  "signature_date": "Signature / Date",
+  "autosave_saving": "Saving...",
+  "autosave_saved": "Saved",
+  "autosave_error": "Autosave failed",
+  "regulation_area": "Regulation Area",
+  "fda_us": "FDA (US)",
+  "per_100g": "Per 100g",
+  "energy": "Energy",
+  "of_which_saturates": "of which saturates",
+  "of_which_sugars": "of which sugars",
+  "salt": "Salt",
+  "not_measured": "Not measured"
 }

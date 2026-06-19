@@ -16,6 +16,7 @@ import type * as comments from "../comments.js";
 import type * as equipment from "../equipment.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
+import type * as i18nMaintenance from "../i18nMaintenance.js";
 import type * as ingredients from "../ingredients.js";
 import type * as inventory from "../inventory.js";
 import type * as labReports from "../labReports.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   equipment: typeof equipment;
   files: typeof files;
   http: typeof http;
+  i18nMaintenance: typeof i18nMaintenance;
   ingredients: typeof ingredients;
   inventory: typeof inventory;
   labReports: typeof labReports;

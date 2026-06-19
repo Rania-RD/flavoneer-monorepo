@@ -8,6 +8,20 @@ export interface LocalizedString {
 }
 
 export const I18N_VERSION = 201;
+const QUESTION_MARK_RUN_REGEX = /\?{3,}/;
+const MOJIBAKE_REGEX = /(?:Ø|Ù|�)/;
+
+export function isCorruptedLocalizedText(value?: string | null) {
+  if (!value) {
+    return false;
+  }
+  return QUESTION_MARK_RUN_REGEX.test(value) || MOJIBAKE_REGEX.test(value);
+}
+
+function cleanLocalizedText(value?: string) {
+  const trimmed = value?.trim();
+  return trimmed && !isCorruptedLocalizedText(trimmed) ? trimmed : undefined;
+}
 
 export function normalizeLanguage(language?: string): SupportedLanguage {
   return language === "ar" ? "ar" : "en";
@@ -17,9 +31,13 @@ export function makeLocalizedString(
   legacyValue: string | undefined,
   localized?: LocalizedString
 ): LocalizedString {
-  const fallback = legacyValue?.trim() || localized?.en || localized?.ar || "";
-  const en = localized?.en?.trim() || fallback;
-  const ar = localized?.ar?.trim() || en || fallback;
+  const fallback =
+    cleanLocalizedText(legacyValue) ||
+    cleanLocalizedText(localized?.en) ||
+    cleanLocalizedText(localized?.ar) ||
+    "";
+  const en = cleanLocalizedText(localized?.en) || fallback;
+  const ar = cleanLocalizedText(localized?.ar) || en || fallback;
   return { en, ar };
 }
 
@@ -29,11 +47,23 @@ export function selectLocalizedString(
   language?: string
 ) {
   const normalizedLanguage = normalizeLanguage(language);
-  const fallback = legacyValue ?? localized?.en ?? localized?.ar ?? "";
+  const fallback =
+    cleanLocalizedText(legacyValue) ||
+    cleanLocalizedText(localized?.en) ||
+    cleanLocalizedText(localized?.ar) ||
+    "";
   if (normalizedLanguage === "ar") {
-    return localized?.ar || localized?.en || fallback;
+    return (
+      cleanLocalizedText(localized?.ar) ||
+      cleanLocalizedText(localized?.en) ||
+      fallback
+    );
   }
-  return localized?.en || localized?.ar || fallback;
+  return (
+    cleanLocalizedText(localized?.en) ||
+    cleanLocalizedText(localized?.ar) ||
+    fallback
+  );
 }
 
 export function localizeArray(

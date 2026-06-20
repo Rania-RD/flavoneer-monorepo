@@ -426,7 +426,8 @@ async function replacePhases(
 
 async function saveProjectSnapshot(
   ctx: MutationCtx,
-  projectId: Id<"projects">
+  projectId: Id<"projects">,
+  autosaveName?: string
 ) {
   const project = await ctx.db.get(projectId);
   if (!project) {
@@ -518,8 +519,9 @@ async function saveProjectSnapshot(
       authorizedExecutor: project.authorizedExecutor,
     }).filter(([, value]) => value !== undefined)
   ) as Doc<"projectVersions">["data"];
-  const now = new Date();
-  const snapshotName = `Auto-Save ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+  const snapshotName =
+    autosaveName?.trim().slice(0, 160) ||
+    "Auto-Save: Updated formulation fields";
 
   await ctx.db.insert("projectVersions", {
     projectId,
@@ -844,11 +846,18 @@ export const update = mutation({
     releaseNotes: v.optional(v.string()),
     releasedBy: v.optional(v.string()),
     authorizedExecutor: v.optional(v.string()),
+    autosaveName: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { id, ingredients, previousVersionIngredients, phases, ...updates } =
-      args;
+    const {
+      id,
+      ingredients,
+      previousVersionIngredients,
+      phases,
+      autosaveName,
+      ...updates
+    } = args;
 
     const existingProject = await ctx.db.get(id);
     if (!existingProject) {
@@ -965,7 +974,7 @@ export const update = mutation({
     }
 
     // Auto-create an immutable snapshot of this saved state
-    await saveProjectSnapshot(ctx, id);
+    await saveProjectSnapshot(ctx, id, autosaveName);
 
     return null;
   },

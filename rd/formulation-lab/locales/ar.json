@@ -1051,5 +1051,7 @@
   "salt": "الملح",
   "not_measured": "غير مقاس",
   "serving_size_unit": "وحدة حجم الحصة",
-  "servings": "حصص"
+  "servings": "حصص",
+  "exit_editor": "الخروج من المحرر",
+  "autosave_updated_formulation_fields": "حفظ تلقائي: تم تحديث حقول التركيبة"
 }

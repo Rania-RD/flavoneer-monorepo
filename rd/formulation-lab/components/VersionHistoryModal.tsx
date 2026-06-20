@@ -39,6 +39,16 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
   const [newVersionNum, setNewVersionNum] = useState("");
   const [newVersionName, setNewVersionName] = useState("");
 
+  const getVersionDisplayName = (name?: string) => {
+    if (!name) {
+      return t("autosave_updated_formulation_fields");
+    }
+    if (/^Auto-Save\s+\d/i.test(name)) {
+      return t("autosave_updated_formulation_fields");
+    }
+    return name;
+  };
+
   // Auto-fill version number when suggestion loads or modal opens
   React.useEffect(() => {
     if (nextVersionSuggestion && isCreating) {
@@ -225,11 +235,9 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                             )}
                           </span>
                         </div>
-                        {v.name && (
-                          <p className="font-bold text-gray-900 text-sm dark:text-slate-100">
-                            {v.name}
-                          </p>
-                        )}
+                        <p className="font-bold text-gray-900 text-sm dark:text-slate-100">
+                          {getVersionDisplayName(v.name)}
+                        </p>
                       </div>
 
                       <button

@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -105,6 +105,16 @@ const PACKAGING_OPTIONS = [
 }>;
 
 const SERVING_SIZE_UNITS = ["g", "kg", "mg", "ml"] as const;
+const MULTIPLE_AUTOSAVE_NAME =
+  "Auto-Save: Updated multiple formulation fields";
+const DEFAULT_AUTOSAVE_NAME = "Auto-Save: Updated formulation fields";
+
+function formatAutosaveValue(value: string | number | undefined) {
+  if (value === undefined || value === "") {
+    return "blank";
+  }
+  return String(value);
+}
 
 const Formulation: React.FC = () => {
   const { t } = useTranslation();
@@ -171,8 +181,24 @@ const Formulation: React.FC = () => {
   const lastAutosaveSignatureRef = useRef("");
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autosaveRunRef = useRef(0);
+  const pendingAutosaveChangesRef = useRef<Map<string, string>>(new Map());
 
-  useEffect(() => {
+  const queueAutosaveChange = useCallback((key: string, description: string) => {
+    pendingAutosaveChangesRef.current.set(key, description);
+  }, []);
+
+  const getPendingAutosaveName = useCallback(() => {
+    const descriptions = [...pendingAutosaveChangesRef.current.values()];
+    if (descriptions.length === 0) {
+      return DEFAULT_AUTOSAVE_NAME;
+    }
+    if (descriptions.length === 1) {
+      return descriptions[0];
+    }
+    return MULTIPLE_AUTOSAVE_NAME;
+  }, []);
+
+  const resetEditorState = useCallback(() => {
     setProject(undefined);
     setPhases([]);
     setExtraAllergenInput("");
@@ -180,13 +206,20 @@ const Formulation: React.FC = () => {
     allergenOverridesInitializedFor.current = null;
     loadedProjectIdRef.current = null;
     lastAutosaveSignatureRef.current = "";
+    pendingAutosaveChangesRef.current.clear();
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = null;
     }
     setAutosaveStatus("idle");
+    setIsVersionHistoryOpen(false);
+    setIsReviewPanelOpen(false);
     setIsCreatingNewVersion(false);
-  }, [projectId]);
+  }, []);
+
+  useEffect(() => {
+    resetEditorState();
+  }, [projectId, resetEditorState]);
 
   // Dnd-Kit Phase Handlers
   const sensors = useSensors(
@@ -257,6 +290,12 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      "measures.servingSizeAmount",
+      servingSizeMode === "recipeMakes"
+        ? `Auto-Save: Updated serving count to ${formatAutosaveValue(value)}`
+        : `Auto-Save: Updated serving size to ${formatAutosaveValue(value)}${servingSizeUnit}`
+    );
     setProject({
       ...project,
       servingSizeAmount: value === "" ? undefined : Number(value),
@@ -267,6 +306,10 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      "measures.servingSizeUnit",
+      `Auto-Save: Updated serving size unit to ${servingSizeUnit}`
+    );
     setProject({
       ...project,
       servingSizeUnit,
@@ -277,6 +320,10 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      "measures.formulationState",
+      `Auto-Save: Switched formulation state to ${formulationState}`
+    );
     setProject({
       ...project,
       formulationState,
@@ -287,6 +334,14 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      "measures.servingSizeMode",
+      `Auto-Save: Switched serving size mode to ${
+        servingSizeMode === "recipeMakes"
+          ? "A Recipe makes"
+          : "A Serving is"
+      }`
+    );
     setProject({
       ...project,
       servingSizeMode,
@@ -299,6 +354,10 @@ const Formulation: React.FC = () => {
     }
     const option = PACKAGING_OPTIONS.find(
       (item) => item.name === packagingItemName
+    );
+    queueAutosaveChange(
+      "packaging.item",
+      `Auto-Save: Updated packaging item to ${packagingItemName || "none"}`
     );
     setProject({
       ...project,
@@ -318,6 +377,12 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      `packaging.${field}`,
+      field === "packagingUnitPrice"
+        ? `Auto-Save: Updated packaging unit price to $${formatAutosaveValue(value)}`
+        : `Auto-Save: Updated packaging capacity to ${formatAutosaveValue(value)}g`
+    );
     setProject({
       ...project,
       [field]: value === "" ? undefined : Number(value),
@@ -346,6 +411,10 @@ const Formulation: React.FC = () => {
     const currentChecked = selectedFormulationAllergens.includes(allergenKey);
     const nextChecked = !currentChecked;
     const baselineChecked = baselineAllergens.includes(allergenKey);
+    queueAutosaveChange(
+      `allergens.${allergenKey}`,
+      `Auto-Save: ${nextChecked ? "Selected" : "Cleared"} allergen ${allergenKey.replace(/^allergen_/, "").replace(/_/g, " ")}`
+    );
     setManualAllergenOverrides((currentOverrides) => {
       const nextOverrides = { ...currentOverrides };
       if (nextChecked === baselineChecked) {
@@ -374,6 +443,10 @@ const Formulation: React.FC = () => {
       setExtraAllergenInput("");
       return;
     }
+    queueAutosaveChange(
+      "allergens.extra",
+      `Auto-Save: Added extra allergen ${value}`
+    );
     setProject({
       ...project,
       formulationExtraAllergens: [...currentExtras, value],
@@ -386,6 +459,10 @@ const Formulation: React.FC = () => {
     if (!(project && canEdit)) {
       return;
     }
+    queueAutosaveChange(
+      "allergens.extra",
+      `Auto-Save: Removed extra allergen ${value}`
+    );
     setProject({
       ...project,
       formulationExtraAllergens: (
@@ -414,6 +491,21 @@ const Formulation: React.FC = () => {
       formulationAllergens: selectedFormulationAllergens,
       formulationAllergenOverrides: manualAllergenOverrides,
       formulationExtraAllergens: extraFormulationAllergens,
+    });
+  };
+
+  const handleAllergenRegionChange = (allergenRegion: string) => {
+    if (!project) {
+      return;
+    }
+    queueAutosaveChange(
+      "label.regulation",
+      `Auto-Save: Switched label regulation to ${allergenRegion}`
+    );
+    setProject({
+      ...project,
+      allergenRegion,
+      allergenReviewRequired: true,
     });
   };
 
@@ -642,13 +734,16 @@ const Formulation: React.FC = () => {
     const runId = autosaveRunRef.current + 1;
     autosaveRunRef.current = runId;
     autosaveTimerRef.current = setTimeout(() => {
+      const autosaveName = getPendingAutosaveName();
       updateProjectMutation({
         id: projectId,
         ...autosavePayload,
+        autosaveName,
       })
         .then(() => {
           if (autosaveRunRef.current === runId) {
             lastAutosaveSignatureRef.current = autosaveSignature;
+            pendingAutosaveChangesRef.current.clear();
             setAutosaveStatus("saved");
           }
         })
@@ -669,8 +764,58 @@ const Formulation: React.FC = () => {
     autosavePayload,
     autosaveSignature,
     canEdit,
+    getPendingAutosaveName,
     project,
     projectId,
+    updateProjectMutation,
+  ]);
+
+  const handleExitEditor = useCallback(async () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+
+    const hasPendingAutosave =
+      Boolean(projectId && canEdit && autosavePayload) &&
+      lastAutosaveSignatureRef.current !== autosaveSignature;
+
+    if (hasPendingAutosave && projectId && autosavePayload) {
+      const runId = autosaveRunRef.current + 1;
+      autosaveRunRef.current = runId;
+      const autosaveName = getPendingAutosaveName();
+      setAutosaveStatus("saving");
+
+      try {
+        await updateProjectMutation({
+          id: projectId,
+          ...autosavePayload,
+          autosaveName,
+        });
+        if (autosaveRunRef.current === runId) {
+          lastAutosaveSignatureRef.current = autosaveSignature;
+          pendingAutosaveChangesRef.current.clear();
+          setAutosaveStatus("saved");
+        }
+      } catch (error) {
+        console.error(error);
+        if (autosaveRunRef.current === runId) {
+          setAutosaveStatus("error");
+        }
+      }
+    }
+
+    autosaveRunRef.current += 1;
+    resetEditorState();
+    navigate("/", { replace: true });
+  }, [
+    autosavePayload,
+    autosaveSignature,
+    canEdit,
+    getPendingAutosaveName,
+    navigate,
+    projectId,
+    resetEditorState,
     updateProjectMutation,
   ]);
 
@@ -721,6 +866,7 @@ const Formulation: React.FC = () => {
         id: projectId,
         status: newStatus as "Draft" | "Under Review" | "Released",
         releaseNotes: nextReleaseNotes,
+        autosaveName: `Auto-Save: Changed status to ${newStatus}`,
         ...(releasedBy ? { releasedBy } : {}),
       });
 
@@ -793,6 +939,76 @@ const Formulation: React.FC = () => {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const getIngredientName = (ingredientId?: string, fallback?: string) =>
+    aggregatedIngredients.find((ingredient) => ingredient._id === ingredientId)
+      ?.name ||
+    fallback ||
+    t("ingredient");
+
+  const formatCriticalParameterValue = (
+    parameter: NonNullable<RecipeStep["criticalParams"]>[number] | undefined
+  ) => {
+    const min =
+      typeof parameter?.min === "number" && Number.isFinite(parameter.min)
+        ? parameter.min
+        : undefined;
+    const max =
+      typeof parameter?.max === "number" && Number.isFinite(parameter.max)
+        ? parameter.max
+        : undefined;
+    if (min !== undefined && max !== undefined) {
+      return min === max ? `${min}` : `${min}-${max}`;
+    }
+    if (max !== undefined) {
+      return `${max}`;
+    }
+    if (min !== undefined) {
+      return `${min}`;
+    }
+    return "blank";
+  };
+
+  const describeStepAutosave = (
+    currentStep: RecipeStep | undefined,
+    updates: Partial<RecipeStep>
+  ) => {
+    const nextStep = { ...currentStep, ...updates } as RecipeStep;
+    if ("expectedWeight" in updates || "unit" in updates) {
+      const ingredientName = getIngredientName(
+        nextStep.ingredientId,
+        nextStep.label
+      );
+      return `Auto-Save: Updated ${ingredientName} to ${formatAutosaveValue(nextStep.expectedWeight)}${nextStep.unit || "g"}`;
+    }
+    if ("ingredientId" in updates) {
+      return `Auto-Save: Updated ingredient row to ${getIngredientName(updates.ingredientId, nextStep.label)}`;
+    }
+    if ("maxLimitPercent" in updates) {
+      return `Auto-Save: Updated regulation limit for ${getIngredientName(nextStep.ingredientId, nextStep.label)} to ${formatAutosaveValue(updates.maxLimitPercent)}%`;
+    }
+    if ("criticalParams" in updates) {
+      const parameter = updates.criticalParams?.[0];
+      const parameterName = parameter?.name || currentStep?.label || "Critical";
+      return `Auto-Save: Updated ${parameterName} parameter to ${formatCriticalParameterValue(parameter)}`;
+    }
+    if ("processTemp" in updates) {
+      return `Auto-Save: Updated process temperature to ${formatAutosaveValue(updates.processTemp)}`;
+    }
+    if ("processSpeed" in updates) {
+      return `Auto-Save: Updated process speed to ${formatAutosaveValue(updates.processSpeed)}`;
+    }
+    if ("durationSeconds" in updates) {
+      return `Auto-Save: Updated timer to ${formatAutosaveValue(updates.durationSeconds)} seconds`;
+    }
+    if ("label" in updates) {
+      return `Auto-Save: Updated step label to ${formatAutosaveValue(updates.label)}`;
+    }
+    if ("notes" in updates) {
+      return `Auto-Save: Updated step notes`;
+    }
+    return DEFAULT_AUTOSAVE_NAME;
+  };
+
   const addPhase = () => {
     if (!canEdit) {
       return;
@@ -801,6 +1017,7 @@ const Formulation: React.FC = () => {
       phases,
       t("new_phase")
     );
+    queueAutosaveChange("phase.add", "Auto-Save: Added a new phase");
     setPhases(nextPhases);
     setTimeout(() => scrollToItem(newPhase.id), 100);
   };
@@ -809,6 +1026,12 @@ const Formulation: React.FC = () => {
     if (!canEdit) {
       return;
     }
+    if (updates.name !== undefined) {
+      queueAutosaveChange(
+        `phase.${phaseId}.name`,
+        `Auto-Save: Updated phase name to ${formatAutosaveValue(updates.name)}`
+      );
+    }
     setPhases(updatePhaseInPhases(phases, phaseId, updates));
   };
 
@@ -816,6 +1039,7 @@ const Formulation: React.FC = () => {
     if (!canEdit) {
       return;
     }
+    queueAutosaveChange("phase.delete", "Auto-Save: Deleted a phase");
     setPhases(deletePhaseFromPhases(phases, phaseId));
   };
 
@@ -831,6 +1055,10 @@ const Formulation: React.FC = () => {
       t("mini_spreadsheet")
     );
     setPhases(nextPhases);
+    queueAutosaveChange(
+      `step.${type}.add`,
+      `Auto-Save: Added a ${type.replace(/_/g, " ")} step`
+    );
     if (type === "weighing") {
       markAllergenReviewRequired();
     }
@@ -854,6 +1082,10 @@ const Formulation: React.FC = () => {
       t("mini_spreadsheet")
     );
     setPhases(nextPhases);
+    queueAutosaveChange(
+      `step.${type}.addAfter`,
+      `Auto-Save: Added a ${type.replace(/_/g, " ")} step`
+    );
     if (type === "weighing") {
       markAllergenReviewRequired();
     }
@@ -872,6 +1104,10 @@ const Formulation: React.FC = () => {
       .find((phase) => phase.id === phaseId)
       ?.steps.find((step) => step.id === stepId);
     const nextPhases = updateStepInPhase(phases, phaseId, stepId, updates);
+    queueAutosaveChange(
+      `step.${stepId}`,
+      describeStepAutosave(changedStep, updates)
+    );
     setPhases(nextPhases);
     if (
       changedStep?.type === "weighing" &&
@@ -891,6 +1127,10 @@ const Formulation: React.FC = () => {
       .find((phase) => phase.id === phaseId)
       ?.steps.find((step) => step.id === stepId);
     const nextPhases = deleteStepFromPhase(phases, phaseId, stepId);
+    queueAutosaveChange(
+      `step.${stepId}.delete`,
+      `Auto-Save: Deleted ${deletedStep?.label || "a formulation step"}`
+    );
     setPhases(nextPhases);
     if (deletedStep?.type === "weighing") {
       markAllergenReviewRequired();
@@ -905,6 +1145,10 @@ const Formulation: React.FC = () => {
     if (!canEdit || startIndex === endIndex) {
       return;
     }
+    queueAutosaveChange(
+      `phase.${phaseId}.reorderSteps`,
+      "Auto-Save: Reordered formulation steps"
+    );
     setPhases((currentPhases) =>
       reorderStepInPhase(currentPhases, phaseId, startIndex, endIndex)
     );
@@ -914,6 +1158,7 @@ const Formulation: React.FC = () => {
     if (!canEdit || startIndex === endIndex) {
       return;
     }
+    queueAutosaveChange("phase.reorder", "Auto-Save: Reordered phases");
     setPhases((currentPhases) =>
       reorderPhases(currentPhases, startIndex, endIndex)
     );
@@ -921,8 +1166,20 @@ const Formulation: React.FC = () => {
 
   if (!project) {
     return (
-      <div>
-        {convexProject === undefined ? t("loading") : t("project_not_found")}
+      <div className="-m-4 flex min-h-dvh items-center justify-center bg-white p-6 sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
+        <div className="max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="font-bold text-slate-700 dark:text-slate-200">
+            {convexProject === undefined ? t("loading") : t("project_not_found")}
+          </p>
+          <button
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+            onClick={handleExitEditor}
+            type="button"
+          >
+            <ChevronLeft size={16} />
+            {t("exit_editor")}
+          </button>
+        </div>
       </div>
     );
   }
@@ -939,20 +1196,15 @@ const Formulation: React.FC = () => {
       <div className="relative z-10 flex shrink-0 flex-col justify-between gap-4 border-gray-100 border-b bg-white px-8 py-4 shadow-sm md:flex-row md:items-center dark:border-slate-800 dark:bg-[#0f172a]">
         <div className="flex items-center space-x-4">
           <button
-            aria-label={t("go_back")}
-            className="cursor-pointer rounded-full border border-gray-200 bg-gray-50 p-3 text-gray-500 transition-colors hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-            onClick={() => {
-              if (window.history.length > 2) {
-                navigate(-1);
-              } else {
-                navigate("/");
-              }
-            }}
-            style={{ cursor: "pointer" }}
-            title={t("go_back")}
+            aria-label={t("exit_editor")}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-3 font-bold text-gray-600 text-sm transition-colors hover:bg-gray-100 hover:text-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+            data-testid="exit-editor-button"
+            onClick={handleExitEditor}
+            title={t("exit_editor")}
             type="button"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
+            <span>{t("exit_editor")}</span>
           </button>
           <div>
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
@@ -1301,11 +1553,7 @@ const Formulation: React.FC = () => {
                 disabled={!canEdit}
                 id="formulation-allergen-region"
                 onChange={(event) =>
-                  setProject({
-                    ...project,
-                    allergenRegion: event.target.value,
-                    allergenReviewRequired: true,
-                  })
+                  handleAllergenRegionChange(event.target.value)
                 }
                 value={allergenRegion}
               >
@@ -1540,9 +1788,13 @@ const Formulation: React.FC = () => {
                 </h3>
                 <textarea
                   className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  onChange={(e) =>
-                    setProject({ ...project, releaseNotes: e.target.value })
-                  }
+                  onChange={(e) => {
+                    queueAutosaveChange(
+                      "metadata.releaseNotes",
+                      "Auto-Save: Updated release notes"
+                    );
+                    setProject({ ...project, releaseNotes: e.target.value });
+                  }}
                   placeholder={t("release_notes_placeholder")}
                   value={project.releaseNotes || ""}
                 />

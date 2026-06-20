@@ -1051,5 +1051,7 @@
   "salt": "Salt",
   "not_measured": "Not measured",
   "serving_size_unit": "Serving size unit",
-  "servings": "servings"
+  "servings": "servings",
+  "exit_editor": "Exit Editor",
+  "autosave_updated_formulation_fields": "Auto-Save: Updated formulation fields"
 }

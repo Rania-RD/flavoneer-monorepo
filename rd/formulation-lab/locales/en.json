@@ -1041,7 +1041,7 @@
   "signature_date": "Signature / Date",
   "autosave_saving": "Saving...",
   "autosave_saved": "Saved",
-  "autosave_error": "Autosave failed",
+  "autosave_error": "Save failed - Check internet connection",
   "regulation_area": "Regulation Area",
   "fda_us": "FDA (US)",
   "per_100g": "Per 100g",

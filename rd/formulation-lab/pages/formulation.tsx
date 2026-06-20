@@ -1216,6 +1216,26 @@ const Formulation: React.FC = () => {
                       v{project.version}
                     </span>
                   </h1>
+                  {canEdit && (
+                    <span
+                      aria-live="polite"
+                      className={`pt-1 font-medium text-[11px] leading-none ${
+                        autosaveStatus === "error"
+                          ? "text-red-600 dark:text-red-400"
+                          : autosaveStatus === "saving"
+                            ? "text-slate-500 dark:text-slate-400"
+                            : "text-slate-400 dark:text-slate-500"
+                      }`}
+                      data-testid="autosave-status"
+                      role={autosaveStatus === "error" ? "alert" : "status"}
+                    >
+                      {autosaveStatus === "error"
+                        ? t("autosave_error")
+                        : autosaveStatus === "saving"
+                          ? t("autosave_saving")
+                          : t("autosave_saved")}
+                    </span>
+                  )}
                   {project && (
                     <div className="flex flex-wrap items-center gap-2">
                       <select
@@ -1322,27 +1342,6 @@ const Formulation: React.FC = () => {
             <History size={20} />
             <span>{t("history")}</span>
           </button>
-
-          {canEdit && (
-            <div
-              aria-live="polite"
-              className={`inline-flex min-w-[88px] items-center justify-center rounded-full px-3 py-2 font-semibold text-xs transition-colors ${
-                autosaveStatus === "error"
-                  ? "border border-red-200 bg-red-50 text-red-700 dark:border-red-800/50 dark:bg-red-950/30 dark:text-red-300"
-                  : autosaveStatus === "saving"
-                    ? "border border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300"
-                    : "text-slate-400 dark:text-slate-500"
-              }`}
-              data-testid="autosave-status"
-              role={autosaveStatus === "error" ? "alert" : "status"}
-            >
-              {autosaveStatus === "error"
-                ? t("autosave_error")
-                : autosaveStatus === "saving"
-                  ? t("autosave_saving")
-                  : t("autosave_saved")}
-            </div>
-          )}
         </div>
       </div>
 

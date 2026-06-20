@@ -1,6 +1,7 @@
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "./convex/_generated/api";
 import type { Doc, Id } from "./convex/_generated/dataModel";
+import type { LocalizedString } from "./lib/i18n-data";
 
 // ─── Backend-derived types (from Convex schema) ─────────────
 export type Project = Doc<"projects">;
@@ -50,6 +51,7 @@ export interface Ingredient {
   costPerKg?: number;
   id: string;
   name: string;
+  nameI18n?: LocalizedString;
   nutritionPer100g?: NutritionPer100g;
   percentage?: number;
   unit?: string;
@@ -71,8 +73,10 @@ export interface RecipeStep {
   isCompleted?: boolean;
   isLocked?: boolean;
   label: string;
+  labelI18n?: LocalizedString;
   maxLimitPercent?: number;
   notes?: string;
+  notesI18n?: LocalizedString;
   onFail?: {
     action: "redirect_dispose" | "report_reason";
     reasonPrompt?: string;
@@ -90,6 +94,7 @@ export interface RecipePhase {
   color: string;
   id: string;
   name: string;
+  nameI18n?: LocalizedString;
   requiresSignOff?: boolean;
   steps: RecipeStep[];
 }
@@ -103,31 +108,34 @@ export interface StepDependency {
 export interface AggregatedIngredient {
   _id: string;
   allergens: string[];
+  costPerKg?: number;
   insNumber?: string;
   isAdditive?: boolean;
   name: string;
   nearestExpiry: string | null;
-  nutritionPer100g?: NutritionPer100g;
   normalizedInsNumber?: string;
-  costPerKg?: number;
+  nutritionPer100g?: NutritionPer100g;
   stock: number;
   unit: string;
 }
 
 export interface NutritionPer100g {
   calories: number;
-  protein: number;
-  fat: number;
   carbohydrates: number;
+  fat: number;
+  protein: number;
 }
 
 export interface TestResult {
   actualValue: number;
   max: number;
   method: string;
+  methodI18n?: LocalizedString;
   min: number;
   parameter: string;
+  parameterI18n?: LocalizedString;
   targetRange: string;
+  targetRangeI18n?: LocalizedString;
   unit: string;
 }
 
@@ -145,33 +153,15 @@ export interface EnrichedProject
     BackendEnrichedProject,
     "ingredients" | "phases" | "previousVersionIngredients"
   > {
-  allergenRegion?: string;
-  allergenReviewRequired?: boolean;
-  batchWeight?: number;
-  batchCost?: number;
-  costPerServing?: number;
-  formulationState?: FormulationState;
-  formulationAllergens?: string[];
-  formulationAllergenOverrides?: Record<string, boolean>;
-  formulationExtraAllergens?: string[];
-  packagingItemName?: string;
-  packagingUnitPrice?: number;
-  packagingCapacity?: number;
-  packagingCapacityUnit?: string;
-  packagingCostPerUnit?: number;
-  finishedGoodCostPerUnit?: number;
   ingredients: Ingredient[];
   phases?: RecipePhase[];
   previousVersionIngredients?: Ingredient[];
-  servingSizeAmount?: number;
-  servingSizeMode?: ServingSizeMode;
-  totalProjectRDCost?: number;
-  yield?: number;
 }
 
 // Enriched lab report with joined results (from backend query)
 export interface EnrichedLabReport extends LabReport {
   projectName: string;
+  projectNameI18n?: LocalizedString;
   results: TestResult[];
 }
 
@@ -179,7 +169,7 @@ export interface EnrichedLabReport extends LabReport {
 // Does not extend InventoryItem because backend enrichment adds computed fields
 // with different shapes than the raw schema (e.g. usedIn is objects, not strings)
 export type EnrichedInventoryItem = Omit<InventoryItem, "usedIn"> & {
-  usedIn: { id: string; name: string }[];
+  usedIn: { id: string; name: string; nameI18n?: LocalizedString }[];
   expiryStatus: string;
   expiryDays?: number;
 };
@@ -208,21 +198,21 @@ export type StepType =
 export type SpreadsheetCellValue = string | number | boolean | null;
 
 export interface MiniSpreadsheetCell {
-  raw: string;
-  value?: SpreadsheetCellValue;
   display?: string;
-  formula?: string;
   error?: "ERROR" | "REF" | "CYCLE";
+  formula?: string;
+  raw: string;
   updatedAt?: number;
   updatedBy?: string;
+  value?: SpreadsheetCellValue;
 }
 
 export interface MiniSpreadsheet {
-  sheetKey: string;
-  rows: number;
-  cols: number;
   cells: Record<string, MiniSpreadsheetCell>;
+  cols: number;
   revision: number;
+  rows: number;
+  sheetKey: string;
   updatedAt?: number;
   updatedBy?: string;
 }

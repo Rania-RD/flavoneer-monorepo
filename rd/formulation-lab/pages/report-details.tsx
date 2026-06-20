@@ -15,6 +15,7 @@ import type React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { ReportPDF } from "../components/ReportPDF";
+import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useToast } from "../hooks/useToast";
@@ -22,13 +23,14 @@ import { MotionDiv, modalVariants } from "../lib/animations";
 
 const ReportDetails: React.FC = () => {
   const { t } = useTranslation();
+  const { language } = useSettings();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const report = useQuery(
     api.labReports.get,
-    id ? { id: id as Id<"labReports"> } : "skip"
+    id ? { id: id as Id<"labReports">, language } : "skip"
   );
 
   if (report === undefined) {

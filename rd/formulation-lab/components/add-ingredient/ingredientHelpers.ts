@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import type { Id } from "../../convex/_generated/dataModel";
 import { normalizeInsNumber } from "../../convex/regulatoryHelpers";
+import { makeLocalizedString } from "../../lib/i18n-data";
 import type { IngredientEditorData, IngredientListItem } from "../../types";
 import {
   INITIAL_INGREDIENT_FORM_DATA,
@@ -25,7 +26,9 @@ export const createInitialIngredientFormData = (): IngredientFormData => ({
 export const hydrateIngredientFormData = (
   ingredient: IngredientEditorData
 ): IngredientFormData => ({
-  name: ingredient.name || "",
+  name: ingredient.nameI18n?.en || ingredient.name || "",
+  nameAr:
+    ingredient.nameI18n?.ar || ingredient.nameI18n?.en || ingredient.name || "",
   commonName: ingredient.commonName || "",
   isnAr: ingredient.isnAr || "",
   isnEn: ingredient.isnEn || "",
@@ -93,7 +96,9 @@ export const computeCompositeNutrients = (
     if (Number.isNaN(percentage) || percentage <= 0) {
       continue;
     }
-    const source = allIngredients.find((ingredient) => ingredient._id === sub.ingredientId);
+    const source = allIngredients.find(
+      (ingredient) => ingredient._id === sub.ingredientId
+    );
     if (!source?.nutrientValues) {
       continue;
     }
@@ -145,7 +150,14 @@ export const getIngredientValidationMessage = ({
   subIngredients: SubIngredientDraft[];
   totalSubPercentage: number;
 }): ValidationMessage | null => {
-  if (!formData.name.trim() || !formData.code.trim() || !formData.groupId.trim()) {
+  if (
+    !(
+      formData.name.trim() &&
+      formData.nameAr.trim() &&
+      formData.code.trim() &&
+      formData.groupId.trim()
+    )
+  ) {
     return {
       key: "please_fill_required_fields_material",
     };
@@ -228,7 +240,9 @@ export const buildIngredientSavePayload = ({
 }): IngredientSavePayload => {
   const finalNutrients = nutrientValues.map((nutrient) => {
     const isCustom = nutrient.predefinedId === "custom";
-    const nutrientName = isCustom ? nutrient.customName : t(nutrient.predefinedId);
+    const nutrientName = isCustom
+      ? nutrient.customName
+      : t(nutrient.predefinedId);
     let finalValue = Number(nutrient.value) || 0;
 
     if (isComposite) {
@@ -247,7 +261,15 @@ export const buildIngredientSavePayload = ({
 
   return {
     name: formData.name,
+    nameI18n: makeLocalizedString(formData.name, {
+      en: formData.name,
+      ar: formData.nameAr,
+    }),
     commonName: formData.commonName,
+    commonNameI18n: makeLocalizedString(formData.commonName, {
+      en: formData.commonName,
+      ar: formData.commonName,
+    }),
     isnAr: formData.isnAr.trim() || formData.name,
     isnEn: formData.isnEn.trim() || formData.commonName || formData.name,
     code: formData.code,

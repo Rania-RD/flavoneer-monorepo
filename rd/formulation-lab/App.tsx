@@ -75,7 +75,9 @@ const App: React.FC = () => {
   );
 
   return (
-    <Router>
+    <Router
+      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+    >
       <SettingsProvider>
         {isPending ? (
           /* ─── Full-screen loading spinner ─── */

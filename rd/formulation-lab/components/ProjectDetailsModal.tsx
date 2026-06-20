@@ -39,7 +39,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
   onUpdateProject,
   teamMembers = [],
 }) => {
-  const { isRTL } = useSettings();
+  const { isRTL, language } = useSettings();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { formatTemp } = useSettings();
@@ -352,7 +352,8 @@ const RecentRunsSection: React.FC<{ projectId: Id<"projects"> }> = ({
   projectId,
 }) => {
   const { t } = useTranslation();
-  const runs = useQuery(api.runs.getByProject, { projectId });
+  const { language } = useSettings();
+  const runs = useQuery(api.runs.getByProject, { projectId, language });
   const navigate = useNavigate();
   return (
     <div className="col-span-1 rounded-[2.5rem] border border-gray-100 bg-white p-8 md:col-span-2 lg:col-span-3 dark:border-slate-800 dark:bg-[#1e293b]">

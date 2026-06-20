@@ -12,7 +12,7 @@
     "test": "playwright test",
     "import:foodwatch-regulatory": "pnpm exec tsx scripts/importFoodWatchRegulatory.ts",
     "clear:tables": "npx convex run clearAllAppTables:run",
-    "check": "ultracite check --diagnostic-level=error --formatter-enabled=false --assist-enabled=false && node scripts/checkZeroEnglishUi.mjs && npm run typecheck",
+    "check": "ultracite check --diagnostic-level=error --formatter-enabled=false --assist-enabled=false && node scripts/checkZeroEnglishUi.mjs && node scripts/checkArabicEncoding.mjs && npm run typecheck",
     "fix": "ultracite fix"
   },
   "dependencies": {

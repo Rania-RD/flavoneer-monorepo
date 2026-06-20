@@ -2,23 +2,44 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import { makeLocalizedString, selectLocalizedString } from "./localization";
 import {
   enrichedLabReportReturnValidator,
   labReportStatusValidator,
+  languageValidator,
+  localizedStringValidator,
   signatureTypeValidator,
 } from "./validators";
 
-// ── Enrichment: resolve projectName + join test results ──
-async function enrichReport(ctx: QueryCtx, report: Doc<"labReports">) {
-  let projectName = "";
+async function enrichReport(
+  ctx: QueryCtx,
+  report: Doc<"labReports">,
+  language?: string
+) {
+  let projectName = selectLocalizedString(
+    report.projectName,
+    report.projectNameI18n,
+    language
+  );
+  let projectNameI18n = makeLocalizedString(
+    report.projectName,
+    report.projectNameI18n
+  );
+
   try {
     const project = await ctx.db.get(report.projectId);
-    projectName = project?.name ?? "";
+    if (project) {
+      projectName = selectLocalizedString(
+        project.name,
+        project.nameI18n,
+        language
+      );
+      projectNameI18n = makeLocalizedString(project.name, project.nameI18n);
+    }
   } catch {
-    projectName = report.projectName ?? "";
+    // Keep report-level fallback for legacy data.
   }
 
-  // Join test results from labTestResults table
   const resultDocs = await ctx.db
     .query("labTestResults")
     .withIndex("by_labReportId", (q) => q.eq("labReportId", report._id))
@@ -26,19 +47,37 @@ async function enrichReport(ctx: QueryCtx, report: Doc<"labReports">) {
 
   const results = resultDocs
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((r) => ({
-      parameter: r.parameter,
-      method: r.method,
-      targetRange: r.targetRange,
-      min: r.min,
-      max: r.max,
-      actualValue: r.actualValue,
-      unit: r.unit,
+    .map((result) => ({
+      parameter: selectLocalizedString(
+        result.parameter,
+        result.parameterI18n,
+        language
+      ),
+      parameterI18n: makeLocalizedString(
+        result.parameter,
+        result.parameterI18n
+      ),
+      method: selectLocalizedString(result.method, result.methodI18n, language),
+      methodI18n: makeLocalizedString(result.method, result.methodI18n),
+      targetRange: selectLocalizedString(
+        result.targetRange,
+        result.targetRangeI18n,
+        language
+      ),
+      targetRangeI18n: makeLocalizedString(
+        result.targetRange,
+        result.targetRangeI18n
+      ),
+      min: result.min,
+      max: result.max,
+      actualValue: result.actualValue,
+      unit: result.unit,
     }));
 
   return {
     ...report,
     projectName,
+    projectNameI18n,
     results,
     signoffData: report.signoffData,
     signoffFont: report.signoffFont,
@@ -50,6 +89,7 @@ export const list = query({
   args: {
     paginationOpts: paginationOptsValidator,
     status: v.optional(labReportStatusValidator),
+    language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
     let result: {
@@ -66,33 +106,38 @@ export const list = query({
       result = await ctx.db.query("labReports").paginate(args.paginationOpts);
     }
     const page = await Promise.all(
-      result.page.map((r) => enrichReport(ctx, r))
+      result.page.map((report) => enrichReport(ctx, report, args.language))
     );
     return { ...result, page };
   },
 });
 
 export const get = query({
-  args: { id: v.id("labReports") },
+  args: { id: v.id("labReports"), language: v.optional(languageValidator) },
   returns: v.union(enrichedLabReportReturnValidator, v.null()),
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.id);
     if (!report) {
       return null;
     }
-    return enrichReport(ctx, report);
+    return enrichReport(ctx, report, args.language);
   },
 });
 
 export const getByProject = query({
-  args: { projectId: v.id("projects") },
+  args: {
+    projectId: v.id("projects"),
+    language: v.optional(languageValidator),
+  },
   returns: v.array(enrichedLabReportReturnValidator),
   handler: async (ctx, args) => {
     const reports = await ctx.db
       .query("labReports")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
       .collect();
-    return Promise.all(reports.map((r) => enrichReport(ctx, r)));
+    return Promise.all(
+      reports.map((report) => enrichReport(ctx, report, args.language))
+    );
   },
 });
 
@@ -101,6 +146,8 @@ export const create = mutation({
     reportId: v.string(),
     runId: v.id("runs"),
     projectId: v.id("projects"),
+    projectName: v.optional(v.string()),
+    projectNameI18n: v.optional(localizedStringValidator),
     version: v.string(),
     lotNumber: v.string(),
     date: v.string(),
@@ -111,8 +158,11 @@ export const create = mutation({
     results: v.array(
       v.object({
         parameter: v.string(),
+        parameterI18n: v.optional(localizedStringValidator),
         method: v.string(),
+        methodI18n: v.optional(localizedStringValidator),
         targetRange: v.string(),
+        targetRangeI18n: v.optional(localizedStringValidator),
         min: v.number(),
         max: v.number(),
         actualValue: v.number(),
@@ -126,16 +176,34 @@ export const create = mutation({
   returns: v.id("labReports"),
   handler: async (ctx, args) => {
     const { results, ...reportData } = args;
+    const project = await ctx.db.get(args.projectId);
+    const projectName = args.projectName ?? project?.name;
+    const projectNameI18n = makeLocalizedString(
+      projectName,
+      args.projectNameI18n ?? project?.nameI18n
+    );
 
-    // Insert the report row
-    const reportId = await ctx.db.insert("labReports", reportData);
+    const reportId = await ctx.db.insert("labReports", {
+      ...reportData,
+      projectName,
+      projectNameI18n,
+    });
 
-    // Insert test results into labTestResults table
     for (let i = 0; i < results.length; i++) {
+      const result = results[i];
       await ctx.db.insert("labTestResults", {
         labReportId: reportId,
         sortOrder: i,
-        ...results[i],
+        ...result,
+        parameterI18n: makeLocalizedString(
+          result.parameter,
+          result.parameterI18n
+        ),
+        methodI18n: makeLocalizedString(result.method, result.methodI18n),
+        targetRangeI18n: makeLocalizedString(
+          result.targetRange,
+          result.targetRangeI18n
+        ),
       });
     }
 
@@ -168,13 +236,12 @@ export const remove = mutation({
   args: { id: v.id("labReports") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Cascade: delete test results
     const results = await ctx.db
       .query("labTestResults")
       .withIndex("by_labReportId", (q) => q.eq("labReportId", args.id))
       .collect();
-    for (const r of results) {
-      await ctx.db.delete(r._id);
+    for (const result of results) {
+      await ctx.db.delete(result._id);
     }
     await ctx.db.delete(args.id);
     return null;

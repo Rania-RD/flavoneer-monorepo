@@ -22,6 +22,13 @@ export const servingSizeModeValidator = v.union(
   v.literal("servingIs")
 );
 
+export const servingSizeUnitValidator = v.union(
+  v.literal("g"),
+  v.literal("kg"),
+  v.literal("mg"),
+  v.literal("ml")
+);
+
 export const sharedRoleValidator = v.union(
   v.literal("viewer"),
   v.literal("editor")
@@ -90,6 +97,10 @@ export const unitsValidator = v.union(
 );
 
 export const languageValidator = v.union(v.literal("en"), v.literal("ar"));
+export const localizedStringValidator = v.object({
+  en: v.optional(v.string()),
+  ar: v.optional(v.string()),
+});
 
 export const runOutcomeValidator = v.union(
   v.literal("success"),
@@ -113,6 +124,7 @@ export const batchCodeFormatValidator = v.union(
 export const ingredientValidator = v.object({
   id: v.string(),
   name: v.string(),
+  nameI18n: v.optional(localizedStringValidator),
   weight: v.number(),
   unit: v.optional(v.string()),
   percentage: v.optional(v.number()),
@@ -131,7 +143,9 @@ export const spreadsheetCellValidator = v.object({
   value: v.optional(spreadsheetCellValueValidator),
   display: v.optional(v.string()),
   formula: v.optional(v.string()),
-  error: v.optional(v.union(v.literal("ERROR"), v.literal("REF"), v.literal("CYCLE"))),
+  error: v.optional(
+    v.union(v.literal("ERROR"), v.literal("REF"), v.literal("CYCLE"))
+  ),
   updatedAt: v.optional(v.number()),
   updatedBy: v.optional(v.string()),
 });
@@ -151,7 +165,9 @@ export const stepValidator = v.object({
   id: v.string(),
   type: stepTypeValidator,
   label: v.string(),
+  labelI18n: v.optional(localizedStringValidator),
   notes: v.optional(v.string()),
+  notesI18n: v.optional(localizedStringValidator),
   ingredientId: v.optional(v.string()),
   expectedWeight: v.optional(v.number()),
   maxLimitPercent: v.optional(v.number()),
@@ -189,6 +205,7 @@ export const stepValidator = v.object({
 export const phaseValidator = v.object({
   id: v.string(),
   name: v.string(),
+  nameI18n: v.optional(localizedStringValidator),
   color: v.string(),
   steps: v.array(stepValidator),
   requiresSignOff: v.optional(v.boolean()),
@@ -211,7 +228,9 @@ export const stepReturnValidator = v.object({
   id: v.string(),
   type: v.string(), // widened from literal union
   label: v.string(),
+  labelI18n: v.optional(localizedStringValidator),
   notes: v.optional(v.string()),
+  notesI18n: v.optional(localizedStringValidator),
   ingredientId: v.optional(v.string()),
   expectedWeight: v.optional(v.number()),
   maxLimitPercent: v.optional(v.number()),
@@ -249,6 +268,7 @@ export const stepReturnValidator = v.object({
 export const phaseReturnValidator = v.object({
   id: v.string(),
   name: v.string(),
+  nameI18n: v.optional(localizedStringValidator),
   color: v.string(),
   steps: v.array(stepReturnValidator),
   requiresSignOff: v.optional(v.boolean()),
@@ -263,19 +283,24 @@ export const enrichedProjectReturnValidator = v.object({
   _id: v.id("projects"),
   _creationTime: v.number(),
   name: v.string(),
+  nameI18n: v.optional(localizedStringValidator),
   version: v.string(),
   status: v.string(), // widened from literal union
   lead: v.string(),
   description: v.string(),
+  descriptionI18n: v.optional(localizedStringValidator),
   category: v.optional(v.string()),
+  categoryI18n: v.optional(localizedStringValidator),
   gsfaCategoryCode: v.optional(v.string()),
   gsfaCategoryName: v.optional(v.string()),
+  gsfaCategoryNameI18n: v.optional(localizedStringValidator),
   formulationState: v.optional(formulationStateValidator),
   yield: v.optional(v.number()),
   batchWeight: v.optional(v.number()),
   batchCost: v.optional(v.number()),
   costPerServing: v.optional(v.number()),
   packagingItemName: v.optional(v.string()),
+  packagingItemNameI18n: v.optional(localizedStringValidator),
   packagingUnitPrice: v.optional(v.number()),
   packagingCapacity: v.optional(v.number()),
   packagingCapacityUnit: v.optional(v.string()),
@@ -284,19 +309,26 @@ export const enrichedProjectReturnValidator = v.object({
   totalProjectRDCost: v.optional(v.number()),
   servingSizeMode: v.optional(servingSizeModeValidator),
   servingSizeAmount: v.optional(v.number()),
+  servingSizeUnit: v.optional(servingSizeUnitValidator),
   allergenRegion: v.optional(v.string()),
   allergenReviewRequired: v.optional(v.boolean()),
   formulationAllergens: v.optional(v.array(v.string())),
   formulationAllergenOverrides: v.optional(v.record(v.string(), v.boolean())),
   formulationExtraAllergens: v.optional(v.array(v.string())),
   productType: v.optional(v.string()),
+  productTypeI18n: v.optional(localizedStringValidator),
   processingMethod: v.optional(v.string()),
+  processingMethodI18n: v.optional(localizedStringValidator),
   targetOutcome: v.optional(v.string()),
+  targetOutcomeI18n: v.optional(localizedStringValidator),
   nutritionalGoal: v.optional(v.string()),
+  nutritionalGoalI18n: v.optional(localizedStringValidator),
   testingRequirements: v.optional(v.array(v.string())),
+  testingRequirementsI18n: v.optional(v.array(localizedStringValidator)),
   processingTemp: v.optional(v.number()),
   processingTime: v.optional(v.string()),
   targetTexture: v.optional(v.string()),
+  targetTextureI18n: v.optional(localizedStringValidator),
   updatedAt: v.string(),
   batchCodePrefix: v.optional(v.string()),
   batchCodeFormat: v.optional(v.string()),
@@ -321,6 +353,7 @@ export const enrichedRunReturnValidator = v.object({
   _creationTime: v.number(),
   projectId: v.id("projects"),
   projectName: v.string(),
+  projectNameI18n: v.optional(localizedStringValidator),
   batchCode: v.string(),
   startTime: v.number(),
   endTime: v.optional(v.number()),
@@ -360,8 +393,11 @@ export const enrichedInventoryReturnValidator = v.object({
   _id: v.id("inventoryItems"),
   _creationTime: v.number(),
   name: v.string(),
+  nameI18n: v.optional(localizedStringValidator),
   description: v.string(),
+  descriptionI18n: v.optional(localizedStringValidator),
   category: v.string(),
+  categoryI18n: v.optional(localizedStringValidator),
   batchId: v.string(),
   stock: v.number(),
   unit: v.string(),
@@ -372,19 +408,30 @@ export const enrichedInventoryReturnValidator = v.object({
   price: v.optional(v.number()),
   lowStockThreshold: v.optional(v.number()),
   supplier: v.optional(v.string()),
+  supplierI18n: v.optional(localizedStringValidator),
   storageConditions: v.optional(v.string()),
+  storageConditionsI18n: v.optional(localizedStringValidator),
   ingredientCode: v.optional(v.string()),
   ingredientId: v.optional(v.string()),
   userId: v.optional(v.string()),
   teamId: v.optional(v.id("teams")),
-  usedIn: v.array(v.object({ id: v.string(), name: v.string() })),
+  usedIn: v.array(
+    v.object({
+      id: v.string(),
+      name: v.string(),
+      nameI18n: v.optional(localizedStringValidator),
+    })
+  ),
 });
 
 /** Lab test result — returned by labTestResults queries */
 export const testResultReturnValidator = v.object({
   parameter: v.string(),
+  parameterI18n: v.optional(localizedStringValidator),
   method: v.string(),
+  methodI18n: v.optional(localizedStringValidator),
   targetRange: v.string(),
+  targetRangeI18n: v.optional(localizedStringValidator),
   min: v.number(),
   max: v.number(),
   actualValue: v.number(),
@@ -399,6 +446,7 @@ export const enrichedLabReportReturnValidator = v.object({
   runId: v.id("runs"),
   projectId: v.id("projects"),
   projectName: v.string(),
+  projectNameI18n: v.optional(localizedStringValidator),
   version: v.string(),
   lotNumber: v.string(),
   date: v.string(),
@@ -555,6 +603,7 @@ export const projectIngredientReturnValidator = v.object({
   projectId: v.id("projects"),
   ingredientKey: v.string(),
   name: v.string(),
+  nameI18n: v.optional(localizedStringValidator),
   weight: v.number(),
   unit: v.optional(v.string()),
   percentage: v.optional(v.number()),
@@ -691,6 +740,7 @@ export const legacyIngredientsValidator = v.optional(
     v.object({
       id: v.string(),
       name: v.string(),
+      nameI18n: v.optional(localizedStringValidator),
       weight: v.number(),
       unit: v.optional(v.string()),
       percentage: v.optional(v.number()),
@@ -712,19 +762,24 @@ export const legacyProfileValidator = v.optional(
 /** Project version snapshot data — subset of project fields */
 export const versionSnapshotDataValidator = v.object({
   name: v.string(),
+  nameI18n: v.optional(localizedStringValidator),
   version: v.string(),
   status: v.string(), // widened from literal union
   lead: v.string(),
   description: v.string(),
+  descriptionI18n: v.optional(localizedStringValidator),
   category: v.optional(v.string()),
+  categoryI18n: v.optional(localizedStringValidator),
   gsfaCategoryCode: v.optional(v.string()),
   gsfaCategoryName: v.optional(v.string()),
+  gsfaCategoryNameI18n: v.optional(localizedStringValidator),
   formulationState: v.optional(formulationStateValidator),
   yield: v.optional(v.number()),
   batchWeight: v.optional(v.number()),
   batchCost: v.optional(v.number()),
   costPerServing: v.optional(v.number()),
   packagingItemName: v.optional(v.string()),
+  packagingItemNameI18n: v.optional(localizedStringValidator),
   packagingUnitPrice: v.optional(v.number()),
   packagingCapacity: v.optional(v.number()),
   packagingCapacityUnit: v.optional(v.string()),
@@ -733,6 +788,7 @@ export const versionSnapshotDataValidator = v.object({
   totalProjectRDCost: v.optional(v.number()),
   servingSizeMode: v.optional(servingSizeModeValidator),
   servingSizeAmount: v.optional(v.number()),
+  servingSizeUnit: v.optional(servingSizeUnitValidator),
   allergenRegion: v.optional(v.string()),
   allergenReviewRequired: v.optional(v.boolean()),
   formulationAllergens: v.optional(v.array(v.string())),
@@ -740,13 +796,19 @@ export const versionSnapshotDataValidator = v.object({
   formulationExtraAllergens: v.optional(v.array(v.string())),
   releaseNotes: v.optional(v.string()),
   productType: v.optional(v.string()),
+  productTypeI18n: v.optional(localizedStringValidator),
   processingMethod: v.optional(v.string()),
+  processingMethodI18n: v.optional(localizedStringValidator),
   targetOutcome: v.optional(v.string()),
+  targetOutcomeI18n: v.optional(localizedStringValidator),
   nutritionalGoal: v.optional(v.string()),
+  nutritionalGoalI18n: v.optional(localizedStringValidator),
   testingRequirements: v.optional(v.array(v.string())),
+  testingRequirementsI18n: v.optional(v.array(localizedStringValidator)),
   processingTemp: v.optional(v.number()),
   processingTime: v.optional(v.string()),
   targetTexture: v.optional(v.string()),
+  targetTextureI18n: v.optional(localizedStringValidator),
   updatedAt: v.optional(v.string()),
   batchCodePrefix: v.optional(v.string()),
   batchCodeFormat: v.optional(v.string()),
@@ -762,6 +824,7 @@ export const versionSnapshotDataValidator = v.object({
       v.object({
         id: v.string(),
         name: v.string(),
+        nameI18n: v.optional(localizedStringValidator),
         weight: v.number(),
         unit: v.optional(v.string()),
         percentage: v.optional(v.number()),
@@ -781,6 +844,7 @@ export const versionSnapshotIngredientsValidator = v.array(
     projectId: v.id("projects"),
     ingredientKey: v.string(),
     name: v.string(),
+    nameI18n: v.optional(localizedStringValidator),
     weight: v.number(),
     unit: v.optional(v.string()),
     percentage: v.optional(v.number()),
@@ -798,6 +862,7 @@ export const versionSnapshotPhasesValidator = v.array(
     projectId: v.id("projects"),
     phaseKey: v.string(),
     name: v.string(),
+    nameI18n: v.optional(localizedStringValidator),
     color: v.string(),
     sortOrder: v.number(),
     steps: v.array(
@@ -809,7 +874,9 @@ export const versionSnapshotPhasesValidator = v.array(
         stepKey: v.string(),
         type: v.string(), // snapshot may contain older types
         label: v.string(),
+        labelI18n: v.optional(localizedStringValidator),
         notes: v.optional(v.string()),
+        notesI18n: v.optional(localizedStringValidator),
         ingredientId: v.optional(v.string()),
         expectedWeight: v.optional(v.number()),
         maxLimitPercent: v.optional(v.number()),

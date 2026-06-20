@@ -1,8 +1,6 @@
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { AnimatePresence, useAnimation } from "framer-motion";
-import {
-  AlertTriangle,
-} from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -12,12 +10,17 @@ import { useTeam } from "../context/TeamContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { normalizeInsNumber } from "../convex/regulatoryHelpers";
+import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { compressImage } from "../lib/imageUtils";
-import type {
-  IngredientDependencyData,
-  IngredientEditorData,
-} from "../types";
+import type { IngredientDependencyData, IngredientEditorData } from "../types";
+import { AddIngredientInfoTab } from "./add-ingredient/AddIngredientInfoTab";
+import {
+  AddIngredientModalFooter,
+  AddIngredientModalHeader,
+  AddIngredientModalTabs,
+} from "./add-ingredient/AddIngredientModalFrame";
+import { AddIngredientNutrientsTab } from "./add-ingredient/AddIngredientNutrientsTab";
 import { DRAFT_KEY, PREDEFINED_NUTRIENTS } from "./add-ingredient/constants";
 import {
   buildIngredientSavePayload,
@@ -37,15 +40,7 @@ import type {
   NutritionLegislation,
   SubIngredientDraft,
 } from "./add-ingredient/types";
-import { AddIngredientInfoTab } from "./add-ingredient/AddIngredientInfoTab";
-import { AddIngredientNutrientsTab } from "./add-ingredient/AddIngredientNutrientsTab";
-import {
-  AddIngredientModalFooter,
-  AddIngredientModalHeader,
-  AddIngredientModalTabs,
-} from "./add-ingredient/AddIngredientModalFrame";
 import DependencyWarningModal from "./DependencyWarningModal";
-import { useToast } from "../hooks/useToast";
 
 interface AddIngredientModalProps {
   editIngredient?: IngredientEditorData;
@@ -59,11 +54,11 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
   editIngredient,
 }) => {
   const { t } = useTranslation();
-  const { isRTL } = useSettings();
+  const { isRTL, language } = useSettings();
   const { activeTeamId } = useTeam();
   const createIngredient = useMutation(api.ingredients.create);
   const updateIngredient = useMutation(api.ingredients.update);
-  const allIngredients = useQuery(api.ingredients.list) ?? [];
+  const allIngredients = useQuery(api.ingredients.list, { language }) ?? [];
 
   const [activeTab, setActiveTab] = useState<"info" | "nutrients">("info");
   const [legislation, setLegislation] = useState<NutritionLegislation>("FDA");
@@ -88,10 +83,11 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
 
   const [allergenInput, setAllergenInput] = useState("");
   const [allergenValues, setAllergenValues] = useState<string[]>([]);
-  const [allergenRegion, setAllergenRegion] =
-    useState<AllergenRegion>("FDA");
+  const [allergenRegion, setAllergenRegion] = useState<AllergenRegion>("FDA");
   const [allergenVerified, setAllergenVerified] = useState(false);
-  const [subAllergens, setSubAllergens] = useState<Record<string, string[]>>({});
+  const [subAllergens, setSubAllergens] = useState<Record<string, string[]>>(
+    {}
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,7 +107,9 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
   >(null);
 
   const [isDirty, setIsDirty] = useState(false);
-  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>(
+    {}
+  );
   const [isShaking, setIsShaking] = useState(false);
 
   const handleBlur = (field: string) => {
@@ -121,7 +119,9 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
   const isLocked = editIngredient?.status === "Approved";
 
   const markDirty = () => {
-    if (!isDirty && !isLocked) setIsDirty(true);
+    if (!(isDirty || isLocked)) {
+      setIsDirty(true);
+    }
   };
 
   useEffect(() => {
@@ -172,7 +172,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
           ? editIngredient.allergenRegion
           : "FDA"
       );
-      setAllergenVerified(editIngredient.allergenVerified || false);
+      setAllergenVerified(editIngredient.allergenVerified ?? false);
       setSubAllergens(editIngredient.subAllergenValues || {});
       setActiveTab("info");
 
@@ -211,19 +211,23 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
       }
       localStorage.removeItem(DRAFT_KEY);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const computedNutrients = useMemo(() => {
-    return computeCompositeNutrients(isComposite, subIngredients, allIngredients);
-  }, [isComposite, subIngredients, allIngredients]);
+  const computedNutrients = useMemo(
+    () =>
+      computeCompositeNutrients(isComposite, subIngredients, allIngredients),
+    [isComposite, subIngredients, allIngredients]
+  );
 
-  const totalSubPercentage = useMemo(() => {
-    return subIngredients.reduce(
-      (acc, sub) => acc + (Number(sub.percentage) || 0),
-      0
-    );
-  }, [subIngredients]);
+  const totalSubPercentage = useMemo(
+    () =>
+      subIngredients.reduce(
+        (acc, sub) => acc + (Number(sub.percentage) || 0),
+        0
+      ),
+    [subIngredients]
+  );
 
   // ── Handlers ────────────────────────────────────────────
   const handleInputChange = (
@@ -369,10 +373,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
       totalSubPercentage,
     });
     if (message) {
-      setError(
-        message.text ??
-          t(message.key ?? "generic_error")
-      );
+      setError(message.text ?? t(message.key ?? "generic_error"));
       return false;
     }
     return true;
@@ -459,9 +460,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
       onClose();
     } catch (err) {
       console.error("Failed to add ingredient:", err);
-      setError(
-        t("failed_to_save_ingredient")
-      );
+      setError(t("failed_to_save_ingredient"));
     } finally {
       if (!showDependencyWarning) {
         setIsSubmitting(false);
@@ -511,13 +510,28 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
   };
 
   const nextTab = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     if (activeTab === "info") {
       const missingFields: Record<string, boolean> = {};
       let isValid = true;
-      if (!formData.name.trim()) { missingFields.name = true; isValid = false; }
-      if (!formData.code.trim()) { missingFields.code = true; isValid = false; }
-      if (!formData.groupId.trim()) { missingFields.groupId = true; isValid = false; }
+      if (!formData.name.trim()) {
+        missingFields.name = true;
+        isValid = false;
+      }
+      if (!formData.nameAr.trim()) {
+        missingFields.nameAr = true;
+        isValid = false;
+      }
+      if (!formData.code.trim()) {
+        missingFields.code = true;
+        isValid = false;
+      }
+      if (!formData.groupId.trim()) {
+        missingFields.groupId = true;
+        isValid = false;
+      }
 
       if (!isValid) {
         setTouchedFields((prev) => ({ ...prev, ...missingFields }));
@@ -528,7 +542,9 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
     }
   };
   const prevTab = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     if (activeTab === "nutrients") {
       setActiveTab("info");
     }
@@ -570,15 +586,15 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
 
           <MotionDiv
             animate={controls}
-            className={`relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2.5rem] bg-white shadow-2xl dark:bg-[#1e293b] transition-all duration-300 ${isShaking ? "border border-red-500 shadow-red-500/30" : "border border-transparent"}`}
+            className={`relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all duration-300 dark:bg-[#1e293b] ${isShaking ? "border border-red-500 shadow-red-500/30" : "border border-transparent"}`}
             exit="exit"
             initial="hidden"
             variants={{
               ...modalVariants,
               shake: {
                 x: [0, -10, 10, -10, 10, -5, 5, 0],
-                transition: { duration: 0.4 }
-              }
+                transition: { duration: 0.4 },
+              },
             }}
           >
             <AddIngredientModalHeader
@@ -603,97 +619,101 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
             />
 
             {/* Body */}
-            <div className="custom-scrollbar flex-1 overflow-y-auto px-8 pb-8 pt-6">
-              <fieldset disabled={isLocked} className="group/fieldset border-0 p-0 m-0 min-w-0">
+            <div className="custom-scrollbar flex-1 overflow-y-auto px-8 pt-6 pb-8">
+              <fieldset
+                className="group/fieldset m-0 min-w-0 border-0 p-0"
+                disabled={isLocked}
+              >
                 <form
                   className="space-y-6"
                   id="add-ingredient-form"
                   onChange={markDirty}
                   onSubmit={handleSubmit}
                 >
-                {error && (
-                  <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-600 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
-                    <AlertTriangle className="mt-0.5 shrink-0" size={20} />
-                    <p className="font-medium text-sm">{error}</p>
-                  </div>
-                )}
+                  {error && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-600 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+                      <AlertTriangle className="mt-0.5 shrink-0" size={20} />
+                      <p className="font-medium text-sm">{error}</p>
+                    </div>
+                  )}
 
-                {/* ── Tab 1: Info ─────────────────── */}
-                {activeTab === "info" && (
-                  <AddIngredientInfoTab
-                    additiveMatch={additiveMatch}
-                    allIngredients={allIngredients}
-                    conversions={conversions}
-                    coverImagePreview={coverImagePreview}
-                    existingCoverImageUrl={existingCoverImageUrl}
-                    formData={formData}
-                    handleAddConversion={handleAddConversion}
-                    handleAddSubIngredient={handleAddSubIngredient}
-                    handleBlur={handleBlur}
-                    handleConversionChange={handleConversionChange}
-                    handleInputChange={handleInputChange}
-                    handleRemoveConversion={handleRemoveConversion}
-                    handleRemoveSubIngredient={handleRemoveSubIngredient}
-                    handleSubIngredientChange={handleSubIngredientChange}
-                    inputClasses={inputClasses}
-                    insNumber={insNumber}
-                    isAdditive={isAdditive}
-                    isComposite={isComposite}
-                    labelClasses={labelClasses}
-                    markDirty={markDirty}
-                    setCoverImageFile={setCoverImageFile}
-                    setCoverImagePreview={setCoverImagePreview}
-                    setInsNumber={setInsNumber}
-                    setIsAdditive={setIsAdditive}
-                    setIsComposite={setIsComposite}
-                    subIngredients={subIngredients}
-                    t={t}
-                    totalSubPercentage={totalSubPercentage}
-                    touchedFields={touchedFields}
-                  />
-                )}
+                  {/* ── Tab 1: Info ─────────────────── */}
+                  {activeTab === "info" && (
+                    <AddIngredientInfoTab
+                      additiveMatch={additiveMatch}
+                      allIngredients={allIngredients}
+                      conversions={conversions}
+                      coverImagePreview={coverImagePreview}
+                      existingCoverImageUrl={existingCoverImageUrl}
+                      formData={formData}
+                      handleAddConversion={handleAddConversion}
+                      handleAddSubIngredient={handleAddSubIngredient}
+                      handleBlur={handleBlur}
+                      handleConversionChange={handleConversionChange}
+                      handleInputChange={handleInputChange}
+                      handleRemoveConversion={handleRemoveConversion}
+                      handleRemoveSubIngredient={handleRemoveSubIngredient}
+                      handleSubIngredientChange={handleSubIngredientChange}
+                      inputClasses={inputClasses}
+                      insNumber={insNumber}
+                      isAdditive={isAdditive}
+                      isComposite={isComposite}
+                      labelClasses={labelClasses}
+                      markDirty={markDirty}
+                      setCoverImageFile={setCoverImageFile}
+                      setCoverImagePreview={setCoverImagePreview}
+                      setInsNumber={setInsNumber}
+                      setIsAdditive={setIsAdditive}
+                      setIsComposite={setIsComposite}
+                      subIngredients={subIngredients}
+                      t={t}
+                      totalSubPercentage={totalSubPercentage}
+                      touchedFields={touchedFields}
+                    />
+                  )}
 
-                {activeTab === "nutrients" && (
-                  <AddIngredientNutrientsTab
-                    allergenRegion={allergenRegion}
-                    allergenValues={allergenValues}
-                    allergenVerified={allergenVerified}
-                    computedNutrients={computedNutrients}
-                    handleAddNutrient={handleAddNutrient}
-                    handleNutrientChange={handleNutrientChange}
-                    handleRemoveNutrient={handleRemoveNutrient}
-                    inputClasses={inputClasses}
-                    isComposite={isComposite}
-                    labelClasses={labelClasses}
-                    legislation={legislation}
-                    markDirty={markDirty}
-                    nutrientValues={nutrientValues}
-                    overriddenNutrients={overriddenNutrients}
-                    setAllergenRegion={setAllergenRegion}
-                    setAllergenVerified={setAllergenVerified}
-                    setLegislation={setLegislation}
-                    setOverriddenNutrients={setOverriddenNutrients}
-                    subAllergens={subAllergens}
-                    t={t}
-                    toast={toast}
-                    toggleAllergen={toggleAllergen}
-                    toggleSubAllergen={toggleSubAllergen}
-                  />
-                )}
-              </form>
+                  {activeTab === "nutrients" && (
+                    <AddIngredientNutrientsTab
+                      allergenRegion={allergenRegion}
+                      allergenValues={allergenValues}
+                      allergenVerified={allergenVerified}
+                      computedNutrients={computedNutrients}
+                      handleAddNutrient={handleAddNutrient}
+                      handleNutrientChange={handleNutrientChange}
+                      handleRemoveNutrient={handleRemoveNutrient}
+                      inputClasses={inputClasses}
+                      isComposite={isComposite}
+                      labelClasses={labelClasses}
+                      legislation={legislation}
+                      markDirty={markDirty}
+                      nutrientValues={nutrientValues}
+                      overriddenNutrients={overriddenNutrients}
+                      setAllergenRegion={setAllergenRegion}
+                      setAllergenVerified={setAllergenVerified}
+                      setLegislation={setLegislation}
+                      setOverriddenNutrients={setOverriddenNutrients}
+                      subAllergens={subAllergens}
+                      t={t}
+                      toast={toast}
+                      toggleAllergen={toggleAllergen}
+                      toggleSubAllergen={toggleSubAllergen}
+                    />
+                  )}
+                </form>
               </fieldset>
             </div>
 
             <AddIngredientModalFooter
               activeTab={activeTab}
+              cancelLabel={t("cancel")}
               canSubmit={
                 !!(
                   formData.name.trim() &&
+                  formData.nameAr.trim() &&
                   formData.code.trim() &&
                   formData.groupId.trim()
                 )
               }
-              cancelLabel={t("cancel")}
               isLocked={isLocked}
               isRTL={isRTL}
               isSubmitting={isSubmitting}

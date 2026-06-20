@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import { useSettings } from "../../context/SettingsContext";
 import { api } from "../../convex/_generated/api";
 import type { RunRecipePhase, RunRecipeStep } from "../../types";
 import { MiniSpreadsheetEditor } from "../spreadsheet/MiniSpreadsheetEditor";
@@ -62,7 +63,8 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
   onTimerComplete,
 }) => {
   const { t } = useTranslation();
-  const inventoryItems = useQuery(api.inventory.list, {});
+  const { language } = useSettings();
+  const inventoryItems = useQuery(api.inventory.list, { language });
 
   if (!(activePhase && activeStep)) {
     return (

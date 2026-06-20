@@ -414,6 +414,26 @@ test.describe("formulation save payload helpers", () => {
     });
   });
 
+  test("normalizes serving size units to grams for recipe measures", () => {
+    expect(calculateRecipeMeasures(1000, "servingIs", 0.25, "kg")).toEqual({
+      batchYield: 1000,
+      servingCount: 4,
+      servingSizeWeight: 250,
+    });
+
+    expect(calculateRecipeMeasures(1000, "servingIs", 250_000, "mg")).toEqual({
+      batchYield: 1000,
+      servingCount: 4,
+      servingSizeWeight: 250,
+    });
+
+    expect(calculateRecipeMeasures(1000, "servingIs", 250, "ml")).toEqual({
+      batchYield: 1000,
+      servingCount: 4,
+      servingSizeWeight: 250,
+    });
+  });
+
   test("calculates recipe costs from ingredient cost per kg", () => {
     expect(
       calculateRecipeCosts(

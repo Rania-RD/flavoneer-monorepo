@@ -67,12 +67,15 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    nameAr: "",
     category: CATEGORIES[0],
     gsfaCategoryCode: "",
     gsfaCategoryName: "",
     description: "",
+    descriptionAr: "",
     formulationState: "Liquid",
     servingSizeMode: "recipeMakes",
+    servingSizeUnit: "g",
     processingMethod: "",
     targetOutcome: "",
     nutritionalGoal: "",
@@ -119,16 +122,25 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
     try {
       const newProject = {
         name: formData.name,
+        nameI18n: {
+          en: formData.name,
+          ar: formData.nameAr || formData.name,
+        },
         version: "1.0",
         status: ProjectStatus.DRAFT,
         lead: profile.name || "Unknown",
         description: formData.description,
+        descriptionI18n: {
+          en: formData.description,
+          ar: formData.descriptionAr || formData.description,
+        },
         ingredients: [],
         category: formData.category,
         gsfaCategoryCode: formData.gsfaCategoryCode || undefined,
         gsfaCategoryName: formData.gsfaCategoryName || undefined,
         formulationState: formData.formulationState,
         servingSizeMode: formData.servingSizeMode,
+        servingSizeUnit: formData.servingSizeUnit,
         processingMethod: formData.processingMethod,
         targetOutcome: formData.targetOutcome,
         nutritionalGoal: formData.nutritionalGoal,
@@ -144,12 +156,15 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       // Clear the form fields so they are empty for the next entry
       setFormData({
         name: "",
+        nameAr: "",
         category: CATEGORIES[0],
         gsfaCategoryCode: "",
         gsfaCategoryName: "",
         description: "",
+        descriptionAr: "",
         formulationState: "Liquid",
         servingSizeMode: "recipeMakes",
+        servingSizeUnit: "g",
         processingMethod: "",
         targetOutcome: "",
         nutritionalGoal: "",
@@ -285,7 +300,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-1.5">
                         <label className="font-semibold text-gray-700 text-sm">
-                          {t("project_title")}
+                          {t("project_title_en")}
                         </label>
                         <input
                           className={inputClasses}
@@ -295,6 +310,20 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                           placeholder={t("example_project_name")}
                           required
                           value={formData.name}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="font-semibold text-gray-700 text-sm">
+                          {t("project_title_ar")}
+                        </label>
+                        <input
+                          className={inputClasses}
+                          dir="rtl"
+                          name="nameAr"
+                          onChange={handleInputChange}
+                          placeholder={t("example_project_name_ar")}
+                          required
+                          value={formData.nameAr}
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -318,7 +347,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
                     <div className="space-y-1.5">
                       <label className="font-semibold text-gray-700 text-sm">
-                        {t("brief_description")}
+                        {t("brief_description_en")}
                       </label>
                       <textarea
                         className={`${inputClasses} resize-none`}
@@ -327,6 +356,20 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                         placeholder={t("describe_goal_placeholder")}
                         rows={3}
                         value={formData.description}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="font-semibold text-gray-700 text-sm">
+                        {t("brief_description_ar")}
+                      </label>
+                      <textarea
+                        className={`${inputClasses} resize-none`}
+                        dir="rtl"
+                        name="descriptionAr"
+                        onChange={handleInputChange}
+                        placeholder={t("describe_goal_placeholder_ar")}
+                        rows={3}
+                        value={formData.descriptionAr}
                       />
                     </div>
 

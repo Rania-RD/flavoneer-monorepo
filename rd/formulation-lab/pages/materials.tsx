@@ -15,6 +15,7 @@ import { MaterialsTabs } from "../components/materials/MaterialsTabs";
 import PrintLabelModal from "../components/PrintLabelModal";
 import StockUsageHistoryModal from "../components/StockUsageHistoryModal";
 import ViewIngredientModal from "../components/ViewIngredientModal";
+import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useMaterialSelection } from "../hooks/materials/useMaterialSelection";
@@ -31,10 +32,9 @@ const getErrorMessage = (error: unknown) =>
 
 const Materials: React.FC = () => {
   const { t } = useTranslation();
+  const { language } = useSettings();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"current" | "library">(
-    "current"
-  );
+  const [activeTab, setActiveTab] = useState<"current" | "library">("current");
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddIngredientModalOpen, setIsAddIngredientModalOpen] =
@@ -58,18 +58,14 @@ const Materials: React.FC = () => {
   );
   const [isDeletingIng, setIsDeletingIng] = useState(false);
 
-  const inventoryRaw = useQuery(api.inventory.list, {});
-  const ingredientsRaw = useQuery(api.ingredients.list) ?? [];
+  const inventoryRaw = useQuery(api.inventory.list, { language });
+  const ingredientsRaw = useQuery(api.ingredients.list, { language }) ?? [];
   const bulkRemove = useMutation(api.inventory.bulkRemove);
   const bulkUpdateStatus = useMutation(api.inventory.bulkUpdateStatus);
   const removeIngredient = useMutation(api.ingredients.remove);
   const items: EnrichedInventoryItem[] = inventoryRaw ?? [];
-  const {
-    clearSelection,
-    selectedItems,
-    toggleAll,
-    toggleSelection,
-  } = useMaterialSelection();
+  const { clearSelection, selectedItems, toggleAll, toggleSelection } =
+    useMaterialSelection();
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchTerm.toLowerCase();
@@ -262,8 +258,7 @@ const Materials: React.FC = () => {
             <span className="font-bold text-gray-900 dark:text-white">
               {selectedItems.size}
             </span>{" "}
-            {t("selected")}{" "}
-            {selectedItems.size === 1 ? t("item") : t("items")}{" "}
+            {t("selected")} {selectedItems.size === 1 ? t("item") : t("items")}{" "}
             {t("this_action_cannot_be_undone")}
           </>
         }

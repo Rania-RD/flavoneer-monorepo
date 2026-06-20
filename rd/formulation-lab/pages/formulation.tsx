@@ -23,50 +23,26 @@ import {
   History,
   MessageSquare,
   Plus,
-  Save,
   ShieldAlert,
   X,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { SortablePhaseItem } from "../components/formulation/sortable-phase-item";
 import {
   ALLERGEN_LISTS,
   TREE_NUT_OPTIONS,
 } from "../components/add-ingredient/constants";
 import type { AllergenRegion } from "../components/add-ingredient/types";
+import { SortablePhaseItem } from "../components/formulation/sortable-phase-item";
 import { ReviewPanel } from "../components/ReviewPanel";
 import VersionHistoryModal from "../components/VersionHistoryModal";
+import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
-import { useFormulationSave } from "../hooks/formulation/use-formulation-save";
 import { usePermissions } from "../hooks/usePermissions";
-import {
-  calculateProjectRDCost,
-  calculatePackagingCosts,
-  calculateRecipeCosts,
-  calculateRecipeMeasures,
-  isServingOverPackagingCapacity,
-} from "../lib/formulation/save-payload";
-import {
-  ALPHABET_MAP,
-  applyAllergenOverrides,
-  areAllergenOverridesEqual,
-  areStringSelectionsEqual,
-  buildAggregatedIngredients,
-  COLORS,
-  createInitialPhases,
-  calculateRegulationCompliance,
-  calculateNutritionFacts,
-  deriveIngredients,
-  getAdditiveIngredientIds,
-  getFormulationBaselineAllergens,
-  getFlatSteps,
-  getIsStepLocked,
-} from "../lib/formulation/helpers";
 import {
   addPhaseToPhases,
   addStepAfterStepInPhase,
@@ -78,10 +54,35 @@ import {
   updatePhaseInPhases,
   updateStepInPhase,
 } from "../lib/formulation/editing";
+import {
+  ALPHABET_MAP,
+  applyAllergenOverrides,
+  areAllergenOverridesEqual,
+  areStringSelectionsEqual,
+  buildAggregatedIngredients,
+  COLORS,
+  calculateNutritionFacts,
+  calculateRegulationCompliance,
+  createInitialPhases,
+  deriveIngredients,
+  getAdditiveIngredientIds,
+  getFlatSteps,
+  getFormulationBaselineAllergens,
+  getIsStepLocked,
+} from "../lib/formulation/helpers";
+import {
+  buildFormulationSavePayload,
+  calculatePackagingCosts,
+  calculateProjectRDCost,
+  calculateRecipeCosts,
+  calculateRecipeMeasures,
+  isServingOverPackagingCapacity,
+  type ServingSizeUnit,
+} from "../lib/formulation/save-payload";
 import type {
   EnrichedProject,
-  InventoryListItem,
   FormulationState,
+  InventoryListItem,
   PhaseColor,
   RecipePhase,
   RecipeStep,
@@ -103,24 +104,37 @@ const PACKAGING_OPTIONS = [
   unitPrice: number;
 }>;
 
+const SERVING_SIZE_UNITS = ["g", "kg", "mg", "ml"] as const;
+const MULTIPLE_AUTOSAVE_NAME =
+  "Auto-Save: Updated multiple formulation fields";
+const DEFAULT_AUTOSAVE_NAME = "Auto-Save: Updated formulation fields";
+
+function formatAutosaveValue(value: string | number | undefined) {
+  if (value === undefined || value === "") {
+    return "blank";
+  }
+  return String(value);
+}
+
 const Formulation: React.FC = () => {
   const { t } = useTranslation();
+  const { language } = useSettings();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const projectId = id as Id<"projects"> | undefined;
 
   const convexProject = useQuery(
     api.projects.get,
-    projectId ? { id: projectId } : "skip"
+    projectId ? { id: projectId, language } : "skip"
   );
   const updateProjectMutation = useMutation(api.projects.update);
   const createNewVersionMutation = useMutation(api.projects.createNewVersion);
   const logActivity = useMutation(api.activities.log);
-  const inventoryItems = useQuery(api.inventory.list, {}) as
+  const inventoryItems = useQuery(api.inventory.list, { language }) as
     | InventoryListItem[]
     | undefined;
   const formulationIngredientOptions =
-    useQuery(api.ingredients.listFormulationOptions, {}) ?? [];
+    useQuery(api.ingredients.listFormulationOptions, { language }) ?? [];
 
   const aggregatedIngredients = useMemo(
     () =>
@@ -160,15 +174,52 @@ const Formulation: React.FC = () => {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false);
   const [isCreatingNewVersion, setIsCreatingNewVersion] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const loadedProjectIdRef = useRef<string | null>(null);
+  const lastAutosaveSignatureRef = useRef("");
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autosaveRunRef = useRef(0);
+  const pendingAutosaveChangesRef = useRef<Map<string, string>>(new Map());
 
-  useEffect(() => {
+  const queueAutosaveChange = useCallback((key: string, description: string) => {
+    pendingAutosaveChangesRef.current.set(key, description);
+  }, []);
+
+  const getPendingAutosaveName = useCallback(() => {
+    const descriptions = [...pendingAutosaveChangesRef.current.values()];
+    if (descriptions.length === 0) {
+      return DEFAULT_AUTOSAVE_NAME;
+    }
+    if (descriptions.length === 1) {
+      return descriptions[0];
+    }
+    return MULTIPLE_AUTOSAVE_NAME;
+  }, []);
+
+  const resetEditorState = useCallback(() => {
     setProject(undefined);
     setPhases([]);
     setExtraAllergenInput("");
     setManualAllergenOverrides({});
     allergenOverridesInitializedFor.current = null;
+    loadedProjectIdRef.current = null;
+    lastAutosaveSignatureRef.current = "";
+    pendingAutosaveChangesRef.current.clear();
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    setAutosaveStatus("idle");
+    setIsVersionHistoryOpen(false);
+    setIsReviewPanelOpen(false);
     setIsCreatingNewVersion(false);
-  }, [projectId]);
+  }, []);
+
+  useEffect(() => {
+    resetEditorState();
+  }, [projectId, resetEditorState]);
 
   // Dnd-Kit Phase Handlers
   const sensors = useSensors(
@@ -239,9 +290,29 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      "measures.servingSizeAmount",
+      servingSizeMode === "recipeMakes"
+        ? `Auto-Save: Updated serving count to ${formatAutosaveValue(value)}`
+        : `Auto-Save: Updated serving size to ${formatAutosaveValue(value)}${servingSizeUnit}`
+    );
     setProject({
       ...project,
       servingSizeAmount: value === "" ? undefined : Number(value),
+    });
+  };
+
+  const handleServingSizeUnitChange = (servingSizeUnit: ServingSizeUnit) => {
+    if (!project) {
+      return;
+    }
+    queueAutosaveChange(
+      "measures.servingSizeUnit",
+      `Auto-Save: Updated serving size unit to ${servingSizeUnit}`
+    );
+    setProject({
+      ...project,
+      servingSizeUnit,
     });
   };
 
@@ -249,6 +320,10 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      "measures.formulationState",
+      `Auto-Save: Switched formulation state to ${formulationState}`
+    );
     setProject({
       ...project,
       formulationState,
@@ -259,6 +334,14 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      "measures.servingSizeMode",
+      `Auto-Save: Switched serving size mode to ${
+        servingSizeMode === "recipeMakes"
+          ? "A Recipe makes"
+          : "A Serving is"
+      }`
+    );
     setProject({
       ...project,
       servingSizeMode,
@@ -272,12 +355,18 @@ const Formulation: React.FC = () => {
     const option = PACKAGING_OPTIONS.find(
       (item) => item.name === packagingItemName
     );
+    queueAutosaveChange(
+      "packaging.item",
+      `Auto-Save: Updated packaging item to ${packagingItemName || "none"}`
+    );
     setProject({
       ...project,
       packagingItemName,
       packagingUnitPrice: option?.unitPrice ?? project.packagingUnitPrice,
       packagingCapacity: option?.capacity,
-      packagingCapacityUnit: option?.capacity ? "g" : project.packagingCapacityUnit,
+      packagingCapacityUnit: option?.capacity
+        ? "g"
+        : project.packagingCapacityUnit,
     });
   };
 
@@ -288,6 +377,12 @@ const Formulation: React.FC = () => {
     if (!project) {
       return;
     }
+    queueAutosaveChange(
+      `packaging.${field}`,
+      field === "packagingUnitPrice"
+        ? `Auto-Save: Updated packaging unit price to $${formatAutosaveValue(value)}`
+        : `Auto-Save: Updated packaging capacity to ${formatAutosaveValue(value)}g`
+    );
     setProject({
       ...project,
       [field]: value === "" ? undefined : Number(value),
@@ -316,6 +411,10 @@ const Formulation: React.FC = () => {
     const currentChecked = selectedFormulationAllergens.includes(allergenKey);
     const nextChecked = !currentChecked;
     const baselineChecked = baselineAllergens.includes(allergenKey);
+    queueAutosaveChange(
+      `allergens.${allergenKey}`,
+      `Auto-Save: ${nextChecked ? "Selected" : "Cleared"} allergen ${allergenKey.replace(/^allergen_/, "").replace(/_/g, " ")}`
+    );
     setManualAllergenOverrides((currentOverrides) => {
       const nextOverrides = { ...currentOverrides };
       if (nextChecked === baselineChecked) {
@@ -344,6 +443,10 @@ const Formulation: React.FC = () => {
       setExtraAllergenInput("");
       return;
     }
+    queueAutosaveChange(
+      "allergens.extra",
+      `Auto-Save: Added extra allergen ${value}`
+    );
     setProject({
       ...project,
       formulationExtraAllergens: [...currentExtras, value],
@@ -356,11 +459,15 @@ const Formulation: React.FC = () => {
     if (!(project && canEdit)) {
       return;
     }
+    queueAutosaveChange(
+      "allergens.extra",
+      `Auto-Save: Removed extra allergen ${value}`
+    );
     setProject({
       ...project,
-      formulationExtraAllergens: (project.formulationExtraAllergens ?? []).filter(
-        (allergen) => allergen !== value
-      ),
+      formulationExtraAllergens: (
+        project.formulationExtraAllergens ?? []
+      ).filter((allergen) => allergen !== value),
       allergenReviewRequired: true,
     });
   };
@@ -387,13 +494,30 @@ const Formulation: React.FC = () => {
     });
   };
 
+  const handleAllergenRegionChange = (allergenRegion: string) => {
+    if (!project) {
+      return;
+    }
+    queueAutosaveChange(
+      "label.regulation",
+      `Auto-Save: Switched label regulation to ${allergenRegion}`
+    );
+    setProject({
+      ...project,
+      allergenRegion,
+      allergenReviewRequired: true,
+    });
+  };
+
   // Store refs for scrolling to specific phases/steps
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Initialize Phases
   // biome-ignore lint/correctness/useExhaustiveDependencies: Initialize from Convex query once
   useEffect(() => {
-    if (foundProject) {
+    if (foundProject && loadedProjectIdRef.current !== foundProject._id) {
+      loadedProjectIdRef.current = foundProject._id;
+      lastAutosaveSignatureRef.current = "";
       setProject(foundProject);
       if (foundProject.phases && foundProject.phases.length > 0) {
         setPhases(foundProject.phases);
@@ -424,14 +548,16 @@ const Formulation: React.FC = () => {
   );
   const servingSizeMode = project?.servingSizeMode ?? "recipeMakes";
   const servingSizeAmount = project?.servingSizeAmount ?? project?.yield;
+  const servingSizeUnit = (project?.servingSizeUnit ?? "g") as ServingSizeUnit;
   const calculatedMeasures = useMemo(
     () =>
       calculateRecipeMeasures(
         calculatedBatchWeight,
         servingSizeMode,
-        servingSizeAmount
+        servingSizeAmount,
+        servingSizeUnit
       ),
-    [calculatedBatchWeight, servingSizeAmount, servingSizeMode]
+    [calculatedBatchWeight, servingSizeAmount, servingSizeMode, servingSizeUnit]
   );
   const nutritionFacts = useMemo(
     () =>
@@ -452,10 +578,7 @@ const Formulation: React.FC = () => {
     .join(", ");
   const calculatedCosts = useMemo(
     () =>
-      calculateRecipeCosts(
-        derivedIngredients,
-        calculatedMeasures.servingCount
-      ),
+      calculateRecipeCosts(derivedIngredients, calculatedMeasures.servingCount),
     [calculatedMeasures.servingCount, derivedIngredients]
   );
   const calculatedPackagingCosts = useMemo(
@@ -470,57 +593,61 @@ const Formulation: React.FC = () => {
     packagingCapacity: project?.packagingCapacity,
     servingSizeWeight: calculatedMeasures.servingSizeWeight,
   });
-  const regulationBreaches = useMemo(() => {
-    return phases.flatMap((phase) =>
-      phase.steps.flatMap((step) => {
-        if (step.type !== "weighing" || !step.ingredientId) {
-          return [];
-        }
-        const ingredient = aggregatedIngredients.find(
-          (item) => item._id === step.ingredientId
-        );
-        const additiveLimit =
-          ingredient && additiveLimits?.[ingredient._id];
-        const compliance = calculateRegulationCompliance({
-          additiveLimit:
-            additiveLimit && typeof additiveLimit === "object"
-              ? additiveLimit
-              : undefined,
-          batchWeight: calculatedBatchWeight,
-          maxLimitPercent: step.maxLimitPercent,
-          weight: step.expectedWeight || 0,
-        });
-        return compliance.exceedsLimit
-          ? [
-              {
-                actualPercent: compliance.actualPercent,
-                ingredientName: ingredient?.name || step.label,
-                maxLimitPercent: compliance.effectiveMaxLimitPercent,
-                phaseName: phase.name,
-                stepId: step.id,
-              },
-            ]
-          : [];
-      })
-    );
-  }, [additiveLimits, aggregatedIngredients, calculatedBatchWeight, phases]);
+  const regulationBreaches = useMemo(
+    () =>
+      phases.flatMap((phase) =>
+        phase.steps.flatMap((step) => {
+          if (step.type !== "weighing" || !step.ingredientId) {
+            return [];
+          }
+          const ingredient = aggregatedIngredients.find(
+            (item) => item._id === step.ingredientId
+          );
+          const additiveLimit = ingredient && additiveLimits?.[ingredient._id];
+          const compliance = calculateRegulationCompliance({
+            additiveLimit:
+              additiveLimit && typeof additiveLimit === "object"
+                ? additiveLimit
+                : undefined,
+            batchWeight: calculatedBatchWeight,
+            maxLimitPercent: step.maxLimitPercent,
+            weight: step.expectedWeight || 0,
+          });
+          return compliance.exceedsLimit
+            ? [
+                {
+                  actualPercent: compliance.actualPercent,
+                  ingredientName: ingredient?.name || step.label,
+                  maxLimitPercent: compliance.effectiveMaxLimitPercent,
+                  phaseName: phase.name,
+                  stepId: step.id,
+                },
+              ]
+            : [];
+        })
+      ),
+    [additiveLimits, aggregatedIngredients, calculatedBatchWeight, phases]
+  );
   const hasRegulationBreaches = regulationBreaches.length > 0;
   const totalProjectRDCost = calculateProjectRDCost(
     project?.totalProjectRDCost,
     project?.batchCost,
     calculatedCosts.batchCost
   );
-  const baselineAllergens = useMemo(() => {
-    return getFormulationBaselineAllergens(
-      derivedIngredients,
-      aggregatedIngredients,
-      TREE_NUT_OPTIONS
-    );
-  }, [aggregatedIngredients, derivedIngredients]);
+  const baselineAllergens = useMemo(
+    () =>
+      getFormulationBaselineAllergens(
+        derivedIngredients,
+        aggregatedIngredients,
+        TREE_NUT_OPTIONS
+      ),
+    [aggregatedIngredients, derivedIngredients]
+  );
   const allergenRegion = (project?.allergenRegion || "FDA") as AllergenRegion;
-  const selectedFormulationAllergens = useMemo(() => {
-    return applyAllergenOverrides(baselineAllergens, manualAllergenOverrides);
-  }, [baselineAllergens, manualAllergenOverrides]);
+  const selectedFormulationAllergens = useMemo(
+    () => applyAllergenOverrides(baselineAllergens, manualAllergenOverrides),
+    [baselineAllergens, manualAllergenOverrides]
+  );
   const extraFormulationAllergens = project?.formulationExtraAllergens ?? [];
 
   useEffect(() => {
@@ -572,16 +699,125 @@ const Formulation: React.FC = () => {
   const canEdit = canEditBase && !isReleased;
   // Allow sign off for local/test environments where roles might not be fully seeded
   const canSignOff = true; // role?.key === "admin" || role?.key === "supervisor";
-  const handleSave = useFormulationSave({
+  const autosavePayload = useMemo(
+    () =>
+      project
+        ? buildFormulationSavePayload(project, phases, derivedIngredients)
+        : undefined,
+    [derivedIngredients, phases, project]
+  );
+  const autosaveSignature = useMemo(
+    () => (autosavePayload ? JSON.stringify(autosavePayload) : ""),
+    [autosavePayload]
+  );
+
+  useEffect(() => {
+    if (!(project && projectId && canEdit && autosavePayload)) {
+      return;
+    }
+
+    if (!lastAutosaveSignatureRef.current) {
+      lastAutosaveSignatureRef.current = autosaveSignature;
+      setAutosaveStatus("saved");
+      return;
+    }
+
+    if (lastAutosaveSignatureRef.current === autosaveSignature) {
+      return;
+    }
+
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+
+    setAutosaveStatus("saving");
+    const runId = autosaveRunRef.current + 1;
+    autosaveRunRef.current = runId;
+    autosaveTimerRef.current = setTimeout(() => {
+      const autosaveName = getPendingAutosaveName();
+      updateProjectMutation({
+        id: projectId,
+        ...autosavePayload,
+        autosaveName,
+      })
+        .then(() => {
+          if (autosaveRunRef.current === runId) {
+            lastAutosaveSignatureRef.current = autosaveSignature;
+            pendingAutosaveChangesRef.current.clear();
+            setAutosaveStatus("saved");
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          if (autosaveRunRef.current === runId) {
+            setAutosaveStatus("error");
+          }
+        });
+    }, 500);
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, [
+    autosavePayload,
+    autosaveSignature,
     canEdit,
-    ingredients: derivedIngredients,
-    logAction: "Updated Formulation",
-    logPage: "Formulation",
-    phases,
+    getPendingAutosaveName,
     project,
     projectId,
-    successMessage: "Formulation saved successfully!",
-  });
+    updateProjectMutation,
+  ]);
+
+  const handleExitEditor = useCallback(async () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+
+    const hasPendingAutosave =
+      Boolean(projectId && canEdit && autosavePayload) &&
+      lastAutosaveSignatureRef.current !== autosaveSignature;
+
+    if (hasPendingAutosave && projectId && autosavePayload) {
+      const runId = autosaveRunRef.current + 1;
+      autosaveRunRef.current = runId;
+      const autosaveName = getPendingAutosaveName();
+      setAutosaveStatus("saving");
+
+      try {
+        await updateProjectMutation({
+          id: projectId,
+          ...autosavePayload,
+          autosaveName,
+        });
+        if (autosaveRunRef.current === runId) {
+          lastAutosaveSignatureRef.current = autosaveSignature;
+          pendingAutosaveChangesRef.current.clear();
+          setAutosaveStatus("saved");
+        }
+      } catch (error) {
+        console.error(error);
+        if (autosaveRunRef.current === runId) {
+          setAutosaveStatus("error");
+        }
+      }
+    }
+
+    autosaveRunRef.current += 1;
+    resetEditorState();
+    navigate("/", { replace: true });
+  }, [
+    autosavePayload,
+    autosaveSignature,
+    canEdit,
+    getPendingAutosaveName,
+    navigate,
+    projectId,
+    resetEditorState,
+    updateProjectMutation,
+  ]);
 
   const handleStatusChange = async (newStatus: string) => {
     if (!(project && projectId)) {
@@ -617,8 +853,7 @@ const Formulation: React.FC = () => {
       return;
     }
 
-    const nextReleaseNotes =
-      newStatus === "Draft" ? "" : project.releaseNotes;
+    const nextReleaseNotes = newStatus === "Draft" ? "" : project.releaseNotes;
 
     // Pass releasedBy if transitioning to Released
     const releasedBy =
@@ -631,6 +866,7 @@ const Formulation: React.FC = () => {
         id: projectId,
         status: newStatus as "Draft" | "Under Review" | "Released",
         releaseNotes: nextReleaseNotes,
+        autosaveName: `Auto-Save: Changed status to ${newStatus}`,
         ...(releasedBy ? { releasedBy } : {}),
       });
 
@@ -653,7 +889,7 @@ const Formulation: React.FC = () => {
   };
 
   const handleCreateNewVersion = async () => {
-    if (!(project && projectId) || !isReleased || isCreatingNewVersion) {
+    if (!(project && projectId && isReleased) || isCreatingNewVersion) {
       return;
     }
 
@@ -703,6 +939,76 @@ const Formulation: React.FC = () => {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const getIngredientName = (ingredientId?: string, fallback?: string) =>
+    aggregatedIngredients.find((ingredient) => ingredient._id === ingredientId)
+      ?.name ||
+    fallback ||
+    t("ingredient");
+
+  const formatCriticalParameterValue = (
+    parameter: NonNullable<RecipeStep["criticalParams"]>[number] | undefined
+  ) => {
+    const min =
+      typeof parameter?.min === "number" && Number.isFinite(parameter.min)
+        ? parameter.min
+        : undefined;
+    const max =
+      typeof parameter?.max === "number" && Number.isFinite(parameter.max)
+        ? parameter.max
+        : undefined;
+    if (min !== undefined && max !== undefined) {
+      return min === max ? `${min}` : `${min}-${max}`;
+    }
+    if (max !== undefined) {
+      return `${max}`;
+    }
+    if (min !== undefined) {
+      return `${min}`;
+    }
+    return "blank";
+  };
+
+  const describeStepAutosave = (
+    currentStep: RecipeStep | undefined,
+    updates: Partial<RecipeStep>
+  ) => {
+    const nextStep = { ...currentStep, ...updates } as RecipeStep;
+    if ("expectedWeight" in updates || "unit" in updates) {
+      const ingredientName = getIngredientName(
+        nextStep.ingredientId,
+        nextStep.label
+      );
+      return `Auto-Save: Updated ${ingredientName} to ${formatAutosaveValue(nextStep.expectedWeight)}${nextStep.unit || "g"}`;
+    }
+    if ("ingredientId" in updates) {
+      return `Auto-Save: Updated ingredient row to ${getIngredientName(updates.ingredientId, nextStep.label)}`;
+    }
+    if ("maxLimitPercent" in updates) {
+      return `Auto-Save: Updated regulation limit for ${getIngredientName(nextStep.ingredientId, nextStep.label)} to ${formatAutosaveValue(updates.maxLimitPercent)}%`;
+    }
+    if ("criticalParams" in updates) {
+      const parameter = updates.criticalParams?.[0];
+      const parameterName = parameter?.name || currentStep?.label || "Critical";
+      return `Auto-Save: Updated ${parameterName} parameter to ${formatCriticalParameterValue(parameter)}`;
+    }
+    if ("processTemp" in updates) {
+      return `Auto-Save: Updated process temperature to ${formatAutosaveValue(updates.processTemp)}`;
+    }
+    if ("processSpeed" in updates) {
+      return `Auto-Save: Updated process speed to ${formatAutosaveValue(updates.processSpeed)}`;
+    }
+    if ("durationSeconds" in updates) {
+      return `Auto-Save: Updated timer to ${formatAutosaveValue(updates.durationSeconds)} seconds`;
+    }
+    if ("label" in updates) {
+      return `Auto-Save: Updated step label to ${formatAutosaveValue(updates.label)}`;
+    }
+    if ("notes" in updates) {
+      return `Auto-Save: Updated step notes`;
+    }
+    return DEFAULT_AUTOSAVE_NAME;
+  };
+
   const addPhase = () => {
     if (!canEdit) {
       return;
@@ -711,6 +1017,7 @@ const Formulation: React.FC = () => {
       phases,
       t("new_phase")
     );
+    queueAutosaveChange("phase.add", "Auto-Save: Added a new phase");
     setPhases(nextPhases);
     setTimeout(() => scrollToItem(newPhase.id), 100);
   };
@@ -719,6 +1026,12 @@ const Formulation: React.FC = () => {
     if (!canEdit) {
       return;
     }
+    if (updates.name !== undefined) {
+      queueAutosaveChange(
+        `phase.${phaseId}.name`,
+        `Auto-Save: Updated phase name to ${formatAutosaveValue(updates.name)}`
+      );
+    }
     setPhases(updatePhaseInPhases(phases, phaseId, updates));
   };
 
@@ -726,6 +1039,7 @@ const Formulation: React.FC = () => {
     if (!canEdit) {
       return;
     }
+    queueAutosaveChange("phase.delete", "Auto-Save: Deleted a phase");
     setPhases(deletePhaseFromPhases(phases, phaseId));
   };
 
@@ -741,6 +1055,10 @@ const Formulation: React.FC = () => {
       t("mini_spreadsheet")
     );
     setPhases(nextPhases);
+    queueAutosaveChange(
+      `step.${type}.add`,
+      `Auto-Save: Added a ${type.replace(/_/g, " ")} step`
+    );
     if (type === "weighing") {
       markAllergenReviewRequired();
     }
@@ -764,6 +1082,10 @@ const Formulation: React.FC = () => {
       t("mini_spreadsheet")
     );
     setPhases(nextPhases);
+    queueAutosaveChange(
+      `step.${type}.addAfter`,
+      `Auto-Save: Added a ${type.replace(/_/g, " ")} step`
+    );
     if (type === "weighing") {
       markAllergenReviewRequired();
     }
@@ -782,10 +1104,16 @@ const Formulation: React.FC = () => {
       .find((phase) => phase.id === phaseId)
       ?.steps.find((step) => step.id === stepId);
     const nextPhases = updateStepInPhase(phases, phaseId, stepId, updates);
+    queueAutosaveChange(
+      `step.${stepId}`,
+      describeStepAutosave(changedStep, updates)
+    );
     setPhases(nextPhases);
     if (
       changedStep?.type === "weighing" &&
-      ("ingredientId" in updates || "expectedWeight" in updates || "unit" in updates)
+      ("ingredientId" in updates ||
+        "expectedWeight" in updates ||
+        "unit" in updates)
     ) {
       markAllergenReviewRequired();
     }
@@ -799,6 +1127,10 @@ const Formulation: React.FC = () => {
       .find((phase) => phase.id === phaseId)
       ?.steps.find((step) => step.id === stepId);
     const nextPhases = deleteStepFromPhase(phases, phaseId, stepId);
+    queueAutosaveChange(
+      `step.${stepId}.delete`,
+      `Auto-Save: Deleted ${deletedStep?.label || "a formulation step"}`
+    );
     setPhases(nextPhases);
     if (deletedStep?.type === "weighing") {
       markAllergenReviewRequired();
@@ -813,6 +1145,10 @@ const Formulation: React.FC = () => {
     if (!canEdit || startIndex === endIndex) {
       return;
     }
+    queueAutosaveChange(
+      `phase.${phaseId}.reorderSteps`,
+      "Auto-Save: Reordered formulation steps"
+    );
     setPhases((currentPhases) =>
       reorderStepInPhase(currentPhases, phaseId, startIndex, endIndex)
     );
@@ -822,6 +1158,7 @@ const Formulation: React.FC = () => {
     if (!canEdit || startIndex === endIndex) {
       return;
     }
+    queueAutosaveChange("phase.reorder", "Auto-Save: Reordered phases");
     setPhases((currentPhases) =>
       reorderPhases(currentPhases, startIndex, endIndex)
     );
@@ -829,8 +1166,20 @@ const Formulation: React.FC = () => {
 
   if (!project) {
     return (
-      <div>
-        {convexProject === undefined ? t("loading") : t("project_not_found")}
+      <div className="-m-4 flex min-h-dvh items-center justify-center bg-white p-6 sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
+        <div className="max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="font-bold text-slate-700 dark:text-slate-200">
+            {convexProject === undefined ? t("loading") : t("project_not_found")}
+          </p>
+          <button
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+            onClick={handleExitEditor}
+            type="button"
+          >
+            <ChevronLeft size={16} />
+            {t("exit_editor")}
+          </button>
+        </div>
       </div>
     );
   }
@@ -847,20 +1196,15 @@ const Formulation: React.FC = () => {
       <div className="relative z-10 flex shrink-0 flex-col justify-between gap-4 border-gray-100 border-b bg-white px-8 py-4 shadow-sm md:flex-row md:items-center dark:border-slate-800 dark:bg-[#0f172a]">
         <div className="flex items-center space-x-4">
           <button
-            aria-label={t("go_back")}
-            className="cursor-pointer rounded-full border border-gray-200 bg-gray-50 p-3 text-gray-500 transition-colors hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-            onClick={() => {
-              if (window.history.length > 2) {
-                navigate(-1);
-              } else {
-                navigate("/");
-              }
-            }}
-            style={{ cursor: "pointer" }}
-            title={t("go_back")}
+            aria-label={t("exit_editor")}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-3 font-bold text-gray-600 text-sm transition-colors hover:bg-gray-100 hover:text-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+            data-testid="exit-editor-button"
+            onClick={handleExitEditor}
+            title={t("exit_editor")}
             type="button"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
+            <span>{t("exit_editor")}</span>
           </button>
           <div>
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
@@ -872,6 +1216,26 @@ const Formulation: React.FC = () => {
                       v{project.version}
                     </span>
                   </h1>
+                  {canEdit && (
+                    <span
+                      aria-live="polite"
+                      className={`pt-1 font-medium text-[11px] leading-none ${
+                        autosaveStatus === "error"
+                          ? "text-red-600 dark:text-red-400"
+                          : autosaveStatus === "saving"
+                            ? "text-slate-500 dark:text-slate-400"
+                            : "text-slate-400 dark:text-slate-500"
+                      }`}
+                      data-testid="autosave-status"
+                      role={autosaveStatus === "error" ? "alert" : "status"}
+                    >
+                      {autosaveStatus === "error"
+                        ? t("autosave_error")
+                        : autosaveStatus === "saving"
+                          ? t("autosave_saving")
+                          : t("autosave_saved")}
+                    </span>
+                  )}
                   {project && (
                     <div className="flex flex-wrap items-center gap-2">
                       <select
@@ -894,11 +1258,12 @@ const Formulation: React.FC = () => {
                         value={lifecycleStatus}
                       >
                         <option value="Draft">{t("draft")}</option>
-                        <option value="Under Review">{t("under_review")}</option>
+                        <option value="Under Review">
+                          {t("under_review")}
+                        </option>
                         <option
                           disabled={
-                            lifecycleStatus === "Draft" ||
-                            hasRegulationBreaches
+                            lifecycleStatus === "Draft" || hasRegulationBreaches
                           }
                           value="Released"
                         >
@@ -911,7 +1276,7 @@ const Formulation: React.FC = () => {
                             className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
                             data-testid="latest-read-only-badge"
                           >
-                            Latest (read only)
+                            {t("latest_read_only")}
                           </span>
                           <button
                             className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-700 text-xs transition-colors hover:bg-indigo-50 disabled:cursor-wait disabled:opacity-70 dark:border-indigo-800/50 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
@@ -921,8 +1286,8 @@ const Formulation: React.FC = () => {
                             type="button"
                           >
                             {isCreatingNewVersion
-                              ? "Creating..."
-                              : "Create New Version"}
+                              ? t("creating")
+                              : t("create_new_version")}
                           </button>
                         </>
                       )}
@@ -939,7 +1304,7 @@ const Formulation: React.FC = () => {
                     <ShieldAlert className="mt-0.5 shrink-0" size={18} />
                     <div>
                       <p className="font-black text-sm">
-                        Regulation limit exceeded. Release is blocked.
+                        {t("regulation_limit_release_blocked")}
                       </p>
                       <p className="mt-1 text-xs">
                         {regulationBreaches
@@ -977,24 +1342,6 @@ const Formulation: React.FC = () => {
             <History size={20} />
             <span>{t("history")}</span>
           </button>
-
-          {canEdit && (
-            <button
-              className="flex items-center gap-2 rounded-3xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-indigo-600/20 shadow-lg transition-all hover:scale-[1.02] hover:bg-indigo-700 active:scale-[0.98] dark:bg-indigo-500"
-              data-testid="save-formulation-button"
-              onClick={() => {
-                if (project.allergenReviewRequired) {
-                  scrollToAllergens();
-                  return;
-                }
-                handleSave();
-              }}
-              type="button"
-            >
-              <Save size={20} />
-              <span>{t("save_formulation")}</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -1207,17 +1554,13 @@ const Formulation: React.FC = () => {
                 disabled={!canEdit}
                 id="formulation-allergen-region"
                 onChange={(event) =>
-                  setProject({
-                    ...project,
-                    allergenRegion: event.target.value,
-                    allergenReviewRequired: true,
-                  })
+                  handleAllergenRegionChange(event.target.value)
                 }
                 value={allergenRegion}
               >
-                <option value="FDA">FDA</option>
-                <option value="EU">EU</option>
-                <option value="GSO">GSO</option>
+                <option value="FDA">{t("region_fda")}</option>
+                <option value="EU">{t("region_eu")}</option>
+                <option value="GSO">{t("region_gso")}</option>
               </select>
 
               <div className="grid grid-cols-1 gap-2">
@@ -1225,7 +1568,9 @@ const Formulation: React.FC = () => {
                   <div key={allergenKey}>
                     <label
                       className={`flex items-center gap-2 rounded-xl border border-amber-100 bg-white px-3 py-2 text-amber-950 text-xs shadow-sm dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-100 ${
-                        canEdit ? "cursor-pointer" : "cursor-not-allowed opacity-75"
+                        canEdit
+                          ? "cursor-pointer"
+                          : "cursor-not-allowed opacity-75"
                       }`}
                     >
                       <input
@@ -1241,7 +1586,7 @@ const Formulation: React.FC = () => {
                     </label>
                     {allergenKey === "allergen_tree_nuts" &&
                       selectedFormulationAllergens.includes(allergenKey) && (
-                        <div className="mt-2 ms-6 grid grid-cols-1 gap-1">
+                        <div className="ms-6 mt-2 grid grid-cols-1 gap-1">
                           {TREE_NUT_OPTIONS.map((subKey) => (
                             <label
                               className={`flex items-center gap-2 text-amber-900 text-xs dark:text-amber-100/80 ${
@@ -1297,7 +1642,9 @@ const Formulation: React.FC = () => {
                 <input
                   className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-3 py-2 text-amber-950 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-70 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
                   disabled={!canEdit}
-                  onChange={(event) => setExtraAllergenInput(event.target.value)}
+                  onChange={(event) =>
+                    setExtraAllergenInput(event.target.value)
+                  }
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
@@ -1334,18 +1681,18 @@ const Formulation: React.FC = () => {
             >
               <div className="border-2 border-black bg-white p-3 font-sans text-black shadow-sm">
                 <h2 className="border-black border-b-8 pb-1 font-black text-4xl leading-none tracking-tight">
-                  Nutrition Facts
+                  {t("nutrition_facts")}
                 </h2>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Serving size{" "}
+                  {t("serving_size")}{" "}
                   <span className="float-right">
                     {calculatedMeasures.servingSizeWeight.toFixed(0)}g
                   </span>
                 </div>
                 <div className="border-black border-b-4 py-1">
-                  <p className="font-bold text-xs">Amount per serving</p>
+                  <p className="font-bold text-xs">{t("amount_per_serving")}</p>
                   <div className="flex items-end justify-between">
-                    <span className="font-black text-2xl">Calories</span>
+                    <span className="font-black text-2xl">{t("calories")}</span>
                     <span
                       className="font-black text-3xl"
                       data-testid="nutrition-calories"
@@ -1355,37 +1702,36 @@ const Formulation: React.FC = () => {
                   </div>
                 </div>
                 <div className="border-black border-b py-1 text-right font-black text-xs">
-                  % Daily Value*
+                  {t("daily_value_percent")}
                 </div>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Total Fat{" "}
+                  {t("total_fat")}{" "}
                   <span data-testid="nutrition-fat">{nutritionFacts.fat}g</span>
                 </div>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Total Carbohydrate{" "}
+                  {t("total_carbohydrate")}{" "}
                   <span data-testid="nutrition-carbohydrates">
                     {nutritionFacts.carbohydrates}g
                   </span>
                 </div>
                 <div className="border-black border-b py-1 font-bold text-sm">
-                  Protein{" "}
+                  {t("protein")}{" "}
                   <span data-testid="nutrition-protein">
                     {nutritionFacts.protein}g
                   </span>
                 </div>
                 <div className="pt-2 text-[10px] leading-tight">
-                  * Daily Values are reference estimates. Final label review
-                  should use the selected regulatory market.
+                  {t("daily_values_reference_note")}
                 </div>
                 <div className="mt-3 border-black border-t-4 pt-2">
                   <p className="font-black text-[11px] uppercase tracking-wide">
-                    Ingredients
+                    {t("ingredients")}
                   </p>
                   <p
                     className="mt-1 text-[11px] leading-snug"
                     data-testid="nutrition-ingredient-statement"
                   >
-                    {ingredientStatement || "No ingredients selected."}
+                    {ingredientStatement || t("no_ingredients_selected")}
                   </p>
                 </div>
               </div>
@@ -1443,10 +1789,13 @@ const Formulation: React.FC = () => {
                 </h3>
                 <textarea
                   className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  onBlur={() => handleSave()}
-                  onChange={(e) =>
-                    setProject({ ...project, releaseNotes: e.target.value })
-                  }
+                  onChange={(e) => {
+                    queueAutosaveChange(
+                      "metadata.releaseNotes",
+                      "Auto-Save: Updated release notes"
+                    );
+                    setProject({ ...project, releaseNotes: e.target.value });
+                  }}
                   placeholder={t("release_notes_placeholder")}
                   value={project.releaseNotes || ""}
                 />
@@ -1460,7 +1809,7 @@ const Formulation: React.FC = () => {
               <div className="flex flex-col gap-5 border-slate-100 border-b p-5 md:flex-row md:items-start md:justify-between dark:border-slate-700">
                 <div>
                   <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
-                    Measures
+                    {t("measures")}
                   </p>
                   <div className="mt-3 flex rounded-full border border-cyan-200 bg-cyan-50 p-1 dark:border-cyan-800/50 dark:bg-cyan-950/40">
                     {(["Liquid", "Solid"] as FormulationState[]).map(
@@ -1477,7 +1826,7 @@ const Formulation: React.FC = () => {
                           onClick={() => handleFormulationStateChange(state)}
                           type="button"
                         >
-                          {state}
+                          {t(state === "Liquid" ? "liquid" : "solid")}
                         </button>
                       )
                     )}
@@ -1487,7 +1836,7 @@ const Formulation: React.FC = () => {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/40">
                     <p className="font-bold text-emerald-700 text-xs dark:text-emerald-300">
-                      Total Project R&D Cost
+                      {t("total_project_rd_cost")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-emerald-950 dark:text-emerald-100"
@@ -1498,7 +1847,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Batch Yield
+                      {t("batch_yield")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1509,7 +1858,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Batch Weight
+                      {t("batch_weight")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1520,7 +1869,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Batch Cost ($)
+                      {t("batch_cost_usd")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1531,7 +1880,7 @@ const Formulation: React.FC = () => {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                     <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Cost per Serving ($)
+                      {t("cost_per_serving_usd")}
                     </p>
                     <p
                       className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
@@ -1547,8 +1896,8 @@ const Formulation: React.FC = () => {
                 <div className="flex flex-wrap rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
                   {(
                     [
-                      ["recipeMakes", "A Recipe makes..."],
-                      ["servingIs", "A Serving is..."],
+                      ["recipeMakes", t("a_recipe_makes")],
+                      ["servingIs", t("a_serving_is")],
                     ] as [ServingSizeMode, string][]
                   ).map(([mode, label]) => (
                     <button
@@ -1570,30 +1919,58 @@ const Formulation: React.FC = () => {
 
                 <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                   <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                    Amount
+                    {t("amount")}
                   </span>
-                  <input
-                    className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
-                    data-testid="serving-size-amount-input"
-                    disabled={!canEdit}
-                    min="0"
-                    onChange={(e) => handleServingAmountChange(e.target.value)}
-                    placeholder="0"
-                    step="any"
-                    type="number"
-                    value={servingSizeAmount ?? ""}
-                  />
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      className="min-w-0 flex-1 bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
+                      data-testid="serving-size-amount-input"
+                      disabled={!canEdit}
+                      min="0"
+                      onChange={(e) =>
+                        handleServingAmountChange(e.target.value)
+                      }
+                      placeholder="0"
+                      step="any"
+                      type="number"
+                      value={servingSizeAmount ?? ""}
+                    />
+                    {servingSizeMode === "servingIs" ? (
+                      <select
+                        aria-label={t("serving_size_unit")}
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-black text-slate-700 text-xs uppercase outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900/40"
+                        data-testid="serving-size-unit-select"
+                        disabled={!canEdit}
+                        onChange={(e) =>
+                          handleServingSizeUnitChange(
+                            e.target.value as ServingSizeUnit
+                          )
+                        }
+                        value={servingSizeUnit}
+                      >
+                        {SERVING_SIZE_UNITS.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="rounded-lg bg-slate-100 px-2 py-1 font-black text-slate-500 text-xs uppercase dark:bg-slate-800 dark:text-slate-300">
+                        {t("servings")}
+                      </span>
+                    )}
+                  </div>
                 </label>
 
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-800/50 dark:bg-indigo-950/40">
                   <p className="font-bold text-indigo-700 text-xs dark:text-indigo-300">
-                    Serving size weight
+                    {t("serving_size_weight")}
                   </p>
                   <p
                     className="mt-1 font-black text-2xl text-indigo-950 dark:text-indigo-100"
                     data-testid="serving-size-weight-display"
                   >
-                    {calculatedMeasures.servingSizeWeight}
+                    {calculatedMeasures.servingSizeWeight} g
                   </p>
                 </div>
 
@@ -1614,15 +1991,15 @@ const Formulation: React.FC = () => {
             >
               <div className="border-slate-100 border-b p-5 dark:border-slate-700">
                 <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
-                  Packaging
+                  {t("packaging")}
                 </p>
                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_180px_180px]">
                   <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                     <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Packaging item
+                      {t("packaging_item")}
                     </span>
                     <select
-                      className="mt-1 w-full bg-transparent font-black text-slate-900 text-lg outline-none dark:text-white"
+                      className="mt-1 w-full bg-transparent font-black text-lg text-slate-900 outline-none dark:text-white"
                       data-testid="packaging-item-select"
                       disabled={!canEdit}
                       onChange={(event) =>
@@ -1630,7 +2007,7 @@ const Formulation: React.FC = () => {
                       }
                       value={project.packagingItemName ?? ""}
                     >
-                      <option value="">Select packaging...</option>
+                      <option value="">{t("select_packaging")}</option>
                       {PACKAGING_OPTIONS.filter((option) => option.name).map(
                         (option) => (
                           <option key={option.name} value={option.name}>
@@ -1643,7 +2020,7 @@ const Formulation: React.FC = () => {
 
                   <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                     <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Unit price ($)
+                      {t("unit_price_usd")}
                     </span>
                     <input
                       className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
@@ -1665,7 +2042,7 @@ const Formulation: React.FC = () => {
 
                   <label className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                     <span className="block font-bold text-slate-500 text-xs dark:text-slate-400">
-                      Target capacity (g)
+                      {t("target_capacity_g")}
                     </span>
                     <input
                       className="mt-1 w-full bg-transparent font-black text-slate-900 text-xl outline-none dark:text-white"
@@ -1690,7 +2067,7 @@ const Formulation: React.FC = () => {
               <div className="grid gap-4 p-5 md:grid-cols-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                   <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                    Ingredient Cost per Serving ($)
+                    {t("ingredient_cost_per_serving_usd")}
                   </p>
                   <p className="mt-1 font-black text-2xl text-slate-900 dark:text-white">
                     {formatCurrency(calculatedCosts.costPerServing)}
@@ -1698,18 +2075,20 @@ const Formulation: React.FC = () => {
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                   <p className="font-bold text-slate-500 text-xs dark:text-slate-400">
-                    Packaging Cost per Unit ($)
+                    {t("packaging_cost_per_unit_usd")}
                   </p>
                   <p
                     className="mt-1 font-black text-2xl text-slate-900 dark:text-white"
                     data-testid="packaging-cost-per-unit-display"
                   >
-                    {formatCurrency(calculatedPackagingCosts.packagingCostPerUnit)}
+                    {formatCurrency(
+                      calculatedPackagingCosts.packagingCostPerUnit
+                    )}
                   </p>
                 </div>
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/40">
                   <p className="font-bold text-emerald-700 text-xs dark:text-emerald-300">
-                    Total Finished Good Cost per Unit ($)
+                    {t("total_finished_good_cost_per_unit_usd")}
                   </p>
                   <p
                     className="mt-1 font-black text-2xl text-emerald-950 dark:text-emerald-100"
@@ -1727,7 +2106,7 @@ const Formulation: React.FC = () => {
                   className="mx-5 mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 font-bold text-amber-800 text-sm dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200"
                   data-testid="packaging-capacity-warning"
                 >
-                  Warning: Serving size exceeds packaging capacity.
+                  {t("serving_size_exceeds_packaging_capacity")}
                 </div>
               )}
             </section>
@@ -1777,6 +2156,10 @@ const Formulation: React.FC = () => {
                         deletePhase={deletePhase}
                         deleteStep={deleteStep}
                         flatSteps={flatSteps}
+                        formulationContext={{
+                          ingredients: derivedIngredients,
+                          phases,
+                        }}
                         handleSaveDependency={handleSaveDependency}
                         isStepLocked={isStepLocked}
                         itemRefs={itemRefs}
@@ -1789,10 +2172,6 @@ const Formulation: React.FC = () => {
                         stepDependencies={stepDependencies}
                         updatePhase={updatePhase}
                         updateStep={updateStep}
-                        formulationContext={{
-                          ingredients: derivedIngredients,
-                          phases,
-                        }}
                       />
                     );
                   })}

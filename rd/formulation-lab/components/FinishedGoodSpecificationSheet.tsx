@@ -1,5 +1,6 @@
 import { Check, FileText, Printer, ShieldCheck } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   calculateNutritionFacts,
   getFormulationBaselineAllergens,
@@ -8,6 +9,7 @@ import {
   calculatePackagingCosts,
   calculateRecipeCosts,
   calculateRecipeMeasures,
+  type ServingSizeUnit,
 } from "../lib/formulation/save-payload";
 import type {
   AggregatedIngredient,
@@ -31,6 +33,9 @@ const TREE_NUT_ALLERGENS = [
 const ALLERGEN_PREFIX_REGEX = /^allergen_/i;
 const UNDERSCORE_REGEX = /_/g;
 const TITLE_CASE_WORD_REGEX = /\b\w/g;
+const KCAL_TO_KJ = 4.184;
+
+type NutritionRegulationArea = "FDA" | "EU";
 
 interface FinishedGoodSpecificationSheetProps {
   activeFormulation?: EnrichedProject | null;
@@ -142,6 +147,9 @@ export default function FinishedGoodSpecificationSheet({
   reports,
   selectedReportId,
 }: FinishedGoodSpecificationSheetProps) {
+  const { t } = useTranslation();
+  const [nutritionRegulationArea, setNutritionRegulationArea] =
+    useState<NutritionRegulationArea>("FDA");
   const liveIngredients = useMemo(
     () =>
       attachLiveIngredientData(
@@ -163,7 +171,8 @@ export default function FinishedGoodSpecificationSheet({
   const measures = calculateRecipeMeasures(
     batchWeight,
     activeFormulation?.servingSizeMode,
-    activeFormulation?.servingSizeAmount ?? activeFormulation?.yield
+    activeFormulation?.servingSizeAmount ?? activeFormulation?.yield,
+    (activeFormulation?.servingSizeUnit ?? "g") as ServingSizeUnit
   );
   const recipeCosts = calculateRecipeCosts(
     liveIngredients,
@@ -178,6 +187,14 @@ export default function FinishedGoodSpecificationSheet({
     measures.servingSizeWeight,
     batchWeight
   );
+  const nutritionFactsPer100g = calculateNutritionFacts(
+    liveIngredients,
+    100,
+    batchWeight
+  );
+  const energyKjPer100g = Math.round(
+    nutritionFactsPer100g.calories * KCAL_TO_KJ
+  );
   const baselineAllergens = getFormulationBaselineAllergens(
     liveIngredients,
     aggregatedIngredients,
@@ -190,11 +207,11 @@ export default function FinishedGoodSpecificationSheet({
   const allergenText =
     selectedAllergens.length > 0
       ? selectedAllergens.map(normalizeLabel).join(", ")
-      : "No declared allergens";
+      : t("no_declared_allergens");
   const ingredientStatement =
     liveIngredients.length > 0
       ? liveIngredients.map((ingredient) => ingredient.name).join(", ")
-      : "No ingredients selected";
+      : t("no_ingredients_selected");
 
   const typedFormulation = activeFormulation as
     | (EnrichedProject & {
@@ -229,7 +246,7 @@ export default function FinishedGoodSpecificationSheet({
     typedFormulation?.legalName ||
     activeFormulation?.productType ||
     activeFormulation?.name ||
-    "Unassigned product";
+    t("unassigned_product");
   const versionTag = activeFormulation?.version || "V1";
   const docCode = `FG-SPEC-${(
     activeFormulation?.formattedId ||
@@ -241,12 +258,12 @@ export default function FinishedGoodSpecificationSheet({
   const shelfLife =
     typedFormulation?.targetShelfLife ||
     activeFormulation?.targetOutcome ||
-    "Validate by shelf-life study";
+    t("validate_by_shelf_life_study");
   const storageConditions =
     typedFormulation?.storageConditions ||
     (activeFormulation?.formulationState === "Solid"
-      ? "Cool, dry storage"
-      : "Controlled storage per validation");
+      ? t("cool_dry_storage")
+      : t("controlled_storage_per_validation"));
   const netWeight =
     typeof activeFormulation?.packagingCapacity === "number"
       ? `${formatNumber(activeFormulation.packagingCapacity, 1)} ${
@@ -256,73 +273,42 @@ export default function FinishedGoodSpecificationSheet({
   const packageContent =
     typedFormulation?.packageContent ||
     activeFormulation?.packagingItemName ||
-    "Packaging method not selected";
+    t("packaging_method_not_selected");
 
   const claims = [
     {
       checked: !hasAnyAllergen(selectedAllergens, ["soy"]),
-      label: "Soy Free",
+      label: t("soy_free"),
     },
     {
       checked: !hasAnyAllergen(selectedAllergens, ["milk", "dairy"]),
-      label: "Dairy Free",
+      label: t("dairy_free"),
     },
     {
       checked: !hasAnyAllergen(selectedAllergens, ["gluten", "wheat"]),
-      label: "Gluten Free",
+      label: t("gluten_free"),
     },
     {
       checked: Boolean(typedFormulation?.gmoFree),
-      label: "GMO Free",
+      label: t("gmo_free"),
     },
   ];
 
   const productBullets = [
-    `Category: ${activeFormulation?.category || "Unclassified"}`,
-    `Formulation state: ${activeFormulation?.formulationState || "Liquid"}`,
-    `Batch weight: ${formatNumber(batchWeight, 1)} g`,
-    `Finished good unit cost: ${formatMoney(
+    `${t("category")}: ${activeFormulation?.category || t("unclassified")}`,
+    `${t("formulation_state")}: ${
+      activeFormulation?.formulationState
+        ? t(activeFormulation.formulationState === "Solid" ? "solid" : "liquid")
+        : t("liquid")
+    }`,
+    `${t("batch_weight")}: ${formatNumber(batchWeight, 1)} g`,
+    `${t("finished_good_unit_cost")}: ${formatMoney(
       packagingCosts.finishedGoodCostPerUnit
     )}`,
   ];
 
   return (
     <>
-      <style>{`
-        @media print {
-          @page {
-            size: A4;
-            margin: 12mm;
-          }
-
-          body * {
-            visibility: hidden;
-          }
-
-          #finished-good-spec-sheet,
-          #finished-good-spec-sheet * {
-            visibility: visible;
-          }
-
-          #finished-good-spec-sheet {
-            position: absolute;
-            inset: 0 auto auto 0;
-            width: 100%;
-            margin: 0 !important;
-            box-shadow: none !important;
-          }
-
-          .spec-no-print {
-            display: none !important;
-          }
-
-          .spec-print-avoid {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-        }
-      `}</style>
-
       <section
         className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950"
         id="finished-good-spec-sheet"
@@ -330,10 +316,10 @@ export default function FinishedGoodSpecificationSheet({
         <div className="spec-no-print mb-5 flex flex-col gap-3 border-slate-200 border-b pb-5 lg:flex-row lg:items-center lg:justify-between dark:border-slate-800">
           <div>
             <p className="font-bold text-blue-700 text-xs uppercase tracking-[0.22em] dark:text-blue-300">
-              Finished Good Specification Sheet
+              {t("finished_good_specification_sheet")}
             </p>
             <h2 className="mt-1 font-bold text-2xl text-slate-950 dark:text-white">
-              Food Product Specification Sheet
+              {t("food_product_specification_sheet")}
             </h2>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -348,27 +334,43 @@ export default function FinishedGoodSpecificationSheet({
                 </option>
               ))}
             </select>
+            <label className="flex min-w-[190px] flex-col gap-1 text-slate-600 text-xs dark:text-slate-300">
+              <span className="font-black uppercase tracking-wide">
+                {t("regulation_area")}
+              </span>
+              <select
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-800 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40"
+                onChange={(event) =>
+                  setNutritionRegulationArea(
+                    event.target.value as NutritionRegulationArea
+                  )
+                }
+                value={nutritionRegulationArea}
+              >
+                <option value="FDA">{t("fda_us")}</option>
+                <option value="EU">{t("eu_europe")}</option>
+              </select>
+            </label>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-bold text-sm text-white transition hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
               onClick={onPrint}
               type="button"
             >
               <Printer size={16} />
-              Print A4 PDF
+              {t("print_a4_pdf")}
             </button>
           </div>
         </div>
 
         {isLoading && (
           <div className="rounded-2xl border border-slate-300 border-dashed p-8 text-center font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-400">
-            Loading active formulation data...
+            {t("loading_active_formulation_data")}
           </div>
         )}
 
         {!(isLoading || (activeFormulation && activeReport)) && (
           <div className="rounded-2xl border border-slate-300 border-dashed p-8 text-center font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-400">
-            Select a lab report with a linked formulation to generate the
-            finished good specification sheet.
+            {t("select_report_for_finished_good_spec")}
           </div>
         )}
 
@@ -381,21 +383,20 @@ export default function FinishedGoodSpecificationSheet({
                 </div>
                 <div>
                   <p className="font-bold text-blue-700 text-xs uppercase tracking-[0.2em] dark:text-blue-300">
-                    Document Control
+                    {t("document_control")}
                   </p>
                   <h3 className="mt-2 font-black text-3xl text-slate-950 leading-tight dark:text-white">
                     {activeFormulation.name}
                   </h3>
                   <p className="mt-1 font-semibold text-slate-500 text-sm dark:text-slate-400">
-                    Official controlled specification for manufacturing,
-                    quality, and regulatory review.
+                    {t("official_controlled_specification")}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
                   <p className="font-bold text-[11px] text-slate-500 uppercase">
-                    Doc Code
+                    {t("doc_code")}
                   </p>
                   <p className="mt-1 font-black text-slate-950 dark:text-white">
                     {docCode}
@@ -403,7 +404,7 @@ export default function FinishedGoodSpecificationSheet({
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
                   <p className="font-bold text-[11px] text-slate-500 uppercase">
-                    Effective Date
+                    {t("effective_date")}
                   </p>
                   <p className="mt-1 font-black text-slate-950 dark:text-white">
                     {formatDate(activeReport.date)}
@@ -411,7 +412,7 @@ export default function FinishedGoodSpecificationSheet({
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
                   <p className="font-bold text-[11px] text-slate-500 uppercase">
-                    Version Tag
+                    {t("version_tag")}
                   </p>
                   <p className="mt-1 font-black text-blue-700 dark:text-blue-300">
                     {versionTag}
@@ -419,11 +420,11 @@ export default function FinishedGoodSpecificationSheet({
                 </div>
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
                   <p className="font-bold text-[11px] uppercase">
-                    Regulation Status
+                    {t("regulation_status")}
                   </p>
                   <p className="mt-1 flex items-center gap-1.5 font-black">
                     <ShieldCheck size={16} />
-                    Compliant
+                    {t("compliant")}
                   </p>
                 </div>
               </div>
@@ -431,10 +432,10 @@ export default function FinishedGoodSpecificationSheet({
 
             <section className="spec-print-avoid grid gap-3 rounded-2xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4 dark:border-slate-800">
               {[
-                ["Legal Name", legalName],
-                ["Target Shelf Life", shelfLife],
-                ["Storage Conditions", storageConditions],
-                ["Net Weight", netWeight],
+                [t("legal_name"), legalName],
+                [t("target_shelf_life"), shelfLife],
+                [t("storage_conditions"), storageConditions],
+                [t("net_weight"), netWeight],
               ].map(([label, value]) => (
                 <div key={label}>
                   <p className="font-bold text-[11px] text-slate-500 uppercase tracking-wide">
@@ -451,7 +452,7 @@ export default function FinishedGoodSpecificationSheet({
               <main className="space-y-5">
                 <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
                   <h4 className="font-black text-lg text-slate-950 dark:text-white">
-                    Product Description
+                    {t("product_description")}
                   </h4>
                   <ul className="mt-3 grid gap-2 text-sm">
                     {productBullets.map((bullet) => (
@@ -468,7 +469,7 @@ export default function FinishedGoodSpecificationSheet({
 
                 <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
                   <h4 className="font-black text-lg text-slate-950 dark:text-white">
-                    Ingredient Statement
+                    {t("ingredient_statement")}
                   </h4>
                   <p className="mt-3 rounded-xl bg-slate-50 p-4 font-semibold text-slate-700 text-sm leading-6 dark:bg-slate-900 dark:text-slate-200">
                     {ingredientStatement}
@@ -478,16 +479,20 @@ export default function FinishedGoodSpecificationSheet({
                 <section className="spec-print-avoid overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div className="border-slate-200 border-b bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
                     <h4 className="font-black text-lg text-slate-950 dark:text-white">
-                      Industrial Formulation Table
+                      {t("industrial_formulation_table")}
                     </h4>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[620px] text-left text-sm">
                       <thead className="bg-white text-[11px] text-slate-500 uppercase dark:bg-slate-950">
                         <tr>
-                          <th className="px-5 py-3">Ingredient Name</th>
-                          <th className="px-5 py-3">Inclusion %</th>
-                          <th className="px-5 py-3">Ingredient Function</th>
+                          <th className="px-5 py-3">{t("ingredient_name")}</th>
+                          <th className="px-5 py-3">
+                            {t("inclusion_percent")}
+                          </th>
+                          <th className="px-5 py-3">
+                            {t("ingredient_function")}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -506,7 +511,7 @@ export default function FinishedGoodSpecificationSheet({
                                 {formatPercent(percentage)}
                               </td>
                               <td className="px-5 py-3 text-slate-500">
-                                Placeholder - assign function
+                                {t("assign_function_placeholder")}
                               </td>
                             </tr>
                           );
@@ -517,7 +522,7 @@ export default function FinishedGoodSpecificationSheet({
                               className="px-5 py-6 text-center text-slate-500"
                               colSpan={3}
                             >
-                              No formulation ingredients available.
+                              {t("no_formulation_ingredients_available")}
                             </td>
                           </tr>
                         )}
@@ -529,39 +534,45 @@ export default function FinishedGoodSpecificationSheet({
                 <section className="spec-print-avoid grid gap-4 md:grid-cols-2">
                   <div className="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
                     <h4 className="font-black text-lg text-slate-950 dark:text-white">
-                      Physical Specifications
+                      {t("physical_specifications")}
                     </h4>
                     <div className="mt-4 space-y-3 text-sm">
                       <div className="flex justify-between gap-3">
                         <span className="font-semibold text-slate-500">
-                          Viscosity
+                          {t("viscosity")}
                         </span>
                         <span className="font-bold">
                           {formatResultValue(
                             viscosityResult,
-                            typedFormulation?.viscosity || "TBD"
+                            typedFormulation?.viscosity || t("tbd")
                           )}
                         </span>
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="font-semibold text-slate-500">
-                          Color
+                          {t("color")}
                         </span>
                         <span className="font-bold">
                           {formatResultValue(
                             colorResult,
                             typedFormulation?.color ||
                               activeFormulation.targetTexture ||
-                              "TBD"
+                              t("tbd")
                           )}
                         </span>
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="font-semibold text-slate-500">
-                          State
+                          {t("state")}
                         </span>
                         <span className="font-bold">
-                          {activeFormulation.formulationState || "Liquid"}
+                          {activeFormulation.formulationState
+                            ? t(
+                                activeFormulation.formulationState === "Solid"
+                                  ? "solid"
+                                  : "liquid"
+                              )
+                            : t("liquid")}
                         </span>
                       </div>
                     </div>
@@ -569,12 +580,12 @@ export default function FinishedGoodSpecificationSheet({
 
                   <div className="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
                     <h4 className="font-black text-lg text-slate-950 dark:text-white">
-                      Chemical Specifications
+                      {t("chemical_specifications")}
                     </h4>
                     <div className="mt-4 space-y-3 text-sm">
                       <div className="flex justify-between gap-3">
                         <span className="font-semibold text-slate-500">
-                          Target pH range
+                          {t("target_ph_range")}
                         </span>
                         <span className="font-bold">
                           {formatResultRange(pHResult)}
@@ -582,7 +593,7 @@ export default function FinishedGoodSpecificationSheet({
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="font-semibold text-slate-500">
-                          Brix / Solids
+                          {t("brix_solids")}
                         </span>
                         <span className="font-bold">
                           {formatResultValue(brixResult)}
@@ -590,7 +601,7 @@ export default function FinishedGoodSpecificationSheet({
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="font-semibold text-slate-500">
-                          Fat Content
+                          {t("fat_content")}
                         </span>
                         <span className="font-bold">
                           {formatResultValue(fatResult)}
@@ -603,24 +614,27 @@ export default function FinishedGoodSpecificationSheet({
                 <section className="spec-print-avoid overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div className="border-slate-200 border-b bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
                     <h4 className="font-black text-lg text-slate-950 dark:text-white">
-                      Nutritional Information
+                      {t("nutritional_information")}
                     </h4>
                   </div>
                   <table className="w-full text-left text-sm">
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {[
                         [
-                          "Serving Size",
+                          t("serving_size"),
                           `${formatNumber(measures.servingSizeWeight, 1)} g`,
                         ],
-                        ["Calories", `${nutritionFacts.calories} kcal`],
+                        [t("calories"), `${nutritionFacts.calories} kcal`],
                         [
-                          "Protein",
+                          t("protein"),
                           `${formatNumber(nutritionFacts.protein)} g`,
                         ],
-                        ["Total Fat", `${formatNumber(nutritionFacts.fat)} g`],
                         [
-                          "Carbohydrates",
+                          t("total_fat"),
+                          `${formatNumber(nutritionFacts.fat)} g`,
+                        ],
+                        [
+                          t("carbohydrates"),
                           `${formatNumber(nutritionFacts.carbohydrates)} g`,
                         ],
                       ].map(([label, value]) => (
@@ -637,7 +651,7 @@ export default function FinishedGoodSpecificationSheet({
 
                 <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
                   <h4 className="font-black text-lg text-slate-950 dark:text-white">
-                    Regulatory Claims Checklist
+                    {t("regulatory_claims_checklist")}
                   </h4>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {claims.map((claim) => (
@@ -664,19 +678,19 @@ export default function FinishedGoodSpecificationSheet({
               <aside className="space-y-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-blue-950 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-50">
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
                   <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
-                    Shelf Life
+                    {t("shelf_life")}
                   </p>
                   <p className="mt-2 font-black text-2xl">{shelfLife}</p>
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
                   <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
-                    Suggestive Storage
+                    {t("suggestive_storage")}
                   </p>
                   <p className="mt-2 font-bold text-lg">{storageConditions}</p>
                 </div>
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
                   <p className="font-black text-xs uppercase tracking-wide">
-                    Allergens
+                    {t("allergens")}
                   </p>
                   <p className="mt-2 font-bold text-sm leading-6">
                     {allergenText}
@@ -684,62 +698,137 @@ export default function FinishedGoodSpecificationSheet({
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
                   <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
-                    Package Content
+                    {t("package_content")}
                   </p>
                   <p className="mt-2 font-bold text-sm leading-6">
                     {packageContent}
                   </p>
                   <p className="mt-3 rounded-xl bg-slate-50 p-3 font-semibold text-slate-600 text-xs dark:bg-slate-900 dark:text-slate-300">
-                    Total finished good cost per unit:{" "}
+                    {t("total_finished_good_cost_per_unit")}{" "}
                     {formatMoney(packagingCosts.finishedGoodCostPerUnit)}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
                   <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
-                    Nutrition Facts
+                    {t("nutrition_facts")}
                   </p>
-                  <div className="mt-3 border-2 border-black bg-white p-3 text-black">
-                    <h5 className="border-black border-b-8 pb-1 font-black text-3xl leading-none">
-                      Nutrition Facts
-                    </h5>
-                    <div className="border-black border-b py-1 font-bold text-sm">
-                      Serving size {formatNumber(measures.servingSizeWeight, 1)}
-                      g
-                    </div>
-                    <div className="flex items-end justify-between border-black border-b-4 py-1">
-                      <span className="font-black text-xl">Calories</span>
-                      <span className="font-black text-3xl">
-                        {nutritionFacts.calories}
-                      </span>
-                    </div>
-                    {[
-                      ["Total Fat", `${formatNumber(nutritionFacts.fat)}g`],
-                      [
-                        "Total Carbohydrate",
-                        `${formatNumber(nutritionFacts.carbohydrates)}g`,
-                      ],
-                      ["Protein", `${formatNumber(nutritionFacts.protein)}g`],
-                    ].map(([label, value]) => (
-                      <div
-                        className="flex justify-between border-black border-b py-1 font-bold text-sm"
-                        key={label}
-                      >
-                        <span>{label}</span>
-                        <span>{value}</span>
+                  {nutritionRegulationArea === "FDA" ? (
+                    <div className="mt-3 border-2 border-black bg-white p-3 text-black">
+                      <h5 className="border-black border-b-8 pb-1 font-black text-3xl leading-none">
+                        {t("nutrition_facts")}
+                      </h5>
+                      <div className="border-black border-b py-1 font-bold text-sm">
+                        {t("serving_size")}{" "}
+                        {formatNumber(measures.servingSizeWeight, 1)}g
                       </div>
-                    ))}
-                  </div>
+                      <div className="border-black border-b-4 py-1">
+                        <p className="font-bold text-[11px] uppercase">
+                          {t("amount_per_serving")}
+                        </p>
+                        <div className="flex items-end justify-between">
+                          <span className="font-black text-xl">
+                            {t("calories")}
+                          </span>
+                          <span className="font-black text-3xl">
+                            {nutritionFacts.calories}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="border-black border-b py-1 text-right font-black text-[11px]">
+                        {t("daily_value_percent")}
+                      </div>
+                      {[
+                        [
+                          t("total_fat"),
+                          `${formatNumber(nutritionFacts.fat)}g`,
+                          "0%",
+                        ],
+                        [
+                          t("total_carbohydrate"),
+                          `${formatNumber(nutritionFacts.carbohydrates)}g`,
+                          "0%",
+                        ],
+                        [
+                          t("protein"),
+                          `${formatNumber(nutritionFacts.protein)}g`,
+                          "",
+                        ],
+                      ].map(([label, value, dailyValue]) => (
+                        <div
+                          className="grid grid-cols-[1fr_auto_auto] gap-2 border-black border-b py-1 font-bold text-sm"
+                          key={label}
+                        >
+                          <span>{label}</span>
+                          <span>{value}</span>
+                          <span>{dailyValue}</span>
+                        </div>
+                      ))}
+                      <p className="mt-2 text-[10px] leading-tight">
+                        {t("daily_values_reference_note")}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-3 overflow-hidden border border-slate-950 bg-white text-black">
+                      <div className="border-slate-950 border-b bg-slate-100 px-3 py-2">
+                        <h5 className="font-black text-lg uppercase">
+                          {t("nutrition_facts")}
+                        </h5>
+                        <p className="font-bold text-xs">{t("per_100g")}</p>
+                      </div>
+                      <table className="w-full border-collapse text-sm">
+                        <tbody>
+                          {[
+                            [
+                              t("energy"),
+                              `${energyKjPer100g} kJ / ${nutritionFactsPer100g.calories} kcal`,
+                            ],
+                            [
+                              t("total_fat"),
+                              `${formatNumber(nutritionFactsPer100g.fat)} g`,
+                            ],
+                            [t("of_which_saturates"), t("not_measured")],
+                            [
+                              t("carbohydrates"),
+                              `${formatNumber(
+                                nutritionFactsPer100g.carbohydrates
+                              )} g`,
+                            ],
+                            [t("of_which_sugars"), t("not_measured")],
+                            [
+                              t("protein"),
+                              `${formatNumber(
+                                nutritionFactsPer100g.protein
+                              )} g`,
+                            ],
+                            [t("salt"), t("not_measured")],
+                          ].map(([label, value]) => (
+                            <tr
+                              className="border-slate-300 border-b last:border-b-0"
+                              key={label}
+                            >
+                              <th className="px-3 py-2 text-left font-bold">
+                                {label}
+                              </th>
+                              <td className="px-3 py-2 text-right font-semibold">
+                                {value}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
                   <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
-                    Microbiological Specification
+                    {t("microbiological_specification")}
                   </p>
                   <div className="mt-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
                     {[
-                      ["Total Plate Count", tpcResult, "<= 1,000 CFU/g"],
-                      ["Yeast", yeastResult, "<= 100 CFU/g"],
-                      ["Mold", moldResult, "<= 100 CFU/g"],
-                      ["Coliform", coliformResult, "Absent / g"],
+                      [t("total_plate_count"), tpcResult, "<= 1,000 CFU/g"],
+                      [t("yeast"), yeastResult, "<= 100 CFU/g"],
+                      [t("mold"), moldResult, "<= 100 CFU/g"],
+                      [t("coliform"), coliformResult, t("absent_per_g")],
                     ].map(([label, result, limit]) => (
                       <div
                         className="grid grid-cols-[1fr_auto] gap-3 py-2"
@@ -757,15 +846,15 @@ export default function FinishedGoodSpecificationSheet({
                 </div>
                 <div className="rounded-2xl bg-blue-900 p-4 text-white shadow-sm">
                   <p className="font-bold text-blue-200 text-xs uppercase">
-                    Metadata Footer
+                    {t("metadata_footer")}
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-blue-200">Version No.</p>
+                      <p className="text-blue-200">{t("version_no")}</p>
                       <p className="font-black">{versionTag}</p>
                     </div>
                     <div>
-                      <p className="text-blue-200">Issue Date</p>
+                      <p className="text-blue-200">{t("issue_date")}</p>
                       <p className="font-black">
                         {formatDate(activeReport.date)}
                       </p>
@@ -778,13 +867,13 @@ export default function FinishedGoodSpecificationSheet({
             <section className="spec-print-avoid rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
               <h4 className="mb-4 flex items-center gap-2 font-black text-lg text-slate-950 dark:text-white">
                 <FileText size={18} />
-                Sign-off Authorization
+                {t("signoff_authorization")}
               </h4>
               <div className="grid gap-5 md:grid-cols-3">
                 {[
-                  "Prepared by R&D",
-                  "Reviewed by QA",
-                  "Approved by Plant Manager",
+                  t("prepared_by_rd"),
+                  t("reviewed_by_qa"),
+                  t("approved_by_plant_manager"),
                 ].map((label) => (
                   <div className="pt-8" key={label}>
                     <div className="border-slate-400 border-t pt-2">
@@ -792,7 +881,7 @@ export default function FinishedGoodSpecificationSheet({
                         {label}
                       </p>
                       <p className="mt-1 text-slate-500 text-xs">
-                        Signature / Date
+                        {t("signature_date")}
                       </p>
                     </div>
                   </div>

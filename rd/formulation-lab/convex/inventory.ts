@@ -1,8 +1,11 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { makeLocalizedString, selectLocalizedString } from "./localization";
 import {
   enrichedInventoryReturnValidator,
+  languageValidator,
+  localizedStringValidator,
   materialUsageLogReturnValidator,
 } from "./validators";
 
@@ -19,7 +22,11 @@ function computeStockStatus(
 // ── Enrichment helper: compute derived fields at read time ──
 // NOTE: expiry computation uses current time. Convex queries should ideally
 // be deterministic, but this is an accepted pattern for time-based reads.
-function enrichItem(item: Doc<"inventoryItems">, nowMs: number) {
+function enrichItem(
+  item: Doc<"inventoryItems">,
+  nowMs: number,
+  language?: string
+) {
   let expiryStatus = "ok";
   let expiryDays: number | undefined;
   if (item.expiryDate) {
@@ -35,12 +42,41 @@ function enrichItem(item: Doc<"inventoryItems">, nowMs: number) {
     }
   }
 
-  return { ...item, expiryStatus, expiryDays };
+  return {
+    ...item,
+    name: selectLocalizedString(item.name, item.nameI18n, language),
+    nameI18n: makeLocalizedString(item.name, item.nameI18n),
+    description: selectLocalizedString(
+      item.description,
+      item.descriptionI18n,
+      language
+    ),
+    descriptionI18n: makeLocalizedString(
+      item.description,
+      item.descriptionI18n
+    ),
+    category: selectLocalizedString(item.category, item.categoryI18n, language),
+    categoryI18n: makeLocalizedString(item.category, item.categoryI18n),
+    supplier: selectLocalizedString(item.supplier, item.supplierI18n, language),
+    supplierI18n: makeLocalizedString(item.supplier, item.supplierI18n),
+    storageConditions: selectLocalizedString(
+      item.storageConditions,
+      item.storageConditionsI18n,
+      language
+    ),
+    storageConditionsI18n: makeLocalizedString(
+      item.storageConditions,
+      item.storageConditionsI18n
+    ),
+    expiryStatus,
+    expiryDays,
+  };
 }
 
 export const list = query({
   args: {
     category: v.optional(v.string()),
+    language: v.optional(languageValidator),
   },
   returns: v.array(enrichedInventoryReturnValidator),
   handler: async (ctx, args) => {
@@ -70,12 +106,19 @@ export const list = query({
       const projectMap = new Map<string, string>();
       for (const log of logs) {
         if (!projectMap.has(log.projectId)) {
-          projectMap.set(log.projectId, log.projectName);
+          projectMap.set(
+            log.projectId,
+            selectLocalizedString(
+              log.projectName,
+              log.projectNameI18n,
+              args.language
+            )
+          );
         }
       }
       const usedIn = Array.from(projectMap, ([id, name]) => ({ id, name }));
 
-      enriched.push({ ...enrichItem(item, nowMs), usedIn });
+      enriched.push({ ...enrichItem(item, nowMs, args.language), usedIn });
     }
 
     return enriched;
@@ -85,8 +128,11 @@ export const list = query({
 export const create = mutation({
   args: {
     name: v.string(),
+    nameI18n: v.optional(localizedStringValidator),
     description: v.string(),
+    descriptionI18n: v.optional(localizedStringValidator),
     category: v.string(),
+    categoryI18n: v.optional(localizedStringValidator),
     batchId: v.string(),
     stock: v.number(),
     unit: v.string(),
@@ -94,14 +140,30 @@ export const create = mutation({
     price: v.optional(v.number()),
     lowStockThreshold: v.optional(v.number()),
     supplier: v.optional(v.string()),
+    supplierI18n: v.optional(localizedStringValidator),
     storageConditions: v.optional(v.string()),
+    storageConditionsI18n: v.optional(localizedStringValidator),
     ingredientCode: v.optional(v.string()),
     ingredientId: v.id("ingredients"),
   },
   returns: v.id("inventoryItems"),
   handler: async (ctx, args) => {
     const stockStatus = computeStockStatus(args.stock, args.lowStockThreshold);
-    return await ctx.db.insert("inventoryItems", { ...args, stockStatus });
+    return await ctx.db.insert("inventoryItems", {
+      ...args,
+      nameI18n: makeLocalizedString(args.name, args.nameI18n),
+      descriptionI18n: makeLocalizedString(
+        args.description,
+        args.descriptionI18n
+      ),
+      categoryI18n: makeLocalizedString(args.category, args.categoryI18n),
+      supplierI18n: makeLocalizedString(args.supplier, args.supplierI18n),
+      storageConditionsI18n: makeLocalizedString(
+        args.storageConditions,
+        args.storageConditionsI18n
+      ),
+      stockStatus,
+    });
   },
 });
 
@@ -109,8 +171,11 @@ export const update = mutation({
   args: {
     id: v.id("inventoryItems"),
     name: v.optional(v.string()),
+    nameI18n: v.optional(localizedStringValidator),
     description: v.optional(v.string()),
+    descriptionI18n: v.optional(localizedStringValidator),
     category: v.optional(v.string()),
+    categoryI18n: v.optional(localizedStringValidator),
     batchId: v.optional(v.string()),
     stock: v.optional(v.number()),
     unit: v.optional(v.string()),
@@ -118,7 +183,9 @@ export const update = mutation({
     price: v.optional(v.number()),
     lowStockThreshold: v.optional(v.number()),
     supplier: v.optional(v.string()),
+    supplierI18n: v.optional(localizedStringValidator),
     storageConditions: v.optional(v.string()),
+    storageConditionsI18n: v.optional(localizedStringValidator),
     ingredientCode: v.optional(v.string()),
     ingredientId: v.optional(v.id("ingredients")),
   },
@@ -143,8 +210,48 @@ export const update = mutation({
       }
     }
 
+    const localizedUpdates = {
+      ...updates,
+      ...(updates.name !== undefined || updates.nameI18n !== undefined
+        ? { nameI18n: makeLocalizedString(updates.name, updates.nameI18n) }
+        : {}),
+      ...(updates.description !== undefined ||
+      updates.descriptionI18n !== undefined
+        ? {
+            descriptionI18n: makeLocalizedString(
+              updates.description,
+              updates.descriptionI18n
+            ),
+          }
+        : {}),
+      ...(updates.category !== undefined || updates.categoryI18n !== undefined
+        ? {
+            categoryI18n: makeLocalizedString(
+              updates.category,
+              updates.categoryI18n
+            ),
+          }
+        : {}),
+      ...(updates.supplier !== undefined || updates.supplierI18n !== undefined
+        ? {
+            supplierI18n: makeLocalizedString(
+              updates.supplier,
+              updates.supplierI18n
+            ),
+          }
+        : {}),
+      ...(updates.storageConditions !== undefined ||
+      updates.storageConditionsI18n !== undefined
+        ? {
+            storageConditionsI18n: makeLocalizedString(
+              updates.storageConditions,
+              updates.storageConditionsI18n
+            ),
+          }
+        : {}),
+    };
     const filtered = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
+      Object.entries(localizedUpdates).filter(([_, v]) => v !== undefined)
     );
     await ctx.db.patch(id, { ...filtered, ...stockStatusUpdate });
     return null;
@@ -163,14 +270,13 @@ export const remove = mutation({
 export const getUsageHistory = query({
   args: { inventoryItemId: v.id("inventoryItems") },
   returns: v.array(materialUsageLogReturnValidator),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("materialUsageLogs")
       .withIndex("by_inventoryItemId", (q) =>
         q.eq("inventoryItemId", args.inventoryItemId)
       )
-      .collect();
-  },
+      .collect(),
 });
 
 export const bulkRemove = mutation({

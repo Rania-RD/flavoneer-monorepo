@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --mint: #d2f2d4;
+  --mint-soft: #e9f8ea;
+  --forest: #1c4a3c;
+  --forest-deep: #102f27;
+  --amber: #f5a623;
+  --orange: #ff7738;
+  --ink: #12382e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--forest-deep);
+  color: var(--ink);
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--orange);
+  color: #fff;
+}
+
+.font-display {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+.hero-wave {
+  filter: drop-shadow(18px 0 0 rgba(16, 47, 39, 0.16));
+}
+
+.particle {
+  position: absolute;
+  border: 1px solid rgba(28, 74, 60, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  animation: particle-drift 12s ease-in-out infinite;
+}
+
+.particle:nth-child(2n) {
+  animation-duration: 16s;
+  animation-direction: reverse;
+}
+
+.particle:nth-child(3n) {
+  animation-delay: -5s;
+}
+
+.mascot-float {
+  animation: mascot-float 4.8s ease-in-out infinite;
+}
+
+.orange-loop::before,
+.orange-loop::after {
+  position: absolute;
+  inset: -22% -7%;
+  z-index: -1;
+  border: 4px solid var(--orange);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  transform: rotate(-4deg);
+}
+
+.orange-loop::after {
+  inset: -15% -5% -28% -9%;
+  border-width: 2px;
+  transform: rotate(5deg);
+}
+
+.metric-grid {
+  background-image:
+    linear-gradient(rgba(210, 242, 212, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 242, 212, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.flow-line {
+  background-image: linear-gradient(90deg, #f5a623 0 46%, transparent 46% 58%, #f5a623 58% 100%);
+  background-size: 22px 2px;
+}
+
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+@keyframes particle-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.35; }
+  50% { transform: translate3d(12px, -30px, 0) scale(1.08); opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .mascot-float,
+  .particle { animation: none !important; }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -58,26 +58,105 @@ a {
   animation-delay: -5s;
 }
 
-.mascot-float {
-  animation: mascot-float 4.8s ease-in-out infinite;
+.brand-pan-o {
+  position: relative;
+  display: inline-block;
+  width: 0.84em;
+  height: 0.84em;
+  margin: 0 0.025em;
+  vertical-align: -0.08em;
+}
+
+.brand-pan-o::after {
+  position: absolute;
+  top: 76%;
+  left: 50%;
+  z-index: -1;
+  width: 0.09em;
+  height: 0.72em;
+  border-radius: 999px;
+  background: #173e33;
+  box-shadow: 0 0.08em 0 #0d2821;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.brand-pan-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 0.075em solid #173e33;
+  border-radius: 50%;
+  background: #f5a623;
+}
+
+.brand-pan-face img {
+  position: absolute;
+  top: 54%;
+  left: 50%;
+  width: 154%;
+  max-width: none;
+  transform: translate(-50%, -50%);
+}
+
+.mascot-shell {
+  isolation: isolate;
+}
+
+.mascot-eye-shutter {
+  position: absolute;
+  top: 50.4%;
+  left: 52.7%;
+  width: 20.5%;
+  aspect-ratio: 1 / 1.03;
+  overflow: hidden;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.mascot-eye-shutter::before,
+.mascot-eye-shutter::after {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 53%;
+  background: #f5a139;
+  content: "";
+}
+
+.mascot-eye-shutter::before {
+  top: 0;
+  border-bottom: 2px solid #d96528;
+  border-radius: 50% 50% 36% 36%;
+  animation: eyelid-top 5.2s ease-in-out infinite;
+  transform: translateY(-106%);
+}
+
+.mascot-eye-shutter::after {
+  bottom: 0;
+  border-top: 2px solid #d96528;
+  border-radius: 36% 36% 50% 50%;
+  animation: eyelid-bottom 5.2s ease-in-out infinite;
+  transform: translateY(106%);
 }
 
 .orange-loop::before,
 .orange-loop::after {
   position: absolute;
-  inset: -22% -7%;
+  inset: -18% -7%;
   z-index: -1;
   border: 4px solid var(--orange);
   border-radius: 50%;
   content: "";
   pointer-events: none;
-  transform: rotate(-4deg);
+  transform: rotate(-1.5deg);
 }
 
 .orange-loop::after {
-  inset: -15% -5% -28% -9%;
+  inset: -23% -5%;
   border-width: 2px;
-  transform: rotate(5deg);
+  transform: rotate(1.5deg);
 }
 
 .metric-grid {
@@ -92,9 +171,14 @@ a {
   background-size: 22px 2px;
 }
 
-@keyframes mascot-float {
-  0%, 100% { transform: translateY(0) rotate(-1deg); }
-  50% { transform: translateY(-12px) rotate(1deg); }
+@keyframes eyelid-top {
+  0%, 43%, 49%, 78%, 84%, 100% { transform: translateY(-106%); }
+  46%, 81% { transform: translateY(0); }
+}
+
+@keyframes eyelid-bottom {
+  0%, 43%, 49%, 78%, 84%, 100% { transform: translateY(106%); }
+  46%, 81% { transform: translateY(0); }
 }
 
 @keyframes particle-drift {
@@ -104,7 +188,8 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .mascot-float,
+  .mascot-eye-shutter::before,
+  .mascot-eye-shutter::after,
   .particle { animation: none !important; }
   *,
   *::before,

@@ -45,6 +45,13 @@ const capabilities = [
     copy: 'Ingredient changes instantly refresh allergen declarations and surface cross-contact overrides for review.',
     tone: 'orange',
   },
+  {
+    icon: Beaker,
+    eyebrow: 'Scale-up readiness',
+    title: 'Trials stay connected from bench to plant.',
+    copy: 'Processing parameters, observations, and release decisions remain attached to the exact version that produced them.',
+    tone: 'ice',
+  },
 ]
 
 const workflowSteps = [
@@ -67,8 +74,8 @@ function closeMobileMenu() {
     <header class="absolute inset-x-0 top-0 z-50 px-4 pt-4 sm:px-7 sm:pt-6 lg:px-10">
       <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-5">
         <a href="#top" class="group inline-flex items-center" aria-label="Flavoneer home">
-          <span class="font-display text-[2rem] font-extrabold leading-none text-[#f5a623] drop-shadow-[0_2px_0_rgba(16,47,39,0.16)] sm:text-[2.65rem]">
-            flav<span class="relative inline-block text-[#ff7738]">o<span class="absolute left-1/2 top-[48%] h-[6px] w-[6px] -translate-x-1/2 rounded-full bg-[#1c4a3c]" /></span>neer
+          <span aria-hidden="true" class="font-display text-[2rem] font-extrabold leading-none text-[#f5a623] drop-shadow-[0_2px_0_rgba(16,47,39,0.16)] sm:text-[2.65rem]">
+            flav<span class="brand-pan-o"><span class="brand-pan-face"><img src="/assets/flavoneer-mascot.png" alt=""></span></span>neer
           </span>
         </a>
 
@@ -157,15 +164,16 @@ function closeMobileMenu() {
 
         <div class="relative z-10 mx-auto grid min-h-[790px] max-w-[1440px] items-center px-5 pb-16 pt-28 sm:min-h-[860px] sm:px-8 sm:pb-24 sm:pt-36 lg:min-h-[900px] lg:grid-cols-[48%_52%] lg:px-10 lg:pb-24 lg:pt-28">
           <div class="relative order-2 h-[260px] self-end sm:h-[310px] lg:order-1 lg:h-full">
-            <div class="absolute bottom-[-28px] left-[-5%] z-20 w-[330px] max-w-[92vw] sm:left-[4%] sm:w-[430px] lg:bottom-[94px] lg:left-[12%] lg:w-[470px] xl:left-[18%] xl:w-[520px]">
+            <div class="mascot-shell absolute bottom-[-28px] left-[-5%] z-20 w-[330px] max-w-[92vw] sm:bottom-[-80px] sm:left-[4%] sm:w-[430px] lg:bottom-[22px] lg:left-[12%] lg:w-[470px] xl:left-[18%] xl:w-[520px]">
               <img
                 src="/assets/flavoneer-mascot.png"
                 alt="Flavoneer's friendly orange one-eyed laboratory mascot"
-                class="mascot-float h-auto w-full select-none"
+                class="h-auto w-full select-none"
                 width="1402"
                 height="1122"
                 fetchpriority="high"
               >
+              <span class="mascot-eye-shutter" aria-hidden="true" />
             </div>
           </div>
 
@@ -174,7 +182,7 @@ function closeMobileMenu() {
               <Sparkles :size="16" class="text-[#e27a20]" />
               Built for modern food R&amp;D
             </p>
-            <h1 class="font-display relative z-10 mx-auto max-w-[650px] text-balance text-[2.3rem] font-extrabold leading-[0.98] text-[#12382e] sm:text-[4.35rem] lg:text-[4.45rem] xl:text-[5.1rem]">
+            <h1 class="font-display relative z-10 mx-auto max-w-[650px] text-balance text-[2.3rem] font-extrabold leading-[1.08] text-[#12382e] sm:text-[4.35rem] lg:text-[4.45rem] xl:text-[5.1rem]">
               <span class="orange-loop relative inline-block">The Intelligent Workspace for Food Formulations</span>
             </h1>
             <p class="mx-auto mt-10 max-w-[640px] text-pretty text-[0.95rem] font-medium leading-6 text-[#285b4d] sm:mt-14 sm:text-lg sm:leading-8">
@@ -270,14 +278,18 @@ function closeMobileMenu() {
             </article>
 
             <article
-              v-for="feature in capabilities"
+              v-for="(feature, index) in capabilities"
               :key="feature.title"
-              class="group rounded-[8px] border p-6 transition-transform duration-300 hover:-translate-y-1 sm:p-7 lg:col-span-5"
-              :class="{
-                'border-[#88b69c] bg-[#d2f2d4] text-[#173e33]': feature.tone === 'mint',
-                'border-[#d69a27] bg-[#f5a623] text-[#173e33]': feature.tone === 'amber',
-                'border-[#ce5a28] bg-[#ff7738] text-[#2e1a10]': feature.tone === 'orange',
-              }"
+              class="group rounded-[8px] border p-6 transition-transform duration-300 hover:-translate-y-1 sm:p-7"
+              :class="[
+                index < 2 ? 'lg:col-span-5' : 'lg:col-span-6',
+                {
+                  'border-[#88b69c] bg-[#d2f2d4] text-[#173e33]': feature.tone === 'mint',
+                  'border-[#d69a27] bg-[#f5a623] text-[#173e33]': feature.tone === 'amber',
+                  'border-[#ce5a28] bg-[#ff7738] text-[#2e1a10]': feature.tone === 'orange',
+                  'border-[#9bbfb2] bg-[#eef7f1] text-[#173e33]': feature.tone === 'ice',
+                },
+              ]"
             >
               <div class="flex h-full flex-col">
                 <component :is="feature.icon" :size="27" :stroke-width="1.8" />

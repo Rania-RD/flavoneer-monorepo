@@ -212,6 +212,12 @@ const UNIT_TO_GRAMS: Record<string, number> = {
   kg: 1000,
   kilogram: 1000,
   kilograms: 1000,
+  mg: 0.001,
+  milligram: 0.001,
+  milligrams: 0.001,
+  ml: 1,
+  milliliter: 1,
+  milliliters: 1,
 };
 
 function ingredientWeightInGrams(ingredient: Ingredient) {
@@ -322,11 +328,17 @@ export function deriveIngredients(
   for (const phase of phases) {
     for (const step of phase.steps) {
       if (step.type === "weighing" && step.ingredientId) {
+        const normalizedWeight = ingredientWeightInGrams({
+          id: step.ingredientId,
+          name: step.label,
+          unit: step.unit || "g",
+          weight: step.expectedWeight || 0,
+        });
         const existing = ingredientMap.get(step.ingredientId);
         if (existing) {
           ingredientMap.set(step.ingredientId, {
             ...existing,
-            weight: existing.weight + (step.expectedWeight || 0),
+            weight: existing.weight + normalizedWeight,
           });
         } else {
           const ingItem = aggregatedIngredients.find(
@@ -335,8 +347,8 @@ export function deriveIngredients(
           ingredientMap.set(step.ingredientId, {
             id: step.ingredientId,
             name: ingItem?.name || step.label.replace(ADD_REGEX, ""),
-            weight: step.expectedWeight || 0,
-            unit: step.unit || ingItem?.unit || "g",
+            weight: normalizedWeight,
+            unit: "g",
             costPerKg: ingItem?.costPerKg,
             nutritionPer100g: ingItem?.nutritionPer100g,
           });

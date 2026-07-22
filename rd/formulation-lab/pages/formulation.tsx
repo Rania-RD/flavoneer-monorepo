@@ -105,6 +105,20 @@ const PACKAGING_OPTIONS = [
 }>;
 
 const SERVING_SIZE_UNITS = ["g", "kg", "mg", "ml"] as const;
+const WEIGHT_UNIT_TO_GRAMS: Record<string, number> = {
+  g: 1,
+  gram: 1,
+  grams: 1,
+  kg: 1000,
+  kilogram: 1000,
+  kilograms: 1000,
+  mg: 0.001,
+  milligram: 0.001,
+  milligrams: 0.001,
+  ml: 1,
+  milliliter: 1,
+  milliliters: 1,
+};
 const MULTIPLE_AUTOSAVE_NAME =
   "Auto-Save: Updated multiple formulation fields";
 const DEFAULT_AUTOSAVE_NAME = "Auto-Save: Updated formulation fields";
@@ -114,6 +128,12 @@ function formatAutosaveValue(value: string | number | undefined) {
     return "blank";
   }
   return String(value);
+}
+
+function convertWeightValue(value: number, fromUnit?: string, toUnit?: string) {
+  const fromFactor = WEIGHT_UNIT_TO_GRAMS[(fromUnit || "g").toLowerCase()] ?? 1;
+  const toFactor = WEIGHT_UNIT_TO_GRAMS[(toUnit || "g").toLowerCase()] ?? 1;
+  return Number(((value * fromFactor) / toFactor).toFixed(6));
 }
 
 const Formulation: React.FC = () => {
@@ -1103,10 +1123,30 @@ const Formulation: React.FC = () => {
     const changedStep = phases
       .find((phase) => phase.id === phaseId)
       ?.steps.find((step) => step.id === stepId);
-    const nextPhases = updateStepInPhase(phases, phaseId, stepId, updates);
+    const normalizedUpdates = { ...updates };
+    if (
+      changedStep?.type === "weighing" &&
+      "unit" in updates &&
+      updates.unit &&
+      updates.unit !== changedStep.unit &&
+      !("expectedWeight" in updates) &&
+      typeof changedStep.expectedWeight === "number"
+    ) {
+      normalizedUpdates.expectedWeight = convertWeightValue(
+        changedStep.expectedWeight,
+        changedStep.unit,
+        updates.unit
+      );
+    }
+    const nextPhases = updateStepInPhase(
+      phases,
+      phaseId,
+      stepId,
+      normalizedUpdates
+    );
     queueAutosaveChange(
       `step.${stepId}`,
-      describeStepAutosave(changedStep, updates)
+      describeStepAutosave(changedStep, normalizedUpdates)
     );
     setPhases(nextPhases);
     if (

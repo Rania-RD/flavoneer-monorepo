@@ -59,6 +59,12 @@ const UNIT_TO_KG: Record<string, number> = {
   kg: 1,
   kilogram: 1,
   kilograms: 1,
+  mg: 0.000001,
+  milligram: 0.000001,
+  milligrams: 0.000001,
+  ml: 0.001,
+  milliliter: 0.001,
+  milliliters: 0.001,
 };
 
 export function calculateRecipeCosts(

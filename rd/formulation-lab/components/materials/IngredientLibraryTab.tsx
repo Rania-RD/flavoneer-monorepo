@@ -47,6 +47,7 @@ const EmptyLibrary = ({
     </p>
     <button
       className="flex items-center gap-2 rounded-[1.2rem] bg-indigo-600 px-6 py-3 font-bold text-sm text-white shadow-lg transition-all hover:bg-indigo-500 active:scale-95"
+      data-testid="add-ingredient-library-button"
       onClick={onAddIngredient}
     >
       <Plus size={18} /> {t("add_ingredient")}
@@ -173,6 +174,7 @@ const AddIngredientCard = ({
 }) => (
   <button
     className="group flex h-[280px] flex-col items-center justify-center gap-4 rounded-[2.5rem] border-2 border-gray-200 border-dashed text-gray-400 transition-all hover:border-gray-300 hover:bg-gray-50/50 hover:text-gray-500 dark:border-slate-700 dark:text-slate-500 dark:hover:border-slate-500 dark:hover:bg-slate-800/50 dark:hover:text-slate-300"
+    data-testid="add-ingredient-library-button"
     onClick={onAddIngredient}
   >
     <div className="flex h-16 w-16 items-center justify-center rounded-[1rem] bg-gray-100 shadow-sm transition-transform group-hover:scale-110 dark:bg-slate-800">

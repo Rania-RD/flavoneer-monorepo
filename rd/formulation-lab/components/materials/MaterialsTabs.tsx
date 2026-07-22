@@ -27,6 +27,7 @@ export const MaterialsTabs = ({
           ? "text-indigo-600 dark:text-indigo-400"
           : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
       }`}
+      data-testid="materials-tab-library"
       onClick={() => onTabChange("library")}
     >
       {t("ingredient_library")}
@@ -43,6 +44,7 @@ export const MaterialsTabs = ({
           ? "text-indigo-600 dark:text-indigo-400"
           : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
       }`}
+      data-testid="materials-tab-current"
       onClick={() => onTabChange("current")}
     >
       {t("current_inventory")}

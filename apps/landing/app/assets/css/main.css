@@ -101,7 +101,7 @@ a {
 
 .mascot-shell {
   isolation: isolate;
-  transform: translateY(17.2%);
+  transform: translateY(calc(17.2% + 24px));
 }
 
 .mascot-eye {

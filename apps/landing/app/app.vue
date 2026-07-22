@@ -163,26 +163,14 @@ function closeMobileMenu() {
         <div class="absolute bottom-[3%] left-[-38%] h-[27%] w-[112%] -rotate-6 rounded-[48%] bg-[#1c4a3c] sm:left-[-24%] sm:h-[30%] sm:w-[88%] lg:hidden" aria-hidden="true" />
 
         <div class="relative z-10 mx-auto grid min-h-[790px] max-w-[1440px] items-center px-5 pb-16 pt-28 sm:min-h-[860px] sm:px-8 sm:pb-24 sm:pt-36 lg:min-h-[900px] lg:grid-cols-[48%_52%] lg:px-10 lg:pb-24 lg:pt-28">
-          <div class="relative order-2 h-[260px] self-end sm:h-[310px] lg:order-1 lg:h-full">
-            <div class="mascot-shell absolute bottom-[-28px] left-[-5%] z-20 w-[330px] max-w-[92vw] sm:bottom-[-80px] sm:left-[4%] sm:w-[430px] lg:bottom-[22px] lg:left-[12%] lg:w-[470px] xl:left-[18%] xl:w-[520px]">
-              <img
-                src="/assets/flavoneer-mascot.png"
-                alt="Flavoneer's friendly orange one-eyed laboratory mascot"
-                class="h-auto w-full select-none"
-                width="1402"
-                height="1122"
-                fetchpriority="high"
-              >
-              <span class="mascot-eye-shutter" aria-hidden="true" />
-            </div>
-          </div>
+          <div class="relative order-2 h-[260px] self-end sm:h-[310px] lg:order-1 lg:h-full" aria-hidden="true" />
 
           <div class="order-1 mx-auto max-w-[710px] self-center text-center lg:order-2 lg:mt-4 lg:pr-4">
             <p class="mb-6 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-[#1c4a3c]/20 bg-white/35 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#1c4a3c] backdrop-blur-sm sm:mb-7 sm:px-4 sm:text-sm sm:tracking-[0.16em]">
               <Sparkles :size="16" class="text-[#e27a20]" />
               Built for modern food R&amp;D
             </p>
-            <h1 class="font-display relative z-10 mx-auto max-w-[650px] text-balance text-[2.3rem] font-extrabold leading-[1.08] text-[#12382e] sm:text-[4.35rem] lg:text-[4.45rem] xl:text-[5.1rem]">
+            <h1 class="font-display relative z-10 mx-auto max-w-[650px] text-balance text-[2.2rem] font-extrabold leading-[1.08] text-[#12382e] sm:text-[3.9rem] lg:text-[4.3rem] xl:text-[4.9rem]">
               <span class="orange-loop relative inline-block">The Intelligent Workspace for Food Formulations</span>
             </h1>
             <p class="mx-auto mt-10 max-w-[640px] text-pretty text-[0.95rem] font-medium leading-6 text-[#285b4d] sm:mt-14 sm:text-lg sm:leading-8">
@@ -205,6 +193,23 @@ function closeMobileMenu() {
               </a>
             </div>
           </div>
+        </div>
+
+        <div class="mascot-shell absolute bottom-0 left-[-5%] z-20 w-[330px] max-w-[92vw] sm:left-[7%] sm:w-[430px] lg:left-[10%] lg:w-[470px] xl:left-[14%] xl:w-[520px]">
+          <img
+            src="/assets/flavoneer-mascot.png"
+            alt="Flavoneer's friendly orange one-eyed laboratory mascot"
+            class="h-auto w-full select-none"
+            width="1402"
+            height="1122"
+            fetchpriority="high"
+          >
+          <span class="mascot-eye" aria-hidden="true">
+            <span class="mascot-eye-clean" />
+            <span class="mascot-original-pupil"><img src="/assets/flavoneer-mascot.png" alt=""></span>
+            <span class="mascot-eyelid mascot-eyelid-top" />
+            <span class="mascot-eyelid mascot-eyelid-bottom" />
+          </span>
         </div>
 
         <div class="absolute inset-x-0 bottom-0 z-30 flex justify-center">

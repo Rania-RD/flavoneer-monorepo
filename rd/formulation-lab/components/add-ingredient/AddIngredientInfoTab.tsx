@@ -85,6 +85,7 @@ export function AddIngredientInfoTab({
           <input
             autoFocus
             className={`${inputClasses} ${touchedFields.name && !formData.name.trim() ? "border-red-300 bg-red-50 focus:ring-red-500/50" : ""}`}
+            data-testid="ingredient-name-en-input"
             name="name"
             onBlur={() => handleBlur("name")}
             onChange={handleInputChange}
@@ -101,6 +102,7 @@ export function AddIngredientInfoTab({
           </label>
           <input
             className={`${inputClasses} ${touchedFields.nameAr && !formData.nameAr.trim() ? "border-red-300 bg-red-50 focus:ring-red-500/50" : ""}`}
+            data-testid="ingredient-name-ar-input"
             dir="rtl"
             name="nameAr"
             onBlur={() => handleBlur("nameAr")}
@@ -130,6 +132,7 @@ export function AddIngredientInfoTab({
           </label>
           <input
             className={`${inputClasses} font-mono ${touchedFields.code && !formData.code.trim() ? "border-red-300 bg-red-50 focus:ring-red-500/50" : ""}`}
+            data-testid="ingredient-code-input"
             name="code"
             onBlur={() => handleBlur("code")}
             onChange={handleInputChange}
@@ -317,6 +320,7 @@ export function AddIngredientInfoTab({
           <label className={labelClasses}>{t("cost_per_kg_usd")}</label>
           <input
             className={inputClasses}
+            data-testid="ingredient-cost-per-kg-input"
             min="0"
             name="costPerKg"
             onChange={handleInputChange}

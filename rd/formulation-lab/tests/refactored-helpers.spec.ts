@@ -254,6 +254,79 @@ test.describe("formulation save payload helpers", () => {
     ]);
   });
 
+  test("normalizes weighing rows in kg, g, mg, and ml before downstream calculations", () => {
+    const aggregatedIngredients = [
+      {
+        _id: "ing-milk",
+        allergens: [],
+        costPerKg: 4.5,
+        name: "Whole Milk",
+        nearestExpiry: null,
+        nutritionPer100g: {
+          calories: 50,
+          carbohydrates: 8,
+          fat: 1,
+          protein: 2,
+        },
+        stock: 0,
+        unit: "g",
+      },
+    ] as Parameters<typeof deriveIngredients>[1];
+    const createPhases = (expectedWeight: number, unit: string) =>
+      [
+        {
+          id: "phase-a",
+          name: "Prep",
+          color: "blue",
+          steps: [
+            {
+              id: `step-${unit}`,
+              type: "weighing",
+              label: "Add Whole Milk",
+              ingredientId: "ing-milk",
+              expectedWeight,
+              unit,
+            },
+          ],
+        },
+      ] as Parameters<typeof deriveIngredients>[0];
+
+    for (const [expectedWeight, unit] of [
+      [1000, "g"],
+      [1, "kg"],
+      [1_000_000, "mg"],
+      [1000, "ml"],
+    ] as const) {
+      const ingredients = deriveIngredients(
+        createPhases(expectedWeight, unit),
+        aggregatedIngredients
+      );
+      const measures = calculateRecipeMeasures(ingredients[0].weight, "recipeMakes", 10);
+
+      expect(ingredients[0]).toMatchObject({
+        costPerKg: 4.5,
+        unit: "g",
+        weight: 1000,
+      });
+      expect(calculateRecipeCosts(ingredients, measures.servingCount)).toEqual({
+        batchCost: 4.5,
+        costPerServing: 0.45,
+      });
+      expect(
+        calculateNutritionFacts(
+          ingredients,
+          measures.servingSizeWeight,
+          ingredients[0].weight
+        )
+      ).toEqual({
+        calories: 50,
+        carbohydrates: 8,
+        fat: 1,
+        protein: 2,
+      });
+    }
+  });
+
   test("maps database nutrients onto formulation rows and scales nutrition facts", () => {
     const aggregatedIngredients = buildAggregatedIngredients([
       {

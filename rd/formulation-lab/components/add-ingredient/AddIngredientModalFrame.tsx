@@ -142,6 +142,7 @@ export const AddIngredientModalFooter = ({
           {activeTab !== "nutrients" ? (
             <button
               className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+              data-testid="add-ingredient-next-button"
               onClick={onNext}
               type="button"
             >
@@ -154,6 +155,7 @@ export const AddIngredientModalFooter = ({
           ) : (
             <button
               className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+              data-testid="add-ingredient-save-button"
               disabled={isSubmitting || !canSubmit}
               form="add-ingredient-form"
               type="submit"

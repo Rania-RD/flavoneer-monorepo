@@ -166,31 +166,55 @@ function closeMobileMenu() {
           <div class="relative order-2 h-[260px] self-end sm:h-[310px] lg:order-1 lg:h-full" aria-hidden="true" />
 
           <div class="order-1 mx-auto max-w-[710px] self-center text-center lg:order-2 lg:mt-4 lg:pr-4">
-            <p class="mb-6 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-[#1c4a3c]/20 bg-white/35 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#1c4a3c] backdrop-blur-sm sm:mb-7 sm:px-4 sm:text-sm sm:tracking-[0.16em]">
+            <p class="mb-7 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-[#1c4a3c]/20 bg-white/35 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#1c4a3c] backdrop-blur-sm sm:mb-8 sm:px-4 sm:text-sm sm:tracking-[0.16em]">
               <Sparkles :size="16" class="text-[#e27a20]" />
               Built for modern food R&amp;D
             </p>
-            <h1 class="font-display relative z-10 mx-auto max-w-[650px] text-balance text-[2.2rem] font-extrabold leading-[1.08] text-[#12382e] sm:text-[3.9rem] lg:text-[4.3rem] xl:text-[4.9rem]">
-              <span class="orange-loop relative inline-block">The Intelligent Workspace for Food Formulations</span>
+            <h1 class="font-display relative z-10 mx-auto max-w-[710px] text-[1.85rem] font-extrabold leading-[1.03] text-[#12382e] sm:text-[3.15rem] lg:text-[3.35rem] xl:text-[3.75rem] 2xl:text-[4rem]">
+              <span class="orange-loop relative inline-grid place-items-center">
+                <svg
+                  class="orange-loop-frame absolute inset-0 size-full"
+                  viewBox="0 0 800 500"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    class="orange-loop-stroke orange-loop-stroke-primary"
+                    d="M112 31C266 4 584 5 699 40C771 63 794 140 787 245C781 349 755 423 676 462C535 493 250 494 104 459C28 431 9 345 15 242C21 137 43 61 112 31Z"
+                  />
+                  <path
+                    class="orange-loop-stroke orange-loop-stroke-secondary"
+                    d="M96 48C244 13 592 12 714 53C779 81 790 157 778 253C769 352 739 416 660 451C516 481 226 482 88 445C24 407 21 325 29 224C36 130 54 70 96 48Z"
+                  />
+                </svg>
+                <span class="orange-loop-copy relative z-10 flex flex-col items-center">
+                  <span class="block">The Intelligent</span>
+                  <span class="block">Workspace for</span>
+                  <span class="block">Food</span>
+                  <span class="block">Formulations</span>
+                </span>
+              </span>
             </h1>
-            <p class="mx-auto mt-10 max-w-[640px] text-pretty text-[0.95rem] font-medium leading-6 text-[#285b4d] sm:mt-14 sm:text-lg sm:leading-8">
-              Accelerate R&amp;D with precision. Manage complex ingredient systems while tracking FDA and EU regulatory frameworks in real time, from benchtop trial to factory release.
-            </p>
-            <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <a
-                href="#technology"
-                class="group inline-flex items-center gap-3 rounded-full bg-[#f5a623] px-6 py-3.5 font-bold text-[#173e33] shadow-[inset_0_-4px_0_rgba(182,97,8,0.23),0_10px_24px_rgba(28,74,60,0.13)] transition-all duration-300 hover:scale-105 hover:bg-[#ffb43b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7738]"
-              >
-                <span class="grid size-7 place-items-center rounded-full bg-[#1c4a3c] text-[#f5a623]"><Play :size="14" fill="currentColor" /></span>
-                Live demo
-              </a>
-              <a
-                :href="labHref"
-                class="group inline-flex items-center gap-2 rounded-full border-2 border-[#1c4a3c] px-6 py-3 font-bold text-[#1c4a3c] transition-all duration-300 hover:scale-105 hover:bg-[#1c4a3c] hover:text-white"
-              >
-                Enter the workspace
-                <ArrowRight :size="18" class="transition-transform group-hover:translate-x-1" />
-              </a>
+            <div class="hero-support mx-auto mt-10 sm:mt-14">
+              <p class="text-pretty text-[0.95rem] font-medium leading-6 text-[#285b4d] sm:text-lg sm:leading-8">
+                Accelerate R&amp;D with precision. Manage complex ingredient systems while tracking FDA and EU regulatory frameworks in real time, from benchtop trial to factory release.
+              </p>
+              <div class="mt-8 flex flex-wrap items-center justify-center gap-3 lg:flex-col xl:flex-row">
+                <a
+                  href="#technology"
+                  class="group inline-flex items-center gap-3 rounded-full bg-[#f5a623] px-6 py-3.5 font-bold text-[#173e33] shadow-[inset_0_-4px_0_rgba(182,97,8,0.23),0_10px_24px_rgba(28,74,60,0.13)] transition-all duration-300 hover:scale-105 hover:bg-[#ffb43b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7738]"
+                >
+                  <span class="grid size-7 place-items-center rounded-full bg-[#1c4a3c] text-[#f5a623]"><Play :size="14" fill="currentColor" /></span>
+                  Live demo
+                </a>
+                <a
+                  :href="labHref"
+                  class="group inline-flex items-center gap-2 rounded-full border-2 border-[#1c4a3c] px-6 py-3 font-bold text-[#1c4a3c] transition-all duration-300 hover:scale-105 hover:bg-[#1c4a3c] hover:text-white"
+                >
+                  Enter the workspace
+                  <ArrowRight :size="18" class="transition-transform group-hover:translate-x-1" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

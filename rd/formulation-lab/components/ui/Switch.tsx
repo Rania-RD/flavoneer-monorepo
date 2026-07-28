@@ -18,7 +18,7 @@ const sizing = {
   lg: {
     container: "h-8 w-14",
     handle:
-      "top-1 start-1 flex h-6 w-6 items-center justify-center text-indigo-500",
+      "top-1 start-1 flex h-6 w-6 items-center justify-center text-[#1c4a3c]",
     translateContent: "translate-x-6 rtl:-translate-x-6",
   },
 };
@@ -36,12 +36,12 @@ export const Switch: React.FC<SwitchProps> = ({
   return (
     <button
       aria-checked={checked}
-      className={`relative rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+      className={`relative rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7738] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#102f27] ${
         styles.container
       } ${
         checked
-          ? "bg-indigo-600 dark:bg-indigo-500"
-          : "bg-gray-200 dark:bg-slate-700"
+          ? "bg-[#1c4a3c] dark:bg-[#f5a623]"
+          : "bg-[#bdd8c6] dark:bg-[#346a59]"
       } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${className}`}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}

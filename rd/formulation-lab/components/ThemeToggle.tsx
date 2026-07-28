@@ -14,17 +14,17 @@ const ThemeToggle: React.FC = () => {
         <div
           className={`rounded-full p-2 transition-colors ${
             darkMode
-              ? "bg-indigo-500/20 text-indigo-300"
-              : "bg-orange-100 text-orange-500"
+              ? "bg-[#f5a623]/15 text-[#f5a623]"
+              : "bg-[#d2f2d4] text-[#1c4a3c]"
           }`}
         >
           {darkMode ? <Moon size={20} /> : <Sun size={20} />}
         </div>
         <div>
-          <span className="block font-medium text-gray-900 text-sm dark:text-gray-100">
+          <span className="block font-bold text-[#173e33] text-sm dark:text-[#f7f4df]">
             {t("dark_mode")}
           </span>
-          <span className="block text-gray-500 text-xs dark:text-gray-400">
+          <span className="block text-[#658579] text-xs dark:text-[#9abcae]">
             {darkMode ? t("switch_to_light_mode") : t("switch_to_dark_mode")}
           </span>
         </div>

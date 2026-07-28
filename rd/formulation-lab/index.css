@@ -1,9 +1,30 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: "DM Sans", "Tajawal", "IBM Plex Sans Arabic", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+}
+
 @layer base {
+  :root {
+    --flavoneer-forest: #1c4a3c;
+    --flavoneer-deep: #102f27;
+    --flavoneer-ink: #173e33;
+    --flavoneer-mint: #d2f2d4;
+    --flavoneer-mint-soft: #eef8eb;
+    --flavoneer-cream: #fffdf4;
+    --flavoneer-amber: #f5a623;
+    --flavoneer-orange: #ff7738;
+    --flavoneer-copy: #527568;
+    --flavoneer-border: rgba(28, 74, 60, 0.14);
+    --flavoneer-surface: rgba(255, 253, 244, 0.94);
+  }
+
   body {
-    @apply bg-stone-50 text-gray-900 font-sans antialiased;
+    @apply font-sans antialiased;
+    background: var(--flavoneer-mint-soft);
+    color: var(--flavoneer-ink);
   }
 
   :lang(ar) {
@@ -12,7 +33,342 @@
 }
 
 .dark body {
-  @apply bg-[#0f172a] text-slate-50;
+  --flavoneer-copy: #a9cbbb;
+  --flavoneer-border: rgba(210, 242, 212, 0.12);
+  --flavoneer-surface: rgba(20, 61, 50, 0.94);
+  background: #0d2b24;
+  color: #f7f4df;
+  color-scheme: dark;
+}
+
+.font-display {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+body.flavoneer-dashboard-active {
+  min-height: 100vh;
+  background: var(--flavoneer-mint-soft);
+}
+
+.dark body.flavoneer-dashboard-active {
+  background: #0d2b24;
+}
+
+/*
+ * Dashboard brand bridge
+ * ----------------------
+ * The authenticated app contains deeply nested, behavior-heavy components and
+ * portal modals. The body scope lets DashboardLayout enforce one palette across
+ * every route and portal without coupling those components to route structure.
+ */
+body.flavoneer-dashboard-active
+:where([class~="bg-white"], [class~="bg-[#FDFCF6]"], [class~="bg-[#FAF5F0]"]) {
+  background-color: var(--flavoneer-surface) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    [class~="bg-gray-50"],
+    [class~="bg-gray-100"],
+    [class~="bg-gray-200"],
+    [class~="bg-gray-300"],
+    [class~="bg-slate-50"],
+    [class~="bg-slate-100"],
+    [class~="bg-slate-200"],
+    [class~="bg-stone-50"]
+  ) {
+  background-color: #e7f4e5 !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    [class~="bg-gray-700"],
+    [class~="bg-gray-800"],
+    [class~="bg-gray-900"],
+    [class~="bg-slate-600"],
+    [class~="bg-slate-700"],
+    [class~="bg-slate-800"],
+    [class~="bg-slate-900"],
+    [class~="bg-slate-950"],
+    [class~="bg-[#0f172a]"],
+    [class~="bg-[#1e293b]"],
+    [class~="bg-[#334155]"],
+    [class~="bg-black"]
+  ) {
+  background-color: var(--flavoneer-forest) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    [class~="text-gray-700"],
+    [class~="text-gray-800"],
+    [class~="text-gray-900"],
+    [class~="text-charcoal"],
+    [class~="text-black"]
+  ) {
+  color: var(--flavoneer-ink) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where([class^="text-slate-"], [class*=" text-slate-"]) {
+  color: var(--flavoneer-copy) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where([class^="border-slate-"], [class*=" border-slate-"]) {
+  border-color: rgba(28, 74, 60, 0.18) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where([class^="bg-indigo-"], [class*=" bg-indigo-"]) {
+  background-color: #e3f3df !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    [class~="bg-indigo-500"],
+    [class~="bg-indigo-600"],
+    [class~="bg-indigo-700"]
+  ) {
+  background-color: var(--flavoneer-forest) !important;
+  color: var(--flavoneer-cream) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where([class^="text-indigo-"], [class*=" text-indigo-"]) {
+  color: var(--flavoneer-forest) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where([class^="border-indigo-"], [class*=" border-indigo-"]) {
+  border-color: rgba(28, 74, 60, 0.28) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where([class^="ring-indigo-"], [class*=" ring-indigo-"]) {
+  --tw-ring-color: rgba(255, 119, 56, 0.48) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    [class^="shadow-indigo-"],
+    [class*=" shadow-indigo-"],
+    [class^="shadow-gray-900"],
+    [class*=" shadow-gray-900"]
+  ) {
+  --tw-shadow-color: rgba(28, 74, 60, 0.2) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where([class^="fill-indigo-"], [class*=" fill-indigo-"]) {
+  fill: var(--flavoneer-forest) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    [class*="hover:bg-gray-800"],
+    [class*="hover:bg-gray-900"],
+    [class*="hover:bg-black"]
+  ):hover {
+  background-color: var(--flavoneer-deep) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class^="dark:bg-slate-"],
+    [class*=" dark:bg-slate-"],
+    [class^="dark:bg-gray-"],
+    [class*=" dark:bg-gray-"],
+    [class^="dark:bg-[#0f172a]"],
+    [class*=" dark:bg-[#0f172a]"],
+    [class^="dark:bg-[#1e293b]"],
+    [class*=" dark:bg-[#1e293b]"],
+    [class^="dark:bg-[#334155]"],
+    [class*=" dark:bg-[#334155]"]
+  ) {
+  background-color: #173e33 !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where([class^="dark:bg-indigo-"], [class*=" dark:bg-indigo-"]) {
+  background-color: rgba(245, 166, 35, 0.14) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class~="dark:bg-indigo-500"],
+    [class~="dark:bg-indigo-600"],
+    [class~="dark:bg-indigo-700"]
+  ) {
+  background-color: var(--flavoneer-amber) !important;
+  color: var(--flavoneer-ink) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class^="dark:text-slate-"],
+    [class*=" dark:text-slate-"],
+    [class^="dark:text-gray-"],
+    [class*=" dark:text-gray-"]
+  ) {
+  color: #a9cbbb !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where([class^="dark:text-indigo-"], [class*=" dark:text-indigo-"]) {
+  color: #ffc760 !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where([class^="text-slate-"], [class*=" text-slate-"]) {
+  color: #a9cbbb !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class^="dark:border-slate-"],
+    [class*=" dark:border-slate-"],
+    [class^="dark:border-gray-"],
+    [class*=" dark:border-gray-"],
+    [class^="dark:border-indigo-"],
+    [class*=" dark:border-indigo-"]
+  ) {
+  border-color: rgba(210, 242, 212, 0.14) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class^="dark:ring-indigo-"],
+    [class*=" dark:ring-indigo-"],
+    [class^="dark:focus:ring-indigo-"],
+    [class*=" dark:focus:ring-indigo-"]
+  ) {
+  --tw-ring-color: rgba(245, 166, 35, 0.5) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where([class^="dark:fill-indigo-"], [class*=" dark:fill-indigo-"]) {
+  fill: var(--flavoneer-amber) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class*="dark:hover:bg-slate-"],
+    [class*="dark:hover:bg-gray-"]
+  ):hover {
+  background-color: #285b4d !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ),
+    textarea,
+    select
+  ) {
+  border-color: rgba(28, 74, 60, 0.18) !important;
+  background-color: rgba(255, 253, 244, 0.94) !important;
+  color: var(--flavoneer-ink) !important;
+  box-shadow: 0 8px 24px rgba(28, 74, 60, 0.05);
+}
+
+body.flavoneer-dashboard-active
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ),
+    textarea,
+    select
+  ):focus {
+  border-color: var(--flavoneer-forest) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.18) !important;
+}
+
+body.flavoneer-dashboard-active
+  :where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--flavoneer-forest);
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ),
+    textarea,
+    select
+  ) {
+  border-color: rgba(210, 242, 212, 0.14) !important;
+  background-color: #173e33 !important;
+  color: #f7f4df !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--flavoneer-amber);
+}
+
+.dashboard-route-surface :where(h1, h2) {
+  font-family: "Fraunces", Georgia, serif;
+  color: var(--flavoneer-ink);
+  letter-spacing: -0.025em;
+}
+
+.dashboard-route-surface {
+  animation: flavoneer-route-enter 220ms ease-out both;
+}
+
+@keyframes flavoneer-route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-route-surface {
+    animation: none;
+  }
+}
+
+.dark .dashboard-route-surface :where(h1, h2) {
+  color: #f7f4df;
+}
+
+.dashboard-route-surface
+  :where(
+    [class~="rounded-[2.5rem]"],
+    [class~="rounded-[2rem]"],
+    [class~="rounded-4xl"]
+  ) {
+  border-color: var(--flavoneer-border);
+}
+
+.dashboard-route-surface :where(button, a, input, textarea, select) {
+  transition-duration: 180ms;
+}
+
+.dashboard-route-surface :where(button, a):focus-visible {
+  outline: 2px solid var(--flavoneer-orange);
+  outline-offset: 3px;
 }
 
 #portal {
@@ -37,20 +393,20 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: #9fbead;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
+  background: #6f9482;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #346a59;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #4f8874;
 }
 
 @media print {
@@ -59,6 +415,7 @@
     margin: 12mm;
   }
 
+  /* biome-ignore lint/style/noDescendingSpecificity: print visibility intentionally overrides the portal interaction rule */
   body * {
     visibility: hidden;
   }

@@ -54,7 +54,7 @@ const NavTooltip: React.FC<NavTooltipProps> = ({
 
   return createPortal(
     <div
-      className="fade-in zoom-in-95 animate-in whitespace-nowrap rounded-lg border border-white/10 bg-gray-900 px-3 py-1.5 font-medium text-white text-xs shadow-xl duration-200 dark:border-slate-700 dark:bg-slate-800"
+      className="fade-in zoom-in-95 animate-in whitespace-nowrap rounded-xl border border-[#d2f2d4]/15 bg-[#102f27] px-3 py-1.5 font-bold text-[#fffdf4] text-xs shadow-xl duration-200"
       style={style}
     >
       {content}

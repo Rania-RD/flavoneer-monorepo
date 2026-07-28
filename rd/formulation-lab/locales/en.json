@@ -1,4 +1,7 @@
 {
+  "app_name": "Flavoneer",
+  "workspace_label": "R&D Workspace",
+  "brand_workspace_status": "Research to release, connected",
   "dashboard": "Dashboard",
   "runs": "Runs",
   "inventory": "Inventory",

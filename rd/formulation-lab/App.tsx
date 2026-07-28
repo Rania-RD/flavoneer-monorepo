@@ -8,7 +8,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { Toaster } from "sonner";
-import Layout from "./components/Layout";
+import DashboardLayout from "./components/DashboardLayout";
 import { SettingsProvider } from "./context/SettingsContext";
 import { TeamProvider } from "./context/TeamContext";
 import { api } from "./convex/_generated/api";
@@ -50,8 +50,22 @@ const App: React.FC = () => {
   const appElement = session ? (
     <TeamProvider>
       <UserSync>
-        <Toaster position="bottom-right" richColors theme="system" />
-        <Layout>
+        <Toaster
+          position="bottom-right"
+          richColors
+          theme="system"
+          toastOptions={{
+            classNames: {
+              toast:
+                "!rounded-2xl !border-[#1c4a3c]/15 !bg-[#fffdf4] !text-[#173e33] !shadow-[0_18px_45px_rgba(16,47,39,0.18)] dark:!border-[#d2f2d4]/10 dark:!bg-[#173e33] dark:!text-[#f7f4df]",
+              description: "!text-[#527568] dark:!text-[#a9cbbb]",
+              actionButton: "!bg-[#1c4a3c] !text-white",
+              cancelButton:
+                "!bg-[#d2f2d4] !text-[#173e33] dark:!bg-[#285b4d] dark:!text-[#f7f4df]",
+            },
+          }}
+        />
+        <DashboardLayout>
           <Routes>
             <Route element={<Dashboard />} path="/" />
             <Route element={<ShareTarget />} path="/share/:token" />
@@ -67,7 +81,7 @@ const App: React.FC = () => {
             <Route element={<Settings />} path="/settings" />
             <Route element={<Navigate replace to="/" />} path="*" />
           </Routes>
-        </Layout>
+        </DashboardLayout>
       </UserSync>
     </TeamProvider>
   ) : (
@@ -81,8 +95,8 @@ const App: React.FC = () => {
       <SettingsProvider>
         {isPending ? (
           /* ─── Full-screen loading spinner ─── */
-          <div className="flex min-h-screen items-center justify-center bg-[#FDFCF6] dark:bg-slate-900">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-slate-500" />
+          <div className="flex min-h-screen items-center justify-center bg-[#eef8eb] dark:bg-[#0d2b24]">
+            <Loader2 className="h-8 w-8 animate-spin text-[#f5a623]" />
           </div>
         ) : (
           <Routes>

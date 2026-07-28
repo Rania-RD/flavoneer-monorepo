@@ -195,8 +195,8 @@ function closeMobileMenu() {
                 </span>
               </span>
             </h1>
-            <div class="hero-support mx-auto mt-10 sm:mt-14">
-              <p class="text-pretty text-[0.95rem] font-medium leading-6 text-[#285b4d] sm:text-lg sm:leading-8">
+            <div class="mx-auto mt-10 w-full max-w-[640px] sm:mt-14">
+              <p class="relative z-20 mx-auto w-full max-w-[34rem] text-pretty text-[0.95rem] font-medium leading-6 text-[#285b4d] sm:text-lg sm:leading-8 lg:ml-[clamp(6rem,8vw,8rem)] lg:mr-0 lg:w-[calc(100%_-_clamp(6rem,8vw,8rem))]">
                 Accelerate R&amp;D with precision. Manage complex ingredient systems while tracking FDA and EU regulatory frameworks in real time, from benchtop trial to factory release.
               </p>
               <div class="mt-8 flex flex-wrap items-center justify-center gap-3 lg:flex-col xl:flex-row">

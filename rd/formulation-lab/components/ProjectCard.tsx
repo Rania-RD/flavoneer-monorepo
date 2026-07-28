@@ -34,47 +34,47 @@ interface ProjectCardProps {
   teamMembers?: { userName: string; userAvatarUrl?: string }[];
 }
 
-// Pastel Palette - Updated for High Contrast & Vibrancy
+// Flavoneer tonal palette — deterministic, brand-safe project differentiation.
 const PASTEL_THEMES = [
   {
-    bg: "bg-rose-100 dark:bg-rose-900/20",
-    text: "text-gray-900 dark:text-slate-100",
-    bar: "bg-rose-500",
-    sub: "text-gray-600 dark:text-rose-200/70",
-    border: "border-rose-200",
-    buttonHover: "group-hover/btn:text-rose-800",
+    bg: "bg-[#dff4dc] dark:bg-[#214f40]",
+    text: "text-[#173e33] dark:text-[#f7f4df]",
+    bar: "bg-[#ff7738]",
+    sub: "text-[#527568] dark:text-[#b9d8c9]",
+    border: "border-[#b9dcc0]",
+    buttonHover: "group-hover/btn:text-[#1c4a3c]",
   },
   {
-    bg: "bg-violet-100 dark:bg-violet-900/20",
-    text: "text-gray-900 dark:text-slate-100",
-    bar: "bg-violet-600",
-    sub: "text-gray-600 dark:text-violet-200/70",
-    border: "border-violet-200",
-    buttonHover: "group-hover/btn:text-violet-800",
+    bg: "bg-[#fff2cf] dark:bg-[#3e4a2f]",
+    text: "text-[#173e33] dark:text-[#fff5d4]",
+    bar: "bg-[#f5a623]",
+    sub: "text-[#6f714e] dark:text-[#ddd8aa]",
+    border: "border-[#f2d798]",
+    buttonHover: "group-hover/btn:text-[#8a5208]",
   },
   {
-    bg: "bg-blue-100 dark:bg-blue-900/20",
-    text: "text-gray-900 dark:text-slate-100",
-    bar: "bg-blue-600",
-    sub: "text-gray-600 dark:text-blue-200/70",
-    border: "border-blue-200",
-    buttonHover: "group-hover/btn:text-blue-800",
+    bg: "bg-[#e8f1da] dark:bg-[#294b3b]",
+    text: "text-[#173e33] dark:text-[#f3f7e7]",
+    bar: "bg-[#1c4a3c]",
+    sub: "text-[#607457] dark:text-[#bfd1b3]",
+    border: "border-[#cadcaf]",
+    buttonHover: "group-hover/btn:text-[#1c4a3c]",
   },
   {
-    bg: "bg-orange-100 dark:bg-orange-900/20",
-    text: "text-gray-900 dark:text-slate-100",
-    bar: "bg-orange-600",
-    sub: "text-gray-600 dark:text-orange-200/70",
-    border: "border-orange-200",
-    buttonHover: "group-hover/btn:text-orange-800",
+    bg: "bg-[#ffe1c8] dark:bg-[#4b3a2a]",
+    text: "text-[#173e33] dark:text-[#fff0df]",
+    bar: "bg-[#ff7738]",
+    sub: "text-[#7d6250] dark:text-[#e5c9b1]",
+    border: "border-[#f4bd91]",
+    buttonHover: "group-hover/btn:text-[#c9501a]",
   },
   {
-    bg: "bg-emerald-100 dark:bg-emerald-900/20",
-    text: "text-gray-900 dark:text-slate-100",
-    bar: "bg-emerald-600",
-    sub: "text-gray-600 dark:text-emerald-200/70",
-    border: "border-emerald-200",
-    buttonHover: "group-hover/btn:text-emerald-800",
+    bg: "bg-[#d9f1e6] dark:bg-[#1d5044]",
+    text: "text-[#173e33] dark:text-[#ecfff5]",
+    bar: "bg-[#285b4d]",
+    sub: "text-[#527568] dark:text-[#b5ddc9]",
+    border: "border-[#b6ddca]",
+    buttonHover: "group-hover/btn:text-[#1c4a3c]",
   },
 ];
 
@@ -201,7 +201,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                       <button
                         className="flex items-center gap-3 rounded-xl px-3 py-2 text-start font-bold text-gray-700 text-sm transition-colors hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10"
                         onClick={() => {
-                          onViewDetails && onViewDetails(project);
+                          onViewDetails?.(project);
                           setIsMenuOpen(false);
                         }}
                       >

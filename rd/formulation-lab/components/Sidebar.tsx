@@ -24,8 +24,15 @@ const Sidebar: React.FC<SidebarProps> = () => {
   const currentPath = location.pathname;
   const { signOut } = useSettings();
 
-  const isActivePath = (path: string) =>
-    currentPath === path || (path !== "/" && currentPath.startsWith(path));
+  const isActivePath = (path: string) => {
+    if (path === "/") {
+      return currentPath === "/" || currentPath.startsWith("/project/");
+    }
+    if (path === "/runs") {
+      return currentPath.startsWith("/runs") || currentPath.startsWith("/run/");
+    }
+    return currentPath === path || currentPath.startsWith(path);
+  };
 
   const navItems = useMemo<{ name: string; icon: LucideIcon; path: string }[]>(
     () => [
@@ -41,10 +48,10 @@ const Sidebar: React.FC<SidebarProps> = () => {
   return (
     <>
       {/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
-      <aside className="fixed start-6 top-6 z-30 hidden h-fit max-h-[calc(100vh-3rem)] w-16 flex-col items-center overflow-y-auto overflow-x-hidden rounded-[2.5rem] border border-gray-100/50 bg-white py-6 shadow-sm transition-all duration-300 [-ms-overflow-style:'none'] [scrollbar-width:'none'] md:flex dark:border-slate-700 dark:bg-[#1e293b] [&::-webkit-scrollbar]:hidden">
+      <aside className="fixed start-5 top-5 z-30 hidden h-fit max-h-[calc(100vh-2.5rem)] w-[4.5rem] flex-col items-center overflow-y-auto overflow-x-hidden rounded-[2.25rem] border border-[#d2f2d4]/15 bg-[#143d32] py-5 shadow-[0_24px_60px_rgba(16,47,39,0.24)] transition-all duration-300 [-ms-overflow-style:'none'] [scrollbar-width:'none'] md:flex dark:border-[#d2f2d4]/10 dark:bg-[#102f27] [&::-webkit-scrollbar]:hidden">
         {/* Logo (Static) */}
-        <div className="mb-6 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gray-900 text-white shadow-gray-900/20 shadow-lg dark:bg-indigo-500 dark:shadow-indigo-500/20">
-          <FlaskConical size={20} strokeWidth={2.5} />
+        <div className="mb-6 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[1rem] bg-[#f5a623] text-[#173e33] shadow-[inset_0_-3px_0_rgba(182,97,8,0.28),0_10px_24px_rgba(0,0,0,0.18)]">
+          <FlaskConical size={21} strokeWidth={2.6} />
         </div>
 
         {/* Navigation (Scrollable) */}
@@ -69,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
             to="/settings"
           />
           <SidebarItem
-            className="text-red-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+            className="text-[#f0a99b] hover:bg-[#ff7738]/15 hover:text-[#ffc5b2]"
             icon={LogOut}
             label={t("logout")}
             onClick={signOut}
@@ -78,15 +85,15 @@ const Sidebar: React.FC<SidebarProps> = () => {
       </aside>
 
       {/* --- MOBILE BOTTOM NAVIGATION (Hidden on Desktop) --- */}
-      <nav className="safe-area-bottom fixed start-0 end-0 bottom-0 z-50 flex h-20 items-center justify-around border-gray-100 border-t bg-white px-4 pb-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:hidden dark:border-slate-700 dark:bg-[#1e293b]">
+      <nav className="safe-area-bottom fixed start-3 end-3 bottom-3 z-50 flex h-[4.75rem] items-center justify-around rounded-[1.75rem] border border-[#1c4a3c]/10 bg-[#fffdf4]/95 px-3 pb-1 shadow-[0_16px_50px_rgba(16,47,39,0.22)] backdrop-blur-xl md:hidden dark:border-[#d2f2d4]/10 dark:bg-[#143d32]/95">
         {navItems.slice(0, 5).map((item) => {
           const active = isActivePath(item.path);
           return (
             <Link
               className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-colors ${
                 active
-                  ? "text-gray-900 dark:text-indigo-400"
-                  : "text-gray-400 dark:text-slate-500"
+                  ? "bg-[#d2f2d4] text-[#173e33] dark:bg-[#f5a623] dark:text-[#173e33]"
+                  : "text-[#6f8e82] hover:bg-[#d2f2d4]/45 hover:text-[#1c4a3c] dark:text-[#9abcae] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
               }`}
               key={item.path}
               to={item.path}
@@ -99,8 +106,8 @@ const Sidebar: React.FC<SidebarProps> = () => {
         <Link
           className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-colors ${
             isActivePath("/settings")
-              ? "text-gray-900 dark:text-indigo-400"
-              : "text-gray-400 dark:text-slate-500"
+              ? "bg-[#d2f2d4] text-[#173e33] dark:bg-[#f5a623] dark:text-[#173e33]"
+              : "text-[#6f8e82] hover:bg-[#d2f2d4]/45 hover:text-[#1c4a3c] dark:text-[#9abcae] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
           }`}
           to="/settings"
         >

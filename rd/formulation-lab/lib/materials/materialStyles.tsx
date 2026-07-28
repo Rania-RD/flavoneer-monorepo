@@ -80,29 +80,29 @@ export const GROUP_STYLES: Record<string, IngredientGroupStyle> = {
 
 export const CARD_THEMES: MaterialCardTheme[] = [
   {
-    bg: "bg-[#F0F9FF] dark:bg-sky-900/20",
-    text: "text-sky-900 dark:text-sky-100",
-    icon: "bg-sky-200 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300",
+    bg: "bg-[#dff4dc] dark:bg-[#214f40]",
+    text: "text-[#173e33] dark:text-[#f7f4df]",
+    icon: "bg-[#bfe6c0] text-[#1c4a3c] dark:bg-[#d2f2d4]/12 dark:text-[#d2f2d4]",
   },
   {
-    bg: "bg-[#FDF2F8] dark:bg-pink-900/20",
-    text: "text-pink-900 dark:text-pink-100",
-    icon: "bg-pink-200 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300",
+    bg: "bg-[#fff2cf] dark:bg-[#3e4a2f]",
+    text: "text-[#644107] dark:text-[#fff5d4]",
+    icon: "bg-[#f8d681] text-[#74480a] dark:bg-[#f5a623]/15 dark:text-[#ffc760]",
   },
   {
-    bg: "bg-[#F0FDF4] dark:bg-emerald-900/20",
-    text: "text-emerald-900 dark:text-emerald-100",
-    icon: "bg-emerald-200 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+    bg: "bg-[#e8f1da] dark:bg-[#294b3b]",
+    text: "text-[#294934] dark:text-[#f3f7e7]",
+    icon: "bg-[#cfdfb5] text-[#315b3d] dark:bg-[#d2f2d4]/12 dark:text-[#d2f2d4]",
   },
   {
-    bg: "bg-[#FFFBEB] dark:bg-amber-900/20",
-    text: "text-amber-900 dark:text-amber-100",
-    icon: "bg-amber-200 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300",
+    bg: "bg-[#ffe1c8] dark:bg-[#4b3a2a]",
+    text: "text-[#743f24] dark:text-[#fff0df]",
+    icon: "bg-[#ffc190] text-[#a84417] dark:bg-[#ff7738]/15 dark:text-[#ffc5b2]",
   },
   {
-    bg: "bg-[#F5F3FF] dark:bg-violet-900/20",
-    text: "text-violet-900 dark:text-violet-100",
-    icon: "bg-violet-200 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300",
+    bg: "bg-[#d9f1e6] dark:bg-[#1d5044]",
+    text: "text-[#18493d] dark:text-[#ecfff5]",
+    icon: "bg-[#b4ddca] text-[#1c4a3c] dark:bg-[#d2f2d4]/12 dark:text-[#d2f2d4]",
   },
 ];
 

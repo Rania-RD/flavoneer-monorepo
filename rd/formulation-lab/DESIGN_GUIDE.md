@@ -2,6 +2,24 @@
 
 > The single source of truth for every visual, interaction, and architectural decision in the Food R&D Lab Manager.
 
+> **Read when:** changing authenticated routes, dashboard navigation, cards, forms, modals, theme behavior, or brand styling.
+
+---
+
+## 1. Dashboard Brand Enforcement
+
+Every authenticated route renders inside `components/DashboardLayout.tsx`. The
+layout owns the shared brand header, responsive navigation clearance, ambient
+background, typography, and the `flavoneer-dashboard-active` body scope.
+
+The body scope is intentional: modal content is rendered through `#portal`
+outside the React route subtree. Brand variables and compatibility selectors in
+`index.css` therefore apply to route content and portal overlays together.
+
+Do not add a second authenticated shell or a route-local page background. New
+internal pages must be placed inside `DashboardLayout` and consume the
+Flavoneer tokens below.
+
 ---
 
 ## 2. Color System
@@ -9,21 +27,25 @@
 ### 2.1 Core Palette
 
 ```
-Light Background:  #FDFCF6  (warm off-white, page base)
-Warm Card BG:      #FAF5F0  (profile header, focus cards)
-White Card:        #FFFFFF
-Dark Background:   #0f172a  (Slate 900)
-Dark Card:         #1e293b  (Slate 800)
+Light Background:  #EEF8EB  (mint workspace canvas)
+Mint Accent:       #D2F2D4  (selected and supporting surfaces)
+Cream Card:        #FFFDF4  (primary surface)
+Forest:            #1C4A3C  (navigation and primary actions)
+Deep Forest:       #102F27  (high-emphasis and dark canvas)
+Amber:             #F5A623  (active states and key actions)
+Orange:            #FF7738  (focus and motion accent)
+Dark Background:   #0D2B24  (forest dark canvas)
+Dark Card:         #173E33  (forest dark surface)
 ```
 
 ### 2.2 Brand Accents
 
 | Context                  | Light                     | Dark                      |
 | ------------------------ | ------------------------- | ------------------------- |
-| Primary CTA / Active Nav | `bg-gray-900` / `#1a1a1a` | `bg-indigo-600`           |
-| Primary Hover            | `bg-gray-800`             | `bg-indigo-500`           |
-| Primary Shadow           | `shadow-gray-900/20`      | `shadow-indigo-600/20–30` |
-| Focus Ring               | `ring-gray-900/10`        | `ring-indigo-500/50`      |
+| Primary CTA / Active Nav | `#1C4A3C`                 | `#F5A623`                 |
+| Primary Hover            | `#102F27`                 | `#FFC760`                 |
+| Primary Shadow           | forest at 18–24% opacity | black at 10–18% opacity  |
+| Focus Ring               | orange at 48% opacity    | amber at 50% opacity     |
 
 ### 2.3 Pastel Theme System (Cards)
 
@@ -66,8 +88,10 @@ STATUS_COLORS = {
 ### 3.1 Font Stack
 
 ```css
-/* LTR */
-font-family: 'Inter', sans-serif;
+/* LTR UI */
+font-family: 'DM Sans', sans-serif;
+/* Display headings */
+font-family: 'Fraunces', serif;
 /* RTL */
 font-family: 'Tajawal', sans-serif;
 ```
@@ -225,10 +249,10 @@ All content cards share:
 
 - **Desktop**: Fixed left (or right in RTL via `start-6`), `w-20`, `rounded-[2.5rem]`
 - **Nav Items**: `w-12 h-12 rounded-[1.2rem]`
-  - **Active**: `bg-black dark:bg-indigo-600 text-white shadow-lg scale-105`
-  - **Inactive**: `text-gray-400 hover:bg-gray-50 hover:text-gray-600`
+  - **Active**: amber surface, forest icon, inset amber shadow, `scale-105`
+  - **Inactive**: mint-muted icon with translucent mint hover
 - **Tooltip**: Appears on hover via `group-hover:opacity-100`, positioned `start-full ms-4`
-- **Logo**: `w-10 h-10 bg-gray-900 dark:bg-indigo-500 rounded-2xl` with FlaskConical icon
+- **Logo**: amber surface, forest FlaskConical icon, rounded 16px
 
 ### 7.5 Search Inputs
 
@@ -240,7 +264,7 @@ All content cards share:
   />
   <input
     className="w-full md:w-64 ps-11 pe-6 py-3 bg-white
-    dark:bg-[#1e293b] rounded-full text-sm font-medium
+    dark:bg-[#173E33] rounded-full text-sm font-medium
     focus:outline-none focus:ring-2 focus:ring-gray-900/10
     shadow-sm border border-transparent dark:border-slate-700"
   />
@@ -253,8 +277,8 @@ All content cards share:
 <button className={`px-5 py-2.5 rounded-full text-sm font-bold
   transition-all whitespace-nowrap ${
     active
-      ? 'bg-gray-900 dark:bg-indigo-600 text-white'
-      : 'bg-white dark:bg-[#1e293b] text-gray-500 hover:bg-gray-50'
+      ? 'bg-[#1C4A3C] dark:bg-[#F5A623] text-white dark:text-[#173E33]'
+      : 'bg-[#FFFDF4] dark:bg-[#173E33] text-[#527568]'
   }`}>
 ```
 
@@ -262,7 +286,7 @@ All content cards share:
 
 ```tsx
 <button
-  className="w-12 h-12 bg-gray-900 dark:bg-indigo-600
+  className="w-12 h-12 bg-[#1C4A3C] dark:bg-[#F5A623]
   rounded-full flex items-center justify-center text-white
   hover:bg-gray-800 shadow-lg shadow-gray-900/20 flex-shrink-0"
 >
@@ -275,7 +299,7 @@ All content cards share:
 ```tsx
 <div
   className={`w-14 h-8 rounded-full transition-colors
-  relative duration-300 ${on ? 'bg-black dark:bg-indigo-600' : 'bg-gray-200'}`}
+  relative duration-300 ${on ? 'bg-[#1C4A3C] dark:bg-[#F5A623]' : 'bg-[#BDD8C6] dark:bg-[#346A59]'}`}
 >
   <div
     className={`absolute top-1 w-6 h-6 rounded-full bg-white
@@ -310,7 +334,7 @@ Animated with Framer Motion `AnimatePresence`:
       exit={{ opacity: 0, scale: 0.95, y: 10 }}
       transition={{ duration: 0.2 }}
       className="absolute top-10 end-0 origin-top-end w-56
-        bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-md
+        bg-[#FFFDF4]/90 dark:bg-[#102F27]/95 backdrop-blur-md
         rounded-2xl shadow-xl border p-2 z-30"
     >
       {/* Menu items */}
@@ -337,7 +361,7 @@ Animated with Framer Motion `AnimatePresence`:
 │      Dr. Sarah Chen         │  ← text-xl font-bold
 │       Head of R&D           │  ← text-sm text-gray-500
 └──────────────────────────────┘
-Background: #FAF5F0 dark:#1e293b, rounded-[2.5rem]
+Background: #DFF4DC dark:#173E33, rounded-[2.5rem]
 ```
 
 ## Avatar has edit overlay on hover: `bg-black/20 opacity-0 group-hover:opacity-100`
@@ -399,24 +423,23 @@ Dark mode is controlled via `SettingsContext` → `toggleDarkMode()`, which adds
 
 | Element         | Light         | Dark                      |
 | --------------- | ------------- | ------------------------- |
-| Page BG         | `#FDFCF6`     | `#0f172a` (Slate 900)     |
-| Card BG         | `#FFFFFF`     | `#1e293b` (Slate 800)     |
-| Warm Card BG    | `#FAF5F0`     | `#1e293b`                 |
-| Text Primary    | `gray-900`    | `slate-100` / `white`     |
-| Text Secondary  | `gray-500`    | `slate-400`               |
-| Text Muted      | `gray-400`    | `slate-500`               |
-| Borders         | `gray-100/50` | `slate-700`               |
-| CTA Primary     | `gray-900`    | `indigo-600`              |
-| CTA Hover       | `gray-800`    | `indigo-500`              |
-| Pastel Cards    | `[color]-100` | `[color]-900/20 + border` |
-| Scrollbar Thumb | `#e2e8f0`     | `#475569`                 |
-| Dropdown BG     | `white/90`    | `#0f172a/95`              |
+| Page BG         | `#EEF8EB`       | `#0D2B24`                    |
+| Card BG         | `#FFFDF4`       | `#173E33`                    |
+| Supporting BG   | `#D2F2D4`       | `#285B4D`                    |
+| Text Primary    | `#173E33`       | `#F7F4DF`                    |
+| Text Secondary  | `#527568`       | `#A9CBBB`                    |
+| Borders         | forest at 14%   | mint at 12–14%               |
+| CTA Primary     | `#1C4A3C`       | `#F5A623`                    |
+| CTA Hover       | `#102F27`       | `#FFC760`                    |
+| Tonal Cards     | mint/cream/sage | forest/olive brand variants |
+| Scrollbar Thumb | `#9FBEAD`       | `#346A59`                    |
+| Dropdown BG     | cream at 95%    | deep forest at 95%          |
 
 ### 9.3 Dark Mode Rules
 
 - Pastel cards in dark mode add `dark:border dark:border-white/5–10`
 - Charts force `dir="ltr"` to prevent rendering issues in RTL
-- Chart highlighted bar: `fill="#1a1a1a"` light / `dark:fill-indigo-500`
+- Chart highlighted bar: forest in light mode / amber in dark mode
 - Decorative blobs reduce opacity: `bg-white/20` → `bg-white/5`
 
 ---
@@ -533,7 +556,7 @@ Per TailwindCSS defaults:
           key={`cell-${index}`}
           fill={highlighted ? '#1a1a1a' : '#E5E7EB'}
           className={
-            highlighted ? 'dark:fill-indigo-500' : 'dark:fill-slate-700'
+            highlighted ? 'dark:fill-[#F5A623]' : 'dark:fill-[#346A59]'
           }
         />
       ))}
@@ -554,7 +577,7 @@ Per TailwindCSS defaults:
 
 - Always wrap in `dir="ltr"` container to prevent RTL rendering issues
 - Tooltip: no border, 12px radius, subtle shadow
-- Active bar: black (light) / indigo-500 (dark)
+- Active bar: forest (light) / amber (dark)
 - Inactive bars: `#E5E7EB` (light) / `slate-700` (dark)
 - All bar corners fully rounded
 
@@ -754,7 +777,7 @@ Food-R-D-Lab-/
 ├── vite.config.ts             ← Vite config
 │
 ├── components/
-│   ├── Layout.tsx             ← Shell: sidebar + main content area
+│   ├── DashboardLayout.tsx    ← Branded shell: header, sidebar, route surface
 │   ├── Sidebar.tsx            ← Desktop sidebar + mobile bottom nav
 │   ├── ProfileHeader.tsx      ← Avatar, notifications, profile settings
 │   ├── ProfileSettingsModal.tsx

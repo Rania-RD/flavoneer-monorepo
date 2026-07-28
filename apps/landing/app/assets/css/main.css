@@ -210,18 +210,6 @@ a {
   opacity: 0.94;
 }
 
-.hero-support {
-  width: min(100%, 640px);
-}
-
-@media (min-width: 1024px) and (max-width: 1535px) {
-  .hero-support {
-    width: calc(100% - clamp(88px, 7vw, 112px));
-    margin-right: 0;
-    margin-left: clamp(88px, 7vw, 112px);
-  }
-}
-
 .metric-grid {
   background-image:
     linear-gradient(rgba(210, 242, 212, 0.06) 1px, transparent 1px),

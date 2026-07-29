@@ -90,6 +90,7 @@ interface FooterProps {
   canSubmit: boolean;
   cancelLabel: React.ReactNode;
   isLocked: boolean;
+  isRTL: boolean;
   isSubmitting: boolean;
   nextLabel: React.ReactNode;
   onCancel: () => void;
@@ -104,6 +105,7 @@ export const AddIngredientModalFooter = ({
   canSubmit,
   cancelLabel,
   isLocked,
+  isRTL,
   isSubmitting,
   nextLabel,
   onCancel,
@@ -119,7 +121,10 @@ export const AddIngredientModalFooter = ({
       onClick={onPrevious}
       type="button"
     >
-      <ChevronLeft className="rtl-mirror-icon me-1" size={16} />
+      <ChevronLeft
+        className={isRTL ? "ms-1 -scale-x-100 transform" : "me-1"}
+        size={16}
+      />
       {previousLabel}
     </button>
 
@@ -142,7 +147,10 @@ export const AddIngredientModalFooter = ({
               type="button"
             >
               {nextLabel}
-              <ChevronRight className="rtl-mirror-icon ms-1" size={16} />
+              <ChevronRight
+                className={isRTL ? "me-1 -scale-x-100 transform" : "ms-1"}
+                size={16}
+              />
             </button>
           ) : (
             <button

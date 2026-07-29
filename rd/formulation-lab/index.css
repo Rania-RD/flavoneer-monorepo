@@ -45,19 +45,6 @@
   font-family: "Fraunces", Georgia, serif;
 }
 
-/*
- * Directional icons are mirrored only when explicitly marked. Using :dir()
- * respects the nearest direction context, including locale-specific modals,
- * while leaving semantic-neutral icons completely unchanged.
- */
-.rtl-mirror-icon {
-  transform-origin: center;
-}
-
-.rtl-mirror-icon:dir(rtl) {
-  scale: -1 1;
-}
-
 body.flavoneer-dashboard-active {
   min-height: 100vh;
   background: var(--flavoneer-mint-soft);

@@ -20,7 +20,6 @@ import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
-import { trackLabEvent } from "../lib/analytics";
 import { buildAggregatedIngredients } from "../lib/formulation/helpers";
 import type { EnrichedLabReport, EnrichedProject } from "../types";
 
@@ -153,11 +152,6 @@ const Reports: React.FC = () => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
           toast.success(t("pdf_generated_successfully"));
-          trackLabEvent("lab_report_exported", {
-            report_id: report._id,
-            source: "reports_list",
-            status: report.status,
-          });
         } catch (error) {
           toast.error(t("failed_to_generate_pdf"));
           console.error(error);
@@ -185,10 +179,6 @@ const Reports: React.FC = () => {
           signoffType: isApproving
             ? (profile?.signatureType as "upload" | "text" | undefined)
             : undefined,
-        });
-        trackLabEvent("lab_report_status_changed", {
-          report_id: report._id,
-          status: newStatus,
         });
         break;
       }

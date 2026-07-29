@@ -20,6 +20,19 @@ yarn install
 bun install
 ```
 
+Copy `.env.example` to `.env` and configure the landing page:
+
+```bash
+NUXT_PUBLIC_LAB_URL=http://localhost:3001
+VITE_PUBLIC_POSTHOG_KEY=phc_your_project_key
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+`VITE_PUBLIC_POSTHOG_KEY` is the public project key from PostHog. Use
+`https://eu.i.posthog.com` for an EU-hosted project. When the key is omitted or
+blank, the analytics client becomes a no-op and the landing page continues to
+work normally.
+
 ## Development Server
 
 Start the development server on `http://localhost:3000`:

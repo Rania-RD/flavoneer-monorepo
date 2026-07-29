@@ -650,6 +650,8 @@
   "arabic": "Arabic (العربية)",
   "english_us": "English (US)",
   "interface_language": "Interface Language",
+  "form_content_language": "Content Language",
+  "close": "Close",
   "current_signature": "Current Signature:",
   "png_jpeg_or_svg_with_transparent_backgro": "PNG, JPEG or SVG with transparent background",
   "save_signature": "Save Signature",

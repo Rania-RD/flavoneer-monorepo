@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
+import { trackLabEvent } from "../lib/analytics";
 import SidebarItem from "./SidebarItem";
 
 type SidebarProps = {};
@@ -62,6 +63,12 @@ const Sidebar: React.FC<SidebarProps> = () => {
               icon={item.icon}
               key={item.path}
               label={item.name}
+              onClick={() =>
+                trackLabEvent("lab_navigation_clicked", {
+                  destination: item.path,
+                  placement: "desktop_sidebar",
+                })
+              }
               to={item.path}
             />
           ))}
@@ -77,9 +84,15 @@ const Sidebar: React.FC<SidebarProps> = () => {
           />
           <SidebarItem
             className="text-[#f0a99b] hover:bg-[#ff7738]/15 hover:text-[#ffc5b2]"
+            directionalIcon
             icon={LogOut}
             label={t("logout")}
-            onClick={signOut}
+            onClick={() => {
+              trackLabEvent("lab_user_signed_out", {
+                placement: "desktop_sidebar",
+              });
+              signOut();
+            }}
           />
         </div>
       </aside>
@@ -96,6 +109,12 @@ const Sidebar: React.FC<SidebarProps> = () => {
                   : "text-[#6f8e82] hover:bg-[#d2f2d4]/45 hover:text-[#1c4a3c] dark:text-[#9abcae] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
               }`}
               key={item.path}
+              onClick={() =>
+                trackLabEvent("lab_navigation_clicked", {
+                  destination: item.path,
+                  placement: "mobile_navigation",
+                })
+              }
               to={item.path}
             >
               <item.icon size={24} strokeWidth={active ? 2.5 : 2} />
@@ -109,6 +128,12 @@ const Sidebar: React.FC<SidebarProps> = () => {
               ? "bg-[#d2f2d4] text-[#173e33] dark:bg-[#f5a623] dark:text-[#173e33]"
               : "text-[#6f8e82] hover:bg-[#d2f2d4]/45 hover:text-[#1c4a3c] dark:text-[#9abcae] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
           }`}
+          onClick={() =>
+            trackLabEvent("lab_navigation_clicked", {
+              destination: "/settings",
+              placement: "mobile_navigation",
+            })
+          }
           to="/settings"
         >
           <Settings

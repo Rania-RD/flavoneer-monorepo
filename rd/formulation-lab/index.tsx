@@ -3,10 +3,13 @@ import { ConvexReactClient } from "convex/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { initializeAnalytics } from "./lib/analytics";
 import { authClient } from "./lib/auth-client";
 import "./lib/i18n";
 import "@glideapps/glide-data-grid/dist/index.css";
 import "./index.css";
+
+initializeAnalytics();
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 

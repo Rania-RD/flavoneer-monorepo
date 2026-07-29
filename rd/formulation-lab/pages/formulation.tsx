@@ -43,6 +43,7 @@ import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { usePermissions } from "../hooks/usePermissions";
+import { trackLabEvent } from "../lib/analytics";
 import {
   addPhaseToPhases,
   addStepAfterStepInPhase,
@@ -119,8 +120,7 @@ const WEIGHT_UNIT_TO_GRAMS: Record<string, number> = {
   milliliter: 1,
   milliliters: 1,
 };
-const MULTIPLE_AUTOSAVE_NAME =
-  "Auto-Save: Updated multiple formulation fields";
+const MULTIPLE_AUTOSAVE_NAME = "Auto-Save: Updated multiple formulation fields";
 const DEFAULT_AUTOSAVE_NAME = "Auto-Save: Updated formulation fields";
 
 function formatAutosaveValue(value: string | number | undefined) {
@@ -203,9 +203,12 @@ const Formulation: React.FC = () => {
   const autosaveRunRef = useRef(0);
   const pendingAutosaveChangesRef = useRef<Map<string, string>>(new Map());
 
-  const queueAutosaveChange = useCallback((key: string, description: string) => {
-    pendingAutosaveChangesRef.current.set(key, description);
-  }, []);
+  const queueAutosaveChange = useCallback(
+    (key: string, description: string) => {
+      pendingAutosaveChangesRef.current.set(key, description);
+    },
+    []
+  );
 
   const getPendingAutosaveName = useCallback(() => {
     const descriptions = [...pendingAutosaveChangesRef.current.values()];
@@ -357,9 +360,7 @@ const Formulation: React.FC = () => {
     queueAutosaveChange(
       "measures.servingSizeMode",
       `Auto-Save: Switched serving size mode to ${
-        servingSizeMode === "recipeMakes"
-          ? "A Recipe makes"
-          : "A Serving is"
+        servingSizeMode === "recipeMakes" ? "A Recipe makes" : "A Serving is"
       }`
     );
     setProject({
@@ -902,6 +903,11 @@ const Formulation: React.FC = () => {
         target: project.name,
         page: "Formulation",
       });
+      trackLabEvent("lab_formulation_status_changed", {
+        previous_status: lifecycleStatus,
+        project_id: projectId,
+        status: newStatus,
+      });
     } catch (err: unknown) {
       // biome-ignore lint/suspicious/noAlert: Immediate user feedback needed on failure
       window.alert((err as Error).message || t("failed_to_update_status"));
@@ -919,6 +925,11 @@ const Formulation: React.FC = () => {
       setProject(undefined);
       setPhases([]);
       setManualAllergenOverrides({});
+      trackLabEvent("lab_project_duplicated", {
+        project_id: projectId,
+        resulting_project_id: newProjectId,
+        source: "formulation",
+      });
       navigate(`/project/${newProjectId}?tab=formulation`);
       void logActivity({
         action: "Created New Draft Version",
@@ -1209,14 +1220,16 @@ const Formulation: React.FC = () => {
       <div className="-m-4 flex min-h-dvh items-center justify-center bg-white p-6 sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
         <div className="max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <p className="font-bold text-slate-700 dark:text-slate-200">
-            {convexProject === undefined ? t("loading") : t("project_not_found")}
+            {convexProject === undefined
+              ? t("loading")
+              : t("project_not_found")}
           </p>
           <button
             className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500"
             onClick={handleExitEditor}
             type="button"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft className="rtl-mirror-icon" size={16} />
             {t("exit_editor")}
           </button>
         </div>
@@ -1243,7 +1256,7 @@ const Formulation: React.FC = () => {
             title={t("exit_editor")}
             type="button"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft className="rtl-mirror-icon" size={20} />
             <span>{t("exit_editor")}</span>
           </button>
           <div>

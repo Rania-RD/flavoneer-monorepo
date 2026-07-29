@@ -487,13 +487,18 @@ The codebase uses **CSS Logical Properties** for automatic RTL flipping:
 
 ```tsx
 // Icons that need directional flipping
-<ArrowRight className={isRTL ? 'transform -scale-x-100' : ''} />
+<ArrowRight className="rtl-mirror-icon" />
 // Font switch
 className={isRTL ? 'font-tajawal' : 'font-inter'}
 // Framer Motion directional animation
 initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
 exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
 ```
+
+Apply `rtl-mirror-icon` only to horizontal directional icons such as arrows,
+navigation chevrons, and log-out/exit symbols. Never apply it to neutral
+identity or object icons such as dashboards, settings, profiles, or flasks; the
+utility follows the nearest computed `dir` context automatically.
 
 ### 10.4 Translation Keys
 

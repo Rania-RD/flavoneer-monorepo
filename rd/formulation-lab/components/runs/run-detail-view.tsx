@@ -48,7 +48,7 @@ const RunDetailView: React.FC<RunDetailViewProps> = ({
             onClick={onBackToSelection}
             type="button"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft className="rtl-mirror-icon" size={20} />
           </button>
           <div>
             <div className="flex items-center gap-3">
@@ -76,7 +76,9 @@ const RunDetailView: React.FC<RunDetailViewProps> = ({
                 {t("batch")} {selectedRunRecord.batchCode}
               </span>
               <span>•</span>
-              <span>{selectedRunRecord.durationString || t("not_applicable")}</span>
+              <span>
+                {selectedRunRecord.durationString || t("not_applicable")}
+              </span>
             </p>
           </div>
         </div>

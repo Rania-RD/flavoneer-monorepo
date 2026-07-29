@@ -8,6 +8,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { Toaster } from "sonner";
+import AnalyticsTracker from "./components/analytics-tracker";
 import DashboardLayout from "./components/DashboardLayout";
 import { SettingsProvider } from "./context/SettingsContext";
 import { TeamProvider } from "./context/TeamContext";
@@ -89,9 +90,8 @@ const App: React.FC = () => {
   );
 
   return (
-    <Router
-      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-    >
+    <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+      <AnalyticsTracker userId={session?.user?.id} />
       <SettingsProvider>
         {isPending ? (
           /* ─── Full-screen loading spinner ─── */

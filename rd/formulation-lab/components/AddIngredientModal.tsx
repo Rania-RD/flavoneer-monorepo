@@ -11,6 +11,7 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { normalizeInsNumber } from "../convex/regulatoryHelpers";
 import { useToast } from "../hooks/useToast";
+import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { compressImage } from "../lib/imageUtils";
 import type { IngredientDependencyData, IngredientEditorData } from "../types";
@@ -455,6 +456,13 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
         await createIngredient(payload);
       }
 
+      trackLabEvent("lab_ingredient_saved", {
+        allergen_verified: allergenVerified,
+        is_additive: isAdditive,
+        is_composite: isComposite,
+        nutrient_count: Object.keys(computedNutrients).length,
+        operation: editIngredient?._id ? "updated" : "created",
+      });
       localStorage.removeItem(DRAFT_KEY);
       resetForm();
       onClose();
@@ -481,6 +489,14 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
     try {
       await updateIngredient({ id: editIngredient._id, ...pendingSavePayload });
       await markDependenciesOutOfSync({ id: editIngredient._id });
+      trackLabEvent("lab_ingredient_saved", {
+        allergen_verified: allergenVerified,
+        dependency_resolution: "marked_out_of_sync",
+        is_additive: isAdditive,
+        is_composite: isComposite,
+        nutrient_count: Object.keys(computedNutrients).length,
+        operation: "updated",
+      });
       localStorage.removeItem(DRAFT_KEY);
       setDependencyData(null);
       setShowDependencyWarning(false);
@@ -499,6 +515,14 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
     try {
       await updateIngredient({ id: editIngredient._id, ...pendingSavePayload });
       await propagateUpdates({ id: editIngredient._id });
+      trackLabEvent("lab_ingredient_saved", {
+        allergen_verified: allergenVerified,
+        dependency_resolution: "propagated",
+        is_additive: isAdditive,
+        is_composite: isComposite,
+        nutrient_count: Object.keys(computedNutrients).length,
+        operation: "updated",
+      });
       localStorage.removeItem(DRAFT_KEY);
       setDependencyData(null);
       setShowDependencyWarning(false);
@@ -715,7 +739,6 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
                 )
               }
               isLocked={isLocked}
-              isRTL={isRTL}
               isSubmitting={isSubmitting}
               nextLabel={t("nextStep")}
               onCancel={onClose}

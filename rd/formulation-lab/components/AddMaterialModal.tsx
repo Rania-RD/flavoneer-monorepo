@@ -22,6 +22,7 @@ import { useSettings } from "../context/SettingsContext";
 import { useTeam } from "../context/TeamContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface AddMaterialModalProps {
@@ -201,6 +202,11 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
         action: "Added Inventory Item",
         target: formData.name,
         page: "Inventory",
+      });
+      trackLabEvent("lab_material_created", {
+        category: formData.category,
+        has_linked_ingredient: Boolean(formData.ingredientId),
+        unit: formData.unit,
       });
       resetForm();
       onClose();
@@ -726,10 +732,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                 onClick={prevTab}
                 type="button"
               >
-                <ChevronLeft
-                  className={isRTL ? "ms-1 -scale-x-100 transform" : "me-1"}
-                  size={16}
-                />
+                <ChevronLeft className="rtl-mirror-icon me-1" size={16} />
                 {t("previous")}
               </button>
 
@@ -767,10 +770,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                     type="button"
                   >
                     {t("nextStep")}
-                    <ChevronRight
-                      className={isRTL ? "me-1 -scale-x-100 transform" : "ms-1"}
-                      size={16}
-                    />
+                    <ChevronRight className="rtl-mirror-icon ms-1" size={16} />
                   </button>
                 )}
               </div>

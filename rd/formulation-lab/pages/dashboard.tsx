@@ -16,6 +16,7 @@ import { useSettings } from "../context/SettingsContext";
 import { useTeam } from "../context/TeamContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { trackLabEvent } from "../lib/analytics";
 import { modalVariants, overlayVariants } from "../lib/animations";
 import { authClient } from "../lib/auth-client";
 import type { EnrichedProject } from "../types";
@@ -67,6 +68,10 @@ const Dashboard: React.FC = () => {
   const teamMembers = teamMembersRaw ?? [];
 
   const handleOpenDetails = (project: EnrichedProject) => {
+    trackLabEvent("lab_project_opened", {
+      project_id: project._id,
+      source: "dashboard",
+    });
     setSelectedProject(project);
     setIsDetailsModalOpen(true);
   };
@@ -88,6 +93,12 @@ const Dashboard: React.FC = () => {
       target: data.name,
       page: "Dashboard",
     });
+    trackLabEvent("lab_project_created", {
+      category: data.category,
+      has_gsfa_category: Boolean(data.gsfaCategoryCode),
+      project_id: newProjectId,
+      team_scoped: Boolean(activeTeamId),
+    });
     navigate(`/project/${newProjectId}?tab=formulation`);
   };
 
@@ -101,6 +112,10 @@ const Dashboard: React.FC = () => {
       action: "Updated Project",
       target: updated.name,
       page: "Dashboard",
+    });
+    trackLabEvent("lab_project_updated", {
+      project_id: updated._id,
+      source: "dashboard",
     });
 
     // Update local selected project immediately for UI responsiveness if needed
@@ -118,6 +133,10 @@ const Dashboard: React.FC = () => {
       target: project.name,
       page: "Dashboard",
     });
+    trackLabEvent("lab_project_duplicated", {
+      project_id: project._id,
+      resulting_project_id: newProjectId,
+    });
     navigate(`/project/${newProjectId}?tab=formulation`);
   };
 
@@ -127,6 +146,9 @@ const Dashboard: React.FC = () => {
       action: "Deleted Project",
       target: projectId,
       page: "Dashboard",
+    });
+    trackLabEvent("lab_project_deleted", {
+      project_id: projectId,
     });
   };
 
@@ -140,6 +162,11 @@ const Dashboard: React.FC = () => {
         action: "Started Lab Batch",
         target: projectId,
         page: "Dashboard",
+      });
+      trackLabEvent("lab_run_started", {
+        project_id: projectId,
+        run_id: runId,
+        source: "dashboard",
       });
       // Small delay for smooth animation
       setTimeout(() => {

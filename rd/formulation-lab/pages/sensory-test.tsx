@@ -222,7 +222,7 @@ const SensoryTest: React.FC = () => {
               {isSubmitting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Send className="h-5 w-5" />
+                <Send className="rtl-mirror-icon h-5 w-5" />
               )}
 
               {t("submit_evaluation")}

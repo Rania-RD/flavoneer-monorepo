@@ -661,11 +661,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 onClick={prevTab}
                 type="button"
               >
-                {isArabicContent ? (
-                  <ChevronRight className="me-1" size={16} />
-                ) : (
-                  <ChevronLeft className="me-1" size={16} />
-                )}
+                <ChevronLeft className="rtl-mirror-icon me-1" size={16} />
 
                 {t("back")}
               </button>
@@ -679,11 +675,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="button"
                 >
                   {t("nextStep")}
-                  {isArabicContent ? (
-                    <ChevronLeft className="ms-1" size={16} />
-                  ) : (
-                    <ChevronRight className="ms-1" size={16} />
-                  )}
+                  <ChevronRight className="rtl-mirror-icon ms-1" size={16} />
                 </button>
               )}
 

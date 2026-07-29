@@ -88,7 +88,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   teamMembers,
 }) => {
   const { t } = useTranslation();
-  const { language, isRTL } = useSettings();
+  const { language } = useSettings();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -333,7 +333,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             >
               {t("viewDetails")}
               <ArrowRight
-                className={`transition-transform duration-300 group-hover/btn:translate-x-1 ${isRTL ? "-scale-x-100 transform" : ""}`}
+                className="rtl-mirror-icon transition-transform duration-300 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1"
                 size={18}
               />
             </button>

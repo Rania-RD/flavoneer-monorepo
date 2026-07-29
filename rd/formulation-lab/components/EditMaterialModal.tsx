@@ -291,9 +291,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                         />
                       </div>
                       <div>
-                        <label className={labelClasses}>
-                          {t("category")}
-                        </label>
+                        <label className={labelClasses}>{t("category")}</label>
                         <div className="relative">
                           <select
                             className={`${inputClasses} cursor-pointer appearance-none`}
@@ -303,7 +301,9 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                           >
                             {CATEGORIES.map((c) => (
                               <option key={c} value={c}>
-                                {t(`category_${c.toLowerCase().replace(/ /g, "_")}`)}
+                                {t(
+                                  `category_${c.toLowerCase().replace(/ /g, "_")}`
+                                )}
                               </option>
                             ))}
                           </select>
@@ -330,9 +330,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
 
                     {/* Batch ID */}
                     <div>
-                      <label className={labelClasses}>
-                        {t("batchId")}
-                      </label>
+                      <label className={labelClasses}>{t("batchId")}</label>
                       <input
                         className={`${inputClasses} font-mono`}
                         name="batchId"
@@ -345,9 +343,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
 
                     {/* Description */}
                     <div>
-                      <label className={labelClasses}>
-                        {t("description")}
-                      </label>
+                      <label className={labelClasses}>{t("description")}</label>
                       <textarea
                         className={`${inputClasses} resize-none`}
                         name="description"
@@ -382,9 +378,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                         />
                       </div>
                       <div>
-                        <label className={labelClasses}>
-                          {t("unit")}
-                        </label>
+                        <label className={labelClasses}>{t("unit")}</label>
                         <div className="relative">
                           <select
                             className={`${inputClasses} cursor-pointer appearance-none`}
@@ -461,9 +455,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
 
                     {/* Expiry Date */}
                     <div>
-                      <label className={labelClasses}>
-                        {t("expiryDate")}
-                      </label>
+                      <label className={labelClasses}>{t("expiryDate")}</label>
                       <div className="relative">
                         <input
                           className={inputClasses}
@@ -579,10 +571,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                 onClick={prevTab}
                 type="button"
               >
-                <ChevronLeft
-                  className={isRTL ? "ms-1 -scale-x-100 transform" : "me-1"}
-                  size={16}
-                />
+                <ChevronLeft className="rtl-mirror-icon me-1" size={16} />
                 {t("previous")}
               </button>
 
@@ -602,10 +591,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                     type="button"
                   >
                     {t("nextStep")}
-                    <ChevronRight
-                      className={isRTL ? "me-1 -scale-x-100 transform" : "ms-1"}
-                      size={16}
-                    />
+                    <ChevronRight className="rtl-mirror-icon ms-1" size={16} />
                   </button>
                 ) : (
                   <button

@@ -726,10 +726,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                 onClick={prevTab}
                 type="button"
               >
-                <ChevronLeft
-                  className={isRTL ? "ms-1 -scale-x-100 transform" : "me-1"}
-                  size={16}
-                />
+                <ChevronLeft className="rtl-mirror-icon me-1" size={16} />
                 {t("previous")}
               </button>
 
@@ -767,10 +764,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                     type="button"
                   >
                     {t("nextStep")}
-                    <ChevronRight
-                      className={isRTL ? "me-1 -scale-x-100 transform" : "ms-1"}
-                      size={16}
-                    />
+                    <ChevronRight className="rtl-mirror-icon ms-1" size={16} />
                   </button>
                 )}
               </div>

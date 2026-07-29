@@ -87,7 +87,10 @@ const InviteStatusBadge: React.FC<{
 };
 
 // ─── Audit action label formatting ───────────────────
-function formatAction(action: string, t: ReturnType<typeof useTranslation>["t"]): React.ReactNode {
+function formatAction(
+  action: string,
+  t: ReturnType<typeof useTranslation>["t"]
+): React.ReactNode {
   const map: Record<string, { icon: LucideIcon; key: string }> = {
     "team.created": { icon: Building2, key: "team_created_action" },
     "team.updated": { icon: PencilLine, key: "team_updated_action" },
@@ -104,15 +107,22 @@ function formatAction(action: string, t: ReturnType<typeof useTranslation>["t"])
     return action;
   }
   const Icon = match.icon;
+  const isDirectionalIcon = action === "member.left";
   return (
     <span className="inline-flex items-center gap-1.5 align-middle">
-      <Icon className="shrink-0 text-gray-400 dark:text-slate-500" size={14} />
+      <Icon
+        className={`${isDirectionalIcon ? "rtl-mirror-icon " : ""}shrink-0 text-gray-400 dark:text-slate-500`}
+        size={14}
+      />
       <span>{t(match.key)}</span>
     </span>
   );
 }
 
-function timeAgo(timestamp: number, t: ReturnType<typeof useTranslation>["t"]): string {
+function timeAgo(
+  timestamp: number,
+  t: ReturnType<typeof useTranslation>["t"]
+): string {
   const diff = Date.now() - timestamp;
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) {

@@ -80,7 +80,7 @@ const ReportDetails: React.FC = () => {
             onClick={() => navigate(-1)}
             type="button"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft className="rtl-mirror-icon" size={20} />
           </button>
           <div>
             <div className="flex items-center gap-3">

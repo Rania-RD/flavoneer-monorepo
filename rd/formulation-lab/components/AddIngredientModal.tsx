@@ -715,7 +715,6 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
                 )
               }
               isLocked={isLocked}
-              isRTL={isRTL}
               isSubmitting={isSubmitting}
               nextLabel={t("nextStep")}
               onCancel={onClose}

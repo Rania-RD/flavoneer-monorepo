@@ -77,6 +77,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
           />
           <SidebarItem
             className="text-[#f0a99b] hover:bg-[#ff7738]/15 hover:text-[#ffc5b2]"
+            directionalIcon
             icon={LogOut}
             label={t("logout")}
             onClick={signOut}

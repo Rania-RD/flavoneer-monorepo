@@ -43,6 +43,7 @@ import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { usePermissions } from "../hooks/usePermissions";
+import { trackLabEvent } from "../lib/analytics";
 import {
   addPhaseToPhases,
   addStepAfterStepInPhase,
@@ -902,6 +903,11 @@ const Formulation: React.FC = () => {
         target: project.name,
         page: "Formulation",
       });
+      trackLabEvent("lab_formulation_status_changed", {
+        previous_status: lifecycleStatus,
+        project_id: projectId,
+        status: newStatus,
+      });
     } catch (err: unknown) {
       // biome-ignore lint/suspicious/noAlert: Immediate user feedback needed on failure
       window.alert((err as Error).message || t("failed_to_update_status"));
@@ -919,6 +925,11 @@ const Formulation: React.FC = () => {
       setProject(undefined);
       setPhases([]);
       setManualAllergenOverrides({});
+      trackLabEvent("lab_project_duplicated", {
+        project_id: projectId,
+        resulting_project_id: newProjectId,
+        source: "formulation",
+      });
       navigate(`/project/${newProjectId}?tab=formulation`);
       void logActivity({
         action: "Created New Draft Version",

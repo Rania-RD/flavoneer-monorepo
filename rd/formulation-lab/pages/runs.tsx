@@ -14,6 +14,7 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useRunExecution } from "../hooks/useRunExecution";
 import { useToast } from "../hooks/useToast";
+import { trackLabEvent } from "../lib/analytics";
 import { buildRunsHistory } from "../lib/runs/history";
 import type { EnrichedProject, RunListItem } from "../types";
 
@@ -80,6 +81,11 @@ const Runs: React.FC = () => {
         action: "Started Lab Batch",
         target: projectName,
         page: "Run Procedure",
+      });
+      trackLabEvent("lab_run_started", {
+        project_id: projectId,
+        run_id: runId,
+        source: "runs",
       });
       setTimeout(() => {
         setIsStartingRun(false);

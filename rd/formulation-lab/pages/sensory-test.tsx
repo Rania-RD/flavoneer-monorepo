@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { api } from "../convex/_generated/api";
 import { useToast } from "../hooks/useToast";
+import { trackLabEvent } from "../lib/analytics";
 
 type QuestionType = "hedonic" | "boolean" | "text";
 
@@ -74,6 +75,10 @@ const SensoryTest: React.FC = () => {
         formId: form._id,
         testerName,
         resultsJSON: JSON.stringify(answers),
+      });
+      trackLabEvent("lab_sensory_response_submitted", {
+        form_id: form._id,
+        question_count: schema.questions.length,
       });
       setIsSubmitted(true);
       toast.success(t("evaluation_submitted_thanks"));

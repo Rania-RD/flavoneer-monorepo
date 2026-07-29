@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface Run {
@@ -135,6 +136,12 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
           Math.random().toString(36).substring(2, 6),
         results: validResults,
       });
+      trackLabEvent("lab_report_created", {
+        project_id: selectedRun.projectId,
+        result_count: validResults.length,
+        run_id: selectedRun._id,
+        sample_type: sampleType,
+      });
       resetForm();
       onClose();
     } catch (err) {
@@ -243,7 +250,10 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                       value={sampleType}
                     >
                       {SAMPLE_TYPES.map((sampleTypeOption) => (
-                        <option key={sampleTypeOption.value} value={sampleTypeOption.value}>
+                        <option
+                          key={sampleTypeOption.value}
+                          value={sampleTypeOption.value}
+                        >
                           {t(sampleTypeOption.key)}
                         </option>
                       ))}

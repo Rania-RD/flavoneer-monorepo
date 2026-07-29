@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
 import { usePermissions } from "../hooks/usePermissions";
+import { trackLabEvent } from "../lib/analytics";
 import ProfileSettingsModal from "./ProfileSettingsModal";
 
 const ProfileHeader: React.FC = () => {
@@ -60,7 +61,12 @@ const ProfileHeader: React.FC = () => {
         {/* Logout */}
         <button
           className="relative z-10 flex items-center gap-2 rounded-xl px-4 py-2 font-bold text-[#658579] text-xs transition-all hover:bg-[#ff7738]/10 hover:text-[#c9501a] dark:text-[#9abcae] dark:hover:bg-[#ff7738]/10 dark:hover:text-[#ffc5b2]"
-          onClick={signOut}
+          onClick={() => {
+            trackLabEvent("lab_user_signed_out", {
+              placement: "profile_header",
+            });
+            signOut();
+          }}
         >
           <LogOut className="rtl-mirror-icon" size={14} />
           {t("logout")}

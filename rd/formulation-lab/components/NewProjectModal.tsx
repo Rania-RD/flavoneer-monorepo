@@ -13,6 +13,7 @@ import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
+import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { type EnrichedProject, ProjectStatus } from "../types";
 import { GsfaCategorySelect } from "./GsfaCategorySelect";
@@ -326,9 +327,11 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     aria-label={t("form_content_language")}
                     className={inputClasses}
                     id="project-content-language"
-                    onChange={(event) =>
-                      setContentLanguage(event.target.value as ContentLanguage)
-                    }
+                    onChange={(event) => {
+                      const locale = event.target.value as ContentLanguage;
+                      setContentLanguage(locale);
+                      trackLabEvent("lab_project_locale_changed", { locale });
+                    }}
                     value={contentLanguage}
                   >
                     <option value="en">{t("english_us")}</option>
@@ -369,13 +372,18 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                           inputClassName={inputClasses}
                           labelClassName="font-semibold text-gray-700 text-sm"
                           language={contentLanguage}
-                          onChange={(category) =>
+                          onChange={(category) => {
                             setFormData((prev) => ({
                               ...prev,
                               gsfaCategoryCode: category.code ?? "",
                               gsfaCategoryName: category.name ?? "",
-                            }))
-                          }
+                            }));
+                            if (category.code) {
+                              trackLabEvent("lab_gsfa_category_selected", {
+                                gsfa_category_code: category.code,
+                              });
+                            }
+                          }}
                           value={{
                             code: formData.gsfaCategoryCode,
                             name: formData.gsfaCategoryName,

@@ -22,6 +22,7 @@ import { useSettings } from "../context/SettingsContext";
 import { useTeam } from "../context/TeamContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface AddMaterialModalProps {
@@ -201,6 +202,11 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
         action: "Added Inventory Item",
         target: formData.name,
         page: "Inventory",
+      });
+      trackLabEvent("lab_material_created", {
+        category: formData.category,
+        has_linked_ingredient: Boolean(formData.ingredientId),
+        unit: formData.unit,
       });
       resetForm();
       onClose();

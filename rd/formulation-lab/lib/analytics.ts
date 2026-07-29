@@ -19,6 +19,8 @@ export type LabAnalyticsEvent =
   | "lab_inventory_exported"
   | "lab_material_created"
   | "lab_navigation_clicked"
+  | "lab_profile_menu_action"
+  | "lab_profile_menu_toggled"
   | "lab_project_created"
   | "lab_project_deleted"
   | "lab_project_duplicated"

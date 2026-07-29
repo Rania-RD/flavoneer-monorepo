@@ -9,7 +9,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      labUrl: process.env.NUXT_PUBLIC_LAB_URL || 'http://localhost:3001'
+      labUrl: process.env.NUXT_PUBLIC_LAB_URL || 'http://localhost:3001',
+      posthogHost:
+        process.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
+      posthogKey: process.env.VITE_PUBLIC_POSTHOG_KEY || ''
     }
   },
   app: {

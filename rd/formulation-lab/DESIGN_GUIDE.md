@@ -350,7 +350,22 @@ Animated with Framer Motion `AnimatePresence`:
 - Unread items highlighted: `bg-blue-50/30 dark:bg-blue-900/10`
 - Notification icons differ by type: success → green, error → red, warning → orange, info → blue
 
-### 7.12 Profile Header
+### 7.12 Searchable Comboboxes
+
+- Use one `role="combobox"` input with an associated `role="listbox"`; do not
+  pair a search input with a native select.
+- Render the listbox through `document.body` with `createPortal`, fixed
+  positioning, logical `insetInlineStart`, and `z-[1000]` so modal overflow and
+  stacking contexts cannot clip it.
+- Recalculate placement on viewport resize and capture-phase scroll. Flip above
+  the field when the available space below is insufficient.
+- Support Arrow Up/Down, Home/End, Enter, Escape, Tab, click-outside dismissal,
+  `aria-activedescendant`, and `aria-selected`.
+- Keep typed filtering immediate; debounce only the remote query.
+- GSFA choices use `01.0 · Category Name`. Store and emit the original GSFA code;
+  formatting is presentation-only.
+
+### 7.13 Profile Header
 
 ```
 ┌──────────────────────────────┐
@@ -603,7 +618,15 @@ The `NewProjectModal` uses a **tabbed wizard** pattern:
 3. Footer: "Back" (text-only) ← → "Next Step" (filled) or "Create Project" (blue CTA)
 4. Back button disabled on first tab: `disabled:opacity-30 disabled:cursor-not-allowed`
 
-### 14.3 Datalist (Combobox)
+### 14.3 Localized Text Fields
+
+Multilingual forms use one language selector and one visible control per field.
+Keep each locale in a separate state key, switch only the active binding, and set
+`lang` plus `dir="rtl"` for Arabic content so toggling never discards input. A
+modal-level locale switcher must also use a fixed i18n translator for every
+visible string and apply direction to the modal root, including portaled UI.
+
+### 14.4 Datalist (Combobox)
 
 ```tsx
 <input list="processing-methods" className={inputClasses} />
@@ -612,7 +635,7 @@ The `NewProjectModal` uses a **tabbed wizard** pattern:
 </datalist>
 ```
 
-### 14.4 Custom Checkboxes
+### 14.5 Custom Checkboxes
 
 ```tsx
 <div

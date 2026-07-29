@@ -650,6 +650,8 @@
   "arabic": "العربية (Arabic)",
   "english_us": "الإنجليزية (US)",
   "interface_language": "لغة الواجهة",
+  "form_content_language": "لغة المحتوى",
+  "close": "إغلاق",
   "current_signature": "التوقيع الحالي:",
   "png_jpeg_or_svg_with_transparent_backgro": "تنسيقات صور شفافة",
   "save_signature": "حفظ التوقيع",

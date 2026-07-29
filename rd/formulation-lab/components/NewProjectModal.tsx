@@ -24,6 +24,8 @@ interface NewProjectModalProps {
   teamMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
 }
 
+type ContentLanguage = "en" | "ar";
+
 const CATEGORIES = [
   "Medical Nutrition",
   "Dairy Alternatives",
@@ -58,12 +60,13 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
   onSave,
   teamMembers = [],
 }) => {
-  const { isRTL } = useSettings();
-  const { t } = useTranslation();
   const { profile } = useSettings();
+  const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<
     "general" | "technical" | "compliance"
   >("general");
+  const [contentLanguage, setContentLanguage] = useState<ContentLanguage>("en");
+  const t = i18n.getFixedT(contentLanguage);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -120,19 +123,22 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
     setIsSubmitting(true);
 
     try {
+      const fallbackName = formData.name || formData.nameAr;
+      const fallbackDescription =
+        formData.description || formData.descriptionAr;
       const newProject = {
-        name: formData.name,
+        name: fallbackName,
         nameI18n: {
-          en: formData.name,
-          ar: formData.nameAr || formData.name,
+          en: formData.name || fallbackName,
+          ar: formData.nameAr || fallbackName,
         },
         version: "1.0",
         status: ProjectStatus.DRAFT,
         lead: profile.name || "Unknown",
-        description: formData.description,
+        description: fallbackDescription,
         descriptionI18n: {
-          en: formData.description,
-          ar: formData.descriptionAr || formData.description,
+          en: formData.description || fallbackDescription,
+          ar: formData.descriptionAr || fallbackDescription,
         },
         ingredients: [],
         category: formData.category,
@@ -177,6 +183,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
         authorizedExecutor: "",
       });
       setActiveTab("general");
+      setContentLanguage("en");
     } catch (error) {
       console.error("Failed to create project:", error);
     } finally {
@@ -203,12 +210,21 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
   // High contrast input classes
   const inputClasses =
     "w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+  const isArabicContent = contentLanguage === "ar";
+  const localizedFieldNames = {
+    title: isArabicContent ? ("nameAr" as const) : ("name" as const),
+    description: isArabicContent
+      ? ("descriptionAr" as const)
+      : ("description" as const),
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          dir={isRTL ? "rtl" : "ltr"}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 text-start"
+          dir={isArabicContent ? "rtl" : "ltr"}
+          lang={contentLanguage}
         >
           {/* Backdrop */}
           <MotionDiv
@@ -230,7 +246,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
           >
             {/* Header */}
             <div className="flex items-center justify-between border-gray-100 border-b bg-white p-6">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <Beaker size={20} />
                 </div>
@@ -244,8 +260,10 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 </div>
               </div>
               <button
+                aria-label={t("close")}
                 className="text-gray-400 transition-colors hover:text-gray-600"
                 onClick={onClose}
+                type="button"
               >
                 <X size={24} />
               </button>
@@ -253,7 +271,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
             {/* Tabs / Progress */}
             <div className="px-6 pt-6">
-              <div className="flex items-center space-x-1 border-gray-200 border-b">
+              <div className="flex items-center gap-1 border-gray-200 border-b">
                 <button
                   className={`border-b-2 px-4 pb-3 font-medium text-sm transition-colors ${
                     activeTab === "general"
@@ -261,6 +279,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                   onClick={() => setActiveTab("general")}
+                  type="button"
                 >
                   {t("1_general_info")}
                 </button>
@@ -271,6 +290,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                   onClick={() => setActiveTab("technical")}
+                  type="button"
                 >
                   {t("2_technical_specs")}
                 </button>
@@ -281,6 +301,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                   onClick={() => setActiveTab("compliance")}
+                  type="button"
                 >
                   {t("3_compliance")}
                 </button>
@@ -294,42 +315,60 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 id="project-form"
                 onSubmit={handleSubmit}
               >
+                <div className="ms-auto w-full space-y-1.5 sm:w-56">
+                  <label
+                    className="font-semibold text-gray-700 text-sm"
+                    htmlFor="project-content-language"
+                  >
+                    {t("form_content_language")}
+                  </label>
+                  <select
+                    aria-label={t("form_content_language")}
+                    className={inputClasses}
+                    id="project-content-language"
+                    onChange={(event) =>
+                      setContentLanguage(event.target.value as ContentLanguage)
+                    }
+                    value={contentLanguage}
+                  >
+                    <option value="en">{t("english_us")}</option>
+                    <option value="ar">{t("arabic")}</option>
+                  </select>
+                </div>
+
                 {/* General Section */}
                 {activeTab === "general" && (
                   <div className="fade-in slide-in-from-end-4 animate-in space-y-4 duration-300">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="font-semibold text-gray-700 text-sm">
-                          {t("project_title_en")}
+                        <label
+                          className="font-semibold text-gray-700 text-sm"
+                          htmlFor="project-localized-title"
+                        >
+                          {t("project_title")}
                         </label>
                         <input
                           className={inputClasses}
                           data-testid="project-name-input"
-                          name="name"
+                          dir={isArabicContent ? "rtl" : "ltr"}
+                          id="project-localized-title"
+                          lang={contentLanguage}
+                          name={localizedFieldNames.title}
                           onChange={handleInputChange}
-                          placeholder={t("example_project_name")}
+                          placeholder={t(
+                            isArabicContent
+                              ? "example_project_name_ar"
+                              : "example_project_name"
+                          )}
                           required
-                          value={formData.name}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="font-semibold text-gray-700 text-sm">
-                          {t("project_title_ar")}
-                        </label>
-                        <input
-                          className={inputClasses}
-                          dir="rtl"
-                          name="nameAr"
-                          onChange={handleInputChange}
-                          placeholder={t("example_project_name_ar")}
-                          required
-                          value={formData.nameAr}
+                          value={formData[localizedFieldNames.title]}
                         />
                       </div>
                       <div className="space-y-1.5">
                         <GsfaCategorySelect
                           inputClassName={inputClasses}
                           labelClassName="font-semibold text-gray-700 text-sm"
+                          language={contentLanguage}
                           onChange={(category) =>
                             setFormData((prev) => ({
                               ...prev,
@@ -346,30 +385,26 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="font-semibold text-gray-700 text-sm">
-                        {t("brief_description_en")}
+                      <label
+                        className="font-semibold text-gray-700 text-sm"
+                        htmlFor="project-localized-description"
+                      >
+                        {t("brief_description")}
                       </label>
                       <textarea
                         className={`${inputClasses} resize-none`}
-                        name="description"
+                        dir={isArabicContent ? "rtl" : "ltr"}
+                        id="project-localized-description"
+                        lang={contentLanguage}
+                        name={localizedFieldNames.description}
                         onChange={handleInputChange}
-                        placeholder={t("describe_goal_placeholder")}
+                        placeholder={t(
+                          isArabicContent
+                            ? "describe_goal_placeholder_ar"
+                            : "describe_goal_placeholder"
+                        )}
                         rows={3}
-                        value={formData.description}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="font-semibold text-gray-700 text-sm">
-                        {t("brief_description_ar")}
-                      </label>
-                      <textarea
-                        className={`${inputClasses} resize-none`}
-                        dir="rtl"
-                        name="descriptionAr"
-                        onChange={handleInputChange}
-                        placeholder={t("describe_goal_placeholder_ar")}
-                        rows={3}
-                        value={formData.descriptionAr}
+                        value={formData[localizedFieldNames.description]}
                       />
                     </div>
 
@@ -431,9 +466,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                         />
                         <datalist id="processing-methods">
                           {PROCESSING_METHODS.map((m) => (
-                            <option key={m} value={m}>
-                              {t(m)}
-                            </option>
+                            <option key={m} label={t(m)} value={m} />
                           ))}
                         </datalist>
                       </div>
@@ -583,7 +616,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {TESTING_REQUIREMENTS.map((req) => (
                           <label
-                            className="flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 bg-white p-3 transition-colors hover:bg-gray-50"
+                            className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-colors hover:bg-gray-50"
                             key={req}
                           >
                             <div
@@ -628,7 +661,11 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 onClick={prevTab}
                 type="button"
               >
-                <ChevronLeft className="me-1" size={16} />
+                {isArabicContent ? (
+                  <ChevronRight className="me-1" size={16} />
+                ) : (
+                  <ChevronLeft className="me-1" size={16} />
+                )}
 
                 {t("back")}
               </button>
@@ -642,7 +679,11 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="button"
                 >
                   {t("nextStep")}
-                  <ChevronRight className="ms-1" size={16} />
+                  {isArabicContent ? (
+                    <ChevronLeft className="ms-1" size={16} />
+                  ) : (
+                    <ChevronRight className="ms-1" size={16} />
+                  )}
                 </button>
               )}
 

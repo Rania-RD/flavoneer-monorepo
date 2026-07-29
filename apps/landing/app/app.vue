@@ -17,6 +17,8 @@ import {
 
 const config = useRuntimeConfig()
 const mobileMenuOpen = ref(false)
+const { trackCta, trackMobileMenuToggle, trackNavigation } =
+  useLandingAnalytics()
 
 const navItems = [
   { label: 'Solutions', href: '#solutions' },
@@ -65,6 +67,22 @@ const labHref = computed(() => String(config.public.labUrl))
 function closeMobileMenu() {
   mobileMenuOpen.value = false
 }
+
+function toggleMobileMenu() {
+  const nextOpen = !mobileMenuOpen.value
+
+  mobileMenuOpen.value = nextOpen
+  trackMobileMenuToggle(nextOpen)
+}
+
+function handleMobileNavigation(label: string, destination: string) {
+  trackNavigation({
+    destination,
+    label,
+    placement: 'mobile_menu',
+  })
+  closeMobileMenu()
+}
 </script>
 
 <template>
@@ -73,7 +91,12 @@ function closeMobileMenu() {
 
     <header class="absolute inset-x-0 top-0 z-50 px-4 pt-4 sm:px-7 sm:pt-6 lg:px-10">
       <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-5">
-        <a href="#top" class="group inline-flex items-center" aria-label="Flavoneer home">
+        <a
+          href="#top"
+          class="group inline-flex items-center"
+          aria-label="Flavoneer home"
+          @click="trackNavigation({ destination: '#top', label: 'Home', placement: 'header_logo' })"
+        >
           <span aria-hidden="true" class="font-display text-[2rem] font-extrabold leading-none text-[#f5a623] drop-shadow-[0_2px_0_rgba(16,47,39,0.16)] sm:text-[2.65rem]">
             flav<span class="brand-pan-o"><span class="brand-pan-face"><img src="/assets/flavoneer-mascot.png" alt=""></span></span>neer
           </span>
@@ -85,18 +108,21 @@ function closeMobileMenu() {
             :key="item.label"
             :href="item.href"
             class="rounded-full bg-[#1c4a3c] px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-[#12382e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7738]"
+            @click="trackNavigation({ destination: item.href, label: item.label, placement: 'desktop_header' })"
           >
             {{ item.label }}
           </a>
           <a
             :href="`${labHref}/login`"
             class="rounded-full bg-[#1c4a3c] px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-[#12382e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7738]"
+            @click="trackCta({ destination: `${labHref}/login`, label: 'Log in', placement: 'desktop_header' })"
           >
             Log in
           </a>
           <a
             :href="labHref"
             class="rounded-full bg-[#f5a623] px-7 py-2.5 text-sm font-bold text-[#173e33] shadow-[inset_0_-3px_0_rgba(182,97,8,0.22)] transition-all duration-300 hover:scale-105 hover:bg-[#ffb43b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7738]"
+            @click="trackCta({ destination: labHref, label: 'Get started', placement: 'desktop_header' })"
           >
             Get started
           </a>
@@ -108,7 +134,7 @@ function closeMobileMenu() {
           :aria-expanded="mobileMenuOpen"
           aria-controls="mobile-navigation"
           aria-label="Toggle navigation"
-          @click="mobileMenuOpen = !mobileMenuOpen"
+          @click="toggleMobileMenu"
         >
           <X v-if="mobileMenuOpen" :size="21" />
           <Menu v-else :size="21" />
@@ -125,13 +151,25 @@ function closeMobileMenu() {
           :key="item.label"
           :href="item.href"
           class="block border-b border-[#1c4a3c]/10 px-3 py-3 font-semibold text-[#1c4a3c]"
-          @click="closeMobileMenu"
+          @click="handleMobileNavigation(item.label, item.href)"
         >
           {{ item.label }}
         </a>
         <div class="grid grid-cols-2 gap-2 pt-3">
-          <a :href="`${labHref}/login`" class="rounded-full bg-[#1c4a3c] px-4 py-3 text-center text-sm font-bold text-white">Log in</a>
-          <a :href="labHref" class="rounded-full bg-[#f5a623] px-4 py-3 text-center text-sm font-bold text-[#173e33]">Get started</a>
+          <a
+            :href="`${labHref}/login`"
+            class="rounded-full bg-[#1c4a3c] px-4 py-3 text-center text-sm font-bold text-white"
+            @click="trackCta({ destination: `${labHref}/login`, label: 'Log in', placement: 'mobile_menu' })"
+          >
+            Log in
+          </a>
+          <a
+            :href="labHref"
+            class="rounded-full bg-[#f5a623] px-4 py-3 text-center text-sm font-bold text-[#173e33]"
+            @click="trackCta({ destination: labHref, label: 'Get started', placement: 'mobile_menu' })"
+          >
+            Get started
+          </a>
         </div>
       </div>
     </header>
@@ -203,6 +241,7 @@ function closeMobileMenu() {
                 <a
                   href="#technology"
                   class="group inline-flex items-center gap-3 rounded-full bg-[#f5a623] px-6 py-3.5 font-bold text-[#173e33] shadow-[inset_0_-4px_0_rgba(182,97,8,0.23),0_10px_24px_rgba(28,74,60,0.13)] transition-all duration-300 hover:scale-105 hover:bg-[#ffb43b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7738]"
+                  @click="trackCta({ destination: '#technology', label: 'Live demo', placement: 'hero' })"
                 >
                   <span class="grid size-7 place-items-center rounded-full bg-[#1c4a3c] text-[#f5a623]"><Play :size="14" fill="currentColor" /></span>
                   Live demo
@@ -210,6 +249,7 @@ function closeMobileMenu() {
                 <a
                   :href="labHref"
                   class="group inline-flex items-center gap-2 rounded-full border-2 border-[#1c4a3c] px-6 py-3 font-bold text-[#1c4a3c] transition-all duration-300 hover:scale-105 hover:bg-[#1c4a3c] hover:text-white"
+                  @click="trackCta({ destination: labHref, label: 'Enter the workspace', placement: 'hero' })"
                 >
                   Enter the workspace
                   <ArrowRight :size="18" class="transition-transform group-hover:translate-x-1" />
@@ -237,7 +277,11 @@ function closeMobileMenu() {
         </div>
 
         <div class="absolute inset-x-0 bottom-0 z-30 flex justify-center">
-          <a href="#solutions" class="flex items-center gap-3 rounded-t-[8px] bg-[#102f27] px-6 py-3 text-xs font-bold uppercase tracking-[0.17em] text-[#d2f2d4] transition-colors hover:text-[#f5a623]">
+          <a
+            href="#solutions"
+            class="flex items-center gap-3 rounded-t-[8px] bg-[#102f27] px-6 py-3 text-xs font-bold uppercase tracking-[0.17em] text-[#d2f2d4] transition-colors hover:text-[#f5a623]"
+            @click="trackCta({ destination: '#solutions', label: 'Explore the platform', placement: 'hero_footer' })"
+          >
             Explore the platform
             <ArrowRight :size="15" class="rotate-90" />
           </a>
@@ -344,7 +388,11 @@ function closeMobileMenu() {
               <p class="mt-6 max-w-[520px] text-lg leading-8 text-[#557367]">
                 Keep technical decisions attached to the formulation they belong to. Every change creates a defensible record without adding administrative work for scientists.
               </p>
-              <a :href="labHref" class="group mt-8 inline-flex items-center gap-2 rounded-full bg-[#f5a623] px-6 py-3.5 font-bold text-[#173e33] transition-all duration-300 hover:scale-105 hover:bg-[#ffb43b]">
+              <a
+                :href="labHref"
+                class="group mt-8 inline-flex items-center gap-2 rounded-full bg-[#f5a623] px-6 py-3.5 font-bold text-[#173e33] transition-all duration-300 hover:scale-105 hover:bg-[#ffb43b]"
+                @click="trackCta({ destination: labHref, label: 'Start a formulation', placement: 'technology' })"
+              >
                 Start a formulation <ArrowRight :size="18" class="transition-transform group-hover:translate-x-1" />
               </a>
             </div>
@@ -389,7 +437,11 @@ function closeMobileMenu() {
               Give product developers, quality teams, and operations one shared record from first concept through commercial production.
             </p>
           </div>
-          <a :href="labHref" class="group inline-flex w-fit items-center gap-3 rounded-full bg-[#173e33] px-7 py-4 font-bold text-white transition-all duration-300 hover:scale-105 hover:bg-[#102f27]">
+          <a
+            :href="labHref"
+            class="group inline-flex w-fit items-center gap-3 rounded-full bg-[#173e33] px-7 py-4 font-bold text-white transition-all duration-300 hover:scale-105 hover:bg-[#102f27]"
+            @click="trackCta({ destination: labHref, label: 'Open Flavoneer', placement: 'closing_banner' })"
+          >
             Open Flavoneer
             <ArrowUpRight :size="19" class="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </a>
@@ -399,11 +451,35 @@ function closeMobileMenu() {
 
     <footer class="bg-[#102f27] px-5 py-10 text-[#b9d8c7] sm:px-8 lg:px-10">
       <div class="mx-auto flex max-w-[1280px] flex-col gap-6 border-b border-[#d2f2d4]/12 pb-8 sm:flex-row sm:items-center sm:justify-between">
-        <a href="#top" class="font-display text-3xl font-bold text-[#f5a623]">flavoneer</a>
+        <a
+          href="#top"
+          class="font-display text-3xl font-bold text-[#f5a623]"
+          @click="trackNavigation({ destination: '#top', label: 'Home', placement: 'footer_logo' })"
+        >
+          flavoneer
+        </a>
         <div class="flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold">
-          <a href="#solutions" class="transition-colors hover:text-white">Solutions</a>
-          <a href="#technology" class="transition-colors hover:text-white">Technology</a>
-          <a :href="`${labHref}/login`" class="transition-colors hover:text-white">Log in</a>
+          <a
+            href="#solutions"
+            class="transition-colors hover:text-white"
+            @click="trackNavigation({ destination: '#solutions', label: 'Solutions', placement: 'footer' })"
+          >
+            Solutions
+          </a>
+          <a
+            href="#technology"
+            class="transition-colors hover:text-white"
+            @click="trackNavigation({ destination: '#technology', label: 'Technology', placement: 'footer' })"
+          >
+            Technology
+          </a>
+          <a
+            :href="`${labHref}/login`"
+            class="transition-colors hover:text-white"
+            @click="trackCta({ destination: `${labHref}/login`, label: 'Log in', placement: 'footer' })"
+          >
+            Log in
+          </a>
         </div>
       </div>
       <div class="mx-auto flex max-w-[1280px] flex-col gap-2 pt-6 text-xs text-[#7fa495] sm:flex-row sm:justify-between">

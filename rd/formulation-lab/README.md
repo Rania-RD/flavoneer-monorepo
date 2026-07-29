@@ -50,25 +50,6 @@ VITE_CONVEX_URL=
 VITE_CONVEX_SITE_URL=
 ```
 
-Optional PostHog product analytics configuration:
-
-```sh
-VITE_PUBLIC_POSTHOG_KEY=
-VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
-```
-
-Analytics is disabled automatically when `VITE_PUBLIC_POSTHOG_KEY` is empty.
-The client uses manual SPA pageviews and explicit laboratory workflow events;
-autocapture and session recording are disabled. Use
-`https://eu.i.posthog.com` as the host for an EU-hosted PostHog project.
-
-Production builds generate `dist/_headers` with a Content Security Policy that
-allows PostHog ingestion and lazy-loaded SDK scripts, Convex HTTP/WebSocket
-connections, Google Fonts, HTTPS images, and local blob workers. Static hosts
-that support `_headers` apply it automatically; equivalent server deployments
-must send the same `Content-Security-Policy` value as an HTTP response header.
-`vite preview` also serves the same production CSP for local verification.
-
 The backend auth code reads these Convex environment values:
 
 ```sh

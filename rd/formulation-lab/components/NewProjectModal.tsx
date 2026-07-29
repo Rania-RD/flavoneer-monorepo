@@ -13,7 +13,6 @@ import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { type EnrichedProject, ProjectStatus } from "../types";
 import { GsfaCategorySelect } from "./GsfaCategorySelect";
@@ -327,11 +326,9 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     aria-label={t("form_content_language")}
                     className={inputClasses}
                     id="project-content-language"
-                    onChange={(event) => {
-                      const locale = event.target.value as ContentLanguage;
-                      setContentLanguage(locale);
-                      trackLabEvent("lab_project_locale_changed", { locale });
-                    }}
+                    onChange={(event) =>
+                      setContentLanguage(event.target.value as ContentLanguage)
+                    }
                     value={contentLanguage}
                   >
                     <option value="en">{t("english_us")}</option>
@@ -372,18 +369,13 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                           inputClassName={inputClasses}
                           labelClassName="font-semibold text-gray-700 text-sm"
                           language={contentLanguage}
-                          onChange={(category) => {
+                          onChange={(category) =>
                             setFormData((prev) => ({
                               ...prev,
                               gsfaCategoryCode: category.code ?? "",
                               gsfaCategoryName: category.name ?? "",
-                            }));
-                            if (category.code) {
-                              trackLabEvent("lab_gsfa_category_selected", {
-                                gsfa_category_code: category.code,
-                              });
-                            }
-                          }}
+                            }))
+                          }
                           value={{
                             code: formData.gsfaCategoryCode,
                             name: formData.gsfaCategoryName,
@@ -669,7 +661,11 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 onClick={prevTab}
                 type="button"
               >
-                <ChevronLeft className="rtl-mirror-icon me-1" size={16} />
+                {isArabicContent ? (
+                  <ChevronRight className="me-1" size={16} />
+                ) : (
+                  <ChevronLeft className="me-1" size={16} />
+                )}
 
                 {t("back")}
               </button>
@@ -683,7 +679,11 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="button"
                 >
                   {t("nextStep")}
-                  <ChevronRight className="rtl-mirror-icon ms-1" size={16} />
+                  {isArabicContent ? (
+                    <ChevronLeft className="ms-1" size={16} />
+                  ) : (
+                    <ChevronRight className="ms-1" size={16} />
+                  )}
                 </button>
               )}
 

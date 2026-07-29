@@ -19,7 +19,6 @@ import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useToast } from "../hooks/useToast";
-import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants } from "../lib/animations";
 
 const ReportDetails: React.FC = () => {
@@ -81,7 +80,7 @@ const ReportDetails: React.FC = () => {
             onClick={() => navigate(-1)}
             type="button"
           >
-            <ArrowLeft className="rtl-mirror-icon" size={20} />
+            <ArrowLeft size={20} />
           </button>
           <div>
             <div className="flex items-center gap-3">
@@ -133,11 +132,6 @@ const ReportDetails: React.FC = () => {
               document.body.removeChild(a);
               URL.revokeObjectURL(url);
               toast.success(t("pdf_generated_successfully"));
-              trackLabEvent("lab_report_exported", {
-                report_id: report._id,
-                source: "report_details",
-                status: report.status,
-              });
             } catch (error) {
               toast.error(t("failed_to_generate_pdf"));
               console.error(error);

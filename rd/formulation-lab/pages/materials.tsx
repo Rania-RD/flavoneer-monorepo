@@ -20,7 +20,6 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { useMaterialSelection } from "../hooks/materials/useMaterialSelection";
 import { useToast } from "../hooks/useToast";
-import { trackLabEvent } from "../lib/analytics";
 import { exportInventoryCsv } from "../lib/materials/exportInventoryCsv";
 import type {
   EnrichedInventoryItem,
@@ -195,12 +194,7 @@ const Materials: React.FC = () => {
             isUpdatingStatus={isUpdatingStatus}
             onClearSelection={clearSelection}
             onDelete={() => setIsDeleteModalOpen(true)}
-            onExport={() => {
-              exportInventoryCsv(items, selectedItems);
-              trackLabEvent("lab_inventory_exported", {
-                item_count: selectedItems.size,
-              });
-            }}
+            onExport={() => exportInventoryCsv(items, selectedItems)}
             onStatusChange={handleBulkStatusChange}
             selectedCount={selectedItems.size}
             t={t}

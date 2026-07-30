@@ -81,3 +81,7 @@ This separation preserves history.
   explicit administrator assignments are not overwritten.
 - Role keys are stable authorization identifiers. The frontend translates role
   titles from those keys; persisted English `name` values are fallbacks only.
+- `manage_version_control` is the dedicated capability for viewing and updating
+  Workspace Settings version-control behavior. The Admin role receives it by
+  default through `full_access`; administrators may grant it explicitly to
+  other roles through the permissions matrix.

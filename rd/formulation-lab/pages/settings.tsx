@@ -1,62 +1,94 @@
 import { Fingerprint, GitBranch, Palette, Shield } from "lucide-react";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import RoleManagementSection from "../components/Settings/RoleManagementSection";
 import TraceabilityConfig from "../components/Settings/TraceabilityConfig";
 import VersionControlConfig from "../components/Settings/VersionControlConfig";
 import ThemeToggle from "../components/ThemeToggle";
 import { usePermissions } from "../hooks/usePermissions";
-
-type Tab = "appearance" | "roles" | "traceability" | "versionControl";
+import { isAdminRole } from "../lib/role-access";
+import {
+  getVisibleWorkspaceSettingsTabs,
+  MANAGE_VERSION_CONTROL_PERMISSION,
+  resolveWorkspaceSettingsTab,
+  type WorkspaceSettingsTab,
+} from "../lib/workspace-settings-access";
 
 const Settings: React.FC = () => {
   const { t } = useTranslation();
-  const { role } = usePermissions();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { hasPermission, isLoading, role } = usePermissions();
   const [units, setUnits] = useState("metric");
+  const requestedTab = searchParams.get("tab");
+  const isAdmin = isAdminRole(role);
+  const canManageVersionControl = hasPermission(
+    MANAGE_VERSION_CONTROL_PERMISSION
+  );
+  const access = { canManageVersionControl, isAdmin };
+  const activeTab = resolveWorkspaceSettingsTab(requestedTab, access);
 
-  const [activeTab, setActiveTab] = useState<Tab>("appearance");
+  React.useEffect(() => {
+    if (!isLoading && requestedTab !== null && requestedTab !== activeTab) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [activeTab, isLoading, requestedTab, setSearchParams]);
 
-  const tabs = [
-    { id: "appearance", label: t("appearance"), icon: Palette },
-    { id: "roles", label: t("roles_permissions"), icon: Shield },
-    { id: "traceability", label: t("traceability_id"), icon: Fingerprint },
-    { id: "versionControl", label: t("version_control"), icon: GitBranch },
-  ] as const;
+  const tabDefinitions = {
+    appearance: { label: t("appearance"), icon: Palette },
+    traceability: { label: t("traceability_id"), icon: Fingerprint },
+    roles: { label: t("roles_permissions"), icon: Shield },
+    versionControl: { label: t("version_control"), icon: GitBranch },
+  } as const;
+  const tabs = getVisibleWorkspaceSettingsTabs(access).map((id) => ({
+    id,
+    ...tabDefinitions[id],
+  }));
 
-  const sidebarContent = React.useMemo(
-    () => (
-      <div className="w-full md:w-1/4">
-        <nav className="flex flex-col space-y-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start transition-all duration-200 ${
-                  isActive
-                    ? "border-indigo-600 border-s-4 bg-indigo-50 text-indigo-700 shadow-sm dark:border-indigo-500 dark:bg-[#1e293b] dark:text-indigo-400"
-                    : "border-transparent border-s-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
-                }`}
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as Tab)}
-              >
-                <Icon
-                  className={`h-5 w-5 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-gray-400 dark:text-gray-500"}`}
-                />
-                <span className="font-semibold">{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-    ),
-    [activeTab]
+  const selectTab = (tab: WorkspaceSettingsTab) => {
+    if (!getVisibleWorkspaceSettingsTabs(access).includes(tab)) {
+      return;
+    }
+    setSearchParams(tab === "appearance" ? {} : { tab }, { replace: true });
+  };
+
+  const sidebarContent = (
+    <div className="w-full md:w-1/4">
+      <nav
+        aria-label={t("workspace_settings")}
+        className="flex flex-col space-y-2"
+      >
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              aria-current={isActive ? "page" : undefined}
+              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start transition-all duration-200 ${
+                isActive
+                  ? "border-[#1c4a3c] border-s-4 bg-[#d2f2d4] text-[#1c4a3c] shadow-sm dark:border-[#f5a623] dark:bg-[#285b4d] dark:text-[#f7f4df]"
+                  : "border-transparent border-s-4 text-[#527568] hover:bg-[#d2f2d4]/55 hover:text-[#173e33] dark:text-[#a9cbbb] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
+              }`}
+              key={tab.id}
+              onClick={() => selectTab(tab.id)}
+              type="button"
+            >
+              <Icon
+                aria-hidden="true"
+                className={`h-5 w-5 ${isActive ? "text-[#1c4a3c] dark:text-[#f5a623]" : "text-[#6f8e82] dark:text-[#8fb3a4]"}`}
+              />
+              <span className="font-semibold">{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
   return (
     <div className="fade-in mx-auto max-w-7xl animate-in space-y-8 px-4 py-8 duration-500 sm:px-6 lg:px-8">
       <div>
         <h1 className="mb-2 font-bold text-3xl text-gray-900 dark:text-white">
-          {t("settings")}
+          {t("workspace_settings")}
         </h1>
         <p className="text-gray-500 dark:text-gray-400">
           {t("manage_your_workspace_preferences")}
@@ -124,12 +156,14 @@ const Settings: React.FC = () => {
                         <button
                           className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "metric" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
                           onClick={() => setUnits("metric")}
+                          type="button"
                         >
                           {t("metric")}
                         </button>
                         <button
                           className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "imperial" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
                           onClick={() => setUnits("imperial")}
+                          type="button"
                         >
                           {t("imperial")}
                         </button>
@@ -141,33 +175,37 @@ const Settings: React.FC = () => {
             </div>
           </div>
 
-          <div
-            className={`transform transition-all duration-300 ease-out ${
-              activeTab === "roles"
-                ? "block translate-x-0 opacity-100"
-                : "hidden translate-x-8 opacity-0"
-            }`}
-          >
-            <section className="overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm dark:border-slate-800 dark:bg-[#1e293b]">
-              <div className="border-gray-100 border-b p-8 dark:border-slate-800">
-                <div className="mb-2 flex items-center gap-3">
-                  <div className="rounded-xl bg-indigo-50 p-2 dark:bg-indigo-900/30">
-                    <Shield className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+          {isAdmin && (
+            <div
+              className={`transform transition-all duration-300 ease-out ${
+                activeTab === "roles"
+                  ? "block translate-x-0 opacity-100"
+                  : "hidden translate-x-8 opacity-0"
+              }`}
+            >
+              <section className="overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
+                <div className="border-[#1c4a3c]/10 border-b px-8 py-6 dark:border-[#d2f2d4]/10">
+                  <div className="mb-2 flex items-center gap-3">
+                    <div className="rounded-xl bg-[#d2f2d4] p-2 dark:bg-[#285b4d]">
+                      <Shield
+                        aria-hidden="true"
+                        className="h-6 w-6 text-[#1c4a3c] dark:text-[#f5a623]"
+                      />
+                    </div>
+                    <h3 className="font-bold text-[#173e33] text-xl dark:text-[#f7f4df]">
+                      {t("user_roles_permissions_management")}
+                    </h3>
                   </div>
-                  <h3 className="font-bold text-gray-900 text-xl dark:text-white">
-                    {t("user_roles_permissions_management")}
-                  </h3>
+                  <p className="text-[#527568] text-sm dark:text-[#a9cbbb]">
+                    {t("manage_user_access_across_the_staqato_ma")}
+                  </p>
                 </div>
-                <p className="text-gray-500 text-sm dark:text-gray-400">
-                  {t("manage_user_access_across_the_staqato_ma")}
-                </p>
-              </div>
-
-              <div className="p-8">
-                <RoleManagementSection />
-              </div>
-            </section>
-          </div>
+                <div className="p-8">
+                  <RoleManagementSection />
+                </div>
+              </section>
+            </div>
+          )}
 
           <div
             className={`transform transition-all duration-300 ease-out ${

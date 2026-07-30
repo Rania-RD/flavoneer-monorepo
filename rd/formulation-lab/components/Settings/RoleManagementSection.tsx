@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { usePermissions } from "../../hooks/usePermissions";
+import { isAdminRole } from "../../lib/role-access";
 import { Switch } from "../ui/Switch";
 
 // Available permission toggles in the system
@@ -19,6 +20,11 @@ const AVAILABLE_PERMISSIONS = [
     key: "manage_roles",
     label: "manage_roles",
     desc: "Can assign roles to users and modify permissions.",
+  },
+  {
+    key: "manage_version_control",
+    label: "manage_version_control",
+    desc: "Can configure workspace version-control behavior.",
   },
   {
     key: "edit_procedures",
@@ -39,8 +45,8 @@ const AVAILABLE_PERMISSIONS = [
 
 const RoleManagementSection: React.FC = () => {
   const { t } = useTranslation();
-  const { hasPermission, isLoading: isPermissionLoading } = usePermissions();
-  const canManageRoles = hasPermission("manage_roles");
+  const { isLoading: isPermissionLoading, role } = usePermissions();
+  const canManageRoles = isAdminRole(role);
   const roles = useQuery(api.roles.list, canManageRoles ? {} : "skip");
   const users = useQuery(
     api.users.listUsersWithRoles,
@@ -195,7 +201,7 @@ const RoleManagementSection: React.FC = () => {
           {t("access_denied")}
         </h4>
         <p className="mt-2 text-gray-500 text-sm dark:text-gray-400">
-          {t("role_management_requires_permission")}
+          {t("role_management_requires_admin")}
         </p>
       </div>
     );
@@ -220,6 +226,7 @@ const RoleManagementSection: React.FC = () => {
               : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
           }`}
           onClick={() => setActiveTab("matrix")}
+          type="button"
         >
           <ShieldAlert size={16} />
 
@@ -232,6 +239,7 @@ const RoleManagementSection: React.FC = () => {
               : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
           }`}
           onClick={() => setActiveTab("users")}
+          type="button"
         >
           <Users size={16} />
 
@@ -316,6 +324,7 @@ const RoleManagementSection: React.FC = () => {
               }`}
               disabled={!hasPermissionChanges || isSavingPermissions}
               onClick={handleSavePermissions}
+              type="button"
             >
               {isSavingPermissions ? (
                 <span className="flex items-center gap-2">
@@ -386,6 +395,7 @@ const RoleManagementSection: React.FC = () => {
               }`}
               disabled={!hasUserChanges || isSavingUsers}
               onClick={handleSaveUsers}
+              type="button"
             >
               {isSavingUsers ? (
                 <span className="flex items-center gap-2">

@@ -248,6 +248,8 @@ All content cards share:
 ### 7.4 Sidebar Navigation
 
 - **Desktop**: Fixed left (or right in RTL via `start-6`), `w-20`, `rounded-[2.5rem]`
+- **Workspace Settings**: a dedicated gear in the rail footer routes to
+  `/settings`; the mobile navigation exposes the same destination.
 - **Nav Items**: `w-12 h-12 rounded-[1.2rem]`
   - **Active**: amber surface, forest icon, inset amber shadow, `scale-105`
   - **Inactive**: mint-muted icon with translucent mint hover
@@ -365,20 +367,26 @@ Animated with Framer Motion `AnimatePresence`:
 - GSFA choices use `01.0 · Category Name`. Store and emit the original GSFA code;
   formatting is presentation-only.
 
-### 7.13 Sidebar Profile Menu
+### 7.13 Sidebar Profile Trigger
 
 - **Trigger**: authenticated avatar at the desktop rail footer; avatar + profile
-  label in the mobile bottom navigation.
-- **Popover**: portal-rendered, fixed-position surface beside the desktop rail or
-  above the mobile navigation. Clamp all edges to a 12px viewport safety area.
-- **Content**: avatar, name, title, email, creator badge, Settings, and Logout.
-- **Accessibility**: `aria-haspopup="menu"`, managed focus, arrow/Home/End
-  navigation, Escape dismissal with focus restoration, Tab dismissal, and
-  click-outside dismissal.
-- **Direction**: open toward page content in both LTR and RTL; use logical
-  `insetInlineStart`. Mirror only the directional Logout icon.
-- **Layering**: use `z-[1000]` to escape sidebar overflow and page stacking
-  contexts. Recalculate on resize and capture-phase scroll.
+  label in the mobile bottom navigation. Clicking either opens
+  `ProfileSettingsModal` directly; never insert an intermediate popover.
+- **Modal content**: Identity, Digital Signature, Language & Region, and
+  Activity remain personal-only tabs. Logout is a dedicated, visually separated
+  action in the modal footer.
+- **Accessibility**: the avatar exposes `aria-haspopup="dialog"` and
+  `aria-expanded`; the portal-rendered modal owns its dialog label, tablist,
+  tabpanel, backdrop dismissal, and close control.
+- **Direction**: the modal inherits the active LTR/RTL context. Mirror only the
+  directional Logout icon.
+- **Layering**: use the modal portal hierarchy at `z-[999]` / `z-[1000]`.
+- **Workspace administration boundary**: never expose Roles & Permissions or
+  other workspace settings from the avatar menu or personal profile modal.
+  Workspace Settings contains Appearance and Traceability & Identity for all
+  users, Roles & Permissions only for `admin`, and Version Control only for
+  users with `manage_version_control`. Unauthorized query-string tab requests
+  fall back to Appearance.
 
 ## 8. Animations & Transitions
 
@@ -806,7 +814,7 @@ Food-R-D-Lab-/
 ├── components/
 │   ├── DashboardLayout.tsx    ← Branded shell: header, sidebar, route surface
 │   ├── Sidebar.tsx            ← Desktop sidebar + mobile bottom nav
-│   ├── SidebarProfileMenu.tsx ← Rail avatar, profile popover, profile settings
+│   ├── SidebarProfileMenu.tsx ← Rail avatar and direct profile-modal trigger
 │   ├── ProfileSettingsModal.tsx
 │   ├── SettingsModal.tsx      ← Dark mode, units, notifications toggles
 │   ├── ProjectCard.tsx        ← Pastel project cards with context menu

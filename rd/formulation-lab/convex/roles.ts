@@ -13,6 +13,7 @@ const DEFAULT_SYSTEM_ROLES = [
     permissions: [
       "full_access",
       "manage_roles",
+      "manage_version_control",
       "edit_procedures",
       "sign_off",
       "execute_runs",

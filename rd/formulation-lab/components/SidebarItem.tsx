@@ -1,13 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { useSettings } from "../context/SettingsContext";
 import NavTooltip from "./NavTooltip";
 
 interface SidebarItemProps {
   active?: boolean;
   className?: string;
-  directionalIcon?: boolean;
   icon: LucideIcon;
   label: string;
   onClick?: () => void;
@@ -21,8 +22,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   to,
   onClick,
   className,
-  directionalIcon = false,
 }) => {
+  const { t } = useTranslation();
+  const { isRTL } = useSettings();
   const [isHovered, setIsHovered] = useState(false);
   const ref = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -42,7 +44,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
   const iconElement = (
     <Icon
-      className={directionalIcon ? "rtl-mirror-icon" : undefined}
+      className={isRTL ? "-scale-x-100 transform" : ""}
       size={20}
       strokeWidth={active ? 2.5 : 2}
     />

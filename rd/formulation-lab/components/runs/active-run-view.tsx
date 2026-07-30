@@ -167,7 +167,7 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
             }}
             type="button"
           >
-            <ArrowLeft className="rtl-mirror-icon text-gray-500" size={20} />
+            <ArrowLeft className="text-gray-500" size={20} />
           </button>
           <div>
             <div className="flex items-center gap-2">
@@ -371,7 +371,7 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
                       >
                         {t("nextStep")}
                         <ArrowRight
-                          className="rtl-mirror-icon transition-transform duration-300 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5"
+                          className="transition-transform duration-300 group-hover:translate-x-1.5"
                           size={20}
                         />
                       </button>

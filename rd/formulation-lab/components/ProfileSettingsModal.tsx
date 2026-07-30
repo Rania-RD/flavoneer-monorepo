@@ -16,7 +16,6 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
-import { trackLabEvent } from "../lib/analytics";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { compressImage } from "../lib/imageUtils";
 import ActivityTab from "./profile/ActivityTab";
@@ -100,9 +99,6 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    trackLabEvent("lab_user_signed_out", {
-      placement: "profile_modal",
-    });
     try {
       await signOut();
     } catch (error) {

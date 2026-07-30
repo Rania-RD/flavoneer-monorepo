@@ -2,7 +2,6 @@ import type React from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { trackLabEvent } from "../lib/analytics";
 import NavTooltip from "./NavTooltip";
 import ProfileSettingsModal from "./ProfileSettingsModal";
 
@@ -29,10 +28,6 @@ const SidebarProfileMenu: React.FC<SidebarProfileMenuProps> = ({
   const openProfileModal = () => {
     setIsTooltipVisible(false);
     setIsProfileModalOpen(true);
-    trackLabEvent("lab_profile_menu_action", {
-      action: "open_profile_modal",
-      placement,
-    });
   };
 
   const closeProfileModal = () => {

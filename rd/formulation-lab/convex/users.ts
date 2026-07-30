@@ -1,12 +1,19 @@
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { getEffectivePermissions, requirePermission } from "./permissions";
+import { ensureDefaultRoles } from "./roles";
 import { userReturnValidator, userWithRoleReturnValidator } from "./validators";
+
+const CREATOR_EMAIL = "fro@gmail.com";
+
+const normalizeEmail = (email: string | null | undefined) =>
+  email?.trim().toLowerCase() ?? "";
 
 /**
  * Mutation to sync the betterAuth user with the local users table.
- * If this is the first user ever, assign them the 'admin' role.
+ * Only the first local user receives Admin; later users receive Operator.
  */
 export const syncCurrentUser = mutation({
   args: {},
@@ -16,6 +23,16 @@ export const syncCurrentUser = mutation({
     if (!authUser) {
       return null;
     }
+
+    const allRoles = await ensureDefaultRoles(ctx);
+    const adminRole = allRoles.find((role) => role.key === "admin");
+    const operatorRole = allRoles.find((role) => role.key === "operator");
+    if (!(adminRole && operatorRole)) {
+      throw new Error("Default system roles are not initialized");
+    }
+
+    const normalizedEmail = normalizeEmail(authUser.email);
+    const isCreator = normalizedEmail === CREATOR_EMAIL;
 
     // Check if user already exists
     let localUser = await ctx.db
@@ -28,63 +45,40 @@ export const syncCurrentUser = mutation({
 
       // Assign default role to pre-existing users
       if (!roleIdToSet) {
-        const allRoles = await ctx.db.query("roles").collect();
-        const adminRole = allRoles.find((r) => r.key === "admin");
-        const operatorRole = allRoles.find((r) => r.key === "operator");
-
         // If there's only 1 user (them), make them admin
         const existingUserCount = (await ctx.db.query("users").take(2)).length;
 
-        const isSuperUser = authUser.email === "fro@gmail.com";
-        roleIdToSet = isSuperUser
-          ? adminRole?._id
-          : existingUserCount <= 1
-            ? adminRole?._id
-            : operatorRole?._id;
+        roleIdToSet =
+          existingUserCount <= 1 ? adminRole?._id : operatorRole?._id;
       }
-
-      const isSuperUser = authUser.email === "fro@gmail.com";
 
       // Update name, email or role if changed
       if (
         localUser.name !== (authUser.name ?? "") ||
         localUser.email !== (authUser.email ?? "") ||
         localUser.roleId !== roleIdToSet ||
-        localUser.isCreator !== isSuperUser
+        localUser.isCreator !== isCreator
       ) {
         await ctx.db.patch(localUser._id, {
           name: authUser.name ?? "",
           email: authUser.email ?? "",
-          ...(roleIdToSet !== undefined ? { roleId: roleIdToSet } : {}),
-          isCreator: isSuperUser,
+          roleId: roleIdToSet,
+          isCreator,
         });
         localUser = await ctx.db.get(localUser._id);
       }
     } else {
-      // Find default roles
-      const allRoles = await ctx.db.query("roles").collect();
-      const adminRole = allRoles.find((r) => r.key === "admin");
-      const operatorRole = allRoles.find((r) => r.key === "operator");
-
       // Check if any users exist in the DB
       const existingUserCount = (await ctx.db.query("users").take(1)).length;
 
-      // ─ Superuser Override ─
-      const isSuperUser = authUser.email === "fro@gmail.com";
-
-      // Only first user gets Admin, others get Operator (or no role until assigned), unless Superuser
-      const roleId = isSuperUser
-        ? adminRole?._id
-        : existingUserCount === 0
-          ? adminRole?._id
-          : operatorRole?._id;
+      const roleId = existingUserCount === 0 ? adminRole._id : operatorRole._id;
 
       const userId = await ctx.db.insert("users", {
         authUserId: authUser._id,
         name: authUser.name ?? "",
         email: authUser.email ?? "",
         roleId,
-        isCreator: isSuperUser,
+        isCreator,
       });
 
       localUser = await ctx.db.get(userId);
@@ -115,7 +109,7 @@ export const getCurrentUserRole = query({
       return null;
     }
 
-    let role;
+    let role: Doc<"roles"> | undefined;
     if (user.roleId) {
       const dbRole = await ctx.db.get(user.roleId);
       if (dbRole) {
@@ -146,7 +140,7 @@ export const listUsersWithRoles = query({
     // Populate roles
     return Promise.all(
       users.map(async (u) => {
-        let uRole;
+        let uRole: Doc<"roles"> | undefined;
         if (u.roleId) {
           const dbRole = await ctx.db.get(u.roleId);
           if (dbRole) {

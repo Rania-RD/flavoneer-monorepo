@@ -63,7 +63,7 @@ const Settings: React.FC = () => {
         </p>
         {role && (
           <p className="mt-1 text-gray-400 text-xs dark:text-gray-500">
-            {t("user_role")} {role.name}
+            {t("user_role")} {t(role.key, { defaultValue: role.name })}
           </p>
         )}
       </div>

@@ -190,6 +190,8 @@
   "owner": "Owner",
   "admin": "Admin",
   "member": "Member",
+  "supervisor": "Supervisor",
+  "operator": "Operator",
   "sendInvite": "Send Invite",
   "revokeInvite": "Revoke",
   "changeRole": "Change Role",

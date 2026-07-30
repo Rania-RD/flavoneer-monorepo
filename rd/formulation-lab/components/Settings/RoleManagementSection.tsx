@@ -254,7 +254,7 @@ const RoleManagementSection: React.FC = () => {
                       className="min-w-[120px] border-gray-100 border-b p-4 text-center font-semibold text-gray-900 text-sm dark:border-slate-800 dark:text-white"
                       key={role._id}
                     >
-                      {role.name}
+                      {t(role.key, { defaultValue: role.name })}
                     </th>
                   ))}
                 </tr>
@@ -359,7 +359,7 @@ const RoleManagementSection: React.FC = () => {
                   </option>
                   {roles.map((role) => (
                     <option key={role._id} value={role._id}>
-                      {role.name}
+                      {t(role.key, { defaultValue: role.name })}
                     </option>
                   ))}
                 </select>

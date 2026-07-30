@@ -1,10 +1,26 @@
 import posthog from 'posthog-js'
+import type { CaptureResult } from 'posthog-js'
 import {
   createNoopAnalyticsClient,
   type LandingAnalyticsClient,
 } from '~/utils/analytics'
 
+const APP_SURFACE = 'landing'
 const DEFAULT_POSTHOG_HOST = 'https://us.i.posthog.com'
+
+function attachAppSurface(event: CaptureResult | null): CaptureResult | null {
+  if (!event) {
+    return null
+  }
+
+  return {
+    ...event,
+    properties: {
+      ...event.properties,
+      app_surface: APP_SURFACE,
+    },
+  }
+}
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
@@ -26,6 +42,7 @@ export default defineNuxtPlugin(() => {
     posthog.init(apiKey, {
       api_host: apiHost,
       autocapture: false,
+      before_send: attachAppSurface,
       capture_pageleave: true,
       capture_pageview: true,
       disable_session_recording: true,

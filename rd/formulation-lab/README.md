@@ -50,6 +50,18 @@ VITE_CONVEX_URL=
 VITE_CONVEX_SITE_URL=
 ```
 
+PostHog browser analytics uses these public build-time variables:
+
+```sh
+VITE_PUBLIC_POSTHOG_KEY=
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+When `VITE_PUBLIC_POSTHOG_KEY` is omitted or blank, analytics initialization is
+skipped and the lab continues to run normally. Use
+`https://eu.i.posthog.com` for a PostHog EU Cloud project. All events from this
+client include `app_surface=formulation_lab`.
+
 The backend auth code reads these Convex environment values:
 
 ```sh
@@ -58,6 +70,21 @@ SITE_URL=http://localhost:3000
 ```
 
 `GEMINI_API_KEY` is still wired in `vite.config.ts`, but the current app shell is not the generic AI Studio starter described by the old README.
+
+### Coolify
+
+Add these variables to the formulation-lab resource:
+
+```env
+VITE_PUBLIC_POSTHOG_KEY=phc_SHARED_PROJECT_TOKEN
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+Enable **Build Variable** for both values and redeploy the resource. Vite embeds
+these public values during the application build, so runtime-only variables are
+not sufficient. Runtime Variable may remain enabled. Use the same project token
+for the landing and formulation-lab resources; filter or break down events by
+`app_surface` when analyzing their shared user journey.
 
 ## Architecture
 

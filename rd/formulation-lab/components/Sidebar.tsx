@@ -11,7 +11,6 @@ import type React from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
-import { trackLabEvent } from "../lib/analytics";
 import SidebarItem from "./SidebarItem";
 import SidebarProfileMenu from "./SidebarProfileMenu";
 
@@ -58,12 +57,6 @@ const Sidebar: React.FC = () => {
               icon={item.icon}
               key={item.path}
               label={item.name}
-              onClick={() =>
-                trackLabEvent("lab_navigation_clicked", {
-                  destination: item.path,
-                  placement: "desktop_sidebar",
-                })
-              }
               to={item.path}
             />
           ))}
@@ -87,12 +80,6 @@ const Sidebar: React.FC = () => {
                   : "text-[#6f8e82] hover:bg-[#d2f2d4]/45 hover:text-[#1c4a3c] dark:text-[#9abcae] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
               }`}
               key={item.path}
-              onClick={() =>
-                trackLabEvent("lab_navigation_clicked", {
-                  destination: item.path,
-                  placement: "mobile_navigation",
-                })
-              }
               to={item.path}
             >
               <item.icon size={24} strokeWidth={active ? 2.5 : 2} />

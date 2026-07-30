@@ -2,7 +2,6 @@ import { useMutation } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
-import { trackLabEvent } from "../lib/analytics";
 import { generateBatchCode, normalizeProjectPhases } from "../lib/runUtils";
 import type { EnrichedProject, RunListItem, RunRecord } from "../types";
 import {
@@ -285,16 +284,6 @@ export const useRunExecution = ({
           runStatus === "batch_disposal" ? failureReason : undefined,
         ingredients: ingredientsUsage,
       });
-      trackLabEvent("lab_run_completed", {
-        duration_seconds: Math.max(
-          0,
-          Math.round((endTime.getTime() - startTime.getTime()) / 1000)
-        ),
-        outcome: runStatus === "batch_disposal" ? "failed" : "completed",
-        phase_count: phases.length,
-        project_id: selectedProject?._id,
-        run_id: activeRunId,
-      });
       savedSignatureRef.current = ""; // Clear baseline
       setIsDirty(false); // Reset dirty flag before leaving
       setRunStatus("completed");
@@ -317,12 +306,6 @@ export const useRunExecution = ({
         data: runValues,
         currentPhaseIndex,
         currentStepIndex,
-      });
-      trackLabEvent("lab_run_draft_saved", {
-        phase_index: currentPhaseIndex,
-        project_id: selectedProject?._id,
-        run_id: activeRunId,
-        step_index: currentStepIndex,
       });
 
       // Update baseline signature to immediately clear dirty state

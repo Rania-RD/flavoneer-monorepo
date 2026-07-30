@@ -13,7 +13,6 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
 import { usePermissions } from "../hooks/usePermissions";
-import { trackLabEvent } from "../lib/analytics";
 import NavTooltip from "./NavTooltip";
 import ProfileSettingsModal from "./ProfileSettingsModal";
 
@@ -226,18 +225,11 @@ const SidebarProfileMenu: React.FC<SidebarProfileMenuProps> = ({
   };
 
   const openProfileSettings = () => {
-    trackLabEvent("lab_profile_menu_action", {
-      action: "open_settings",
-      placement,
-    });
     closeMenu();
     setIsProfileModalOpen(true);
   };
 
   const handleSignOut = () => {
-    trackLabEvent("lab_user_signed_out", {
-      placement: `${placement}_profile_menu`,
-    });
     closeMenu();
     signOut();
   };
@@ -359,10 +351,6 @@ const SidebarProfileMenu: React.FC<SidebarProfileMenuProps> = ({
           const nextIsOpen = !isOpen;
           setIsOpen(nextIsOpen);
           setIsTooltipVisible(false);
-          trackLabEvent("lab_profile_menu_toggled", {
-            is_open: nextIsOpen,
-            placement,
-          });
         }}
         onKeyDown={handleTriggerKeyDown}
         onMouseEnter={() => {

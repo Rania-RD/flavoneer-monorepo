@@ -189,7 +189,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               disabled={!newComment.trim() || isSubmitting}
               type="submit"
             >
-              <Send className="rtl-mirror-icon" size={16} />
+              <Send size={16} />
             </button>
           </form>
         </div>

@@ -54,6 +54,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     <>
       {to ? (
         <Link
+          aria-label={label}
           className={commonClasses}
           onClick={onClick}
           onMouseEnter={handleMouseEnter}
@@ -65,11 +66,13 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
         </Link>
       ) : (
         <button
+          aria-label={label}
           className={commonClasses}
           onClick={onClick}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={() => setIsHovered(false)}
           ref={ref as React.RefObject<HTMLButtonElement>}
+          type="button"
         >
           {iconElement}
         </button>

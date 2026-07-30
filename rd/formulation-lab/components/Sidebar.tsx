@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
   PlayCircle,
+  Settings,
   UsersRound,
 } from "lucide-react";
 import type React from "react";
@@ -37,7 +38,7 @@ const Sidebar: React.FC = () => {
       { name: t("reports"), icon: FileText, path: "/reports" },
       { name: t("team"), icon: UsersRound, path: "/team" },
     ],
-    [t]
+    [t],
   );
 
   return (
@@ -63,7 +64,14 @@ const Sidebar: React.FC = () => {
         </nav>
 
         {/* Footer (Static) */}
-        <div className="mt-auto flex w-full flex-col items-center pt-4">
+        <div className="mt-auto flex w-full flex-col items-center gap-3 pt-4">
+          <SidebarItem
+            active={isActivePath("/settings")}
+            icon={Settings}
+            label={t("workspace_settings")}
+            to="/settings"
+          />
+          <div aria-hidden="true" className="h-px w-8 bg-[#d2f2d4]/15" />
           <SidebarProfileMenu placement="desktop" />
         </div>
       </aside>
@@ -87,6 +95,22 @@ const Sidebar: React.FC = () => {
             </Link>
           );
         })}
+        <Link
+          aria-label={t("workspace_settings")}
+          className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-colors ${
+            isActivePath("/settings")
+              ? "bg-[#d2f2d4] text-[#173e33] dark:bg-[#f5a623] dark:text-[#173e33]"
+              : "text-[#6f8e82] hover:bg-[#d2f2d4]/45 hover:text-[#1c4a3c] dark:text-[#9abcae] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
+          }`}
+          to="/settings"
+        >
+          <Settings
+            aria-hidden="true"
+            size={24}
+            strokeWidth={isActivePath("/settings") ? 2.5 : 2}
+          />
+          <span className="font-medium text-[10px]">{t("settings")}</span>
+        </Link>
         <SidebarProfileMenu placement="mobile" />
       </nav>
     </>

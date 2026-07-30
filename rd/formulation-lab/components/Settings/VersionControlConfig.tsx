@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { usePermissions } from "../../hooks/usePermissions";
+import { MANAGE_VERSION_CONTROL_PERMISSION } from "../../lib/workspace-settings-access";
 import { Switch } from "../ui/Switch";
 
 const VersionControlConfig: React.FC = () => {
   const { t } = useTranslation();
   const config = useQuery(api.systemConfig.getVersionControlConfig);
   const updateConfig = useMutation(api.systemConfig.updateVersionControlConfig);
-  const { hasPermission, role } = usePermissions();
+  const { hasPermission } = usePermissions();
 
   const [tempPrefix, setTempPrefix] = useState("V");
   const [tempStyle, setTempStyle] = useState("major-minor");
@@ -19,8 +20,9 @@ const VersionControlConfig: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Ensure only admins can see the save button, although prompt asked to restrict update action to admin
-  const isAdmin = role?.key === "admin" || hasPermission("manage_roles");
+  const canManageVersionControl = hasPermission(
+    MANAGE_VERSION_CONTROL_PERMISSION
+  );
 
   useEffect(() => {
     if (config) {
@@ -137,7 +139,7 @@ const VersionControlConfig: React.FC = () => {
           </div>
         </div>
 
-        {isAdmin && (
+        {canManageVersionControl && (
           <div className="flex items-center justify-end gap-4 border-gray-100 border-t pt-4 dark:border-slate-800">
             {saved && (
               <span className="fade-in slide-in-from-end-4 flex animate-in items-center font-medium text-indigo-600 text-sm dark:text-indigo-400">

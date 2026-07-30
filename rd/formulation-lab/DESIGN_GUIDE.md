@@ -365,21 +365,20 @@ Animated with Framer Motion `AnimatePresence`:
 - GSFA choices use `01.0 · Category Name`. Store and emit the original GSFA code;
   formatting is presentation-only.
 
-### 7.13 Profile Header
+### 7.13 Sidebar Profile Menu
 
-```
-┌──────────────────────────────┐
-│ 🔔                        ⚙️ │  ← Notifications & Settings
-│        ┌──────────┐         │
-│        │  Avatar  │         │  ← w-24 h-24 rounded-full
-│        └──────────┘         │
-│      Dr. Sarah Chen         │  ← text-xl font-bold
-│       Head of R&D           │  ← text-sm text-gray-500
-└──────────────────────────────┘
-Background: #DFF4DC dark:#173E33, rounded-[2.5rem]
-```
-
-## Avatar has edit overlay on hover: `bg-black/20 opacity-0 group-hover:opacity-100`
+- **Trigger**: authenticated avatar at the desktop rail footer; avatar + profile
+  label in the mobile bottom navigation.
+- **Popover**: portal-rendered, fixed-position surface beside the desktop rail or
+  above the mobile navigation. Clamp all edges to a 12px viewport safety area.
+- **Content**: avatar, name, title, email, creator badge, Settings, and Logout.
+- **Accessibility**: `aria-haspopup="menu"`, managed focus, arrow/Home/End
+  navigation, Escape dismissal with focus restoration, Tab dismissal, and
+  click-outside dismissal.
+- **Direction**: open toward page content in both LTR and RTL; use logical
+  `insetInlineStart`. Mirror only the directional Logout icon.
+- **Layering**: use `z-[1000]` to escape sidebar overflow and page stacking
+  contexts. Recalculate on resize and capture-phase scroll.
 
 ## 8. Animations & Transitions
 
@@ -802,7 +801,7 @@ Food-R-D-Lab-/
 ├── components/
 │   ├── DashboardLayout.tsx    ← Branded shell: header, sidebar, route surface
 │   ├── Sidebar.tsx            ← Desktop sidebar + mobile bottom nav
-│   ├── ProfileHeader.tsx      ← Avatar, notifications, profile settings
+│   ├── SidebarProfileMenu.tsx ← Rail avatar, profile popover, profile settings
 │   ├── ProfileSettingsModal.tsx
 │   ├── SettingsModal.tsx      ← Dark mode, units, notifications toggles
 │   ├── ProjectCard.tsx        ← Pastel project cards with context menu

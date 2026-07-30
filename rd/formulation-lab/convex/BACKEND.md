@@ -64,3 +64,20 @@ This separation preserves history.
 - **Projects**: Core recipes. Complex update logic allows replacing ingredients/phases.
 - **Runs**: Executing a recipe. Handles inventory deduction upon completion.
 - **Inventory**: Stock management. Linked to `materialUsageLogs` for traceability.
+
+## 5. Authentication & System Roles
+
+- `users.syncCurrentUser` synchronizes the authenticated Better Auth identity
+  into the local `users` table.
+- The synchronization transaction ensures the built-in Admin, Supervisor,
+  Editor, and Operator roles exist before assigning a role. Existing role
+  permissions are never overwritten by this seed step.
+- Fresh deployments can run `roles.initializeDefaultRoles` once before the
+  first login. After any role exists, this mutation requires `manage_roles`.
+- Only the first user synchronized into a deployment receives the Admin role.
+  Every later user receives Operator by default, without email-based overrides.
+- Creating a team grants the creator the team-level Owner role but never changes
+  their system role. Existing system roles are preserved during later syncs so
+  explicit administrator assignments are not overwritten.
+- Role keys are stable authorization identifiers. The frontend translates role
+  titles from those keys; persisted English `name` values are fallbacks only.

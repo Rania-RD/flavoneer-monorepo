@@ -19,9 +19,7 @@ function slugify(name: string): string {
 export const get = query({
   args: { id: v.id("teams") },
   returns: v.union(teamReturnValidator, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.id),
 });
 
 /** List all teams the authenticated user belongs to */
@@ -63,7 +61,7 @@ export const create = mutation({
       throw new Error("Not authenticated");
     }
 
-    const slug = slugify(args.name) + "-" + Date.now().toString(36);
+    const slug = `${slugify(args.name)}-${Date.now().toString(36)}`;
 
     const teamId = await ctx.db.insert("teams", {
       name: args.name,
@@ -82,23 +80,6 @@ export const create = mutation({
       role: "owner",
       joinedAt: Date.now(),
     });
-
-    // Auto-assign 'admin' app role to the team creator
-    const creatorUser = await ctx.db
-      .query("users")
-      .withIndex("by_authUserId", (q) => q.eq("authUserId", authUser._id))
-      .first();
-
-    if (creatorUser) {
-      const allRoles = await ctx.db.query("roles").collect();
-      const adminRole = allRoles.find((r) => r.key === "admin");
-
-      if (adminRole) {
-        await ctx.db.patch(creatorUser._id, {
-          roleId: adminRole._id,
-        });
-      }
-    }
 
     // Audit log
     await logTeamAction(ctx, {

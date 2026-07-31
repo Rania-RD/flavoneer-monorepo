@@ -1,1 +1,1 @@
-FROM ghcr.io/rania-rd/flavoneer-formulation-lab:sha-c475bcc
+FROM ghcr.io/rania-rd/flavoneer-formulation-lab:sha-46fbbe7

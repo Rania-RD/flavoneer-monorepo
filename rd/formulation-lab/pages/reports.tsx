@@ -10,7 +10,6 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import FinishedGoodSpecificationSheet from "../components/FinishedGoodSpecificationSheet";
 import InfiniteScrollObserver from "../components/InfiniteScrollObserver";
 import NewLabReportModal from "../components/NewLabReportModal";
@@ -79,14 +78,6 @@ const Reports: React.FC = () => {
   );
   const recentReports =
     reportsUntyped && runsRaw ? validRecentReports.slice(0, 3) : [];
-
-  // Mock Data for "Texture Analysis" (Pie Chart)
-  const textureData = [
-    { name: t("firmness"), value: 40 },
-    { name: t("springiness"), value: 30 },
-    { name: t("cohesiveness"), value: 30 },
-  ];
-  const TEXTURE_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899"];
 
   const filteredReports = allReports.filter((r) => {
     // Must match filter criteria AND have a linked run
@@ -253,14 +244,14 @@ const Reports: React.FC = () => {
       {/* Bento Grid */}
       <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-4">
         {/* Medium Card: Recent Reports Quick Access */}
-        <div className="col-span-1 min-h-[300px] md:col-span-2">
+        <div className="col-span-1 min-h-[300px] md:col-span-4">
           <div className="h-full rounded-[2.5rem] border border-black/5 bg-vivid-blue p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
             <div className="mb-6">
               <h3 className="font-bold text-charcoal dark:text-slate-100">
                 {t("recentReports")}
               </h3>
             </div>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               {recentReports.map((report, _i) => (
                 <div
                   className="group relative flex cursor-pointer items-center gap-4 rounded-2xl border border-white/50 bg-white/40 p-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:z-20 hover:scale-[1.02] hover:shadow-xl dark:border-slate-700 dark:bg-[#1e293b]"
@@ -311,46 +302,6 @@ const Reports: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Medium Card: Texture Analysis */}
-        <div className="col-span-1 flex flex-col justify-between rounded-[2.5rem] border border-gray-100 bg-white p-6 shadow-sm md:col-span-2 dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="mb-4 flex items-center gap-2 font-bold text-gray-900 dark:text-white">
-            <div className="h-2 w-2 rounded-full bg-purple-500" />
-
-            {t("texture_profile")}
-          </h3>
-          <div className="relative h-32 w-full">
-            <ResponsiveContainer height="100%" width="100%">
-              <PieChart>
-                <Pie
-                  cx="50%"
-                  cy="50%"
-                  data={textureData}
-                  dataKey="value"
-                  innerRadius={30}
-                  outerRadius={50}
-                  paddingAngle={5}
-                  stroke="none"
-                >
-                  {textureData.map((_entry, index) => (
-                    <Cell
-                      fill={TEXTURE_COLORS[index % TEXTURE_COLORS.length]}
-                      key={`texture-cell-${_entry.name}`}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: "12px", border: "none" }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-2 flex justify-center gap-2">
-            <span className="h-1.5 w-6 rounded-full bg-blue-500" />
-            <span className="h-1.5 w-6 rounded-full bg-purple-500" />
-            <span className="h-1.5 w-6 rounded-full bg-pink-500" />
           </div>
         </div>
 

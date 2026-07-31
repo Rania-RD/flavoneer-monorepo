@@ -109,12 +109,16 @@ pack and set the Dockerfile location to `/Dockerfile.coolify` while keeping the
 base directory `/rd/formulation-lab`. The wrapper contains only a `FROM` line,
 so the server pulls the completed GHCR image instead of rebuilding the app.
 
-For optional automatic deployment, enable the Coolify API and add an API token
-to the GitHub repository secret `COOLIFY_API_TOKEN`. Add the resource's
-authenticated deploy webhook URL to `COOLIFY_LAB_DEPLOY_WEBHOOK`, then disable
-Coolify's Git auto-deploy for this resource. When both secrets exist, the image
-workflow calls Coolify only after GHCR publishing succeeds. Without them, image
-publishing still succeeds and the Coolify resource can be redeployed manually.
+Automatic deployment uses Coolify's signed manual GitHub webhook and requires
+no Coolify API token. Keep **Auto Deploy** enabled for the resource and add the
+GitHub webhook URL and secret shown on the resource's **Webhooks** page to the
+repository's **Settings > Webhooks** page.
+
+After GHCR publishing succeeds, the workflow updates
+`.coolify/formulation-lab-release` with the source commit and pushes a
+`[skip ci]` deploy-signal commit. That push is outside the workflow's watched
+paths, so it cannot start another image build; it only causes Coolify to pull
+the already-published `latest` image through `Dockerfile.coolify`.
 
 ## Architecture
 

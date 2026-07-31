@@ -26,7 +26,7 @@ jobs:
     name: Build and publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -69,22 +69,23 @@ jobs:
           cache-from: type=gha,scope=formulation-lab
           cache-to: type=gha,mode=max,scope=formulation-lab
 
-      - name: Deploy the new image with Coolify
-        env:
-          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
-          COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_LAB_DEPLOY_WEBHOOK }}
+      - name: Signal Coolify after the image is published
+        if: github.ref == 'refs/heads/main'
         shell: bash
         run: |
-          if [[ -z "$COOLIFY_API_TOKEN" || -z "$COOLIFY_DEPLOY_WEBHOOK" ]]; then
-            echo "Coolify deployment secrets are not configured; skipping deployment."
-            exit 0
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          curl \
-            --fail-with-body \
-            --retry 3 \
-            --retry-all-errors \
-            --show-error \
-            --silent \
-            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
-            "$COOLIFY_DEPLOY_WEBHOOK"
+          mkdir -p .coolify
+          {
+            printf 'source=%s\n' "$GITHUB_SHA"
+            printf 'run=%s\n' "$GITHUB_RUN_ID"
+            printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT"
+          } > .coolify/formulation-lab-release
+          git add .coolify/formulation-lab-release
+          git commit \
+            --message "chore(deploy): publish formulation lab ${GITHUB_SHA::7} [skip ci]"
+
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

@@ -117,7 +117,7 @@ repository's **Settings > Webhooks** page.
 
 After GHCR publishing succeeds, the workflow updates
 `.coolify/formulation-lab.Dockerfile` to the matching immutable image tag,
-records the run in `.coolify/formulation-lab-release`, and pushes a `[skip ci]`
+records the run in `.coolify/formulation-lab-release`, and pushes a
 deploy-signal commit using the repository secret
 `COOLIFY_DEPLOY_SIGNAL_TOKEN`. The token is fine-grained, restricted to this
 repository, and has only **Contents: read and write** permission. Rotate it

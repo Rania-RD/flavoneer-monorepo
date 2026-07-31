@@ -97,7 +97,7 @@ jobs:
             .coolify/formulation-lab.Dockerfile \
             .coolify/formulation-lab-release
           git commit \
-            --message "chore(deploy): publish formulation lab ${GITHUB_SHA::7} [skip ci]"
+            --message "chore(deploy): publish formulation lab ${GITHUB_SHA::7}"
 
           git fetch origin main
           git rebase origin/main

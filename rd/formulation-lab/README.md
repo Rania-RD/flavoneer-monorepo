@@ -104,6 +104,16 @@ above and port `80`. Keep the existing `VITE_CONVEX_URL`,
 `VITE_PUBLIC_POSTHOG_HOST` runtime variables on the resource. This makes Coolify
 pull and start a prebuilt image instead of installing packages on the server.
 
+For the existing Git-backed Coolify resource, select the `Dockerfile` build
+pack and set the Dockerfile location to `/Dockerfile.coolify` while keeping the
+base directory `/rd/formulation-lab`. The wrapper contains only a `FROM` line,
+so the server pulls the completed GHCR image instead of rebuilding the app.
+
+Add the resource's deploy webhook URL to the GitHub repository secret
+`COOLIFY_LAB_DEPLOY_WEBHOOK`, then disable Coolify's Git auto-deploy for this
+resource. The image workflow calls that webhook only after GHCR publishing
+succeeds, preventing deployments from racing against the image build.
+
 ## Architecture
 
 Frontend:

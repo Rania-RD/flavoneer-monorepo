@@ -71,11 +71,12 @@ jobs:
 
       - name: Deploy the new image with Coolify
         env:
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_LAB_DEPLOY_WEBHOOK }}
         shell: bash
         run: |
-          if [[ -z "$COOLIFY_DEPLOY_WEBHOOK" ]]; then
-            echo "COOLIFY_LAB_DEPLOY_WEBHOOK is not configured; skipping deployment."
+          if [[ -z "$COOLIFY_API_TOKEN" || -z "$COOLIFY_DEPLOY_WEBHOOK" ]]; then
+            echo "Coolify deployment secrets are not configured; skipping deployment."
             exit 0
           fi
 
@@ -85,4 +86,5 @@ jobs:
             --retry-all-errors \
             --show-error \
             --silent \
+            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
             "$COOLIFY_DEPLOY_WEBHOOK"

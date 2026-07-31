@@ -85,24 +85,53 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          mkdir -p .coolify
-          printf 'FROM ghcr.io/rania-rd/flavoneer-formulation-lab:sha-%s\n' \
-            "${GITHUB_SHA::7}" > .coolify/formulation-lab.Dockerfile
-          {
-            printf 'source=%s\n' "$GITHUB_SHA"
-            printf 'run=%s\n' "$GITHUB_RUN_ID"
-            printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT"
-          } > .coolify/formulation-lab-release
-          git add \
-            .coolify/formulation-lab.Dockerfile \
-            .coolify/formulation-lab-release
-          git commit \
-            --message "chore(deploy): publish formulation lab ${GITHUB_SHA::7}"
+          deploy_inputs=(
+            .github/workflows/formulation-lab-image.yml
+            .dockerignore
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            rd/formulation-lab
+          )
 
-          git fetch origin main
-          git rebase origin/main
           git remote set-url origin \
             "https://x-access-token:${DEPLOY_SIGNAL_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push origin HEAD:main
-          git remote set-url origin \
-            "https://github.com/${GITHUB_REPOSITORY}.git"
+          trap 'git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"' EXIT
+
+          for push_attempt in {1..5}; do
+            git fetch origin main
+            if ! git diff --quiet "$GITHUB_SHA" origin/main -- "${deploy_inputs[@]}"; then
+              echo "A newer formulation lab change exists on main; skipping this stale deploy signal."
+              exit 0
+            fi
+
+            git switch --detach --force origin/main
+            mkdir -p .coolify
+            printf 'FROM ghcr.io/rania-rd/flavoneer-formulation-lab:sha-%s\n' \
+              "${GITHUB_SHA::7}" > .coolify/formulation-lab.Dockerfile
+            {
+              printf 'source=%s\n' "$GITHUB_SHA"
+              printf 'run=%s\n' "$GITHUB_RUN_ID"
+              printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT"
+            } > .coolify/formulation-lab-release
+            git add \
+              .coolify/formulation-lab.Dockerfile \
+              .coolify/formulation-lab-release
+
+            if git diff --cached --quiet; then
+              echo "The Coolify deploy signal already points to ${GITHUB_SHA::7}."
+              exit 0
+            fi
+
+            git commit \
+              --message "chore(deploy): publish formulation lab ${GITHUB_SHA::7} [skip ci]"
+
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            echo "main moved during deploy signal attempt ${push_attempt}; retrying."
+          done
+
+          echo "Could not publish the Coolify deploy signal after 5 attempts."
+          exit 1

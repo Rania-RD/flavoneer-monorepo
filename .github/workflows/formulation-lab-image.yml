@@ -26,7 +26,7 @@ jobs:
     name: Build and publish
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
@@ -71,21 +71,36 @@ jobs:
 
       - name: Signal Coolify after the image is published
         if: github.ref == 'refs/heads/main'
+        env:
+          DEPLOY_SIGNAL_TOKEN: ${{ secrets.COOLIFY_DEPLOY_SIGNAL_TOKEN }}
         shell: bash
         run: |
+          if [[ -z "$DEPLOY_SIGNAL_TOKEN" ]]; then
+            echo "COOLIFY_DEPLOY_SIGNAL_TOKEN is required."
+            exit 1
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           mkdir -p .coolify
+          printf 'FROM ghcr.io/rania-rd/flavoneer-formulation-lab:sha-%s\n' \
+            "${GITHUB_SHA::7}" > .coolify/formulation-lab.Dockerfile
           {
             printf 'source=%s\n' "$GITHUB_SHA"
             printf 'run=%s\n' "$GITHUB_RUN_ID"
             printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT"
           } > .coolify/formulation-lab-release
-          git add .coolify/formulation-lab-release
+          git add \
+            .coolify/formulation-lab.Dockerfile \
+            .coolify/formulation-lab-release
           git commit \
             --message "chore(deploy): publish formulation lab ${GITHUB_SHA::7} [skip ci]"
 
           git fetch origin main
           git rebase origin/main
+          git remote set-url origin \
+            "https://x-access-token:${DEPLOY_SIGNAL_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push origin HEAD:main
+          git remote set-url origin \
+            "https://github.com/${GITHUB_REPOSITORY}.git"

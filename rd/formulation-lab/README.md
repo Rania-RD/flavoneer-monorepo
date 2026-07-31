@@ -105,9 +105,10 @@ above and port `80`. Keep the existing `VITE_CONVEX_URL`,
 pull and start a prebuilt image instead of installing packages on the server.
 
 For the existing Git-backed Coolify resource, select the `Dockerfile` build
-pack and set the Dockerfile location to `/Dockerfile.coolify` while keeping the
-base directory `/rd/formulation-lab`. The wrapper contains only a `FROM` line,
-so the server pulls the completed GHCR image instead of rebuilding the app.
+pack, set the base directory to `/`, and set the Dockerfile location to
+`/.coolify/formulation-lab.Dockerfile`. The wrapper pins an immutable
+`sha-...` GHCR image, so the server pulls the completed image instead of
+rebuilding the app.
 
 Automatic deployment uses Coolify's signed manual GitHub webhook and requires
 no Coolify API token. Keep **Auto Deploy** enabled for the resource and add the
@@ -115,10 +116,16 @@ GitHub webhook URL and secret shown on the resource's **Webhooks** page to the
 repository's **Settings > Webhooks** page.
 
 After GHCR publishing succeeds, the workflow updates
-`.coolify/formulation-lab-release` with the source commit and pushes a
-`[skip ci]` deploy-signal commit. That push is outside the workflow's watched
-paths, so it cannot start another image build; it only causes Coolify to pull
-the already-published `latest` image through `Dockerfile.coolify`.
+`.coolify/formulation-lab.Dockerfile` to the matching immutable image tag,
+records the run in `.coolify/formulation-lab-release`, and pushes a `[skip ci]`
+deploy-signal commit using the repository secret
+`COOLIFY_DEPLOY_SIGNAL_TOKEN`. The token is fine-grained, restricted to this
+repository, and has only **Contents: read and write** permission. Rotate it
+before its configured expiration date.
+
+The `.coolify/**` deploy-signal files are outside the workflow's watched paths,
+so the signal cannot start another image build. It only causes Coolify to pull
+the image that Actions has already published.
 
 ## Architecture
 

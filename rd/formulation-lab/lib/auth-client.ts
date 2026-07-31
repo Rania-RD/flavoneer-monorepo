@@ -3,9 +3,10 @@ import {
   crossDomainClient,
 } from "@convex-dev/better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { publicConfig } from "./runtime-config";
 
 export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_CONVEX_SITE_URL,
+  baseURL: publicConfig.convexSiteUrl,
   plugins: [
     convexClient(),
     crossDomainClient() as unknown as ReturnType<typeof convexClient>,

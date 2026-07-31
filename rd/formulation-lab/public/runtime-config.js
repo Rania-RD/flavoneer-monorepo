@@ -1,0 +1,1 @@
+window.__FLAVONEER_RUNTIME_CONFIG__ = {};

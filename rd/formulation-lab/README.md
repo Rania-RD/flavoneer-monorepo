@@ -50,6 +50,18 @@ VITE_CONVEX_URL=
 VITE_CONVEX_SITE_URL=
 ```
 
+PostHog browser analytics uses these public variables:
+
+```sh
+VITE_PUBLIC_POSTHOG_KEY=
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+When `VITE_PUBLIC_POSTHOG_KEY` is omitted or blank, analytics initialization is
+skipped and the lab continues to run normally. Use
+`https://eu.i.posthog.com` for a PostHog EU Cloud project. All events from this
+client include `app_surface=formulation_lab`.
+
 The backend auth code reads these Convex environment values:
 
 ```sh
@@ -58,6 +70,39 @@ SITE_URL=http://localhost:3000
 ```
 
 `GEMINI_API_KEY` is still wired in `vite.config.ts`, but the current app shell is not the generic AI Studio starter described by the old README.
+
+### Coolify
+
+Add these variables to the formulation-lab resource:
+
+```env
+VITE_PUBLIC_POSTHOG_KEY=phc_SHARED_PROJECT_TOKEN
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+The production container creates `/runtime-config.js` when it starts, so these
+variables only need to be enabled as runtime variables in Coolify. They no
+longer need to be sent to the image build. Use the same project token for the
+landing and formulation-lab resources; filter or break down events by
+`app_surface` when analyzing their shared user journey.
+
+### Free GHCR deployment
+
+The formulation lab image is built on GitHub-hosted Actions and published as:
+
+```text
+ghcr.io/rania-rd/flavoneer-formulation-lab:latest
+```
+
+The workflow runs after relevant changes reach `main`, and can also be started
+manually from the Actions tab. It publishes an immutable `sha-...` tag alongside
+`latest`.
+
+Configure the Coolify resource as a Docker image deployment using the image
+above and port `80`. Keep the existing `VITE_CONVEX_URL`,
+`VITE_CONVEX_SITE_URL`, `VITE_SITE_URL`, `VITE_PUBLIC_POSTHOG_KEY`, and
+`VITE_PUBLIC_POSTHOG_HOST` runtime variables on the resource. This makes Coolify
+pull and start a prebuilt image instead of installing packages on the server.
 
 ## Architecture
 

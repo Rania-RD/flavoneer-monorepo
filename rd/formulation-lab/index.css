@@ -50,6 +50,11 @@ body.flavoneer-dashboard-active {
   background: var(--flavoneer-mint-soft);
 }
 
+body.flavoneer-workspace-active {
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
 .dark body.flavoneer-dashboard-active {
   background: #0d2b24;
 }
@@ -199,6 +204,28 @@ body.flavoneer-dashboard-active
 .dark
   body.flavoneer-dashboard-active
   :where(
+    [class~="text-gray-700"],
+    [class~="text-gray-800"],
+    [class~="text-gray-900"],
+    [class~="text-charcoal"],
+    [class~="text-black"]
+  ) {
+  color: #f7f4df !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class~="text-gray-400"],
+    [class~="text-gray-500"],
+    [class~="text-gray-600"]
+  ) {
+  color: #a9cbbb !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
     [class~="dark:bg-indigo-500"],
     [class~="dark:bg-indigo-600"],
     [class~="dark:bg-indigo-700"]
@@ -210,10 +237,27 @@ body.flavoneer-dashboard-active
 .dark
   body.flavoneer-dashboard-active
   :where(
+    [class^="dark:text-white"],
+    [class*=" dark:text-white"],
     [class^="dark:text-slate-"],
     [class*=" dark:text-slate-"],
     [class^="dark:text-gray-"],
     [class*=" dark:text-gray-"]
+  ) {
+  color: #f7f4df !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(
+    [class^="dark:text-slate-400"],
+    [class*=" dark:text-slate-400"],
+    [class^="dark:text-slate-500"],
+    [class*=" dark:text-slate-500"],
+    [class^="dark:text-gray-400"],
+    [class*=" dark:text-gray-400"],
+    [class^="dark:text-gray-500"],
+    [class*=" dark:text-gray-500"]
   ) {
   color: #a9cbbb !important;
 }

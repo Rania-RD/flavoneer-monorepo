@@ -144,9 +144,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <>
       <div
-        className={
-          "group relative h-[280px] rounded-[2.5rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-none"
-        }
+        className={`group relative h-full min-h-[280px] min-w-0 rounded-[2.5rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-none ${
+          isMenuOpen ? "z-40" : "z-0 hover:z-10"
+        }`}
+        data-testid={`project-card-${project._id}`}
       >
         {/* Background & Decor - Lower z-index */}
         <div
@@ -156,11 +157,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Main Content - z-10 */}
-        <div className="relative z-10 flex h-full flex-col justify-between p-8">
+        <div className="relative z-10 flex min-h-[280px] flex-col gap-4 p-6 sm:p-8">
           {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-full bg-white/80 px-4 py-1.5 font-black text-gray-900 text-xs uppercase tracking-wider shadow-sm backdrop-blur-md dark:bg-white/10 dark:text-white">
+          <div className="flex min-w-0 items-start justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+              <div className="max-w-full truncate rounded-full bg-white/80 px-4 py-1.5 font-black text-gray-900 text-xs uppercase tracking-wider shadow-sm backdrop-blur-md dark:bg-white/10 dark:text-white">
                 {t(project.category || "r_and_d")}
               </div>
               {project.status && (
@@ -179,7 +180,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
 
             {/* Context Menu Trigger */}
-            <div className="relative" ref={menuRef}>
+            <div className="relative shrink-0" ref={menuRef}>
               <button
                 className="rounded-full p-2 text-gray-900 transition-colors hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -264,7 +265,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
 
           {/* Card Body */}
-          <div className="mt-4">
+          <div className="min-w-0">
             <h3 className="mb-1 line-clamp-2 text-start font-black text-3xl text-gray-900 leading-tight dark:text-slate-100">
               {project.name}
             </h3>

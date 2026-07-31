@@ -16,7 +16,7 @@ const RunCompletedView: React.FC = () => {
   return (
     <MotionDiv
       animate={{ opacity: 1, scale: 1 }}
-      className="flex h-screen flex-col items-center justify-center bg-[#FDFCF6] px-6 dark:bg-[#0f172a]"
+      className="flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto bg-[#FDFCF6] px-6 dark:bg-[#0f172a]"
       exit={{ opacity: 0, scale: 0.95 }}
       initial={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.5, ease: "easeOut" }}

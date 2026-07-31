@@ -1208,8 +1208,8 @@ const Formulation: React.FC = () => {
     const isProjectLoading = Boolean(projectId) && convexProject !== null;
 
     return (
-      <div className="-m-4 flex min-h-dvh items-center justify-center bg-white p-6 sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
-        <div className="max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex h-dvh items-center justify-center bg-[#eef8eb] p-6 dark:bg-[#0d2b24]">
+        <div className="w-full max-w-md rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] p-8 text-center shadow-xl dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
           <p
             aria-live="polite"
             className="font-bold text-slate-700 dark:text-slate-200"
@@ -1238,31 +1238,34 @@ const Formulation: React.FC = () => {
     })}`;
 
   return (
-    <div className="-m-4 flex min-h-dvh flex-col bg-white sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
-      {/* Header - Sticky */}
-      <div className="relative z-10 flex shrink-0 flex-col justify-between gap-4 border-gray-100 border-b bg-white px-8 py-4 shadow-sm md:flex-row md:items-center dark:border-slate-800 dark:bg-[#0f172a]">
-        <div className="flex items-center space-x-4">
+    <div className="flex h-dvh min-h-0 min-w-0 flex-col overflow-hidden bg-white dark:bg-[#0f172a]">
+      {/* Full-screen editor header */}
+      <header className="relative z-40 flex shrink-0 flex-col gap-3 border-gray-100 border-b bg-white px-4 py-3 shadow-sm sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8 dark:border-slate-800 dark:bg-[#0f172a]">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <button
             aria-label={t("exit_editor")}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-3 font-bold text-gray-600 text-sm transition-colors hover:bg-gray-100 hover:text-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+            className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2.5 font-bold text-gray-600 text-sm transition-colors hover:bg-gray-100 hover:text-gray-900 sm:px-4 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
             data-testid="exit-editor-button"
             onClick={handleExitEditor}
             title={t("exit_editor")}
             type="button"
           >
             <ChevronLeft size={20} />
-            <span>{t("exit_editor")}</span>
+            <span className="hidden sm:inline">{t("exit_editor")}</span>
           </button>
-          <div>
-            <div className="flex flex-col gap-6 md:flex-row md:items-center">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <h1 className="flex items-center gap-3 font-bold text-3xl text-gray-900 dark:text-white">
-                    {project?.name || t("formulation_builder")}
-                    <span className="rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1 font-medium text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                      v{project.version}
+          <div className="min-w-0 flex-1">
+            <div className="min-w-0 space-y-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <h1 className="min-w-0 flex-1 font-bold text-2xl text-gray-900 sm:text-3xl dark:text-white">
+                    <span className="truncate">
+                      {project?.name || t("formulation_builder")}
                     </span>
                   </h1>
+                  <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1 font-medium text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                    v{project.version}
+                  </span>
+                </div>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
                   {canEdit && (
                     <span
                       aria-live="polite"
@@ -1365,15 +1368,14 @@ const Formulation: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
           <button
-            className="flex items-center gap-2 rounded-3xl border border-indigo-200 bg-white px-6 py-3 font-bold text-indigo-600 transition-all hover:scale-[1.02] hover:bg-indigo-50 active:scale-[0.98] dark:border-indigo-800/50 dark:bg-[#1e293b] dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+            className="flex items-center gap-2 rounded-3xl border border-indigo-200 bg-white px-4 py-2.5 font-bold text-indigo-600 transition-all hover:scale-[1.02] hover:bg-indigo-50 active:scale-[0.98] sm:px-5 dark:border-indigo-800/50 dark:bg-[#1e293b] dark:text-indigo-400 dark:hover:bg-indigo-900/30"
             onClick={() => setIsReviewPanelOpen(true)}
             type="button"
           >
@@ -1382,7 +1384,7 @@ const Formulation: React.FC = () => {
           </button>
 
           <button
-            className="flex items-center gap-2 rounded-3xl border border-gray-200 bg-white px-6 py-3 font-bold text-gray-700 transition-all hover:scale-[1.02] hover:bg-gray-50 active:scale-[0.98] dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-300 dark:hover:bg-slate-800"
+            className="flex items-center gap-2 rounded-3xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-700 transition-all hover:scale-[1.02] hover:bg-gray-50 active:scale-[0.98] sm:px-5 dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-300 dark:hover:bg-slate-800"
             onClick={() => setIsVersionHistoryOpen(true)}
             type="button"
           >
@@ -1390,7 +1392,7 @@ const Formulation: React.FC = () => {
             <span>{t("history")}</span>
           </button>
         </div>
-      </div>
+      </header>
 
       {project.allergenReviewRequired && canEdit && (
         <div className="border-amber-200 border-b bg-amber-50 px-6 py-3 dark:border-amber-800/50 dark:bg-amber-950/40">
@@ -1412,9 +1414,9 @@ const Formulation: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
         {/* Left Sidebar - Outline (25%) */}
-        <div className="sticky top-0 hidden h-full w-[30%] max-w-sm shrink-0 select-none overflow-y-auto border-gray-100 border-r bg-gray-50/50 shadow-[inset_-10px_0_20px_-15px_rgba(0,0,0,0.05)] md:block dark:border-slate-800 dark:bg-[#1e293b]/50 dark:shadow-[inset_-10px_0_20px_-15px_rgba(0,0,0,0.5)]">
+        <div className="hidden h-full w-[30%] max-w-sm shrink-0 select-none overflow-y-auto border-gray-100 border-e bg-gray-50/50 md:block dark:border-slate-800 dark:bg-[#1e293b]/50">
           <div className="space-y-6 p-6">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-gray-500 text-xs uppercase tracking-widest dark:text-slate-400">
@@ -1787,7 +1789,7 @@ const Formulation: React.FC = () => {
         </div>
 
         {/* Main Canvas - Continuous Scroll (75%) */}
-        <div className="flex-1 overflow-y-auto scroll-smooth bg-gray-100/30 pb-32 dark:bg-[#0f172a]">
+        <div className="min-w-0 flex-1 overflow-y-auto scroll-smooth bg-gray-100/30 pb-32 dark:bg-[#0f172a]">
           <div className="fade-in zoom-in-95 mx-auto max-w-4xl animate-in space-y-16 p-6 duration-200 lg:p-12">
             {/* The Release Stamp */}
             {isReleased && (

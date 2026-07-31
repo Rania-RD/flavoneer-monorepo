@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { History, Plus, RotateCcw, Save, X } from "lucide-react";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
 import { api } from "../convex/_generated/api";
@@ -99,12 +100,14 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
       toast.error(t("failed_to_restore_version"));
     }
   };
-  return (
+  const modal = (
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          aria-modal="true"
+          className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-4"
           dir={isRTL ? "rtl" : "ltr"}
+          role="dialog"
         >
           {/* Backdrop */}
           <MotionDiv
@@ -119,7 +122,7 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
           {/* Modal Content */}
           <MotionDiv
             animate="visible"
-            className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/50 bg-white shadow-2xl dark:border-slate-800 dark:bg-[#1e293b]"
+            className="relative z-[1000] max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/50 bg-white shadow-2xl sm:max-h-[90dvh] dark:border-slate-800 dark:bg-[#1e293b]"
             exit="exit"
             initial="hidden"
             variants={modalVariants}
@@ -143,8 +146,10 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                 </div>
               </div>
               <button
+                aria-label={t("close")}
                 className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800"
                 onClick={onClose}
+                type="button"
               >
                 <X size={20} />
               </button>
@@ -256,6 +261,8 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modal, document.body);
 };
 
 export default VersionHistoryModal;

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
+import { createPortal } from "react-dom";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -78,13 +79,15 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
         return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
     }
   };
-  return (
+  const modal = (
     <>
       <AnimatePresence>
         {isOpen && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            aria-modal="true"
+            className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-4"
             dir={isRTL ? "rtl" : "ltr"}
+            role="dialog"
           >
             {/* Backdrop */}
             <MotionDiv
@@ -99,15 +102,17 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
             {/* Modal Content - Bento Grid Container - Responsive Width */}
             <MotionDiv
               animate="visible"
-              className="scrollbar-hide relative max-h-[90vh] w-full overflow-y-auto overflow-x-hidden rounded-[2.5rem] border border-white/50 bg-[#FDFCF6] shadow-2xl md:w-[95%] lg:w-[70%] dark:border-slate-800 dark:bg-[#0f172a]"
+              className="scrollbar-hide relative z-[1000] max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl overflow-y-auto overflow-x-hidden rounded-[2.5rem] border border-white/50 bg-[#FDFCF6] shadow-2xl sm:max-h-[90dvh] dark:border-slate-800 dark:bg-[#0f172a]"
               exit="exit"
               initial="hidden"
               variants={modalVariants}
             >
               {/* Floating Close Button */}
               <button
+                aria-label={t("close")}
                 className="absolute end-6 top-6 z-50 rounded-full bg-white/50 p-2 text-gray-500 backdrop-blur-sm transition-colors hover:bg-white dark:bg-[#1e293b]/50 dark:text-slate-400 dark:hover:bg-[#1e293b]"
                 onClick={onClose}
+                type="button"
               >
                 <X size={24} />
               </button>
@@ -345,6 +350,8 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
       />
     </>
   );
+
+  return createPortal(modal, document.body);
 };
 
 // ── Sub-component: Recent Runs for this project ────────────────────

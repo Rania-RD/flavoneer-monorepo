@@ -1,6 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import { Activity, Hash, Save, Target, Thermometer, X } from "lucide-react";
 import type React from "react";
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
@@ -50,12 +51,14 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
     "w-full px-4 py-3 bg-gray-50 dark:bg-[#334155] border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
   const labelClass =
     "block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-2";
-  return (
+  const modal = (
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          aria-modal="true"
+          className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-4"
           dir={isRTL ? "rtl" : "ltr"}
+          role="dialog"
         >
           {/* Backdrop */}
           <MotionDiv
@@ -70,7 +73,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
           {/* Modal Container */}
           <MotionDiv
             animate="visible"
-            className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2.5rem] border border-white/50 bg-[#FDFCF6] shadow-2xl dark:border-slate-700 dark:bg-[#0f172a]"
+            className="relative z-[1000] max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-[2.5rem] border border-white/50 bg-[#FDFCF6] shadow-2xl sm:max-h-[90dvh] dark:border-slate-700 dark:bg-[#0f172a]"
             exit="exit"
             initial="hidden"
             variants={modalVariants}
@@ -86,8 +89,10 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 </p>
               </div>
               <button
+                aria-label={t("close")}
                 className="rounded-full bg-gray-100 p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-[#1e293b] dark:text-slate-400 dark:hover:bg-slate-600"
                 onClick={onClose}
+                type="button"
               >
                 <X size={20} />
               </button>
@@ -401,6 +406,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modal, document.body);
 };
 
 export default EditProjectModal;

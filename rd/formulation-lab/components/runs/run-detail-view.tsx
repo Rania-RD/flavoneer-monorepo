@@ -36,7 +36,7 @@ const RunDetailView: React.FC<RunDetailViewProps> = ({
   return (
     <MotionDiv
       animate="visible"
-      className="mx-auto flex h-screen max-w-7xl flex-col bg-[#FDFCF6] px-4 py-8 dark:bg-[#0f172a]"
+      className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col overflow-hidden bg-[#FDFCF6] px-4 py-4 sm:py-6 lg:py-8 dark:bg-[#0f172a]"
       exit="exit"
       initial="hidden"
       variants={modalVariants}

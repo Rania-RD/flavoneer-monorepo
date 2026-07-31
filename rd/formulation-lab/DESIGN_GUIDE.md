@@ -20,6 +20,13 @@ Do not add a second authenticated shell or a route-local page background. New
 internal pages must be placed inside `DashboardLayout` and consume the
 Flavoneer tokens below.
 
+Full-screen workspaces are an explicit layout mode, not a second shell.
+`/project/:id` and `/run/:id` keep the dashboard brand scope but unmount the
+global header and sidebar, remove page padding, and give the route surface one
+`100dvh` scroll boundary. Workspace pages must use `h-full min-h-0` rather than
+negative margins or nested `h-screen` containers. Their own tool header sits at
+the top of the viewport and their content region owns internal scrolling.
+
 ---
 
 ## 2. Color System

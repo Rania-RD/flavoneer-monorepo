@@ -149,13 +149,13 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
   return (
     <MotionDiv
       animate={{ opacity: 1, scale: 1 }}
-      className="flex h-screen flex-col bg-[#FDFCF6] dark:bg-[#0f172a]"
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-[#FDFCF6] dark:bg-[#0f172a]"
       exit={{ opacity: 0, scale: 0.95 }}
       initial={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <header className="z-10 flex items-center justify-between border-gray-200 border-b bg-white px-6 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-center gap-4">
+      <header className="z-40 flex shrink-0 items-center justify-between border-gray-200 border-b bg-white px-4 py-3 shadow-sm sm:px-6 sm:py-4 dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <button
             className="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
             onClick={() => {
@@ -169,9 +169,9 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
           >
             <ArrowLeft className="text-gray-500" size={20} />
           </button>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="font-bold text-gray-900 text-lg dark:text-white">
+              <h2 className="truncate font-bold text-gray-900 text-lg dark:text-white">
                 {selectedProject.name}
               </h2>
               <span className="rounded border border-gray-200 bg-gray-100 px-2 py-0.5 font-bold text-[10px] text-gray-500 dark:border-slate-600 dark:bg-slate-700">
@@ -237,8 +237,8 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
         )}
       </AnimatePresence>
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="relative z-[60] hidden w-80 overflow-y-auto border-gray-200 border-r bg-white p-6 md:block dark:border-slate-700 dark:bg-slate-800">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <aside className="relative z-30 hidden w-80 overflow-y-auto border-gray-200 border-e bg-white p-6 md:block dark:border-slate-700 dark:bg-slate-800">
           <StepSidebar
             activePhaseIndex={currentPhaseIndex}
             activeStepIndex={currentStepIndex}

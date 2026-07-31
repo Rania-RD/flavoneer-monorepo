@@ -219,6 +219,7 @@ const Dashboard: React.FC = () => {
             />
           </div>
           <button
+            aria-label={t("newProject")}
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white shadow-black/20 shadow-xl transition-all hover:scale-105 hover:bg-black dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
             data-testid="new-project-button"
             onClick={() => setIsModalOpen(true)}
@@ -244,8 +245,8 @@ const Dashboard: React.FC = () => {
         ))}
 
         <button
-          className="group mx-auto flex h-[280px] w-full max-w-[400px] flex-col items-center justify-center gap-4 rounded-4xl border-2 border-gray-200 border-dashed text-gray-400 transition-all hover:border-gray-300 hover:bg-gray-50/50 hover:text-gray-500 hover:shadow-xl dark:border-slate-700 dark:text-slate-500 dark:hover:border-slate-500 dark:hover:bg-slate-800/50 dark:hover:text-slate-300"
-          data-testid="new-project-button"
+          className="group flex h-full min-h-[280px] w-full flex-col items-center justify-center gap-4 rounded-[2.5rem] border-2 border-gray-200 border-dashed text-gray-400 transition-all hover:border-gray-300 hover:bg-gray-50/50 hover:text-gray-500 hover:shadow-xl dark:border-slate-700 dark:text-slate-500 dark:hover:border-slate-500 dark:hover:bg-slate-800/50 dark:hover:text-slate-300"
+          data-testid="new-project-empty-state-button"
           onClick={() => setIsModalOpen(true)}
           type="button"
         >

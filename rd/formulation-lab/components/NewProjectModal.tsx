@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import type React from "react";
+import { createPortal } from "react-dom";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
@@ -218,13 +219,15 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       : ("description" as const),
   };
 
-  return (
+  const modal = (
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 text-start"
+          aria-modal="true"
+          className="fixed inset-0 z-[999] flex items-center justify-center p-3 text-start sm:p-4"
           dir={isArabicContent ? "rtl" : "ltr"}
           lang={contentLanguage}
+          role="dialog"
         >
           {/* Backdrop */}
           <MotionDiv
@@ -239,7 +242,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
           {/* Modal Card */}
           <MotionDiv
             animate="visible"
-            className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="relative z-[1000] flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-white shadow-2xl sm:max-h-[90dvh] dark:border-[#d2f2d4]/10 dark:bg-[#173e33]"
             exit="exit"
             initial="hidden"
             variants={modalVariants}
@@ -710,6 +713,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modal, document.body);
 };
 
 export default NewProjectModal;

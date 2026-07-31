@@ -28,7 +28,7 @@ const BatchDisposalView: React.FC<BatchDisposalViewProps> = ({
   return (
     <MotionDiv
       animate={{ opacity: 1, scale: 1 }}
-      className="flex h-screen flex-col items-center justify-center bg-rose-50/50 px-6 dark:bg-rose-950/20"
+      className="flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto bg-rose-50/50 px-6 dark:bg-rose-950/20"
       exit={{ opacity: 0, scale: 0.95 }}
       initial={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3, ease: "easeOut" }}

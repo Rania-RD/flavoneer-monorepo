@@ -68,3 +68,21 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=formulation-lab
           cache-to: type=gha,mode=max,scope=formulation-lab
+
+      - name: Deploy the new image with Coolify
+        env:
+          COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_LAB_DEPLOY_WEBHOOK }}
+        shell: bash
+        run: |
+          if [[ -z "$COOLIFY_DEPLOY_WEBHOOK" ]]; then
+            echo "COOLIFY_LAB_DEPLOY_WEBHOOK is not configured; skipping deployment."
+            exit 0
+          fi
+
+          curl \
+            --fail-with-body \
+            --retry 3 \
+            --retry-all-errors \
+            --show-error \
+            --silent \
+            "$COOLIFY_DEPLOY_WEBHOOK"

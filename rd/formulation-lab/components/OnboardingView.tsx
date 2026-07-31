@@ -76,7 +76,7 @@ export default function OnboardingView() {
         <h1 className="mb-4 font-extrabold text-4xl text-charcoal tracking-tight sm:text-5xl dark:text-white">
           {t("welcome_to")}{" "}
           <span className="text-indigo-600 dark:text-indigo-400">
-            {t("mesqey")}
+            {t("app_name")}
           </span>
         </h1>
         <p className="mx-auto max-w-2xl text-gray-500 text-lg sm:text-xl dark:text-slate-400">

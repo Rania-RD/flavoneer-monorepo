@@ -76,11 +76,10 @@ const styles = StyleSheet.create({
     padding: 8,
     fontSize: 10,
   },
-  col1: { width: "25%" },
-  col2: { width: "20%" },
+  col1: { width: "30%" },
+  col2: { width: "25%" },
   col3: { width: "25%" },
-  col4: { width: "15%" },
-  col5: { width: "15%" },
+  col4: { width: "20%" },
   footer: {
     position: "absolute",
     bottom: 30,
@@ -191,12 +190,9 @@ export const ReportPDF: React.FC<ReportPDFProps> = ({
                 {t("method")}
               </Text>
               <Text style={[styles.tableHeader, styles.col3]}>
-                {t("target")}
-              </Text>
-              <Text style={[styles.tableHeader, styles.col4]}>
                 {t("result")}
               </Text>
-              <Text style={[styles.tableHeader, styles.col5]}>{t("eval")}</Text>
+              <Text style={[styles.tableHeader, styles.col4]}>{t("eval")}</Text>
             </View>
             {report.results.map((res, i) => {
               const isPass =
@@ -210,15 +206,12 @@ export const ReportPDF: React.FC<ReportPDFProps> = ({
                     {res.method}
                   </Text>
                   <Text style={[styles.tableCol, styles.col3]}>
-                    {res.targetRange}
-                  </Text>
-                  <Text style={[styles.tableCol, styles.col4]}>
                     {res.actualValue} {res.unit}
                   </Text>
                   <Text
                     style={[
                       styles.tableCol,
-                      styles.col5,
+                      styles.col4,
                       isPass ? styles.badgePass : styles.badgeFail,
                     ]}
                   >

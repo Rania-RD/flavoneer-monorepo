@@ -59,15 +59,6 @@ async function enrichReport(
       ),
       method: selectLocalizedString(result.method, result.methodI18n, language),
       methodI18n: makeLocalizedString(result.method, result.methodI18n),
-      targetRange: selectLocalizedString(
-        result.targetRange,
-        result.targetRangeI18n,
-        language
-      ),
-      targetRangeI18n: makeLocalizedString(
-        result.targetRange,
-        result.targetRangeI18n
-      ),
       min: result.min,
       max: result.max,
       actualValue: result.actualValue,
@@ -161,8 +152,6 @@ export const create = mutation({
         parameterI18n: v.optional(localizedStringValidator),
         method: v.string(),
         methodI18n: v.optional(localizedStringValidator),
-        targetRange: v.string(),
-        targetRangeI18n: v.optional(localizedStringValidator),
         min: v.number(),
         max: v.number(),
         actualValue: v.number(),
@@ -200,10 +189,6 @@ export const create = mutation({
           result.parameterI18n
         ),
         methodI18n: makeLocalizedString(result.method, result.methodI18n),
-        targetRangeI18n: makeLocalizedString(
-          result.targetRange,
-          result.targetRangeI18n
-        ),
       });
     }
 

@@ -11,7 +11,7 @@ function repairLocalizedString(
   localized?: LocalizedString
 ) {
   if (!localized) {
-    return undefined;
+    return;
   }
 
   const en =
@@ -24,7 +24,7 @@ function repairLocalizedString(
     cleanText(legacyValue);
 
   if (!(en || ar)) {
-    return undefined;
+    return;
   }
 
   const repaired = {
@@ -33,7 +33,7 @@ function repairLocalizedString(
   };
 
   if (localized.en === repaired.en && localized.ar === repaired.ar) {
-    return undefined;
+    return;
   }
 
   return repaired;
@@ -44,7 +44,7 @@ function repairLocalizedStringArray(
   localizedValues?: LocalizedString[] | null
 ) {
   if (!localizedValues) {
-    return undefined;
+    return;
   }
 
   let changed = false;
@@ -281,12 +281,6 @@ export const repairCorruptedArabicFields = mutation({
         "methodI18n",
         result.method,
         result.methodI18n
-      );
-      fieldsRepaired += addRepair(
-        patch,
-        "targetRangeI18n",
-        result.targetRange,
-        result.targetRangeI18n
       );
       await patchIfNeeded(result._id, patch);
     }

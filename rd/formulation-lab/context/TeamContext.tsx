@@ -35,8 +35,9 @@ const STORAGE_KEY = "food-rd-lab-active-team";
 export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const userTeams = useQuery(api.teams.list) ?? [];
-  const teamsLoading = useQuery(api.teams.list) === undefined;
+  const userTeamsQuery = useQuery(api.teams.list);
+  const userTeams = userTeamsQuery ?? [];
+  const teamsLoading = userTeamsQuery === undefined;
 
   const [activeTeamId, setActiveTeamIdState] = useState<Id<"teams"> | null>(
     () => {
@@ -57,6 +58,17 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
 
   // Auto-select first team if none selected and teams are available
   useEffect(() => {
+    if (teamsLoading) {
+      return;
+    }
+
+    if (userTeams.length === 0) {
+      if (activeTeamId) {
+        setActiveTeamId(null);
+      }
+      return;
+    }
+
     if (!activeTeamId && userTeams.length > 0) {
       setActiveTeamId(userTeams[0]._id);
     }
@@ -68,7 +80,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     ) {
       setActiveTeamId(userTeams[0]._id);
     }
-  }, [userTeams, activeTeamId]);
+  }, [userTeams, activeTeamId, teamsLoading]);
 
   // Derive current role
   const activeTeam = userTeams.find((t) => t._id === activeTeamId);

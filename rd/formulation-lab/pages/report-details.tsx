@@ -213,9 +213,6 @@ const ReportDetails: React.FC = () => {
                     {t("method")}
                   </th>
                   <th className="whitespace-nowrap px-6 py-4 text-center font-semibold">
-                    {t("target_range")}
-                  </th>
-                  <th className="whitespace-nowrap px-6 py-4 text-center font-semibold">
                     {t("result_value")}
                   </th>
                   <th className="px-6 py-4 text-end font-semibold">
@@ -237,9 +234,6 @@ const ReportDetails: React.FC = () => {
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-gray-500 dark:text-slate-400">
                         {res.method}
-                      </td>
-                      <td className="px-6 py-4 text-center font-mono text-gray-600 dark:text-slate-300">
-                        {res.targetRange}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className="font-bold text-base text-gray-900 dark:text-white">

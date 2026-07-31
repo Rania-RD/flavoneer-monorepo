@@ -100,6 +100,7 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_userId", ["userId"])
+    .index("by_userId_status", ["userId", "status"])
     .index("by_teamId", ["teamId"])
     .index("by_teamId_status", ["teamId", "status"]),
 
@@ -224,7 +225,10 @@ export default defineSchema({
     parameterI18n: v.optional(localizedStringValidator),
     method: v.string(),
     methodI18n: v.optional(localizedStringValidator),
-    targetRange: v.string(),
+    // Deprecated legacy storage fields. Current clients and mutations do not
+    // read or write them; keeping them optional allows old documents to pass
+    // schema validation until a separate data cleanup migration is completed.
+    targetRange: v.optional(v.string()),
     targetRangeI18n: v.optional(localizedStringValidator),
     min: v.number(),
     max: v.number(),

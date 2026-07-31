@@ -134,8 +134,6 @@ export interface TestResult {
   min: number;
   parameter: string;
   parameterI18n?: LocalizedString;
-  targetRange: string;
-  targetRangeI18n?: LocalizedString;
   unit: string;
 }
 

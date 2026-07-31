@@ -920,11 +920,11 @@ const Formulation: React.FC = () => {
       setPhases([]);
       setManualAllergenOverrides({});
       navigate(`/project/${newProjectId}?tab=formulation`);
-      void logActivity({
+      logActivity({
         action: "Created New Draft Version",
         target: `${project.name} v${project.version}`,
         page: "Formulation",
-      });
+      }).catch(console.error);
     } catch (err: unknown) {
       setIsCreatingNewVersion(false);
       window.alert((err as Error).message || "Failed to create new version");
@@ -1024,7 +1024,7 @@ const Formulation: React.FC = () => {
       return `Auto-Save: Updated step label to ${formatAutosaveValue(updates.label)}`;
     }
     if ("notes" in updates) {
-      return `Auto-Save: Updated step notes`;
+      return "Auto-Save: Updated step notes";
     }
     return DEFAULT_AUTOSAVE_NAME;
   };
@@ -1204,21 +1204,28 @@ const Formulation: React.FC = () => {
     );
   };
 
-  if (!project) {
+  if (!project || project._id !== projectId) {
+    const isProjectLoading = Boolean(projectId) && convexProject !== null;
+
     return (
       <div className="-m-4 flex min-h-dvh items-center justify-center bg-white p-6 sm:-m-6 lg:-m-8 dark:bg-[#0f172a]">
         <div className="max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <p className="font-bold text-slate-700 dark:text-slate-200">
-            {convexProject === undefined ? t("loading") : t("project_not_found")}
-          </p>
-          <button
-            className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500"
-            onClick={handleExitEditor}
-            type="button"
+          <p
+            aria-live="polite"
+            className="font-bold text-slate-700 dark:text-slate-200"
           >
-            <ChevronLeft size={16} />
-            {t("exit_editor")}
-          </button>
+            {isProjectLoading ? t("loading") : t("project_not_found")}
+          </p>
+          {!isProjectLoading && (
+            <button
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+              onClick={handleExitEditor}
+              type="button"
+            >
+              <ChevronLeft size={16} />
+              {t("exit_editor")}
+            </button>
+          )}
         </div>
       </div>
     );

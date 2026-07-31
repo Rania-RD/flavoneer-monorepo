@@ -3,7 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { FlaskConical, Plus, Save, Trash2, X } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
@@ -31,6 +31,175 @@ const SAMPLE_TYPES = [
   { key: "sample_in_process", value: "In-Process" },
 ];
 
+const PARAMETER_SUGGESTIONS = [
+  "pH",
+  "Viscosity",
+  "Density",
+  "Brix",
+  "Moisture",
+] as const;
+
+const METHOD_SUGGESTIONS = [
+  "ISO",
+  "HPLC",
+  "Titration",
+  "AOAC",
+  "Refractometry",
+] as const;
+
+const UNIT_SUGGESTIONS = [
+  "%",
+  "mg/g",
+  "cP",
+  "g/cm³",
+  "mg/kg",
+  "ppm",
+] as const;
+
+interface AutocompleteInputProps {
+  onChange: (value: string) => void;
+  placeholder: string;
+  suggestions: readonly string[];
+  value: string;
+}
+
+const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
+  onChange,
+  placeholder,
+  suggestions,
+  value,
+}) => {
+  const listboxId = useId();
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  const normalizedValue = value.trim().toLocaleLowerCase();
+  const filteredSuggestions = suggestions.filter((suggestion) =>
+    suggestion.toLocaleLowerCase().includes(normalizedValue)
+  );
+
+  const closeSuggestions = () => {
+    setIsOpen(false);
+    setActiveIndex(-1);
+  };
+
+  const selectSuggestion = (suggestion: string) => {
+    onChange(suggestion);
+    closeSuggestions();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      if (isOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeSuggestions();
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (filteredSuggestions.length === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((currentIndex) => {
+        if (event.key === "ArrowDown") {
+          return currentIndex >= filteredSuggestions.length - 1
+            ? 0
+            : currentIndex + 1;
+        }
+        return currentIndex <= 0
+          ? filteredSuggestions.length - 1
+          : currentIndex - 1;
+      });
+      return;
+    }
+
+    if (
+      event.key === "Enter" &&
+      isOpen &&
+      activeIndex >= 0 &&
+      filteredSuggestions[activeIndex]
+    ) {
+      event.preventDefault();
+      selectSuggestion(filteredSuggestions[activeIndex]);
+    }
+  };
+
+  const showSuggestions = isOpen && filteredSuggestions.length > 0;
+  const activeOptionId =
+    showSuggestions && activeIndex >= 0
+      ? `${listboxId}-option-${activeIndex}`
+      : undefined;
+
+  return (
+    <div
+      className="relative"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          closeSuggestions();
+        }
+      }}
+    >
+      <input
+        aria-activedescendant={activeOptionId}
+        aria-autocomplete="list"
+        aria-controls={showSuggestions ? listboxId : undefined}
+        aria-expanded={showSuggestions}
+        autoComplete="off"
+        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+        onChange={(event) => {
+          onChange(event.target.value);
+          setActiveIndex(-1);
+          setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        role="combobox"
+        type="text"
+        value={value}
+      />
+
+      {showSuggestions && (
+        <div
+          className="absolute inset-x-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-xl dark:border-slate-600 dark:bg-slate-800"
+          id={listboxId}
+          role="listbox"
+        >
+          {filteredSuggestions.map((suggestion, index) => (
+            <div
+              aria-selected={index === activeIndex}
+              className={`cursor-pointer rounded-lg px-3 py-2 text-start text-sm transition-colors ${
+                index === activeIndex
+                  ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200"
+                  : "text-gray-700 hover:bg-gray-50 dark:text-slate-200 dark:hover:bg-slate-700"
+              }`}
+              id={`${listboxId}-option-${index}`}
+              key={suggestion}
+              onClick={() => selectSuggestion(suggestion)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  selectSuggestion(suggestion);
+                }
+              }}
+              onMouseDown={(event) => event.preventDefault()}
+              role="option"
+              tabIndex={-1}
+            >
+              {suggestion}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
   isOpen,
   onClose,
@@ -49,7 +218,6 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
     {
       parameter: "",
       method: "",
-      targetRange: "",
       min: 0,
       max: 0,
       actualValue: 0,
@@ -65,7 +233,6 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
       {
         parameter: "",
         method: "",
-        targetRange: "",
         min: 0,
         max: 0,
         actualValue: 0,
@@ -96,7 +263,6 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
       {
         parameter: "",
         method: "",
-        targetRange: "",
         min: 0,
         max: 0,
         actualValue: 0,
@@ -130,9 +296,9 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
         leadChemist: profile.name || t("unknown"),
         sampleType,
         hash:
-          Math.random().toString(36).substring(2, 10) +
+          Math.random().toString(36).slice(2, 10) +
           "..." +
-          Math.random().toString(36).substring(2, 6),
+          Math.random().toString(36).slice(2, 6),
         results: validResults,
       });
       resetForm();
@@ -295,53 +461,29 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                             </button>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                          <input
-                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                            onChange={(e) =>
-                              handleResultChange(
-                                index,
-                                "parameter",
-                                e.target.value
-                              )
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                          <AutocompleteInput
+                            onChange={(value) =>
+                              handleResultChange(index, "parameter", value)
                             }
                             placeholder={t("parameter")}
-                            type="text"
+                            suggestions={PARAMETER_SUGGESTIONS}
                             value={result.parameter}
                           />
-                          <input
-                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                            onChange={(e) =>
-                              handleResultChange(
-                                index,
-                                "method",
-                                e.target.value
-                              )
+                          <AutocompleteInput
+                            onChange={(value) =>
+                              handleResultChange(index, "method", value)
                             }
                             placeholder={t("method")}
-                            type="text"
+                            suggestions={METHOD_SUGGESTIONS}
                             value={result.method}
                           />
-                          <input
-                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                            onChange={(e) =>
-                              handleResultChange(
-                                index,
-                                "targetRange",
-                                e.target.value
-                              )
-                            }
-                            placeholder={t("target_range")}
-                            type="text"
-                            value={result.targetRange}
-                          />
-                          <input
-                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                            onChange={(e) =>
-                              handleResultChange(index, "unit", e.target.value)
+                          <AutocompleteInput
+                            onChange={(value) =>
+                              handleResultChange(index, "unit", value)
                             }
                             placeholder={t("unit")}
-                            type="text"
+                            suggestions={UNIT_SUGGESTIONS}
                             value={result.unit}
                           />
                         </div>

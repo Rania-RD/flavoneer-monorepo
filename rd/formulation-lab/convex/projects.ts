@@ -573,32 +573,53 @@ export const listByTeam = query({
     language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
+    const authUser = await authComponent.getAuthUser(ctx);
+    if (!authUser) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+
     let result: {
       page: Doc<"projects">[];
       isDone: boolean;
       continueCursor: string;
     };
     if (args.teamId) {
+      const teamId = args.teamId;
+      const membership = await ctx.db
+        .query("teamMembers")
+        .withIndex("by_teamId_userId", (q) =>
+          q.eq("teamId", teamId).eq("userId", authUser._id)
+        )
+        .first();
+      if (!membership) {
+        return { page: [], isDone: true, continueCursor: "" };
+      }
+
       if (args.status) {
         result = await ctx.db
           .query("projects")
           .withIndex("by_teamId_status", (q) =>
-            q.eq("teamId", args.teamId!).eq("status", args.status!)
+            q.eq("teamId", teamId).eq("status", args.status!)
           )
           .paginate(args.paginationOpts);
       } else {
         result = await ctx.db
           .query("projects")
-          .withIndex("by_teamId", (q) => q.eq("teamId", args.teamId!))
+          .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
           .paginate(args.paginationOpts);
       }
     } else if (args.status) {
       result = await ctx.db
         .query("projects")
-        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .withIndex("by_userId_status", (q) =>
+          q.eq("userId", authUser._id).eq("status", args.status!)
+        )
         .paginate(args.paginationOpts);
     } else {
-      result = await ctx.db.query("projects").paginate(args.paginationOpts);
+      result = await ctx.db
+        .query("projects")
+        .withIndex("by_userId", (q) => q.eq("userId", authUser._id))
+        .paginate(args.paginationOpts);
     }
     const page = await Promise.all(
       result.page.map((p) => enrichProject(ctx, p, args.language))
@@ -617,18 +638,22 @@ export const get = query({
     }
 
     // Auth & Access Check
-    const authUserId = (await ctx.auth.getUserIdentity())?.subject;
-    if (!authUserId) {
+    const authUser = await authComponent.getAuthUser(ctx);
+    if (!authUser) {
       return null; // Guest users must login to redeem/view
     }
+    const authUserId = authUser._id;
 
     let sharedRole: "viewer" | "editor" | undefined;
 
-    if (project.teamId) {
+    if (project.userId === authUserId) {
+      // The creator always retains access, including legacy projects that were
+      // accidentally associated with a stale team selection.
+    } else if (project.teamId) {
       const teamMember = await ctx.db
         .query("teamMembers")
         .withIndex("by_teamId_userId", (q) =>
-          q.eq("teamId", project.teamId!).eq("userId", authUserId!)
+          q.eq("teamId", project.teamId!).eq("userId", authUserId)
         )
         .first();
 
@@ -640,7 +665,7 @@ export const get = query({
         const access = await ctx.db
           .query("sharedAccess")
           .withIndex("by_userId_entityId", (q) =>
-            q.eq("userId", authUserId!).eq("entityId", project._id)
+            q.eq("userId", authUserId).eq("entityId", project._id)
           )
           .first();
 
@@ -652,20 +677,17 @@ export const get = query({
         }
       }
     } else {
-      // If project has no team ID, only the creator or those with shared access should see it
-      if (project.userId !== authUserId) {
-        const access = await ctx.db
-          .query("sharedAccess")
-          .withIndex("by_userId_entityId", (q) =>
-            q.eq("userId", authUserId!).eq("entityId", project._id)
-          )
-          .first();
+      const access = await ctx.db
+        .query("sharedAccess")
+        .withIndex("by_userId_entityId", (q) =>
+          q.eq("userId", authUserId).eq("entityId", project._id)
+        )
+        .first();
 
-        if (access) {
-          sharedRole = access.role;
-        } else {
-          return null;
-        }
+      if (access) {
+        sharedRole = access.role;
+      } else {
+        return null;
       }
     }
 
@@ -729,12 +751,16 @@ export const create = mutation({
     phases: v.optional(v.array(phaseValidator)),
     batchCodePrefix: v.optional(v.string()),
     batchCodeFormat: v.optional(batchCodeFormatValidator),
-    userId: v.optional(v.string()),
     teamId: v.optional(v.id("teams")),
     authorizedExecutor: v.optional(v.string()),
   },
   returns: v.id("projects"),
   handler: async (ctx, args) => {
+    const authUser = await authComponent.getAuthUser(ctx);
+    if (!authUser) {
+      throw new Error("Not authenticated");
+    }
+
     const {
       ingredients,
       previousVersionIngredients,
@@ -742,6 +768,19 @@ export const create = mutation({
       authorizedExecutor,
       ...projectData
     } = args;
+
+    if (projectData.teamId) {
+      const teamId = projectData.teamId;
+      const membership = await ctx.db
+        .query("teamMembers")
+        .withIndex("by_teamId_userId", (q) =>
+          q.eq("teamId", teamId).eq("userId", authUser._id)
+        )
+        .first();
+      if (!membership) {
+        throw new Error("You do not have access to the selected team");
+      }
+    }
 
     // 1. Auto-generate ID if Traceability Config is active
     let generatedBatchCodePrefix = projectData.batchCodePrefix;
@@ -760,7 +799,7 @@ export const create = mutation({
     const projectId = await ctx.db.insert("projects", {
       ...withProjectLocalizedFields(projectData),
       batchCodePrefix: generatedBatchCodePrefix,
-      userId: projectData.userId ?? null,
+      userId: authUser._id,
       teamId: projectData.teamId ?? null,
       authorizedExecutor,
     });
@@ -953,9 +992,9 @@ export const update = mutation({
           let currentNumStr = project.version;
           // Attempt to strip prefix to get pure numbers
           if (currentNumStr.toUpperCase().startsWith(prefix.toUpperCase())) {
-            currentNumStr = currentNumStr.substring(prefix.length);
+            currentNumStr = currentNumStr.slice(prefix.length);
           } else if (currentNumStr.toUpperCase().startsWith("V")) {
-            currentNumStr = currentNumStr.substring(1);
+            currentNumStr = currentNumStr.slice(1);
           }
 
           let newVersion = project.version;

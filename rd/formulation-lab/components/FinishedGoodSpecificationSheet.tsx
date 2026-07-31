@@ -105,9 +105,6 @@ function formatResultRange(result?: TestResult, fallback = "To be validated") {
   if (!result) {
     return fallback;
   }
-  if (result.targetRange) {
-    return result.targetRange;
-  }
   return `${result.min}-${result.max}${result.unit ? ` ${result.unit}` : ""}`;
 }
 

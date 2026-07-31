@@ -16,7 +16,6 @@ import { useTeam } from "../context/TeamContext";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { modalVariants, overlayVariants } from "../lib/animations";
-import { authClient } from "../lib/auth-client";
 import type { EnrichedProject } from "../types";
 
 const MotionDiv = motion.div as React.FC<
@@ -38,8 +37,6 @@ const Dashboard: React.FC = () => {
 
   // Team context
   const { activeTeamId, teams, teamsLoading } = useTeam();
-
-  const { data: session } = authClient.useSession();
 
   const {
     results: projectsRaw,
@@ -80,7 +77,6 @@ const Dashboard: React.FC = () => {
     const newProjectId = await createProject({
       ...data,
       teamId: activeTeamId ?? undefined,
-      userId: session?.user?.id ?? undefined,
     });
     logActivity({
       action: "Created Project",

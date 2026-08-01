@@ -1,0 +1,1290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Production-readiness assessment for the Flavoneer monorepo, generated 2026-08-01."
+    />
+    <title>Flavoneer production readiness assessment</title>
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #f1f0ea;
+        --muted: #a8aaa1;
+        --faint: #777b73;
+        --paper: #0d100f;
+        --paper-raised: #141816;
+        --line: rgba(240, 239, 231, 0.14);
+        --line-strong: rgba(240, 239, 231, 0.26);
+        --amber: #f6b94b;
+        --amber-soft: rgba(246, 185, 75, 0.12);
+        --red: #ff7167;
+        --red-soft: rgba(255, 113, 103, 0.1);
+        --green: #69d49a;
+        --green-soft: rgba(105, 212, 154, 0.1);
+        --blue: #79b9ff;
+        --content: 1180px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+          var(--paper);
+        background-size: 40px 40px;
+        color: var(--ink);
+        font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        text-rendering: optimizeLegibility;
+      }
+
+      a {
+        color: inherit;
+        text-decoration-color: rgba(246, 185, 75, 0.5);
+        text-underline-offset: 0.2em;
+      }
+
+      a:hover {
+        color: var(--amber);
+      }
+
+      code,
+      .mono {
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      }
+
+      code {
+        color: #deddd5;
+        font-size: 0.91em;
+      }
+
+      .progress {
+        position: fixed;
+        z-index: 100;
+        inset: 0 auto auto 0;
+        width: 0;
+        height: 3px;
+        background: var(--amber);
+        box-shadow: 0 0 18px rgba(246, 185, 75, 0.45);
+      }
+
+      .topbar {
+        position: sticky;
+        z-index: 50;
+        top: 0;
+        border-bottom: 1px solid var(--line);
+        background: rgba(13, 16, 15, 0.88);
+        backdrop-filter: blur(18px);
+      }
+
+      .topbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: min(calc(100% - 40px), var(--content));
+        min-height: 60px;
+        margin: auto;
+        gap: 24px;
+      }
+
+      .wordmark {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+
+      .wordmark-mark {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--amber);
+        box-shadow: 0 0 0 5px var(--amber-soft);
+      }
+
+      .topbar-meta {
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero {
+        position: relative;
+        min-height: min(820px, calc(100svh - 60px));
+        overflow: hidden;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero::before {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 78% 22%, rgba(246, 185, 75, 0.14), transparent 33%),
+          linear-gradient(135deg, rgba(255, 113, 103, 0.055), transparent 48%);
+        content: "";
+        pointer-events: none;
+      }
+
+      .hero-inner {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+        align-items: end;
+        width: min(calc(100% - 40px), var(--content));
+        min-height: min(760px, calc(100svh - 60px));
+        margin: auto;
+        padding: 88px 0 72px;
+        gap: 64px;
+      }
+
+      .eyebrow {
+        margin: 0 0 20px;
+        color: var(--amber);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 850px;
+        margin-bottom: 28px;
+        font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        font-size: clamp(56px, 7vw, 96px);
+        font-weight: 700;
+        letter-spacing: -0.065em;
+        line-height: 0.92;
+      }
+
+      .hero-copy {
+        max-width: 700px;
+        margin-bottom: 0;
+        color: #c9cac3;
+        font-size: clamp(18px, 2vw, 24px);
+        line-height: 1.45;
+      }
+
+      .score-panel {
+        align-self: center;
+        padding: 30px 0 4px 32px;
+        border-left: 1px solid var(--line-strong);
+      }
+
+      .score {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 12px;
+        color: var(--red);
+      }
+
+      .score-value {
+        font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        font-size: 92px;
+        font-weight: 700;
+        letter-spacing: -0.07em;
+        line-height: 1;
+      }
+
+      .score-max {
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .verdict {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 22px;
+        color: var(--red);
+        font-size: 13px;
+        font-weight: 750;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .verdict::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 0 5px var(--red-soft);
+        content: "";
+      }
+
+      .score-note {
+        max-width: 300px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .report-nav {
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-raised);
+      }
+
+      .report-nav ol {
+        display: flex;
+        width: min(calc(100% - 40px), var(--content));
+        margin: auto;
+        padding: 0;
+        overflow-x: auto;
+        list-style: none;
+        scrollbar-width: none;
+      }
+
+      .report-nav a {
+        display: block;
+        padding: 18px 24px 17px 0;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .report-nav a:hover {
+        color: var(--ink);
+      }
+
+      main {
+        width: min(calc(100% - 40px), var(--content));
+        margin: auto;
+      }
+
+      section {
+        padding: 96px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(160px, 0.38fr) minmax(0, 1fr);
+        margin-bottom: 54px;
+        gap: 36px;
+      }
+
+      .section-number {
+        color: var(--faint);
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        max-width: 790px;
+        margin-bottom: 14px;
+        font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        font-size: clamp(40px, 5vw, 68px);
+        font-weight: 700;
+        letter-spacing: -0.045em;
+        line-height: 1;
+      }
+
+      .section-intro {
+        max-width: 770px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .finding {
+        display: grid;
+        grid-template-columns: 110px minmax(220px, 0.48fr) minmax(0, 1fr);
+        padding: 28px 0;
+        border-top: 1px solid var(--line);
+        gap: 30px;
+      }
+
+      .finding:last-child {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .severity {
+        display: inline-flex;
+        width: fit-content;
+        height: fit-content;
+        padding: 6px 9px 5px;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      .critical,
+      .high {
+        color: var(--red);
+      }
+
+      .medium {
+        color: var(--amber);
+      }
+
+      .positive {
+        color: var(--green);
+      }
+
+      .finding h3 {
+        margin-bottom: 8px;
+        font-size: 19px;
+        letter-spacing: -0.015em;
+        line-height: 1.25;
+      }
+
+      .finding p,
+      .finding ul {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .finding ul {
+        padding-left: 20px;
+      }
+
+      .finding li + li {
+        margin-top: 7px;
+      }
+
+      .evidence {
+        margin-top: 13px;
+        color: var(--faint);
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .evidence a {
+        color: #b9bcb4;
+      }
+
+      .score-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .dimension {
+        min-height: 176px;
+        padding: 24px 18px 22px 0;
+        border-right: 1px solid var(--line);
+      }
+
+      .dimension + .dimension {
+        padding-left: 18px;
+      }
+
+      .dimension:last-child {
+        border-right: 0;
+      }
+
+      .dimension strong {
+        display: block;
+        margin-bottom: 28px;
+        font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        font-size: 36px;
+        letter-spacing: -0.05em;
+      }
+
+      .dimension span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .dimension small {
+        display: block;
+        margin-top: 7px;
+        color: var(--faint);
+        font-size: 11px;
+      }
+
+      .gate-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .gate-table th,
+      .gate-table td {
+        padding: 19px 14px;
+        border-top: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .gate-table th:first-child,
+      .gate-table td:first-child {
+        padding-left: 0;
+      }
+
+      .gate-table th {
+        color: var(--faint);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .gate-table td {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .gate-table td:first-child {
+        color: var(--ink);
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .status {
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .status.pass {
+        color: var(--green);
+      }
+
+      .status.fail {
+        color: var(--red);
+      }
+
+      .status.partial {
+        color: var(--amber);
+      }
+
+      .timeline {
+        display: grid;
+        grid-template-columns: 180px minmax(0, 1fr);
+      }
+
+      .phase {
+        display: contents;
+      }
+
+      .phase-time,
+      .phase-body {
+        padding: 30px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .phase-time {
+        color: var(--amber);
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .phase-body h3 {
+        margin-bottom: 10px;
+        font-size: 21px;
+      }
+
+      .phase-body ol {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--muted);
+      }
+
+      .phase-body li + li {
+        margin-top: 8px;
+      }
+
+      .decision-rule {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 46px;
+        border-top: 1px solid var(--line-strong);
+        border-bottom: 1px solid var(--line-strong);
+      }
+
+      .decision-rule > div {
+        padding: 28px 26px 28px 0;
+      }
+
+      .decision-rule > div + div {
+        padding-left: 26px;
+        border-left: 1px solid var(--line-strong);
+      }
+
+      .decision-rule strong {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 14px;
+      }
+
+      .decision-rule p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .callout {
+        padding: 28px 30px;
+        border: 1px solid rgba(246, 185, 75, 0.35);
+        background: var(--amber-soft);
+      }
+
+      .callout strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--amber);
+      }
+
+      .callout p {
+        margin: 0;
+        color: #d3d0c5;
+      }
+
+      .scope-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 40px;
+      }
+
+      .scope-list div {
+        padding: 20px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .scope-list strong,
+      .scope-list span {
+        display: block;
+      }
+
+      .scope-list strong {
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+
+      .scope-list span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      footer {
+        width: min(calc(100% - 40px), var(--content));
+        margin: auto;
+        padding: 46px 0 64px;
+        color: var(--faint);
+        font-size: 12px;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+
+      .js .reveal {
+        opacity: 0;
+        transform: translateY(16px);
+        transition:
+          opacity 520ms ease,
+          transform 520ms ease;
+      }
+
+      .js .reveal.visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      .hero-animate {
+        animation: hero-in 650ms both cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .hero-animate:nth-child(2) {
+        animation-delay: 90ms;
+      }
+
+      .hero-animate:nth-child(3) {
+        animation-delay: 180ms;
+      }
+
+      @keyframes hero-in {
+        from {
+          transform: translateY(20px);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 920px) {
+        .hero-inner {
+          grid-template-columns: 1fr;
+          align-items: end;
+          padding-top: 64px;
+          gap: 44px;
+        }
+
+        .score-panel {
+          align-self: end;
+          padding: 24px 0 0;
+          border-top: 1px solid var(--line-strong);
+          border-left: 0;
+        }
+
+        .score-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .dimension:nth-child(3) {
+          border-right: 0;
+        }
+
+        .dimension:nth-child(n + 4) {
+          border-top: 1px solid var(--line);
+        }
+      }
+
+      @media (max-width: 700px) {
+        .topbar-meta {
+          display: none;
+        }
+
+        .hero-inner {
+          min-height: auto;
+          padding: 72px 0 60px;
+        }
+
+        h1 {
+          font-size: clamp(52px, 18vw, 80px);
+        }
+
+        section {
+          padding: 68px 0;
+        }
+
+        .section-head,
+        .finding,
+        .decision-rule,
+        .scope-list {
+          grid-template-columns: 1fr;
+        }
+
+        .section-head {
+          gap: 14px;
+        }
+
+        .finding {
+          gap: 13px;
+        }
+
+        .score-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .dimension:nth-child(2n) {
+          border-right: 0;
+        }
+
+        .dimension:nth-child(3) {
+          border-right: 1px solid var(--line);
+        }
+
+        .dimension:nth-child(n + 3) {
+          border-top: 1px solid var(--line);
+        }
+
+        .timeline {
+          grid-template-columns: 1fr;
+        }
+
+        .phase {
+          display: block;
+        }
+
+        .phase-time {
+          padding-bottom: 0;
+        }
+
+        .phase-body {
+          padding-top: 10px;
+          border-top: 0;
+        }
+
+        .decision-rule > div + div {
+          padding-left: 0;
+          border-top: 1px solid var(--line-strong);
+          border-left: 0;
+        }
+
+        .gate-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .hero-animate,
+        .js .reveal {
+          opacity: 1;
+          transform: none;
+          animation: none;
+          transition: none;
+        }
+      }
+
+      @media print {
+        :root {
+          color-scheme: light;
+          --ink: #141714;
+          --muted: #454a44;
+          --faint: #6b716a;
+          --paper: #fff;
+          --paper-raised: #f5f5f1;
+          --line: rgba(20, 23, 20, 0.16);
+          --line-strong: rgba(20, 23, 20, 0.3);
+        }
+
+        body {
+          background: #fff;
+        }
+
+        .progress,
+        .report-nav {
+          display: none;
+        }
+
+        .topbar {
+          position: static;
+          background: #fff;
+        }
+
+        .hero,
+        section {
+          break-inside: avoid;
+        }
+
+        .reveal {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="wordmark" href="#top">
+          <span class="wordmark-mark" aria-hidden="true"></span>
+          Flavoneer / readiness review
+        </a>
+        <div class="topbar-meta mono">main · f089fe0 · 2026-08-01</div>
+      </div>
+    </header>
+
+    <div class="hero" id="top">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow hero-animate">Production readiness assessment</p>
+          <h1 class="hero-animate">The build works. The trust boundary does not.</h1>
+          <p class="hero-copy hero-animate">
+            Flavoneer has a credible product surface, typed code, working production builds, and useful domain tests. It should not handle production customer data until Convex authorization, vulnerable dependencies, and the release pipeline are fixed and verified.
+          </p>
+        </div>
+        <aside class="score-panel hero-animate" aria-label="Readiness score">
+          <div class="score">
+            <span class="score-value">34</span><span class="score-max">/100</span>
+          </div>
+          <div class="verdict">No-go</div>
+          <p class="score-note">
+            Score reflects the checked-out repository. A passing build cannot offset unauthenticated data access and mutation paths.
+          </p>
+        </aside>
+      </div>
+    </div>
+
+    <nav class="report-nav" aria-label="Report sections">
+      <ol>
+        <li><a href="#summary">01 / Summary</a></li>
+        <li><a href="#blockers">02 / Blockers</a></li>
+        <li><a href="#quality">03 / Quality gates</a></li>
+        <li><a href="#dimensions">04 / Score</a></li>
+        <li><a href="#roadmap">05 / Roadmap</a></li>
+        <li><a href="#scope">06 / Scope</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <section id="summary" class="reveal">
+        <div class="section-head">
+          <div class="section-number mono">01 / Executive summary</div>
+          <div>
+            <h2>Strong product code, unsafe production controls.</h2>
+            <p class="section-intro">
+              The repository can produce deployable artifacts, but it has release-blocking security defects and no repository-enforced delivery gate. Production readiness is blocked by authorization, dependency risk, and deployment drift, not by basic compilation.
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity critical">P0</span>
+          <div><h3>Tenant data is not protected consistently</h3></div>
+          <div>
+            <p>
+              Several public Convex queries and mutations do not authenticate the caller or verify access to the target team/project. The exposed surface includes project listing and destructive project mutations, inventory, lab reports, comments, recipe subdocuments, equipment, and step dependencies.
+            </p>
+            <p class="evidence">
+              Evidence: <a href="../rd/formulation-lab/convex/projects.ts">convex/projects.ts</a>,
+              <a href="../rd/formulation-lab/convex/inventory.ts">convex/inventory.ts</a>,
+              <a href="../rd/formulation-lab/convex/labReports.ts">convex/labReports.ts</a>,
+              <a href="../rd/formulation-lab/convex/comments.ts">convex/comments.ts</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity critical">P0</span>
+          <div><h3>Production dependencies have known vulnerabilities</h3></div>
+          <div>
+            <p>
+              <code>pnpm audit --prod</code> reports 27 vulnerabilities: 2 critical, 16 high, 7 moderate, and 2 low. Direct Better Auth 1.5.3 is below patched versions listed by multiple advisories; a critical <code>tar</code> issue is also present through the Nuxt server dependency tree.
+            </p>
+            <p class="evidence">
+              Evidence: <a href="../rd/formulation-lab/package.json">rd/formulation-lab/package.json</a>,
+              <a href="../pnpm-lock.yaml">pnpm-lock.yaml</a> · command exit 1 on 2026-08-01
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity high">P1</span>
+          <div><h3>The documented deployment path no longer exists</h3></div>
+          <div>
+            <p>
+              The lab README describes GitHub Actions, GHCR, a <code>.coolify</code> wrapper, and Dockerfiles. None are checked in. The remaining Railpack/Nixpacks files only install dependencies; they define no build or start step. There is also no checked-in CI workflow.
+            </p>
+            <p class="evidence">
+              Evidence: <a href="../rd/formulation-lab/README.md">rd/formulation-lab/README.md</a>,
+              <a href="../railpack.json">railpack.json</a>,
+              <a href="../nixpacks.toml">nixpacks.toml</a> · no <code>.github/</code>, <code>.coolify/</code>, or Dockerfile tracked
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity positive">Good</span>
+          <div><h3>The codebase has a useful base to harden</h3></div>
+          <div>
+            <p>
+              Both application builds pass. TypeScript passes with <code>--noEmit</code>. The zero-English and Arabic encoding guards pass. Forty-five of fifty Playwright-collected tests pass without a browser; the remaining browser tests were blocked by a missing Chromium binary, not an observed assertion failure.
+            </p>
+            <p class="evidence">
+              Evidence: <code>pnpm build</code>, <code>pnpm typecheck</code>, localization scripts, <code>pnpm test</code> · verified 2026-08-01
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="blockers" class="reveal">
+        <div class="section-head">
+          <div class="section-number mono">02 / Release blockers</div>
+          <div>
+            <h2>Fix these before any customer data enters the system.</h2>
+            <p class="section-intro">
+              These findings can cause cross-tenant disclosure, unauthorized writes, account or dependency compromise, or an unreproducible release.
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity critical">P0</span>
+          <div><h3>Project APIs bypass authorization</h3></div>
+          <div>
+            <ul>
+              <li><code>projects.list</code> paginates all projects without authentication or tenant filtering.</li>
+              <li><code>projects.update</code> patches scalar fields and replaces recipe contents without an identity or ownership check.</li>
+              <li><code>projects.remove</code> cascades deletion without authentication.</li>
+              <li><code>createNewVersion</code> and <code>duplicate</code> clone any project ID without authorization.</li>
+            </ul>
+            <p class="evidence"><a href="../rd/formulation-lab/convex/projects.ts">rd/formulation-lab/convex/projects.ts</a> · functions at lines 541, 828, 1022, 1217, 1223 in the audited checkout</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity critical">P0</span>
+          <div><h3>Core domain modules expose unauthenticated CRUD</h3></div>
+          <div>
+            <p>
+              Nine Convex modules with public APIs contain no authentication marker at all: comments, equipment, i18n maintenance, inventory, lab reports, project ingredients, recipe phases, regulatory imports, and step dependencies. This is a systemic boundary problem; adding checks only in the UI will not fix it.
+            </p>
+            <p class="evidence">
+              Evidence: <a href="../rd/formulation-lab/convex">rd/formulation-lab/convex/</a> · 9 of 27 public-API modules lack <code>getUserIdentity</code>, <code>getAuthUser</code>, or <code>requirePermission</code>
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity critical">P0</span>
+          <div><h3>Spreadsheet writes treat anonymous callers as “system”</h3></div>
+          <div>
+            <p>
+              <code>updateCell</code>, <code>resize</code>, and <code>clearRange</code> load a project step and write it without checking project access. Missing identity is recorded as <code>system</code>, which hides the authorization failure in audit metadata.
+            </p>
+            <p class="evidence"><a href="../rd/formulation-lab/convex/spreadsheetSteps.ts">rd/formulation-lab/convex/spreadsheetSteps.ts</a> · lines 122–226</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity critical">P0</span>
+          <div><h3>Sharing and invitations lack required checks</h3></div>
+          <div>
+            <ul>
+              <li>Any authenticated user can create a share link for any supplied entity ID; the code comment acknowledges the missing ownership check.</li>
+              <li>Share redemption does not enforce <code>expiresAt</code>.</li>
+              <li>Team invite creation uses <code>Math.random()</code>, does not set expiry, and acceptance does not require the signed-in email to match the invited email.</li>
+              <li><code>teams.get</code> returns a team by ID without authentication or membership verification.</li>
+            </ul>
+            <p class="evidence">
+              <a href="../rd/formulation-lab/convex/sharedLinks.ts">sharedLinks.ts</a> ·
+              <a href="../rd/formulation-lab/convex/teamInvites.ts">teamInvites.ts</a> ·
+              <a href="../rd/formulation-lab/convex/teams.ts">teams.ts</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity high">P1</span>
+          <div><h3>Auth configuration is development-grade</h3></div>
+          <div>
+            <p>
+              Password signup does not require email verification. The direct auth dependency is pinned at 1.5.3 despite advisories patched in 1.6.11–1.6.13. The repository has no tests that call Convex functions under anonymous, wrong-team, viewer, editor, and admin identities.
+            </p>
+            <p class="evidence">
+              <a href="../rd/formulation-lab/convex/auth.ts">convex/auth.ts</a> ·
+              <a href="../rd/formulation-lab/tests">tests/</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity high">P1</span>
+          <div><h3>Environment file is tracked in Git</h3></div>
+          <div>
+            <p>
+              <code>rd/formulation-lab/.env</code> is tracked and has a long commit history. The current file contains deployment identifiers and service URLs. These values may be public by nature, but tracking the file makes future secret leakage likely and complicates environment separation.
+            </p>
+            <p class="evidence"><a href="../rd/formulation-lab/.env.example">Use .env.example as the contract</a> · remove <code>.env</code> from tracking, add an ignore rule, review history, rotate any secret that ever appeared</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity high">P1</span>
+          <div><h3>Regulatory import can become public by omission</h3></div>
+          <div>
+            <p>
+              <code>importCatalogBatch</code> rejects a token only when <code>REGULATORY_IMPORT_TOKEN</code> is configured. If the environment variable is missing, any caller can insert or replace regulatory catalog data. Make the function internal or fail closed when the token is absent.
+            </p>
+            <p class="evidence"><a href="../rd/formulation-lab/convex/regulatory.ts">rd/formulation-lab/convex/regulatory.ts</a> · <code>if (requiredToken &amp;&amp; ...)</code></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="quality" class="reveal">
+        <div class="section-head">
+          <div class="section-number mono">03 / Verified gates</div>
+          <div>
+            <h2>Buildable, but not release-gated.</h2>
+            <p class="section-intro">
+              Commands below were run from the audited checkout. A test marked “blocked” did not finish; it is not a pass.
+            </p>
+          </div>
+        </div>
+
+        <table class="gate-table">
+          <thead>
+            <tr><th>Command</th><th>Result</th><th>Observed behavior</th><th>Release implication</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>pnpm build</td>
+              <td><span class="status pass">Pass</span></td>
+              <td>Nuxt and Vite builds complete.</td>
+              <td>Artifacts are producible.</td>
+            </tr>
+            <tr>
+              <td>pnpm typecheck</td>
+              <td><span class="status pass">Pass</span></td>
+              <td><code>tsc --noEmit</code> exits 0 for the lab.</td>
+              <td>Static types are currently consistent.</td>
+            </tr>
+            <tr>
+              <td>i18n guards</td>
+              <td><span class="status pass">Pass</span></td>
+              <td>Zero-English UI and Arabic encoding checks exit 0.</td>
+              <td>Existing localization-specific guards work.</td>
+            </tr>
+            <tr>
+              <td>pnpm lint</td>
+              <td><span class="status fail">Fail</span></td>
+              <td>Root calls <code>pnpm -r lint</code>; no selected package defines <code>lint</code>.</td>
+              <td>The advertised root gate cannot be used by CI.</td>
+            </tr>
+            <tr>
+              <td>lab check</td>
+              <td><span class="status fail">Fail</span></td>
+              <td>Ultracite reports 33 errors, including skill SVG formatting and source lint findings.</td>
+              <td>Quality gate is red and includes out-of-scope generated/tool assets.</td>
+            </tr>
+            <tr>
+              <td>pnpm test</td>
+              <td><span class="status partial">Blocked</span></td>
+              <td>45 passed; 4 browser tests failed to launch because Chromium is not installed; 1 did not run.</td>
+              <td>E2E behavior remains unverified in this environment.</td>
+            </tr>
+            <tr>
+              <td>pnpm audit --prod</td>
+              <td><span class="status fail">Fail</span></td>
+              <td>27 vulnerabilities: 2 critical, 16 high, 7 moderate, 2 low.</td>
+              <td>Dependency remediation is a release blocker.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout" style="margin-top: 36px">
+          <strong>Bundle budget exceeded</strong>
+          <p>
+            The lab’s main JavaScript chunk is 3,674.77 kB minified and 1,131.07 kB gzip. Vite emits a chunk-size warning. Route-level lazy loading and dependency splitting should happen before broad production rollout, then be checked against an explicit performance budget.
+          </p>
+        </div>
+      </section>
+
+      <section id="dimensions" class="reveal">
+        <div class="section-head">
+          <div class="section-number mono">04 / Readiness score</div>
+          <div>
+            <h2>Security is the score ceiling.</h2>
+            <p class="section-intro">
+              Weighting favors controls that prevent data loss and make releases reproducible. Scores are repository evidence, not a live infrastructure certification.
+            </p>
+          </div>
+        </div>
+
+        <div class="score-grid" aria-label="Readiness dimensions">
+          <div class="dimension"><strong>3/30</strong><span>Security &amp; tenant isolation</span><small>Systemic backend authorization gaps</small></div>
+          <div class="dimension"><strong>6/20</strong><span>Release engineering</span><small>Build works; CI/deploy path absent</small></div>
+          <div class="dimension"><strong>8/15</strong><span>Tests &amp; quality</span><small>Useful tests; broken wiring and E2E setup</small></div>
+          <div class="dimension"><strong>5/15</strong><span>Reliability &amp; operations</span><small>No runbook, backup proof, or error monitor</small></div>
+          <div class="dimension"><strong>5/10</strong><span>Performance</span><small>Large bundle and unbounded read paths</small></div>
+          <div class="dimension"><strong>7/10</strong><span>Maintainability &amp; docs</span><small>Typed and documented; major drift and large files</small></div>
+        </div>
+
+        <div class="finding" style="margin-top: 46px">
+          <span class="severity medium">P2</span>
+          <div><h3>Convex read amplification is visible in code</h3></div>
+          <div>
+            <p>
+              <code>inventory.list</code> can collect every inventory row, then performs one indexed usage-log query per item. <code>ingredients</code> includes full-table scans and scan filters. Several maintenance mutations collect entire tables. Without runtime Convex Insights, this proves unbounded paths, not current user impact.
+            </p>
+            <p class="evidence"><a href="../rd/formulation-lab/convex/inventory.ts">inventory.ts</a> · <a href="../rd/formulation-lab/convex/ingredients.ts">ingredients.ts</a> · <a href="../rd/formulation-lab/convex/i18nMaintenance.ts">i18nMaintenance.ts</a></p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity medium">P2</span>
+          <div><h3>Operational controls are undocumented or absent</h3></div>
+          <div>
+            <p>
+              The repository has no release checklist, rollback procedure, incident runbook, backup/restore drill, service-level target, health check, or error-monitoring integration. PostHog captures product analytics but is not an exception or availability monitor.
+            </p>
+            <p class="evidence">Evidence: repository file inventory and source search; no <code>.github/</code> workflow or operations documents found</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity medium">P2</span>
+          <div><h3>Large modules increase change risk</h3></div>
+          <div>
+            <p>
+              The lab has about 40.8k lines across TypeScript, CSS, and JSON. <code>pages/formulation.tsx</code> is 2,252 lines, <code>convex/projects.ts</code> is 1,227, and several components exceed 700 lines. This conflicts with the project’s own ~500-line guidance and makes authorization refactors harder to review.
+            </p>
+            <p class="evidence"><a href="../rd/formulation-lab/pages/formulation.tsx">pages/formulation.tsx</a> · <a href="../rd/formulation-lab/convex/projects.ts">convex/projects.ts</a> · source line count on 2026-08-01</p>
+          </div>
+        </div>
+
+        <div class="finding">
+          <span class="severity medium">P2</span>
+          <div><h3>Documentation and configuration disagree</h3></div>
+          <div>
+            <p>
+              The lab README says port 3000 while its package script and Playwright base URL use 3001. It describes removed GHCR/Coolify assets. Both <code>convex/app.config.ts</code> and <code>convex/convex.config.ts</code> install the same component. Root instructions point to a generated Convex guidelines file that is not installed.
+            </p>
+            <p class="evidence"><a href="../rd/formulation-lab/README.md">README.md</a> · <a href="../rd/formulation-lab/package.json">package.json</a> · <a href="../rd/formulation-lab/playwright.config.ts">playwright.config.ts</a> · <a href="../rd/formulation-lab/convex">convex/</a></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="roadmap" class="reveal">
+        <div class="section-head">
+          <div class="section-number mono">05 / Remediation roadmap</div>
+          <div>
+            <h2>A short path to a controlled beta.</h2>
+            <p class="section-intro">
+              Fix the trust boundary first, then make every release prove it. Performance and maintainability follow once correctness is protected by tests.
+            </p>
+          </div>
+        </div>
+
+        <div class="timeline">
+          <div class="phase">
+            <div class="phase-time">Before deploy</div>
+            <div class="phase-body">
+              <h3>Close the data boundary</h3>
+              <ol>
+                <li>Create shared Convex access helpers for authenticated user, team membership, project viewer/editor, and explicit system permissions.</li>
+                <li>Apply them to every public query and mutation. Derive actor and ownership fields server-side; do not accept <code>userId</code>, author, resolver, or tenant identity from the client.</li>
+                <li>Make administrative imports and maintenance functions internal. Make missing secrets fail closed.</li>
+                <li>Require secure, expiring share/invite tokens; check expiry, active state, entity ownership, invite email, and role escalation.</li>
+                <li>Remove the tracked <code>.env</code>, inspect its history, and rotate anything secret that was ever committed.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="phase">
+            <div class="phase-time">Next 2–3 days</div>
+            <div class="phase-body">
+              <h3>Make security executable</h3>
+              <ol>
+                <li>Add backend tests for anonymous, wrong-user, wrong-team, viewer, editor, admin, expired-link, and replay cases across each entity family.</li>
+                <li>Upgrade Better Auth and affected transitive packages, regenerate the lockfile, rerun the full auth suite, and require a clean production audit or an explicit, scoped exception.</li>
+                <li>Enable email verification in non-local deployments and document session/cookie/origin configuration.</li>
+                <li>Provision Playwright Chromium in CI and separate pure logic tests from browser E2E so failures are clear.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="phase">
+            <div class="phase-time">Next week</div>
+            <div class="phase-body">
+              <h3>Restore the release path</h3>
+              <ol>
+                <li>Add one root <code>check</code> command that runs formatting/lint, typecheck, localization checks, unit tests, E2E, build, and dependency audit with correct package scopes.</li>
+                <li>Add protected CI with frozen install, cache, Playwright browser provisioning, artifacts, and required status checks.</li>
+                <li>Choose and check in one deployment path. Define build/start commands, immutable artifact versioning, health checks, rollback, and environment ownership. Remove stale GHCR/Coolify text if that path stays retired.</li>
+                <li>Add error monitoring with release IDs and source maps, structured server logs, alert ownership, and a tested backup/restore procedure for Convex data and stored files.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="phase">
+            <div class="phase-time">Before scale</div>
+            <div class="phase-body">
+              <h3>Bound cost and change risk</h3>
+              <ol>
+                <li>Use Convex Insights against the intended deployment. Fix measured hot paths plus clearly unbounded scans, starting with inventory list enrichment and ingredient dependency scans.</li>
+                <li>Lazy-load route-level lab screens and PDF/grid-heavy code. Set a main-route JavaScript budget and test it in CI.</li>
+                <li>Split the 2,252-line formulation page and large backend modules along stable feature and authorization boundaries.</li>
+                <li>Run a staging release, cross-tenant penetration test, restore drill, rollback exercise, and production smoke test before the go/no-go review.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div class="decision-rule">
+          <div>
+            <strong>Controlled beta entry</strong>
+            <p>All P0/P1 findings closed; access-control matrix tests green; clean build, typecheck, lint, E2E, and dependency gate; one reproducible staged deployment with rollback and restore evidence.</p>
+          </div>
+          <div>
+            <strong>Production entry</strong>
+            <p>Beta criteria plus runtime monitoring, alert ownership, measured performance budgets, backup/restore drill, incident runbook, and a completed cross-tenant security review.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="scope" class="reveal">
+        <div class="section-head">
+          <div class="section-number mono">06 / Scope &amp; evidence</div>
+          <div>
+            <h2>Repository assessment, not infrastructure certification.</h2>
+            <p class="section-intro">
+              The review covers the current checkout on <code>main</code> at <code>f089fe0</code>. A pre-existing whitespace-only modification in <code>rd/formulation-lab/vite.config.ts</code> was preserved.
+            </p>
+          </div>
+        </div>
+
+        <div class="scope-list">
+          <div><strong>Inspected</strong><span>Workspace manifests, lockfile, app and Convex code, schema/indexes, auth and role helpers, tests, deploy files, environment examples, docs, Git tracking state.</span></div>
+          <div><strong>Executed</strong><span>Production builds, lab typecheck, localization guards, lab check, Playwright suite, production dependency audit.</span></div>
+          <div><strong>Not verified</strong><span>Live production environment, Convex deployment configuration, dashboard Insights, DNS/TLS, secrets manager, backups, alert delivery, data volume, availability history.</span></div>
+          <div><strong>Assessment date</strong><span>2026-08-01, Asia/Gaza. Dependency findings are time-sensitive and should be rerun on every release.</span></div>
+        </div>
+
+        <div class="callout" style="margin-top: 44px">
+          <strong>Suggested improvement</strong>
+          <p>
+            Add a single server-side authorization layer and make its access matrix the primary backend test fixture. This reduces repeated authorization logic and gives each new Convex endpoint a clear, reviewable production contract before it ships.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Flavoneer production readiness assessment · generated from repository evidence · 2026-08-01
+    </footer>
+
+    <script>
+      const progress = document.querySelector(".progress");
+      const updateProgress = () => {
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const ratio = scrollable > 0 ? window.scrollY / scrollable : 0;
+        progress.style.width = `${Math.min(1, Math.max(0, ratio)) * 100}%`;
+      };
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+              observer.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0.08 }
+      );
+
+      document.querySelectorAll(".reveal").forEach((element) => observer.observe(element));
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      updateProgress();
+    </script>
+  </body>
+</html>

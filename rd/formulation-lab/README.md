@@ -1,35 +1,3 @@
-# Food R&D Lab Manager
-
-Food R&D Lab Manager is a Vite, React, TypeScript, and Convex app for food product formulation work. It tracks projects, recipe phases, manufacturing runs, inventory, lab reports, sensory tests, team membership, roles, and audit-facing activity.
-
-## Quick Start
-
-Prerequisites:
-
-- Node.js
-- npm
-- A Convex dev deployment
-
-Install dependencies:
-
-```sh
-npm install
-```
-
-Run the frontend:
-
-```sh
-npm run dev
-```
-
-Run the Convex backend in a second terminal:
-
-```sh
-npx convex dev
-```
-
-The web UI runs at `http://localhost:3000`.
-
 ## Local Auth
 
 The app uses Better Auth through `@convex-dev/better-auth`. Email/password auth is enabled without email verification in local development.
@@ -86,86 +54,6 @@ longer need to be sent to the image build. Use the same project token for the
 landing and formulation-lab resources; filter or break down events by
 `app_surface` when analyzing their shared user journey.
 
-### Free GHCR deployment
-
-The formulation lab image is built on GitHub-hosted Actions and published as:
-
-```text
-ghcr.io/rania-rd/flavoneer-formulation-lab:latest
-```
-
-The workflow runs after relevant changes reach `main`, and can also be started
-manually from the Actions tab. It publishes an immutable `sha-...` tag alongside
-`latest`.
-
-Configure the Coolify resource as a Docker image deployment using the image
-above and port `80`. Keep the existing `VITE_CONVEX_URL`,
-`VITE_CONVEX_SITE_URL`, `VITE_SITE_URL`, `VITE_PUBLIC_POSTHOG_KEY`, and
-`VITE_PUBLIC_POSTHOG_HOST` runtime variables on the resource. This makes Coolify
-pull and start a prebuilt image instead of installing packages on the server.
-
-For the existing Git-backed Coolify resource, select the `Dockerfile` build
-pack, set the base directory to `/`, and set the Dockerfile location to
-`/.coolify/formulation-lab.Dockerfile`. The wrapper pins an immutable
-`sha-...` GHCR image, so the server pulls the completed image instead of
-rebuilding the app.
-
-Automatic deployment uses Coolify's signed manual GitHub webhook and requires
-no Coolify API token. Keep **Auto Deploy** enabled for the resource and add the
-GitHub webhook URL and secret shown on the resource's **Webhooks** page to the
-repository's **Settings > Webhooks** page.
-
-After GHCR publishing succeeds, the workflow updates
-`.coolify/formulation-lab.Dockerfile` to the matching immutable image tag,
-records the run in `.coolify/formulation-lab-release`, and pushes a
-deploy-signal commit using the repository secret
-`COOLIFY_DEPLOY_SIGNAL_TOKEN`. The token is fine-grained, restricted to this
-repository, and has only **Contents: read and write** permission. Rotate it
-before its configured expiration date.
-
-The `.coolify/**` deploy-signal files are outside the workflow's watched paths,
-so the signal cannot start another image build. It only causes Coolify to pull
-the image that Actions has already published.
-
-## Architecture
-
-Frontend:
-
-- `App.tsx` defines authenticated routes and public evaluation links.
-- `pages/` contains route-level screens: dashboard, formulation, runs, materials, reports, team, and settings.
-- `components/` contains shared UI and feature components.
-- `context/SettingsContext.tsx` owns localization, theme, and RTL settings.
-- `context/TeamContext.tsx` owns active team state.
-- `lib/auth-client.ts` configures the Better Auth client against the Convex site URL.
-
-Backend:
-
-- `convex/schema.ts` defines tables, validators, and indexes.
-- `convex/*.ts` files expose Convex queries, mutations, actions, and HTTP handlers.
-- `convex/auth.ts` configures Better Auth and exposes the current auth user query.
-- `convex/app.config.ts` installs the Better Auth Convex component.
-- `convex/BACKEND.md` documents backend patterns for enrichment, snapshots, and query performance.
-
-Shared contracts:
-
-- `types.ts` contains frontend-facing domain types.
-- `convex/validators.ts` contains reusable Convex validators.
-- `locales/en.json` and `locales/ar.json` contain UI copy. New UI text should use translation keys.
-
-## Current Routes
-
-- `/` dashboard
-- `/project/:id` formulation editor
-- `/runs` run list
-- `/run/:id` run detail
-- `/materials` inventory and ingredient library
-- `/reports` report list
-- `/reports/:id` report detail
-- `/team` team management
-- `/settings` app settings
-- `/evaluate/:token` public sensory evaluation
-- `/share/:token` authenticated share target
-
 ## Quality Gates
 
 Run these before handoff when the change is not docs-only:
@@ -190,17 +78,5 @@ For docs-only changes, a targeted markdown/content review is usually enough unle
 - Support dark mode and RTL-aware layout.
 - Prefer CSS logical properties such as `start`, `end`, `ps`, and `pe`.
 
-## Useful Commands
-
-```sh
-npm run dev
-npx convex dev
-npm run build
-npm run check
-npm run fix
-npm test
-npm run import:foodwatch-regulatory
-npm run clear:tables
-```
 
 `npm run clear:tables` calls `npx convex run clearAllAppTables:run`; use it only when intentionally clearing local app data.

@@ -6,6 +6,9 @@ import { defineConfig, loadEnv } from "vite";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
   return {
+    preview: {
+      allowedHosts: ["lab.flavoneer.com"]
+    },
     server: {
       port: 3000,
       host: "0.0.0.0",

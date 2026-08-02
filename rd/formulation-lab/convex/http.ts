@@ -3,7 +3,13 @@ import { authComponent, createAuth } from "./auth";
 
 const http = httpRouter();
 
-// CORS handling is required for client side frameworks
-authComponent.registerRoutes(http, createAuth, { cors: true });
+authComponent.registerRoutesLazy(http, createAuth, {
+  cors: true,
+  trustedOrigins: [
+    process.env.SITE_URL,
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ],
+});
 
 export default http;

@@ -69,6 +69,20 @@ This separation preserves history.
 
 - `users.syncCurrentUser` synchronizes the authenticated Better Auth identity
   into the local `users` table.
+- Better Auth organizations are the authority for workspace lifecycle,
+  membership, pending invitations, active organization, and the coarse Owner,
+  Admin, and Member roles.
+- The local `teams`, `teamMembers`, and `teamInvites` tables are domain anchors
+  and bounded read projections. Existing projects and regulated records keep
+  their Convex `teamId`; application code must not treat a projection row as
+  the authorization source after a workspace has `authOrganizationId`.
+- `workspaceAccess.ts` resolves centralized membership first and falls back to
+  the local membership table only for workspaces that have not been migrated.
+- Product capabilities such as `manage_roles`, procedure editing, execution,
+  and sign-off remain in the local role and permission model.
+- Workspace deletion is owner-only and is blocked while projects or shared
+  ingredients still reference the workspace. Audit and regulated record
+  retention must be decided before enabling production deletion.
 - The synchronization transaction ensures the built-in Admin, Supervisor,
   Editor, and Operator roles exist before assigning a role. Existing role
   permissions are never overwritten by this seed step.

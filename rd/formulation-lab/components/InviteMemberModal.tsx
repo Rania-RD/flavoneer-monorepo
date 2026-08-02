@@ -1,4 +1,4 @@
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { Mail, Shield, User, X } from "lucide-react";
 import type React from "react";
@@ -27,7 +27,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 
   const { toast } = useToast();
 
-  const createInvite = useMutation(api.teamInvites.create);
+  const createInvite = useAction(api.teamInvites.create);
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member">("member");
@@ -61,7 +61,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
     if (!inviteToken) {
       return;
     }
-    const link = `${window.location.origin}${window.location.pathname}#/invite/${inviteToken}`;
+    const link = `${window.location.origin}/invite/${inviteToken}`;
     navigator.clipboard.writeText(link);
     toast.info(t("copiedToClipboard"));
   };
@@ -145,7 +145,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                       <input
                         className="flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 font-mono text-gray-600 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                         readOnly
-                        value={`${window.location.origin}${window.location.pathname}#/invite/${inviteToken}`}
+                        value={`${window.location.origin}/invite/${inviteToken}`}
                       />
                       <button
                         className="flex-shrink-0 rounded-lg bg-gray-900 px-4 py-2.5 font-bold text-white text-xs transition-colors hover:bg-gray-800 dark:bg-indigo-600 dark:hover:bg-indigo-500"

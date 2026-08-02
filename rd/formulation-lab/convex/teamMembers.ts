@@ -1,8 +1,13 @@
 import { v } from "convex/values";
+import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
+import { authComponent, createAuth } from "./auth";
 import { logTeamAction } from "./teamAuditLogs";
 import { inviteRoleValidator, teamMemberReturnValidator } from "./validators";
+import {
+  requireWorkspaceAdmin,
+  requireWorkspaceMember,
+} from "./workspaceAccess";
 
 // ─── Queries ──────────────────────────────────────────
 
@@ -11,26 +16,12 @@ export const list = query({
   args: { teamId: v.id("teams") },
   returns: v.array(teamMemberReturnValidator),
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
-
-    // Verify membership
-    const callerMembership = await ctx.db
-      .query("teamMembers")
-      .withIndex("by_teamId_userId", (q) =>
-        q.eq("teamId", args.teamId).eq("userId", authUser._id)
-      )
-      .first();
-    if (!callerMembership) {
-      return [];
-    }
+    await requireWorkspaceMember(ctx, args.teamId);
 
     return await ctx.db
       .query("teamMembers")
       .withIndex("by_teamId", (q) => q.eq("teamId", args.teamId))
-      .collect();
+      .take(100);
   },
 });
 
@@ -44,11 +35,6 @@ export const updateRole = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
-
     const target = await ctx.db.get(args.memberId);
     if (!target) {
       throw new Error("Member not found");
@@ -59,19 +45,45 @@ export const updateRole = mutation({
       throw new Error("Cannot change the owner's role");
     }
 
-    // Caller must be admin or owner of the same team
-    const callerMembership = await ctx.db
-      .query("teamMembers")
-      .withIndex("by_teamId_userId", (q) =>
-        q.eq("teamId", target.teamId).eq("userId", authUser._id)
-      )
-      .first();
-    if (!callerMembership || callerMembership.role === "member") {
-      throw new Error("Insufficient permissions");
-    }
+    const { authUser, team } = await requireWorkspaceAdmin(ctx, target.teamId);
 
     const oldRole = target.role;
-    await ctx.db.patch(args.memberId, { role: args.newRole });
+    let authMemberId = target.authMemberId;
+    if (team.authOrganizationId) {
+      if (!authMemberId) {
+        const authMember = await ctx.runQuery(
+          components.betterAuth.adapter.findOne,
+          {
+            model: "member",
+            where: [
+              {
+                field: "organizationId",
+                value: team.authOrganizationId,
+              },
+              { field: "userId", value: target.userId },
+            ],
+          }
+        );
+        authMemberId = authMember?._id;
+      }
+      if (!authMemberId) {
+        throw new Error("Better Auth member not found");
+      }
+      const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+      await auth.api.updateMemberRole({
+        body: {
+          memberId: authMemberId,
+          role: args.newRole,
+          organizationId: team.authOrganizationId,
+        },
+        headers,
+      });
+    }
+
+    await ctx.db.patch(args.memberId, {
+      role: args.newRole,
+      authMemberId,
+    });
 
     await logTeamAction(ctx, {
       teamId: target.teamId,
@@ -92,11 +104,6 @@ export const remove = mutation({
   args: { memberId: v.id("teamMembers") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
-
     const target = await ctx.db.get(args.memberId);
     if (!target) {
       throw new Error("Member not found");
@@ -107,27 +114,29 @@ export const remove = mutation({
       throw new Error("Cannot remove the team owner");
     }
 
-    // Caller must be admin or owner
-    const callerMembership = await ctx.db
-      .query("teamMembers")
-      .withIndex("by_teamId_userId", (q) =>
-        q.eq("teamId", target.teamId).eq("userId", authUser._id)
-      )
-      .first();
-    if (!callerMembership || callerMembership.role === "member") {
-      throw new Error("Insufficient permissions");
-    }
-    // Only owner can remove admins
-    if (target.role === "admin" && callerMembership.role !== "owner") {
+    const access = await requireWorkspaceAdmin(ctx, target.teamId);
+    if (target.role === "admin" && access.role !== "owner") {
       throw new Error("Only the owner can remove admins");
+    }
+
+    if (access.team.authOrganizationId) {
+      const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+      await auth.api.removeMember({
+        body: {
+          memberIdOrEmail: target.authMemberId ?? target.userEmail,
+          organizationId: access.team.authOrganizationId,
+        },
+        headers,
+      });
     }
 
     await ctx.db.delete(args.memberId);
 
     await logTeamAction(ctx, {
       teamId: target.teamId,
-      actorId: authUser._id,
-      actorName: authUser.name ?? authUser.email ?? "Unknown",
+      actorId: access.authUser._id,
+      actorName:
+        access.authUser.name ?? access.authUser.email ?? "Unknown",
       action: "member.removed",
       targetType: "member",
       targetId: target.userId,
@@ -142,17 +151,13 @@ export const leave = mutation({
   args: { teamId: v.id("teams") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
-
+    const access = await requireWorkspaceMember(ctx, args.teamId);
     const membership = await ctx.db
       .query("teamMembers")
       .withIndex("by_teamId_userId", (q) =>
-        q.eq("teamId", args.teamId).eq("userId", authUser._id)
+        q.eq("teamId", args.teamId).eq("userId", access.authUser._id)
       )
-      .first();
+      .unique();
     if (!membership) {
       throw new Error("Not a member of this team");
     }
@@ -160,16 +165,26 @@ export const leave = mutation({
       throw new Error("Owners must transfer ownership before leaving");
     }
 
+    if (access.team.authOrganizationId) {
+      const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+      await auth.api.leaveOrganization({
+        body: { organizationId: access.team.authOrganizationId },
+        headers,
+      });
+    }
+
     await ctx.db.delete(membership._id);
 
     await logTeamAction(ctx, {
       teamId: args.teamId,
-      actorId: authUser._id,
-      actorName: authUser.name ?? authUser.email ?? "Unknown",
+      actorId: access.authUser._id,
+      actorName:
+        access.authUser.name ?? access.authUser.email ?? "Unknown",
       action: "member.left",
       targetType: "member",
-      targetId: authUser._id,
-      targetLabel: authUser.name ?? authUser.email ?? "Unknown",
+      targetId: access.authUser._id,
+      targetLabel:
+        access.authUser.name ?? access.authUser.email ?? "Unknown",
     });
     return null;
   },

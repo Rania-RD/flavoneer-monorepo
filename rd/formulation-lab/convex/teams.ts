@@ -1,8 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
+import { authComponent, createAuth } from "./auth";
 import { logTeamAction } from "./teamAuditLogs";
 import { teamReturnValidator, teamWithRoleReturnValidator } from "./validators";
+import {
+  getAuthUserOrThrow,
+  requireWorkspaceAdmin,
+  requireWorkspaceMember,
+  requireWorkspaceOwner,
+} from "./workspaceAccess";
 
 // ─── Helpers ──────────────────────────────────────────
 function slugify(name: string): string {
@@ -19,7 +25,10 @@ function slugify(name: string): string {
 export const get = query({
   args: { id: v.id("teams") },
   returns: v.union(teamReturnValidator, v.null()),
-  handler: async (ctx, args) => await ctx.db.get(args.id),
+  handler: async (ctx, args) => {
+    const access = await requireWorkspaceMember(ctx, args.id);
+    return access.team;
+  },
 });
 
 /** List all teams the authenticated user belongs to */
@@ -27,7 +36,7 @@ export const list = query({
   args: {},
   returns: v.array(teamWithRoleReturnValidator),
   handler: async (ctx) => {
-    const authUser = await authComponent.getAuthUser(ctx);
+    const authUser = await authComponent.safeGetAuthUser(ctx);
     if (!authUser) {
       return [];
     }
@@ -35,7 +44,7 @@ export const list = query({
     const memberships = await ctx.db
       .query("teamMembers")
       .withIndex("by_userId", (q) => q.eq("userId", authUser._id))
-      .collect();
+      .take(100);
 
     const teams = await Promise.all(
       memberships.map(async (m) => {
@@ -56,21 +65,29 @@ export const create = mutation({
   },
   returns: v.id("teams"),
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
+    const authUser = await getAuthUserOrThrow(ctx);
 
     const slug = `${slugify(args.name)}-${Date.now().toString(36)}`;
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+    const organization = await auth.api.createOrganization({
+      body: {
+        name: args.name,
+        slug,
+      },
+      headers,
+    });
+    const ownerMember = organization.members.find(
+      (member) => member?.userId === authUser._id
+    );
 
     const teamId = await ctx.db.insert("teams", {
       name: args.name,
       slug,
       ownerId: authUser._id,
       createdAt: Date.now(),
+      authOrganizationId: organization.id,
     });
 
-    // Add creator as owner member
     await ctx.db.insert("teamMembers", {
       teamId,
       userId: authUser._id,
@@ -79,9 +96,9 @@ export const create = mutation({
       userAvatarUrl: authUser.image ?? undefined,
       role: "owner",
       joinedAt: Date.now(),
+      authMemberId: ownerMember?.id,
     });
 
-    // Audit log
     await logTeamAction(ctx, {
       teamId,
       actorId: authUser._id,
@@ -106,27 +123,30 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
-
-    // Permission check: admin or owner
-    const membership = await ctx.db
-      .query("teamMembers")
-      .withIndex("by_teamId_userId", (q) =>
-        q.eq("teamId", args.id).eq("userId", authUser._id)
-      )
-      .first();
-    if (!membership || membership.role === "member") {
-      throw new Error("Insufficient permissions");
-    }
+    const { authUser, team } = await requireWorkspaceAdmin(ctx, args.id);
 
     const { id, ...updates } = args;
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined)
     );
+    if (team.authOrganizationId && (args.name || args.avatarUrl)) {
+      const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+      await auth.api.updateOrganization({
+        body: {
+          organizationId: team.authOrganizationId,
+          data: {
+            ...(args.name ? { name: args.name } : {}),
+            ...(args.avatarUrl ? { logo: args.avatarUrl } : {}),
+          },
+        },
+        headers,
+      });
+    }
     await ctx.db.patch(id, filtered);
+
+    const meta = Object.fromEntries(
+      Object.entries(filtered).map(([key, value]) => [key, String(value)])
+    );
 
     await logTeamAction(ctx, {
       teamId: id,
@@ -135,58 +155,65 @@ export const update = mutation({
       action: "team.updated",
       targetType: "team",
       targetId: id,
-      meta: filtered as Record<string, string>,
+      meta,
     });
     return null;
   },
 });
 
-/** Delete a team (owner only) — cascades members, invites, audit logs */
+/** Delete an empty team (owner only), including its Better Auth organization. */
 export const remove = mutation({
   args: { id: v.id("teams") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
+    const { team } = await requireWorkspaceOwner(ctx, args.id);
+
+    const project = await ctx.db
+      .query("projects")
+      .withIndex("by_teamId", (q) => q.eq("teamId", args.id))
+      .first();
+    const ingredient = await ctx.db
+      .query("ingredients")
+      .withIndex("by_teamId", (q) => q.eq("teamId", args.id))
+      .first();
+    if (project || ingredient) {
+      throw new Error(
+        "Archive or move workspace records before deleting this team"
+      );
     }
 
-    const team = await ctx.db.get(args.id);
-    if (!team) {
-      throw new Error("Team not found");
-    }
-    if (team.ownerId !== authUser._id) {
-      throw new Error("Only the team owner can delete the team");
-    }
-
-    // Cascade: delete all members
     const members = await ctx.db
       .query("teamMembers")
       .withIndex("by_teamId", (q) => q.eq("teamId", args.id))
-      .collect();
+      .take(101);
+    if (members.length > 100) {
+      throw new Error("Team exceeds the supported membership limit");
+    }
+
+    const invites = await ctx.db
+      .query("teamInvites")
+      .withIndex("by_teamId", (q) => q.eq("teamId", args.id))
+      .take(101);
+    if (invites.length > 100) {
+      throw new Error("Team exceeds the supported invitation limit");
+    }
+
+    if (team.authOrganizationId) {
+      const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+      await auth.api.deleteOrganization({
+        body: { organizationId: team.authOrganizationId },
+        headers,
+      });
+    }
+
     for (const m of members) {
       await ctx.db.delete(m._id);
     }
 
-    // Cascade: delete all invites
-    const invites = await ctx.db
-      .query("teamInvites")
-      .withIndex("by_teamId", (q) => q.eq("teamId", args.id))
-      .collect();
     for (const inv of invites) {
       await ctx.db.delete(inv._id);
     }
 
-    // Cascade: delete all audit logs
-    const logs = await ctx.db
-      .query("teamAuditLogs")
-      .withIndex("by_teamId", (q) => q.eq("teamId", args.id))
-      .collect();
-    for (const log of logs) {
-      await ctx.db.delete(log._id);
-    }
-
-    // Finally delete the team itself
     await ctx.db.delete(args.id);
     return null;
   },

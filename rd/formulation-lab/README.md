@@ -34,8 +34,46 @@ The backend auth code reads these Convex environment values:
 
 ```sh
 CONVEX_SITE_URL=
+BETTER_AUTH_URL=
 SITE_URL=http://localhost:3000
+INVITATION_EMAIL_WEBHOOK_URL=
+INVITATION_EMAIL_WEBHOOK_SECRET=
 ```
+
+Set `BETTER_AUTH_URL` to the deployment HTTP Actions origin ending in
+`.convex.site`. This explicit value is also available while Better Auth builds
+its local component adapter, where Convex built-in environment variables may
+not be exposed.
+
+`INVITATION_EMAIL_WEBHOOK_URL` is optional. When set, Better Auth posts a
+`workspace.invitation.created` JSON payload containing the recipient, inviter,
+organization, and acceptance URL. `INVITATION_EMAIL_WEBHOOK_SECRET` is sent as
+a Bearer token when configured.
+
+## Better Auth workspace migration
+
+Better Auth organizations own workspace membership, invitations, and the
+coarse `owner`, `admin`, and `member` roles. The local `teams`, `teamMembers`,
+and `teamInvites` tables remain bounded read projections because formulation
+records still reference Convex team IDs. Product permissions remain in the
+local role system.
+
+Deploy the widened schema before starting the backfill. Run a dry run against
+the intended deployment, inspect the output, then start the resumable runner:
+
+```sh
+pnpm exec convex dev --once
+pnpm exec convex run migrations:attachBetterAuthOrganizations '{"dryRun":true}'
+pnpm exec convex run migrations:run '{"fn":"migrations:attachBetterAuthOrganizations"}'
+```
+
+The migration reuses matching organization and member records, assigns new
+Better Auth IDs to pending legacy invitations, and preserves the Convex team
+IDs referenced by domain data. It does not send replacement emails for legacy
+invitations; workspace admins should copy the new acceptance links from the
+Invitations tab. Do not run with `--prod` until `workspaceMigration:inventory`
+has been reviewed with an authenticated administrator identity and workspace
+deletion-retention policy has been confirmed.
 
 `GEMINI_API_KEY` is still wired in `vite.config.ts`, but the current app shell is not the generic AI Studio starter described by the old README.
 

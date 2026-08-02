@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { projectVersionReturnValidator } from "./validators";
+import { requirePersonalOrWorkspaceAccess } from "./workspaceAccess";
 
 type RecipeStepType =
   | "weighing"
@@ -15,6 +16,11 @@ export const list = query({
   args: { projectId: v.id("projects") },
   returns: v.array(projectVersionReturnValidator),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      return [];
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     return await ctx.db
       .query("projectVersions")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
@@ -40,6 +46,7 @@ export const create = mutation({
     if (!project) {
       throw new Error("Project not found");
     }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
 
     // Snapshot ingredients
     const ingredients = await ctx.db
@@ -108,6 +115,11 @@ export const restore = mutation({
     if (versionRecord.projectId !== args.projectId) {
       throw new Error("Version does not belong to this project");
     }
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
 
     // 1. Restore Project Data
     const {
@@ -231,6 +243,7 @@ export const getNextVersion = query({
     if (!project) {
       return null;
     }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
 
     if (!project.teamId) {
       return null;

@@ -509,6 +509,7 @@ export const teamWithRoleReturnValidator = v.object({
   ownerId: v.string(),
   createdAt: v.number(),
   autoVersioning: v.optional(v.boolean()),
+  authOrganizationId: v.optional(v.string()),
   role: teamMemberRoleValidator,
 });
 
@@ -522,6 +523,7 @@ export const teamReturnValidator = v.object({
   ownerId: v.string(),
   createdAt: v.number(),
   autoVersioning: v.optional(v.boolean()),
+  authOrganizationId: v.optional(v.string()),
 });
 
 /** Team member document — returned by teamMembers queries */
@@ -535,6 +537,7 @@ export const teamMemberReturnValidator = v.object({
   userAvatarUrl: v.optional(v.string()),
   role: teamMemberRoleValidator,
   joinedAt: v.number(),
+  authMemberId: v.optional(v.string()),
 });
 
 /** Team invite doc — returned by teamInvites queries */
@@ -550,6 +553,7 @@ export const teamInviteReturnValidator = v.object({
   invitedByName: v.string(),
   createdAt: v.number(),
   expiresAt: v.optional(v.number()),
+  authInvitationId: v.optional(v.string()),
 });
 
 /** Team invite with team name — returned by teamInvites.getByToken */
@@ -565,6 +569,7 @@ export const teamInviteWithTeamReturnValidator = v.object({
   invitedByName: v.string(),
   createdAt: v.number(),
   expiresAt: v.optional(v.number()),
+  authInvitationId: v.optional(v.string()),
   teamName: v.string(),
 });
 

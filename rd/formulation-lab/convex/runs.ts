@@ -18,6 +18,10 @@ import {
   runIngredientUsageValidator,
   signatureTypeValidator,
 } from "./validators";
+import {
+  getWorkspaceAccess,
+  requirePersonalOrWorkspaceAccess,
+} from "./workspaceAccess";
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -189,20 +193,23 @@ export const getLabUtilization = query({
   args: { teamId: v.optional(v.id("teams")) },
   returns: v.number(),
   handler: async (ctx, args) => {
-    let activeRuns = await ctx.db
-      .query("runs")
-      .withIndex("by_status", (q) => q.eq("status", "In Progress"))
-      .collect();
-
-    if (args.teamId !== undefined) {
-      activeRuns = activeRuns.filter((r) => r.teamId === args.teamId);
+    const authUser = await authComponent.safeGetAuthUser(ctx);
+    if (!authUser) {
+      throw new Error("Not authenticated");
+    }
+    if (args.teamId && !(await getWorkspaceAccess(ctx, args.teamId))) {
+      throw new Error("Not a member of this team");
     }
 
-    console.log(
-      `[LabUtilization] Found ${activeRuns.length} runs with status 'In Progress' for team ${args.teamId || "all"}`
-    );
-
-    return activeRuns.length;
+    const activeRuns = await ctx.db
+      .query("runs")
+      .withIndex("by_status", (q) => q.eq("status", "In Progress"))
+      .take(200);
+    return activeRuns.filter((run) =>
+      args.teamId
+        ? run.teamId === args.teamId
+        : run.userId === authUser._id && run.teamId === undefined
+    ).length;
   },
 });
 
@@ -213,8 +220,13 @@ export const list = query({
     language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
-    const authUserId = (await ctx.auth.getUserIdentity())?.subject;
-    if (!authUserId) {
+    const authUser = await authComponent.safeGetAuthUser(ctx);
+    if (!authUser) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+    const authUserId = authUser._id;
+
+    if (args.teamId && !(await getWorkspaceAccess(ctx, args.teamId))) {
       return { page: [], isDone: true, continueCursor: "" };
     }
 
@@ -238,18 +250,26 @@ export const list = query({
         .paginate(args.paginationOpts);
     }
 
-    // Get user's teams
-    const userTeams = await ctx.db
-      .query("teamMembers")
-      .withIndex("by_userId", (q) => q.eq("userId", authUserId))
-      .collect();
-    const teamIds = new Set(userTeams.map((t) => t.teamId));
+    const pageTeamIds = Array.from(
+      new Set(
+        result.page
+          .map((run) => run.teamId)
+          .filter((teamId): teamId is Id<"teams"> => teamId !== undefined)
+      )
+    );
+    const teamAccessEntries = await Promise.all(
+      pageTeamIds.map(async (teamId) => [
+        teamId,
+        Boolean(await getWorkspaceAccess(ctx, teamId)),
+      ] as const)
+    );
+    const teamAccess = new Map(teamAccessEntries);
 
     // Get user's explicit sharedAccess for runs
     const sharedAccess = await ctx.db
       .query("sharedAccess")
       .withIndex("by_userId_entityId", (q) => q.eq("userId", authUserId))
-      .collect();
+      .take(200);
 
     const sharedRunMap = new Map();
     for (const acc of sharedAccess) {
@@ -264,7 +284,7 @@ export const list = query({
       }
       return (
         r.userId === authUserId ||
-        (r.teamId && teamIds.has(r.teamId)) ||
+        (r.teamId && teamAccess.get(r.teamId)) ||
         sharedRunMap.has(r._id)
       );
     });
@@ -293,20 +313,16 @@ export const get = query({
     }
 
     // Auth & Access Check
-    const authUserId = (await ctx.auth.getUserIdentity())?.subject;
-    if (!authUserId) {
+    const authUser = await authComponent.safeGetAuthUser(ctx);
+    if (!authUser) {
       return null;
     }
+    const authUserId = authUser._id;
 
     let sharedRole: "viewer" | "editor" | undefined;
 
     if (run.teamId) {
-      const teamMember = await ctx.db
-        .query("teamMembers")
-        .withIndex("by_teamId_userId", (q) =>
-          q.eq("teamId", run.teamId!).eq("userId", authUserId)
-        )
-        .first();
+      const teamMember = await getWorkspaceAccess(ctx, run.teamId);
 
       if (!teamMember) {
         const access = await ctx.db
@@ -349,6 +365,11 @@ export const getByProject = query({
   },
   returns: v.array(enrichedRunReturnValidator),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      return [];
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     const runs = await ctx.db
       .query("runs")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
@@ -370,17 +391,20 @@ export const startRun = mutation({
   returns: v.id("runs"),
   handler: async (ctx, args) => {
     const { phases, ...runData } = args;
-    const authUserId = (await ctx.auth.getUserIdentity())?.subject;
     const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, project);
 
     // 1. Insert the run record (endTime will be set when finished)
     const runId = await ctx.db.insert("runs", {
       ...runData,
-      projectName: project?.name ?? "",
-      projectNameI18n: makeLocalizedString(project?.name, project?.nameI18n),
+      projectName: project.name,
+      projectNameI18n: makeLocalizedString(project.name, project.nameI18n),
       data: {},
-      userId: authUserId || undefined,
-      teamId: project?.teamId || undefined,
+      userId: authUser._id,
+      teamId: project.teamId || undefined,
     });
 
     // 2. Snapshot phases + steps into run-scoped tables
@@ -440,6 +464,7 @@ export const createNewRun = mutation({
     if (!project) {
       throw new Error("Project formulation not found");
     }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, project);
 
     if (project.status !== "Released") {
       throw new Error(
@@ -458,8 +483,6 @@ export const createNewRun = mutation({
       project.name.split(" ")[0].toUpperCase().slice(0, 4);
     const batchCode = `${prefix}-${String(seq).padStart(3, "0")}`;
 
-    const authUserId = (await ctx.auth.getUserIdentity())?.subject;
-
     // 1. Insert the run record
     const runId = await ctx.db.insert("runs", {
       projectId: args.formulationId,
@@ -469,7 +492,7 @@ export const createNewRun = mutation({
       startTime: Date.now(),
       status: "In Progress",
       data: {},
-      userId: authUserId || undefined,
+      userId: authUser._id,
       teamId: project.teamId || undefined,
     });
 
@@ -533,8 +556,7 @@ export const createNewRun = mutation({
       }
     }
 
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (project.teamId && authUser) {
+    if (project.teamId) {
       await logTeamAction(ctx, {
         teamId: project.teamId,
         actorId: authUser._id,
@@ -593,6 +615,7 @@ export const finishRun = mutation({
     if (!run) {
       throw new Error("Run not found");
     }
+    await requirePersonalOrWorkspaceAccess(ctx, run);
 
     // 1. Patch the run with endTime + data + status + signoff
     await ctx.db.patch(runId, {
@@ -661,6 +684,7 @@ export const saveDraft = mutation({
     if (!run) {
       throw new Error("Run not found");
     }
+    await requirePersonalOrWorkspaceAccess(ctx, run);
 
     // Only update the data field, keeping the status as it was.
     await ctx.db.patch(runId, {
@@ -686,13 +710,16 @@ export const create = mutation({
   returns: v.id("runs"),
   handler: async (ctx, args) => {
     const { ingredients, ...runData } = args;
-    const authUserId = (await ctx.auth.getUserIdentity())?.subject;
     const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, project);
 
     const runId = await ctx.db.insert("runs", {
       ...runData,
-      userId: authUserId || undefined,
-      teamId: project?.teamId || undefined,
+      userId: authUser._id,
+      teamId: project.teamId || undefined,
     });
 
     let projectName = "";
@@ -726,6 +753,12 @@ export const updateStepWeight = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const run = await ctx.db.get(args.runId);
+    if (!run) {
+      throw new Error("Run not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, run);
+
     const allSteps = await ctx.db
       .query("runSteps")
       .withIndex("by_runId", (q) => q.eq("runId", args.runId))

@@ -1,39 +1,99 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
-import { betterAuth } from "better-auth/minimal";
+import { requireActionCtx } from "@convex-dev/better-auth/utils";
+import { betterAuth, type BetterAuthOptions } from "better-auth/minimal";
+import { organization } from "better-auth/plugins/organization";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
+import authSchema from "./betterAuth/schema";
 
 const siteUrl = process.env.SITE_URL || "http://localhost:3001";
+const authBaseUrl = process.env.BETTER_AUTH_URL || process.env.CONVEX_SITE_URL;
 const trustedOrigins = Array.from(
   new Set([siteUrl, "http://localhost:3000", "http://localhost:3001"])
 );
 
+const invitationWebhookUrl = process.env.INVITATION_EMAIL_WEBHOOK_URL;
+const invitationWebhookSecret = process.env.INVITATION_EMAIL_WEBHOOK_SECRET;
+
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
-export const authComponent = createClient<DataModel>(components.betterAuth);
+export const authComponent = createClient<DataModel, typeof authSchema>(
+  components.betterAuth,
+  {
+    local: {
+      schema: authSchema,
+    },
+  }
+);
 
-export const createAuth = (ctx: GenericCtx<DataModel>) => {
-  return betterAuth({
-    baseURL: process.env.CONVEX_SITE_URL,
+export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
+  ({
+    baseURL: authBaseUrl,
     trustedOrigins,
     database: authComponent.adapter(ctx),
-    // Configure simple, non-verified email/password to get started
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
     plugins: [
-      // The cross domain plugin is required for client side frameworks
+      organization({
+        allowUserToCreateOrganization: true,
+        organizationLimit: 10,
+        membershipLimit: 100,
+        invitationLimit: 100,
+        invitationExpiresIn: 60 * 60 * 48,
+        cancelPendingInvitationsOnReInvite: true,
+        requireEmailVerificationOnInvitation: false,
+        async sendInvitationEmail(data) {
+          if (!invitationWebhookUrl) {
+            return;
+          }
+
+          requireActionCtx(ctx);
+          const inviteUrl = `${siteUrl.replace(/\/$/, "")}/#/invite/${data.id}`;
+          const response = await fetch(invitationWebhookUrl, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              ...(invitationWebhookSecret
+                ? { authorization: `Bearer ${invitationWebhookSecret}` }
+                : {}),
+            },
+            body: JSON.stringify({
+              event: "workspace.invitation.created",
+              invitationId: data.id,
+              inviteUrl,
+              email: data.email,
+              role: data.role,
+              organization: {
+                id: data.organization.id,
+                name: data.organization.name,
+              },
+              inviter: {
+                email: data.inviter.user.email,
+                name: data.inviter.user.name,
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(
+              `Invitation webhook failed with status ${response.status}`
+            );
+          }
+        },
+      }),
       crossDomain({ siteUrl }),
-      // The Convex plugin is required for Convex compatibility
       convex({ authConfig }),
     ],
-  });
-};
+  }) satisfies BetterAuthOptions;
+
+export const createAuth = (ctx: GenericCtx<DataModel>) =>
+  betterAuth(createAuthOptions(ctx));
 
 // Get the current authenticated user
 export const getCurrentUser = query({
@@ -51,7 +111,5 @@ export const getCurrentUser = query({
     }),
     v.null()
   ),
-  handler: (ctx) => {
-    return authComponent.getAuthUser(ctx);
-  },
+  handler: (ctx) => authComponent.getAuthUser(ctx),
 });

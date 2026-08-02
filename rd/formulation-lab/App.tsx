@@ -15,6 +15,7 @@ import { api } from "./convex/_generated/api";
 import { authClient } from "./lib/auth-client";
 import Dashboard from "./pages/dashboard";
 import Formulation from "./pages/formulation";
+import Invite from "./pages/invite";
 import Login from "./pages/login";
 import Materials from "./pages/materials";
 
@@ -70,6 +71,7 @@ const App: React.FC = () => {
             <Route element={<Dashboard />} path="/" />
             <Route element={<ShareTarget />} path="/share/:token" />
             <Route element={<Formulation />} path="/project/:id" />
+            <Route element={<Invite />} path="/invite/:token" />
             <Route element={<Runs />} path="/runs" />
             <Route element={<Runs />} path="/run/:id" />
             <Route element={<Navigate replace to="/" />} path="/formulations" />

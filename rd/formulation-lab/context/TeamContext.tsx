@@ -9,6 +9,7 @@ import {
 } from "react";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { authClient } from "../lib/auth-client";
 
 interface TeamContextType {
   /** Currently active team ID (null = no team selected) */
@@ -21,6 +22,7 @@ interface TeamContextType {
   teams: {
     _id: Id<"teams">;
     autoVersioning?: boolean;
+    authOrganizationId?: string;
     name: string;
     role: string;
   }[];
@@ -82,8 +84,16 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [userTeams, activeTeamId, teamsLoading]);
 
+  const activeTeam = userTeams.find((team) => team._id === activeTeamId);
+  useEffect(() => {
+    if (activeTeam?.authOrganizationId) {
+      authClient.organization.setActive({
+        organizationId: activeTeam.authOrganizationId,
+      }).catch(console.error);
+    }
+  }, [activeTeam?.authOrganizationId]);
+
   // Derive current role
-  const activeTeam = userTeams.find((t) => t._id === activeTeamId);
   const currentRole = activeTeam?.role ?? null;
 
   return (

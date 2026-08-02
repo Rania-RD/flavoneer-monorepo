@@ -26,6 +26,11 @@ import {
   servingSizeModeValidator,
   servingSizeUnitValidator,
 } from "./validators";
+import {
+  getWorkspaceAccess,
+  requirePersonalOrWorkspaceAccess,
+  requireWorkspaceMember,
+} from "./workspaceAccess";
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -585,13 +590,8 @@ export const listByTeam = query({
     };
     if (args.teamId) {
       const teamId = args.teamId;
-      const membership = await ctx.db
-        .query("teamMembers")
-        .withIndex("by_teamId_userId", (q) =>
-          q.eq("teamId", teamId).eq("userId", authUser._id)
-        )
-        .first();
-      if (!membership) {
+      const access = await getWorkspaceAccess(ctx, teamId);
+      if (!access) {
         return { page: [], isDone: true, continueCursor: "" };
       }
 
@@ -650,12 +650,7 @@ export const get = query({
       // The creator always retains access, including legacy projects that were
       // accidentally associated with a stale team selection.
     } else if (project.teamId) {
-      const teamMember = await ctx.db
-        .query("teamMembers")
-        .withIndex("by_teamId_userId", (q) =>
-          q.eq("teamId", project.teamId!).eq("userId", authUserId)
-        )
-        .first();
+      const teamMember = await getWorkspaceAccess(ctx, project.teamId);
 
       if (teamMember) {
         // User is a native team member, they get full access natively,
@@ -770,16 +765,7 @@ export const create = mutation({
     } = args;
 
     if (projectData.teamId) {
-      const teamId = projectData.teamId;
-      const membership = await ctx.db
-        .query("teamMembers")
-        .withIndex("by_teamId_userId", (q) =>
-          q.eq("teamId", teamId).eq("userId", authUser._id)
-        )
-        .first();
-      if (!membership) {
-        throw new Error("You do not have access to the selected team");
-      }
+      await requireWorkspaceMember(ctx, projectData.teamId);
     }
 
     // 1. Auto-generate ID if Traceability Config is active
@@ -902,6 +888,13 @@ export const update = mutation({
     if (!existingProject) {
       throw new Error("Project not found");
     }
+    await requirePersonalOrWorkspaceAccess(ctx, existingProject);
+    if (
+      updates.teamId &&
+      updates.teamId !== existingProject.teamId
+    ) {
+      await requireWorkspaceMember(ctx, updates.teamId);
+    }
 
     // Enforce Approval Workflow logic
     const releaseMetadata: { releasedAt?: string; formattedId?: string } = {};
@@ -1023,6 +1016,12 @@ export const remove = mutation({
   args: { id: v.id("projects") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.id);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
+
     // Cascade: delete ingredients
     const ings = await ctx.db
       .query("projectIngredients")
@@ -1061,6 +1060,7 @@ async function cloneProjectAsDraftVersion(
   if (!original) {
     throw new Error("Project not found");
   }
+  await requirePersonalOrWorkspaceAccess(ctx, original);
 
   const newVersion = getNextMajorVersion(original.version);
   const baseName = getCloneBaseName(original.name);

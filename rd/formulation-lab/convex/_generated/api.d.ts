@@ -22,6 +22,7 @@ import type * as inventory from "../inventory.js";
 import type * as labReports from "../labReports.js";
 import type * as labTestResults from "../labTestResults.js";
 import type * as localization from "../localization.js";
+import type * as migrations from "../migrations.js";
 import type * as permissions from "../permissions.js";
 import type * as projectIngredients from "../projectIngredients.js";
 import type * as projectVersions from "../projectVersions.js";
@@ -44,6 +45,8 @@ import type * as teams from "../teams.js";
 import type * as units from "../units.js";
 import type * as users from "../users.js";
 import type * as validators from "../validators.js";
+import type * as workspaceAccess from "../workspaceAccess.js";
+import type * as workspaceMigration from "../workspaceMigration.js";
 
 import type {
   ApiFromModules,
@@ -66,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   labReports: typeof labReports;
   labTestResults: typeof labTestResults;
   localization: typeof localization;
+  migrations: typeof migrations;
   permissions: typeof permissions;
   projectIngredients: typeof projectIngredients;
   projectVersions: typeof projectVersions;
@@ -88,6 +92,8 @@ declare const fullApi: ApiFromModules<{
   units: typeof units;
   users: typeof users;
   validators: typeof validators;
+  workspaceAccess: typeof workspaceAccess;
+  workspaceMigration: typeof workspaceMigration;
 }>;
 
 /**
@@ -117,5 +123,6 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
+  betterAuth: import("../betterAuth/_generated/component.js").ComponentApi<"betterAuth">;
+  migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
 };

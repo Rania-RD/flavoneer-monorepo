@@ -476,9 +476,13 @@ export default defineSchema({
     ownerId: v.string(), // auth user ID who created the team
     createdAt: v.number(),
     autoVersioning: v.optional(v.boolean()),
+    // Better Auth organization backing this domain workspace.
+    // Optional during the widen/backfill deployment.
+    authOrganizationId: v.optional(v.string()),
   })
     .index("by_ownerId", ["ownerId"])
-    .index("by_slug", ["slug"]),
+    .index("by_slug", ["slug"])
+    .index("by_authOrganizationId", ["authOrganizationId"]),
 
   projectVersions: defineTable({
     projectId: v.id("projects"),
@@ -506,10 +510,13 @@ export default defineSchema({
     userAvatarUrl: v.optional(v.string()),
     role: teamMemberRoleValidator,
     joinedAt: v.number(),
+    // Better Auth member backing this read projection.
+    authMemberId: v.optional(v.string()),
   })
     .index("by_teamId", ["teamId"])
     .index("by_userId", ["userId"])
-    .index("by_teamId_userId", ["teamId", "userId"]),
+    .index("by_teamId_userId", ["teamId", "userId"])
+    .index("by_authMemberId", ["authMemberId"]),
 
   teamInvites: defineTable({
     teamId: v.id("teams"),
@@ -521,10 +528,13 @@ export default defineSchema({
     invitedByName: v.string(),
     createdAt: v.number(),
     expiresAt: v.optional(v.number()),
+    // Better Auth invitation backing this read projection.
+    authInvitationId: v.optional(v.string()),
   })
     .index("by_teamId", ["teamId"])
     .index("by_token", ["token"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_authInvitationId", ["authInvitationId"]),
 
   teamAuditLogs: defineTable({
     teamId: v.id("teams"),

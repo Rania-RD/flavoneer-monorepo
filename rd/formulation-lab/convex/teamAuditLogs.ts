@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { type MutationCtx, query } from "./_generated/server";
-import { authComponent } from "./auth";
 import { teamAuditLogReturnValidator } from "./validators";
+import { requireWorkspaceMember } from "./workspaceAccess";
 
 /**
  * Internal helper — insert an audit log entry.
@@ -43,30 +43,12 @@ export const list = query({
   },
   returns: v.array(teamAuditLogReturnValidator),
   handler: async (ctx, args) => {
-    // Auth check
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
+    await requireWorkspaceMember(ctx, args.teamId);
 
-    // Membership check
-    const membership = await ctx.db
-      .query("teamMembers")
-      .withIndex("by_teamId_userId", (q) =>
-        q.eq("teamId", args.teamId).eq("userId", authUser._id)
-      )
-      .first();
-    if (!membership) {
-      return [];
-    }
-
-    // Fetch logs, newest first
-    const logs = await ctx.db
+    return await ctx.db
       .query("teamAuditLogs")
       .withIndex("by_teamId", (q) => q.eq("teamId", args.teamId))
       .order("desc")
       .take(200);
-
-    return logs;
   },
 });

@@ -1,6 +1,14 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["ultracite/biome/core", "ultracite/biome/react"],
+  "$schema": "../../node_modules/@biomejs/biome/configuration_schema.json",
+  "root": false,
+  "extends": [
+    "../../biome.jsonc",
+    "ultracite/biome/core",
+    "ultracite/biome/react"
+  ],
+  "files": {
+    "includes": ["!!**/.agents", "!!**/.claude", "!!**/.codex"]
+  },
   "linter": {
     "rules": {
       "a11y": {
@@ -15,8 +23,10 @@
         "noBannedTypes": "warn",
         "noExcessiveCognitiveComplexity": "off",
         "noForEach": "warn",
+        "noUselessCatchBinding": "warn",
         "noUselessFragments": "warn",
         "noUselessSwitchCase": "warn",
+        "noUselessUndefined": "warn",
         "useOptionalChain": "warn",
         "useSimplifiedLogicExpression": "warn"
       },
@@ -37,10 +47,13 @@
         "noNestedTernary": "warn",
         "noNegationElse": "warn",
         "noNonNullAssertion": "warn",
+        "noSubstr": "warn",
         "useBlockStatements": "warn",
         "useCollapsedElseIf": "warn",
+        "useConsistentArrowReturn": "warn",
         "useFilenamingConvention": "warn",
         "useImportType": "warn",
+        "useNumericSeparators": "warn",
         "useTemplate": "warn"
       },
       "suspicious": {

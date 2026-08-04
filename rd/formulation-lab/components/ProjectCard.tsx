@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
-import type { Id } from "../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 import type { EnrichedProject } from "../types";
 import ShareModal from "./ShareModal";
 

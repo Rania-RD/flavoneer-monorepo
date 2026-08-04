@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import { FlaskConical, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import type React from "react";
-import { normalizeInsNumber } from "../../convex/regulatoryHelpers";
+import { normalizeInsNumber } from "@flavoneer/backend/regulatory";
 import type { IngredientListItem } from "../../types";
 import { Switch } from "../ui/Switch";
 import type {

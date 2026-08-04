@@ -3,7 +3,7 @@ import { Check, GitBranch, Loader2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { usePermissions } from "../../hooks/usePermissions";
 import { MANAGE_VERSION_CONTROL_PERMISSION } from "../../lib/workspace-settings-access";
 import { Switch } from "../ui/Switch";

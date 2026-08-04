@@ -1,5 +1,5 @@
 import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 
 export function usePermissions() {
   const currentUserWithRole = useQuery(api.users.getCurrentUserRole);

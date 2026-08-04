@@ -2,7 +2,7 @@ import { type HTMLMotionProps, motion } from "framer-motion";
 import { AlertTriangle, ArrowLeft, Check, Share2 } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 import { modalVariants } from "../../lib/animations";
 import type { RunRecord } from "../../types";
 import { SensoryBuilder } from "../SensoryBuilder";

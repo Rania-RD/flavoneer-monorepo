@@ -1,6 +1,6 @@
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { buildFormulationSavePayload } from "../../lib/formulation/save-payload";
 import type { EnrichedProject, Ingredient, RecipePhase } from "../../types";
 import { useToast } from "../useToast";

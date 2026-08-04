@@ -7,8 +7,8 @@ import {
   useEffect,
   useState,
 } from "react";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { authClient } from "../lib/auth-client";
 
 interface TeamContextType {

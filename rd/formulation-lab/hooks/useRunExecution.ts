@@ -1,7 +1,7 @@
 import { useMutation } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { generateBatchCode, normalizeProjectPhases } from "../lib/runUtils";
 import type { EnrichedProject, RunListItem, RunRecord } from "../types";
 import {

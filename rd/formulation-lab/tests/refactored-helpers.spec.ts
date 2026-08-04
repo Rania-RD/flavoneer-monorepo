@@ -32,7 +32,7 @@ import {
 import {
   findCompositeDependencies,
   findProjectIdsUsingIngredientCode,
-} from "../lib/ingredients/dependencies";
+} from "@flavoneer/backend/ingredient-dependencies";
 import type { EnrichedProject, RecipePhase } from "../types";
 
 const phases: RecipePhase[] = [

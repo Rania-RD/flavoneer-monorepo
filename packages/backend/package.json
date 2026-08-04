@@ -1,0 +1,36 @@
+{
+  "name": "@flavoneer/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    },
+    "./data-model": {
+      "types": "./convex/_generated/dataModel.d.ts"
+    },
+    "./ingredient-dependencies": "./lib/ingredients/dependencies.ts",
+    "./regulatory": "./convex/regulatoryHelpers.ts",
+    "./system-role-access": "./lib/system-role-access.ts",
+    "./units": "./convex/units.ts"
+  },
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "codegen": "convex codegen",
+    "typecheck": "tsc -p convex/tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/expo": "1.5.6",
+    "@convex-dev/better-auth": "^0.11.5",
+    "@convex-dev/migrations": "0.3.4",
+    "better-auth": "1.5.6",
+    "convex": "^1.41.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "~5.8.2"
+  }
+}

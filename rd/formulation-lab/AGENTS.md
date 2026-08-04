@@ -4,7 +4,7 @@
 
 - **Web UI**: http://localhost:3000
 - **Test login**: `test@example.com` / `test1234`
-- **Dev servers**: `npm run dev` (frontend) + `npx convex dev` (backend)
+- **Dev servers**: `pnpm dev:lab` (frontend) + `pnpm dev:backend` (backend)
 
 At the end of each task, add a "Suggested improvement" with 2-3 sentences describing a potential change that would improve the project.
 
@@ -59,20 +59,20 @@ Avoid: purple-on-white clichés, generic component grids, predictable layouts.
 | ---------- | --------------------------------------------------------------------- |
 | Pages      | `pages/` (Dashboard, Formulation, Runs, Inventory, Reports, Schedule) |
 | Components | `components/` (modals, cards, layout)                                 |
-| Backend    | `convex/` (Convex queries, mutations, schema)                         |
+| Backend    | `../../packages/backend/convex/` (queries, mutations, schema)         |
 | Types      | `types.ts`                                                            |
 | Design     | `DESIGN_GUIDE.md`                                                     |
 
 ## ⚠️ Backend Modification Rules
 
-When modifying any Convex backend file (`convex/*.ts`):
+When modifying any Convex backend file (`../../packages/backend/convex/*.ts`):
 
 1. **Always update both the `args` validator AND the `handler`** — they must stay in sync. If you add/remove/rename a field in the `args` object, the `handler` logic must reflect it, and vice versa.
-2. **Update `convex/schema.ts`** if table columns change.
+2. **Update `../../packages/backend/convex/schema.ts`** if table columns change.
 3. **Update `types.ts`** if the change affects frontend-facing types.
 4. **Check calling code** — frontend mutations/queries must pass args matching the updated validator exactly. Extra or missing fields cause `ArgumentValidationError`.
 
-Example pattern in `convex/*.ts`:
+Example pattern in `../../packages/backend/convex/*.ts`:
 
 ```ts
 export const create = mutation({
@@ -98,14 +98,14 @@ export const create = mutation({
 
 ## Convex Notes
 
-This project uses Convex as its backend. The Convex AI file installer did not provide generated guidelines in this repo, so backend work should start with `convex/BACKEND.md`, `convex/schema.ts`, and the relevant `convex/*.ts` module instead.
+This project uses the shared Convex backend in `../../packages/backend`. Backend work should start with `../../packages/backend/convex/_generated/ai/guidelines.md`, `../../packages/backend/convex/BACKEND.md`, `../../packages/backend/convex/schema.ts`, and the relevant function module.
 
 <!-- convex-ai-start -->
 
 This project uses [Convex](https://convex.dev) as its backend.
 
 When working on Convex code, **always read
-`convex/_generated/ai/guidelines.md` first** for important guidelines on
+`../../packages/backend/convex/_generated/ai/guidelines.md` first** for important guidelines on
 how to correctly use Convex APIs and patterns. The file contains rules that
 override what you may have learned about Convex from training data.
 

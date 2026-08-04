@@ -28,7 +28,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import InviteMemberModal from "../components/InviteMemberModal";
 import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 
 // ─── Role badge component ────────────────────────────

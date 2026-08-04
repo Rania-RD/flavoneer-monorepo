@@ -1,4 +1,4 @@
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 import type { LocalizedString } from "../../lib/i18n-data";
 
 export type AllergenRegion = "FDA" | "EU" | "GSO";

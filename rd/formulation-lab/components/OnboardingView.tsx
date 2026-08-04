@@ -9,7 +9,7 @@ const MotionDiv = motion.div as React.FC<
 import { Beaker, FlaskConical, Loader2, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 
 const getErrorMessage = (error: unknown, fallback: string) =>

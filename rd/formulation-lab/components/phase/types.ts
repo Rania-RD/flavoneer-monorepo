@@ -2,7 +2,7 @@ import type {
   DraggableAttributes,
   DraggableSyntheticListeners,
 } from "@dnd-kit/core";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 import type { SpreadsheetFormulaContext } from "../../lib/spreadsheet/formula-engine";
 import type {
   AggregatedIngredient,

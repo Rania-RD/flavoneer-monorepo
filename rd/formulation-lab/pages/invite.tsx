@@ -3,7 +3,7 @@ import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 
 const Invite = () => {
   const { t } = useTranslation();

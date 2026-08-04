@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { resolveSystemRoleId } from "../lib/system-role-access";
+import { resolveSystemRoleId } from "@flavoneer/backend/system-role-access";
 
 test.describe("team-owner system access", () => {
   test("requires the Admin role for a team owner", () => {

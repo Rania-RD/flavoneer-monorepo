@@ -11,7 +11,7 @@ import { Toaster } from "sonner";
 import DashboardLayout from "./components/DashboardLayout";
 import { SettingsProvider } from "./context/SettingsContext";
 import { TeamProvider } from "./context/TeamContext";
-import { api } from "./convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { authClient } from "./lib/auth-client";
 import Dashboard from "./pages/dashboard";
 import Formulation from "./pages/formulation";

@@ -14,7 +14,7 @@ import {
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../../context/SettingsContext";
-import { api } from "../../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import type { RunRecipePhase, RunRecipeStep } from "../../types";
 import { MiniSpreadsheetEditor } from "../spreadsheet/MiniSpreadsheetEditor";
 import TimerDisplay from "./TimerDisplay";

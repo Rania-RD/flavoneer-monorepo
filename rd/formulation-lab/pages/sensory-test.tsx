@@ -4,7 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 
 type QuestionType = "hedonic" | "boolean" | "text";

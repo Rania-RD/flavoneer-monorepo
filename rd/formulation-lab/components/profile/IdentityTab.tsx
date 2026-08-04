@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type UserProfile } from "../../context/SettingsContext";
 import { useTeam } from "../../context/TeamContext";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 
 interface IdentityTabProps {
   handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;

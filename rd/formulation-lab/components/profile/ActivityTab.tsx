@@ -3,7 +3,7 @@ import { Clock, FileText, LayoutDashboard, Package } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import type { FunctionReturnType } from "convex/server";
 
 type ActivityListItem = FunctionReturnType<

@@ -9,10 +9,19 @@
   },
   "scripts": {
     "dev": "pnpm --filter @flavoneer/landing dev",
+    "dev:backend": "pnpm --filter @flavoneer/backend dev",
     "dev:landing": "pnpm --filter @flavoneer/landing dev",
     "dev:lab": "pnpm --filter @flavoneer/formulation-lab dev",
-    "dev:all": "pnpm --parallel --filter @flavoneer/landing --filter @flavoneer/formulation-lab dev",
+    "dev:mobile": "pnpm --filter mobile start",
+    "dev:all": "pnpm --parallel --filter @flavoneer/backend --filter @flavoneer/landing --filter @flavoneer/formulation-lab dev",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint"
+    "check": "biome check .",
+    "check:write": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.6"
   }
 }

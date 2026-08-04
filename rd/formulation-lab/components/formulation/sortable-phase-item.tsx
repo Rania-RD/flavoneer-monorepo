@@ -5,7 +5,7 @@ import type {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type React from "react";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 import type {
   FlatStepReference,
   PhaseColorStyle,

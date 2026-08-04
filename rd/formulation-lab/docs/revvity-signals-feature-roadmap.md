@@ -38,10 +38,10 @@ The current app already has a strong base:
 - `pages/reports.tsx` and `pages/report-details.tsx` manage lab reports and report review.
 - `pages/sensory-test.tsx` and `components/SensoryBuilder.tsx` support sensory forms and public sensory submissions.
 - `components/Settings/VersionControlConfig.tsx` and `components/Settings/TraceabilityConfig.tsx` configure version and traceability behavior.
-- `convex/schema.ts` already defines projects, normalized ingredients, recipe phases, recipe steps, runs, run snapshots, lab reports, lab test results, inventory items, material usage logs, sensory forms, sensory evaluations, comments, project versions, roles, users, teams, audit logs, shared links, and system config.
-- `convex/runs.ts` already snapshots recipe phases and steps at run start and deducts inventory on completion.
-- `convex/labReports.ts` already stores lab reports separately from normalized lab test results.
-- `convex/teamAuditLogs.ts` already provides a team-level audit log base.
+- `packages/backend/convex/schema.ts` already defines projects, normalized ingredients, recipe phases, recipe steps, runs, run snapshots, lab reports, lab test results, inventory items, material usage logs, sensory forms, sensory evaluations, comments, project versions, roles, users, teams, audit logs, shared links, and system config.
+- `packages/backend/convex/runs.ts` already snapshots recipe phases and steps at run start and deducts inventory on completion.
+- `packages/backend/convex/labReports.ts` already stores lab reports separately from normalized lab test results.
+- `packages/backend/convex/teamAuditLogs.ts` already provides a team-level audit log base.
 
 Important current constraint:
 
@@ -74,11 +74,11 @@ User-facing behavior:
 
 Backend:
 
-- Add `notebookEntries` to `convex/schema.ts`.
+- Add `notebookEntries` to `packages/backend/convex/schema.ts`.
 - Add `notebookEntrySections` to store ordered structured sections instead of a single untyped blob.
 - Add optional `notebookAttachments` if attachments need metadata beyond Convex storage IDs.
-- Add `convex/notebookEntries.ts` with create, update, remove, get, listByProject, listByRun, listByReport, and listByInventoryItem queries/mutations.
-- Add validators in `convex/validators.ts` for entry status, section type, linked entity type, and template key.
+- Add `packages/backend/convex/notebookEntries.ts` with create, update, remove, get, listByProject, listByRun, listByReport, and listByInventoryItem queries/mutations.
+- Add validators in `packages/backend/convex/validators.ts` for entry status, section type, linked entity type, and template key.
 - Keep args and handlers synchronized for every Convex mutation.
 
 Suggested table shape:
@@ -147,7 +147,7 @@ User-facing behavior:
 
 Backend:
 
-- Add `convex/analytics.ts`.
+- Add `packages/backend/convex/analytics.ts`.
 - Use existing `runs`, `labReports`, `labTestResults`, `sensoryForms`, `sensoryEvaluations`, `materialUsageLogs`, and `projectIngredients`.
 - Start with query-time aggregation. Add `analyticsSnapshots` later only if query-time aggregation becomes slow.
 - Add queries:
@@ -188,10 +188,10 @@ User-facing behavior:
 
 Backend:
 
-- Add `inventoryLots` to `convex/schema.ts`.
+- Add `inventoryLots` to `packages/backend/convex/schema.ts`.
 - Extend `materialUsageLogs` with optional `inventoryLotId`.
-- Update `convex/inventory.ts` with lot create/update/archive/list mutations and queries.
-- Update `convex/runs.ts` so inventory deduction uses selected lot IDs when supplied.
+- Update `packages/backend/convex/inventory.ts` with lot create/update/archive/list mutations and queries.
+- Update `packages/backend/convex/runs.ts` so inventory deduction uses selected lot IDs when supplied.
 - Keep name-search fallback only for legacy runs or old data without selected lots.
 
 Suggested table shape:
@@ -248,7 +248,7 @@ User-facing behavior:
 
 Backend:
 
-- Add workflow transition helpers in `convex/projects.ts` and `convex/labReports.ts`.
+- Add workflow transition helpers in `packages/backend/convex/projects.ts` and `packages/backend/convex/labReports.ts`.
 - Add explicit mutations such as `submitForReview`, `approve`, `reject`, `release`, and `reopen`.
 - Extend `teamAuditLogs` or add entity-specific audit log tables if before/after details become large.
 - Add before/after metadata for project, report, inventory, and run state changes.
@@ -275,8 +275,8 @@ User-facing behavior:
 
 Backend:
 
-- Add `testRequests` to `convex/schema.ts`.
-- Add `convex/testRequests.ts`.
+- Add `testRequests` to `packages/backend/convex/schema.ts`.
+- Add `packages/backend/convex/testRequests.ts`.
 - Link requests to `projectId`, optional `runId`, optional `labReportId`, optional `assignedTo`, and `teamId`.
 - Add status validator: `draft`, `requested`, `in_progress`, `completed`, `cancelled`, `out_of_spec`.
 - Add mutation to convert completed request data into `labTestResults`.
@@ -379,7 +379,7 @@ Type updates:
 
 Validator updates:
 
-- Add reusable validators in `convex/validators.ts`.
+- Add reusable validators in `packages/backend/convex/validators.ts`.
 - Keep literal unions centralized for statuses and template keys.
 - Update generated Convex API usage after backend changes.
 
@@ -388,21 +388,21 @@ Validator updates:
 General Convex rules:
 
 - Every mutation must keep `args` validators and `handler` behavior synchronized.
-- Every table column change must update `convex/schema.ts`.
+- Every table column change must update `packages/backend/convex/schema.ts`.
 - Every frontend-facing shape must update `types.ts`.
 - Every caller must pass exactly the fields accepted by the Convex validator.
 - Use indexes for project, run, team, report, status, and inventory lot lookups. Avoid full scans for user-facing lists.
 
 Module plan:
 
-- `convex/notebookEntries.ts`: notebook CRUD and entity-linked list queries.
-- `convex/analytics.ts`: project, dashboard, version, and batch analytics queries.
-- `convex/inventory.ts`: add lot CRUD and aggregate stock helpers.
-- `convex/runs.ts`: update run completion and material deduction to use lot IDs.
-- `convex/labReports.ts`: add request-linked result insertion and approval workflow transitions.
-- `convex/testRequests.ts`: request lifecycle and result conversion.
-- `convex/teamAuditLogs.ts`: add reusable audit helper for entity changes if current helper is too team-action-specific.
-- `convex/systemConfig.ts`: add compliance toggles if signature requirements become configurable.
+- `packages/backend/convex/notebookEntries.ts`: notebook CRUD and entity-linked list queries.
+- `packages/backend/convex/analytics.ts`: project, dashboard, version, and batch analytics queries.
+- `packages/backend/convex/inventory.ts`: add lot CRUD and aggregate stock helpers.
+- `packages/backend/convex/runs.ts`: update run completion and material deduction to use lot IDs.
+- `packages/backend/convex/labReports.ts`: add request-linked result insertion and approval workflow transitions.
+- `packages/backend/convex/testRequests.ts`: request lifecycle and result conversion.
+- `packages/backend/convex/teamAuditLogs.ts`: add reusable audit helper for entity changes if current helper is too team-action-specific.
+- `packages/backend/convex/systemConfig.ts`: add compliance toggles if signature requirements become configurable.
 
 Auth and permissions:
 

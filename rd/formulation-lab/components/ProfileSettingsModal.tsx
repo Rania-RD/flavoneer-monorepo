@@ -15,7 +15,7 @@ import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { compressImage } from "../lib/imageUtils";
 import ActivityTab from "./profile/ActivityTab";

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import type { IngredientListItem } from "../types";
 

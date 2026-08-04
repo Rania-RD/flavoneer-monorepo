@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { formatLimitValue } from "../../convex/regulatoryHelpers";
+import { formatLimitValue } from "@flavoneer/backend/regulatory";
 import type { AggregatedIngredient } from "../../types";
 
 interface AdditiveLimitRecord {

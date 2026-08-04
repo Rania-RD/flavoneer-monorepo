@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
-import { MASS_UNITS } from "../../convex/units";
-import type { Id } from "../../convex/_generated/dataModel";
+import { MASS_UNITS } from "@flavoneer/backend/units";
+import type { Id } from "@flavoneer/backend/data-model";
 import type { SpreadsheetFormulaContext } from "../../lib/spreadsheet/formula-engine";
 import { calculateRegulationCompliance } from "../../lib/formulation/helpers";
 import type {

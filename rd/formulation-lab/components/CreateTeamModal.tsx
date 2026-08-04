@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface CreateTeamModalProps {

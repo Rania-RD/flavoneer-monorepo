@@ -843,7 +843,7 @@ Food-R-D-Lab-/
 │   ├── SettingsContext.tsx     ← Theme, units, profile, i18n
 │   └── NotificationContext.tsx ← In-app notification management
 │
-└── convex/                    ← Backend (Convex functions + schema)
+└── ../../packages/backend/convex/ ← Shared backend (Convex functions + schema)
 ```
 
 ---

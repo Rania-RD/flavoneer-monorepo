@@ -5,8 +5,8 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useToast } from "../hooks/useToast";
 
 const NewRunGuard: React.FC = () => {

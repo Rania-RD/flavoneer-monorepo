@@ -16,7 +16,7 @@ import NewLabReportModal from "../components/NewLabReportModal";
 import { ReportPDF } from "../components/ReportPDF";
 import ReportsDropdown from "../components/ReportsDropdown";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
 import { buildAggregatedIngredients } from "../lib/formulation/helpers";

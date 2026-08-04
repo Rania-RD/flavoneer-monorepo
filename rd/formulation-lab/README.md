@@ -30,12 +30,13 @@ skipped and the lab continues to run normally. Use
 `https://eu.i.posthog.com` for a PostHog EU Cloud project. All events from this
 client include `app_surface=formulation_lab`.
 
-The backend auth code reads these Convex environment values:
+The shared backend in `packages/backend` reads these Convex environment values:
 
 ```sh
 CONVEX_SITE_URL=
 BETTER_AUTH_URL=
 SITE_URL=http://localhost:3000
+MOBILE_SITE_URL=flavoneer://
 INVITATION_EMAIL_WEBHOOK_URL=
 INVITATION_EMAIL_WEBHOOK_SECRET=
 ```
@@ -62,9 +63,9 @@ Deploy the widened schema before starting the backfill. Run a dry run against
 the intended deployment, inspect the output, then start the resumable runner:
 
 ```sh
-pnpm exec convex dev --once
-pnpm exec convex run migrations:attachBetterAuthOrganizations '{"dryRun":true}'
-pnpm exec convex run migrations:run '{"fn":"migrations:attachBetterAuthOrganizations"}'
+pnpm --filter @flavoneer/backend exec convex dev --once
+pnpm --filter @flavoneer/backend exec convex run migrations:attachBetterAuthOrganizations '{"dryRun":true}'
+pnpm --filter @flavoneer/backend exec convex run migrations:run '{"fn":"migrations:attachBetterAuthOrganizations"}'
 ```
 
 The migration reuses matching organization and member records, assigns new
@@ -109,7 +110,7 @@ For docs-only changes, a targeted markdown/content review is usually enough unle
 ## Project Rules
 
 - Keep Convex `args` validators and handlers in sync.
-- Update `convex/schema.ts` when table fields or indexes change.
+- Update `packages/backend/convex/schema.ts` when table fields or indexes change.
 - Update `types.ts` when frontend-facing data shapes change.
 - Check all calling code when changing Convex args. Convex rejects extra and missing fields.
 - Use `t("key")` for new UI strings.
@@ -117,4 +118,4 @@ For docs-only changes, a targeted markdown/content review is usually enough unle
 - Prefer CSS logical properties such as `start`, `end`, `ps`, and `pe`.
 
 
-`npm run clear:tables` calls `npx convex run clearAllAppTables:run`; use it only when intentionally clearing local app data.
+`pnpm clear:tables` runs `clearAllAppTables:run` through the shared backend workspace; use it only when intentionally clearing local app data.

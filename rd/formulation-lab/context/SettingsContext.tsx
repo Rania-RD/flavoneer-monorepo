@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { authClient } from "../lib/auth-client";
 import { authHelpers } from "../lib/auth-helpers";
 

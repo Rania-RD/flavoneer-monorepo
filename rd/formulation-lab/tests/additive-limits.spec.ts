@@ -3,7 +3,7 @@ import {
   formatLimitValue,
   normalizeInsNumber,
   parentCategoryCodes,
-} from "../convex/regulatoryHelpers";
+} from "@flavoneer/backend/regulatory";
 
 test.describe("additive limit helpers", () => {
   test("normalizes E-number and INS input into the same additive key", () => {

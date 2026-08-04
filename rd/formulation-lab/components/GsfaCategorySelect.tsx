@@ -12,7 +12,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import {
   formatGsfaCategoryLabel,
   type GsfaCategoryOption,

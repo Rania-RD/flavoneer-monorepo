@@ -40,8 +40,8 @@ import { SortablePhaseItem } from "../components/formulation/sortable-phase-item
 import { ReviewPanel } from "../components/ReviewPanel";
 import VersionHistoryModal from "../components/VersionHistoryModal";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { usePermissions } from "../hooks/usePermissions";
 import {
   addPhaseToPhases,

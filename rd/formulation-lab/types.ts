@@ -1,6 +1,6 @@
 import type { FunctionReturnType } from "convex/server";
-import type { api } from "./convex/_generated/api";
-import type { Doc, Id } from "./convex/_generated/dataModel";
+import type { api } from "@flavoneer/backend/api";
+import type { Doc, Id } from "@flavoneer/backend/data-model";
 import type { LocalizedString } from "./lib/i18n-data";
 
 // ─── Backend-derived types (from Convex schema) ─────────────

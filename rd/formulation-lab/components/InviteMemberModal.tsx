@@ -7,8 +7,8 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
 import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 

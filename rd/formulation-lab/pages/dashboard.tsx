@@ -13,8 +13,8 @@ import ProjectCard from "../components/ProjectCard";
 import ProjectDetailsModal from "../components/ProjectDetailsModal";
 import { useSettings } from "../context/SettingsContext";
 import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { modalVariants, overlayVariants } from "../lib/animations";
 import type { EnrichedProject } from "../types";
 

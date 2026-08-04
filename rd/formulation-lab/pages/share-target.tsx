@@ -4,7 +4,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 
 const ShareTarget: React.FC = () => {

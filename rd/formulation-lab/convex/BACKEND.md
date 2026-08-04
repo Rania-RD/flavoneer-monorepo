@@ -88,11 +88,12 @@ This separation preserves history.
   permissions are never overwritten by this seed step.
 - Fresh deployments can run `roles.initializeDefaultRoles` once before the
   first login. After any role exists, this mutation requires `manage_roles`.
-- Only the first user synchronized into a deployment receives the Admin role.
-  Every later user receives Operator by default, without email-based overrides.
-- Creating a team grants the creator the team-level Owner role but never changes
-  their system role. Existing system roles are preserved during later syncs so
-  explicit administrator assignments are not overwritten.
+- Only the first user synchronized into a deployment receives the Admin role by
+  default. Every later non-owner receives Operator, without email-based
+  overrides.
+- Creating a team grants the creator the team-level Owner role and the Admin
+  system role. `users.syncCurrentUser` also promotes existing team owners to
+  Admin so ownership and administrative access cannot drift.
 - Role keys are stable authorization identifiers. The frontend translates role
   titles from those keys; persisted English `name` values are fallbacks only.
 - `manage_version_control` is the dedicated capability for viewing and updating

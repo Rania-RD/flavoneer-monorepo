@@ -5,6 +5,7 @@ import { authComponent } from "./auth";
 import { getEffectivePermissions, requirePermission } from "./permissions";
 import { ensureDefaultRoles } from "./roles";
 import { userReturnValidator, userWithRoleReturnValidator } from "./validators";
+import { resolveSystemRoleId } from "../lib/system-role-access";
 
 const CREATOR_EMAIL = "fro@gmail.com";
 
@@ -13,7 +14,7 @@ const normalizeEmail = (email: string | null | undefined) =>
 
 /**
  * Mutation to sync the betterAuth user with the local users table.
- * Only the first local user receives Admin; later users receive Operator.
+ * Team owners and the first local user receive Admin; other users receive Operator.
  */
 export const syncCurrentUser = mutation({
   args: {},
@@ -33,6 +34,11 @@ export const syncCurrentUser = mutation({
 
     const normalizedEmail = normalizeEmail(authUser.email);
     const isCreator = normalizedEmail === CREATOR_EMAIL;
+    const ownsTeam =
+      (await ctx.db
+        .query("teams")
+        .withIndex("by_ownerId", (q) => q.eq("ownerId", authUser._id))
+        .first()) !== null;
 
     // Check if user already exists
     let localUser = await ctx.db
@@ -41,16 +47,22 @@ export const syncCurrentUser = mutation({
       .first();
 
     if (localUser) {
-      let roleIdToSet = localUser.roleId;
+      let defaultRoleId = operatorRole._id;
 
       // Assign default role to pre-existing users
-      if (!roleIdToSet) {
+      if (!localUser.roleId) {
         // If there's only 1 user (them), make them admin
         const existingUserCount = (await ctx.db.query("users").take(2)).length;
 
-        roleIdToSet =
+        defaultRoleId =
           existingUserCount <= 1 ? adminRole?._id : operatorRole?._id;
       }
+      const roleIdToSet = resolveSystemRoleId({
+        adminRoleId: adminRole._id,
+        currentRoleId: localUser.roleId,
+        defaultRoleId,
+        ownsTeam,
+      });
 
       // Update name, email or role if changed
       if (
@@ -71,7 +83,13 @@ export const syncCurrentUser = mutation({
       // Check if any users exist in the DB
       const existingUserCount = (await ctx.db.query("users").take(1)).length;
 
-      const roleId = existingUserCount === 0 ? adminRole._id : operatorRole._id;
+      const roleId = resolveSystemRoleId({
+        adminRoleId: adminRole._id,
+        currentRoleId: undefined,
+        defaultRoleId:
+          existingUserCount === 0 ? adminRole._id : operatorRole._id,
+        ownsTeam,
+      });
 
       const userId = await ctx.db.insert("users", {
         authUserId: authUser._id,

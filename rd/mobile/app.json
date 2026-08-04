@@ -31,6 +31,7 @@
         "@sentry/react-native/expo",
         {
           "organization": "bugsinkhasnoorgs",
+          "project": "flavoneer-web",
           "url": "https://zapper.synbiodiet.com/"
         }
       ],

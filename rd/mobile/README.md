@@ -72,17 +72,18 @@ The app reports JavaScript and native errors to the Bugsink project at
 because Bugsink only processes error events. Default PII collection is also
 disabled.
 
-EAS Build uploads Metro source maps through `sentry-cli`. Create these two EAS
-variables in every environment used by a build profile:
+EAS Build uploads Metro source maps through `sentry-cli`. The non-secret
+`SENTRY_PROJECT=flavoneer-web` value is configured in the Expo plugin and in
+the linked EAS project. Create this variable in every EAS environment used by a
+build profile:
 
-- `SENTRY_PROJECT`: the Bugsink project slug, shown in the project settings.
 - `SENTRY_AUTH_TOKEN`: a Bugsink API token, stored with sensitive visibility.
 
 The build profiles load the matching `development`, `preview`, or `production`
 EAS environment. Run `eas env:create --environment production` once for each
-variable and repeat for any other build environment in use. The Bugsink URL and
-single-organization value are committed in the Expo config; the auth token must
-not be committed or prefixed with `EXPO_PUBLIC_`.
+variable and repeat for any other build environment in use. The Bugsink URL,
+project slug, and single-organization value are committed in the Expo config;
+the auth token must not be committed or prefixed with `EXPO_PUBLIC_`.
 
 The Metro config injects matching debug IDs into bundles and source maps. The
 Sentry Expo config plugin adds the native EAS Build upload steps for Android and

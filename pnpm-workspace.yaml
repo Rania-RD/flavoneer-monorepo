@@ -5,9 +5,11 @@ packages:
 
 onlyBuiltDependencies:
   - "@parcel/watcher"
+  - "@sentry/cli"
   - "esbuild"
 allowBuilds:
   '@parcel/watcher': true
+  '@sentry/cli': true
   aws-sdk: false
   core-js: false
   esbuild: true

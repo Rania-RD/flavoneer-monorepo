@@ -93,6 +93,18 @@ longer need to be sent to the image build. Use the same project token for the
 landing and formulation-lab resources; filter or break down events by
 `app_surface` when analyzing their shared user journey.
 
+Configure the Coolify resource with these deployment settings:
+
+```text
+Build Pack: Dockerfile
+Base Directory: /
+Dockerfile Location: /Dockerfile.formulation-lab
+Exposed Port: 80
+```
+
+Leave the start command empty. The image uses Nginx to serve the Vite build and
+falls back to `index.html` for client-side routes.
+
 ## Quality Gates
 
 Run these before handoff when the change is not docs-only:

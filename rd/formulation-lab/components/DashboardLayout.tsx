@@ -1,8 +1,11 @@
 import type React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import WorkspaceSectionSwitcher, {
+  type WorkspaceSection,
+} from "./WorkspaceSectionSwitcher";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -11,6 +14,16 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState<WorkspaceSection>(() => {
+    if (typeof window === "undefined") {
+      return "research";
+    }
+    return window.localStorage.getItem("flavoneer.workspace-section") ===
+      "quality"
+      ? "quality"
+      : "research";
+  });
   const isFullScreenWorkspace =
     /^\/project\/[^/]+\/?$/.test(location.pathname) ||
     /^\/run\/[^/]+\/?$/.test(location.pathname);
@@ -26,6 +39,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       document.body.classList.remove("flavoneer-workspace-active");
     };
   }, [isFullScreenWorkspace]);
+
+  const handleSectionChange = (section: WorkspaceSection) => {
+    if (section === activeSection) {
+      return;
+    }
+    setActiveSection(section);
+    window.localStorage.setItem("flavoneer.workspace-section", section);
+    navigate(section === "quality" ? "/reports" : "/");
+  };
+
+  const workspaceLabel =
+    activeSection === "quality"
+      ? t("quality_control_workspace")
+      : t("workspace_label");
+  const workspaceStatus =
+    activeSection === "quality"
+      ? t("quality_workspace_status")
+      : t("brand_workspace_status");
 
   return (
     <div
@@ -45,7 +76,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(28,74,60,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(28,74,60,0.035)_1px,transparent_1px)] bg-[size:32px_32px] dark:bg-[linear-gradient(rgba(210,242,212,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(210,242,212,0.025)_1px,transparent_1px)]" />
       </div>
 
-      {!isFullScreenWorkspace && <Sidebar />}
+      {!isFullScreenWorkspace && (
+        <Sidebar
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+        />
+      )}
 
       <main
         className={`relative z-10 min-w-0 flex-1 transition-all duration-300 ${
@@ -64,7 +100,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           {!isFullScreenWorkspace && (
             <header className="mb-6 flex items-center justify-between gap-4 rounded-[2rem] border border-[#1c4a3c]/10 bg-[#fffdf4]/85 px-5 py-4 shadow-[0_18px_55px_rgba(28,74,60,0.08)] backdrop-blur-xl dark:border-[#d2f2d4]/10 dark:bg-[#143d32]/85 dark:shadow-black/10">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[1rem] bg-[#f5a623] font-display font-black text-[#173e33] text-xl shadow-[inset_0_-3px_0_rgba(182,97,8,0.24)]">
+              <WorkspaceSectionSwitcher
+                activeSection={activeSection}
+                onSectionChange={handleSectionChange}
+                placement="header"
+              />
+              <div className="hidden h-11 w-11 shrink-0 place-items-center rounded-[1rem] bg-[#f5a623] font-display font-black text-[#173e33] text-xl shadow-[inset_0_-3px_0_rgba(182,97,8,0.24)] md:grid">
                 {t("app_name").slice(0, 1)}
               </div>
               <div className="min-w-0">
@@ -72,14 +113,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   {t("app_name")}
                 </p>
                 <p className="mt-1 truncate font-bold text-[#527568] text-[10px] uppercase tracking-[0.18em] dark:text-[#a9cbbb]">
-                  {t("workspace_label")}
+                  {workspaceLabel}
                 </p>
               </div>
             </div>
 
             <div className="hidden items-center gap-2 rounded-full border border-[#1c4a3c]/10 bg-[#d2f2d4]/55 px-4 py-2 font-bold text-[#285b4d] text-xs sm:flex dark:border-[#d2f2d4]/10 dark:bg-[#d2f2d4]/8 dark:text-[#c8e4d4]">
               <span className="h-2 w-2 rounded-full bg-[#ff7738] shadow-[0_0_0_4px_rgba(255,119,56,0.14)]" />
-              {t("brand_workspace_status")}
+              {workspaceStatus}
             </div>
             </header>
           )}

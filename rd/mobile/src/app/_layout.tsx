@@ -1,6 +1,8 @@
 import '@/global.css';
+import '@/lib/bugsink';
 
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
+import * as Sentry from '@sentry/react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
@@ -24,10 +26,12 @@ function TabLayout() {
 
 const HotUpdatedTabLayout = withHotUpdater(TabLayout);
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <ConvexBetterAuthProvider authClient={authClient} client={convex}>
       <HotUpdatedTabLayout />
     </ConvexBetterAuthProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

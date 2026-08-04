@@ -1,7 +1,7 @@
 import {
   Boxes,
+  ClipboardCheck,
   FileText,
-  FlaskConical,
   LayoutDashboard,
   type LucideIcon,
   PlayCircle,
@@ -14,8 +14,19 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import SidebarProfileMenu from "./SidebarProfileMenu";
+import WorkspaceSectionSwitcher, {
+  type WorkspaceSection,
+} from "./WorkspaceSectionSwitcher";
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  activeSection: WorkspaceSection;
+  onSectionChange: (section: WorkspaceSection) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  activeSection,
+  onSectionChange,
+}) => {
   const { t } = useTranslation();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -31,27 +42,45 @@ const Sidebar: React.FC = () => {
   };
 
   const navItems = useMemo<{ name: string; icon: LucideIcon; path: string }[]>(
-    () => [
-      { name: t("dashboard"), icon: LayoutDashboard, path: "/" },
-      { name: t("runs"), icon: PlayCircle, path: "/runs" },
-      { name: t("materials"), icon: Boxes, path: "/materials" },
-      { name: t("reports"), icon: FileText, path: "/reports" },
-      { name: t("team"), icon: UsersRound, path: "/team" },
-    ],
-    [t],
+    () =>
+      activeSection === "quality"
+        ? [
+            {
+              name: t("lab_reports"),
+              icon: ClipboardCheck,
+              path: "/reports",
+            },
+            { name: t("run_review"), icon: PlayCircle, path: "/runs" },
+            { name: t("materials"), icon: Boxes, path: "/materials" },
+          ]
+        : [
+            { name: t("dashboard"), icon: LayoutDashboard, path: "/" },
+            { name: t("runs"), icon: PlayCircle, path: "/runs" },
+            { name: t("materials"), icon: Boxes, path: "/materials" },
+            { name: t("reports"), icon: FileText, path: "/reports" },
+            { name: t("team"), icon: UsersRound, path: "/team" },
+          ],
+    [activeSection, t],
   );
 
   return (
     <>
       {/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
       <aside className="fixed start-5 top-5 bottom-5 z-30 hidden w-[4.5rem] flex-col items-center overflow-visible rounded-[2.25rem] border border-[#d2f2d4]/15 bg-[#143d32] py-5 shadow-[0_24px_60px_rgba(16,47,39,0.24)] transition-all duration-300 md:flex dark:border-[#d2f2d4]/10 dark:bg-[#102f27]">
-        {/* Logo (Static) */}
-        <div className="mb-6 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[1rem] bg-[#f5a623] text-[#173e33] shadow-[inset_0_-3px_0_rgba(182,97,8,0.28),0_10px_24px_rgba(0,0,0,0.18)]">
-          <FlaskConical size={21} strokeWidth={2.6} />
+        {/* Workspace section selector */}
+        <div className="mb-6">
+          <WorkspaceSectionSwitcher
+            activeSection={activeSection}
+            onSectionChange={onSectionChange}
+            placement="rail"
+          />
         </div>
 
         {/* Navigation (Scrollable) */}
-        <nav className="flex min-h-0 w-full flex-1 flex-col items-center gap-y-4 overflow-y-auto overflow-x-hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] [&::-webkit-scrollbar]:hidden">
+        <nav
+          className="flex min-h-0 w-full flex-1 flex-col items-center gap-y-4 overflow-y-auto overflow-x-hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] [&::-webkit-scrollbar]:hidden"
+          data-testid="desktop-workspace-navigation"
+        >
           {navItems.map((item) => (
             <SidebarItem
               active={isActivePath(item.path)}

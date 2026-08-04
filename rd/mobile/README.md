@@ -65,6 +65,30 @@ Hot Updater is disabled in the JavaScript root when
 or a development build; use an iOS or Android release build for end-to-end
 testing.
 
+## Bugsink
+
+The app reports JavaScript and native errors to the Bugsink project at
+`zapper.synbiodiet.com`. Performance tracing and session tracking are disabled
+because Bugsink only processes error events. Default PII collection is also
+disabled.
+
+EAS Build uploads Metro source maps through `sentry-cli`. Create these two EAS
+variables in every environment used by a build profile:
+
+- `SENTRY_PROJECT`: the Bugsink project slug, shown in the project settings.
+- `SENTRY_AUTH_TOKEN`: a Bugsink API token, stored with sensitive visibility.
+
+The build profiles load the matching `development`, `preview`, or `production`
+EAS environment. Run `eas env:create --environment production` once for each
+variable and repeat for any other build environment in use. The Bugsink URL and
+single-organization value are committed in the Expo config; the auth token must
+not be committed or prefixed with `EXPO_PUBLIC_`.
+
+The Metro config injects matching debug IDs into bundles and source maps. The
+Sentry Expo config plugin adds the native EAS Build upload steps for Android and
+iOS. A missing or incorrect `SENTRY_PROJECT` or `SENTRY_AUTH_TOKEN` makes the
+upload fail instead of silently producing unsymbolicated errors.
+
 ## Shared Convex backend
 
 The mobile app uses the same Convex project, generated API, and Better Auth
@@ -106,7 +130,7 @@ This command will move the starter code to the **app-example** directory and cre
 To learn more about developing your project with Expo, look at the following resources:
 
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial for building Android and iOS apps.
 
 ## Join the community
 

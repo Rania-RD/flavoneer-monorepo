@@ -16,7 +16,7 @@ export const authClient = createAuthClient({
   baseURL: mobileEnv.convexSiteUrl,
   plugins: [
     expoClient({
-      scheme: 'mobile',
+      scheme: 'flavoneer',
       storagePrefix: 'flavoneer',
       storage: SecureStore,
     }),

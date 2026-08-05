@@ -3,33 +3,42 @@ import '@/lib/bugsink';
 
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
 import * as Sentry from '@sentry/react-native';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
 import { authClient, convex } from '@/lib/backend';
 import { withHotUpdater } from '@/lib/hot-updater';
 
 SplashScreen.preventAutoHideAsync();
 
-function TabLayout() {
+function AppNavigator() {
   const colorScheme = useColorScheme();
+  const { data: session, isPending } = authClient.useSession();
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={Boolean(session)}>
+          <Stack.Screen name="(tabs)" />
+        </Stack.Protected>
+
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="sign-in" />
+        </Stack.Protected>
+      </Stack>
+      <AnimatedSplashOverlay ready={!isPending} />
     </ThemeProvider>
   );
 }
 
-const HotUpdatedTabLayout = withHotUpdater(TabLayout);
+const HotUpdatedAppNavigator = withHotUpdater(AppNavigator);
 
 function RootLayout() {
   return (
     <ConvexBetterAuthProvider authClient={authClient} client={convex}>
-      <HotUpdatedTabLayout />
+      <HotUpdatedAppNavigator />
     </ConvexBetterAuthProvider>
   );
 }

@@ -1,11 +1,16 @@
+import { createBackendRegulatoryEnv } from "@flavoneer/config/env/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { env, mutation, query } from "./_generated/server";
 import {
   normalizeInsNumber,
   parentCategoryCodes,
   plainInsNumber,
 } from "./regulatoryHelpers";
+
+const regulatoryEnv = createBackendRegulatoryEnv({
+  REGULATORY_IMPORT_TOKEN: env.REGULATORY_IMPORT_TOKEN,
+});
 
 const categoryImportValidator = v.object({
   code: v.string(),
@@ -160,7 +165,7 @@ export const importCatalogBatch = mutation({
     limits: v.optional(v.array(limitImportValidator)),
   },
   handler: async (ctx, args) => {
-    const requiredToken = process.env.REGULATORY_IMPORT_TOKEN;
+    const requiredToken = regulatoryEnv.importToken;
     if (requiredToken && args.token !== requiredToken) {
       throw new Error("Invalid regulatory import token");
     }

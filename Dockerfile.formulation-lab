@@ -6,6 +6,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/backend ./packages/backend
+COPY packages/config ./packages/config
 COPY rd/formulation-lab ./rd/formulation-lab
 
 RUN corepack enable \

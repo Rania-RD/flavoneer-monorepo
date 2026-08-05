@@ -61,6 +61,8 @@ const WorkspaceSectionSwitcher: React.FC<
       icon: ShieldCheck,
     },
   ];
+  const ActiveSectionIcon =
+    activeSection === "quality" ? ShieldCheck : FlaskConical;
 
   return (
     <div
@@ -76,7 +78,14 @@ const WorkspaceSectionSwitcher: React.FC<
         onClick={() => setIsOpen((open) => !open)}
         type="button"
       >
-        <FlaskConical size={21} strokeWidth={2.6} />
+        <ActiveSectionIcon
+          aria-hidden="true"
+          className="animate-in fade-in zoom-in-75 duration-200"
+          data-mode-icon={activeSection}
+          key={activeSection}
+          size={21}
+          strokeWidth={2.6}
+        />
         <span className="absolute -end-1 -bottom-1 grid h-4 w-4 place-items-center rounded-full border-2 border-[#143d32] bg-[#fffdf4] shadow-sm dark:border-[#102f27]">
           <ChevronDown
             className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}

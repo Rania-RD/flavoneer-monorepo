@@ -22,6 +22,26 @@ import {
 import type { DataModel } from "./dataModel.js";
 
 /**
+ * Typesafe environment variables declared in `convex.config.ts`.
+ */
+type Env = {
+  readonly BETTER_AUTH_URL: string | undefined;
+  readonly CONVEX_SITE_URL: string | undefined;
+  readonly HOT_UPDATER_API_TOKEN: string;
+  readonly HOT_UPDATER_S3_ACCESS_KEY_ID: string;
+  readonly HOT_UPDATER_S3_BASE_PATH: string;
+  readonly HOT_UPDATER_S3_BUCKET: string;
+  readonly HOT_UPDATER_S3_ENDPOINT: string;
+  readonly HOT_UPDATER_S3_REGION: string;
+  readonly HOT_UPDATER_S3_SECRET_ACCESS_KEY: string;
+  readonly INVITATION_EMAIL_WEBHOOK_SECRET: string | undefined;
+  readonly INVITATION_EMAIL_WEBHOOK_URL: string | undefined;
+  readonly MOBILE_SITE_URL: string | undefined;
+  readonly REGULATORY_IMPORT_TOKEN: string | undefined;
+  readonly SITE_URL: string | undefined;
+};
+
+/**
  * Define a query in this Convex app's public API.
  *
  * This function will be allowed to read your Convex database and will be accessible from the client.
@@ -94,6 +114,11 @@ export declare const internalAction: ActionBuilder<DataModel, "internal">;
  * @returns The wrapped function. Import this function from `convex/http.js` and route it to hook it up.
  */
 export declare const httpAction: HttpActionBuilder;
+
+/**
+ * Typesafe environment variables declared in `convex.config.ts`.
+ */
+export declare const env: Env;
 
 /**
  * A set of services for use within Convex query functions.

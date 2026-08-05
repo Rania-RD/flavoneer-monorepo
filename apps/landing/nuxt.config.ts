@@ -1,4 +1,11 @@
+import { createLandingEnv } from '@flavoneer/config/env/landing'
 import tailwindcss from '@tailwindcss/vite'
+
+const env = createLandingEnv({
+  NUXT_PUBLIC_LAB_URL: process.env.NUXT_PUBLIC_LAB_URL,
+  VITE_PUBLIC_POSTHOG_HOST: process.env.VITE_PUBLIC_POSTHOG_HOST,
+  VITE_PUBLIC_POSTHOG_KEY: process.env.VITE_PUBLIC_POSTHOG_KEY,
+})
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -9,9 +16,9 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      labUrl: process.env.NUXT_PUBLIC_LAB_URL || 'https://lab.flavoneer.com',
-      posthogHost: process.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
-      posthogKey: process.env.VITE_PUBLIC_POSTHOG_KEY || '',
+      labUrl: env.labUrl,
+      posthogHost: env.posthogHost,
+      posthogKey: env.posthogKey,
     },
   },
   app: {

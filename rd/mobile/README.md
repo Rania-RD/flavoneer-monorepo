@@ -37,15 +37,15 @@ cp rd/mobile/.env.hotupdater.example rd/mobile/.env.hotupdater
 ```
 
 `EXPO_PUBLIC_HOT_UPDATER_URL` and `HOT_UPDATER_SERVER_URL` must point to the
-same self-hosted Hot Updater base path. The server must expose the standard
-check-update and bundle API routes and use the same S3 storage settings as
+same Convex `.site` URL under `/hot-updater`. Convex stores bundle metadata and
+exposes the standard update-check and bundle-management routes. The bundle
+archives remain in the S3-compatible storage configured by
 `hot-updater.config.ts`.
 
-The deploy process reads AWS credentials from the standard AWS credential
-chain. It also accepts `HOT_UPDATER_S3_ACCESS_KEY_ID` and
-`HOT_UPDATER_S3_SECRET_ACCESS_KEY`. Set `HOT_UPDATER_S3_ENDPOINT` for an
-S3-compatible service and `HOT_UPDATER_API_TOKEN` when the bundle API uses
-Bearer authentication.
+The deploy process requires `HOT_UPDATER_S3_ACCESS_KEY_ID`,
+`HOT_UPDATER_S3_SECRET_ACCESS_KEY`, `HOT_UPDATER_S3_ENDPOINT`, and
+`HOT_UPDATER_API_TOKEN`. The API token must match the value configured on the
+target Convex deployment.
 
 Build a new native binary after adding or changing Hot Updater native
 configuration:

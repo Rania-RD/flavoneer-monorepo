@@ -1,9 +1,12 @@
 {
   "expo": {
     "name": "Flavoneer",
-    "slug": "mobile",
+    "slug": "flavoneer",
     "version": "0.1.0",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "flavoneer",
@@ -50,7 +53,15 @@
         }
       ],
       "expo-secure-store",
-      "expo-image"
+      "expo-image",
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

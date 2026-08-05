@@ -1,16 +1,15 @@
 import { HotUpdater } from '@hot-updater/react-native';
 import type { ComponentType } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-
-const hotUpdaterBaseUrl = process.env.EXPO_PUBLIC_HOT_UPDATER_URL;
+import { mobileEnv } from './env';
 
 export function withHotUpdater(Component: ComponentType) {
-  if (!hotUpdaterBaseUrl) {
+  if (!mobileEnv.hotUpdaterUrl) {
     return Component;
   }
 
   return HotUpdater.wrap({
-    baseURL: hotUpdaterBaseUrl,
+    baseURL: mobileEnv.hotUpdaterUrl,
     updateStrategy: 'appVersion',
     updateMode: 'auto',
     fallbackComponent: ({ progress, status }) => (

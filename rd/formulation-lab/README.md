@@ -76,8 +76,6 @@ Invitations tab. Do not run with `--prod` until `workspaceMigration:inventory`
 has been reviewed with an authenticated administrator identity and workspace
 deletion-retention policy has been confirmed.
 
-`GEMINI_API_KEY` is still wired in `vite.config.ts`, but the current app shell is not the generic AI Studio starter described by the old README.
-
 ### Coolify
 
 Add these variables to the formulation-lab resource:
@@ -103,7 +101,11 @@ Exposed Port: 80
 ```
 
 Leave the start command empty. The image uses Nginx to serve the Vite build and
-falls back to `index.html` for client-side routes.
+falls back to `index.html` for client-side routes. Nginx serves `index.html`
+with `Cache-Control: no-store, no-cache, must-revalidate`, while fingerprinted
+assets remain immutable for one year. Production responses also include
+`X-Content-Type-Options: nosniff` and
+`Referrer-Policy: strict-origin-when-cross-origin`.
 
 ## Quality Gates
 

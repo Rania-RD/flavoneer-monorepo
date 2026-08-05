@@ -2,24 +2,30 @@ import { expo } from "@better-auth/expo";
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { requireActionCtx } from "@convex-dev/better-auth/utils";
+import { createBackendAuthEnv } from "@flavoneer/config/env/server";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins/organization";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { query } from "./_generated/server";
+import { env, query } from "./_generated/server";
 import authConfig from "./auth.config";
 import authSchema from "./betterAuth/schema";
 
-const siteUrl = process.env.SITE_URL || "http://localhost:3001";
-const mobileSiteUrl = process.env.MOBILE_SITE_URL || "flavoneer://";
-const authBaseUrl = process.env.BETTER_AUTH_URL || process.env.CONVEX_SITE_URL;
+export const backendAuthEnv = createBackendAuthEnv({
+  BETTER_AUTH_URL: env.BETTER_AUTH_URL,
+  CONVEX_SITE_URL: env.CONVEX_SITE_URL,
+  INVITATION_EMAIL_WEBHOOK_SECRET: env.INVITATION_EMAIL_WEBHOOK_SECRET,
+  INVITATION_EMAIL_WEBHOOK_URL: env.INVITATION_EMAIL_WEBHOOK_URL,
+  MOBILE_SITE_URL: env.MOBILE_SITE_URL,
+  SITE_URL: env.SITE_URL,
+});
+const { authBaseUrl, mobileSiteUrl, siteUrl } = backendAuthEnv;
 const trustedOrigins = Array.from(
   new Set([siteUrl, mobileSiteUrl, "http://localhost:3000", "http://localhost:3001"]),
 );
 
-const invitationWebhookUrl = process.env.INVITATION_EMAIL_WEBHOOK_URL;
-const invitationWebhookSecret = process.env.INVITATION_EMAIL_WEBHOOK_SECRET;
+const { invitationWebhookSecret, invitationWebhookUrl } = backendAuthEnv;
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.

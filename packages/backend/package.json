@@ -26,6 +26,8 @@
     "@better-auth/expo": "1.5.6",
     "@convex-dev/better-auth": "^0.11.5",
     "@convex-dev/migrations": "0.3.4",
+    "@flavoneer/config": "workspace:*",
+    "@hot-updater/js": "0.35.4",
     "better-auth": "1.5.6",
     "convex": "^1.41.0"
   },

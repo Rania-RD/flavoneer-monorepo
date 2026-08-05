@@ -4,26 +4,16 @@ import { organizationClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import { ConvexReactClient } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
-
-const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
-const convexSiteUrl = process.env.EXPO_PUBLIC_CONVEX_SITE_URL;
-
-if (!convexUrl) {
-  throw new Error('EXPO_PUBLIC_CONVEX_URL is required.');
-}
-
-if (!convexSiteUrl) {
-  throw new Error('EXPO_PUBLIC_CONVEX_SITE_URL is required.');
-}
+import { mobileEnv } from './env';
 
 export { api } from '@flavoneer/backend/api';
 
-export const convex = new ConvexReactClient(convexUrl, {
+export const convex = new ConvexReactClient(mobileEnv.convexUrl, {
   unsavedChangesWarning: false,
 });
 
 export const authClient = createAuthClient({
-  baseURL: convexSiteUrl,
+  baseURL: mobileEnv.convexSiteUrl,
   plugins: [
     expoClient({
       scheme: 'mobile',

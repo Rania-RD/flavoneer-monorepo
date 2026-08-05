@@ -34,6 +34,7 @@ test("flask selector switches the workspace navigation to quality control", asyn
   await expect(page.getByRole("link", { name: "Run review" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Team" })).toHaveCount(0);
+  await expect(selector.locator('[data-mode-icon="quality"]')).toBeVisible();
 
   await page.reload();
   await expect(page.getByTestId("rail-section-selector")).toBeVisible();

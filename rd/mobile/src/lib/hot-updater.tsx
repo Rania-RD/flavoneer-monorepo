@@ -1,6 +1,6 @@
 import { HotUpdater } from '@hot-updater/react-native';
 import type { ComponentType } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { mobileEnv } from './env';
 
 export function withHotUpdater(Component: ComponentType) {
@@ -13,35 +13,15 @@ export function withHotUpdater(Component: ComponentType) {
     updateStrategy: 'appVersion',
     updateMode: 'auto',
     fallbackComponent: ({ progress, status }) => (
-      <View style={styles.updateContainer}>
+      <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator color="#208AEF" size="large" />
-        <Text style={styles.updateStatus}>
+        <Text className="mt-5 text-lg font-semibold text-[#111827]">
           {status === 'UPDATING' ? 'Updating app…' : 'Checking for updates…'}
         </Text>
         {progress > 0 ? (
-          <Text style={styles.updateProgress}>{Math.round(progress * 100)}%</Text>
+          <Text className="mt-2 text-sm text-[#4B5563]">{Math.round(progress * 100)}%</Text>
         ) : null}
       </View>
     ),
   })(Component);
 }
-
-const styles = StyleSheet.create({
-  updateContainer: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  updateProgress: {
-    color: '#4B5563',
-    fontSize: 14,
-    marginTop: 8,
-  },
-  updateStatus: {
-    color: '#111827',
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 20,
-  },
-});

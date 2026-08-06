@@ -1,14 +1,13 @@
 import * as Device from 'expo-device';
 import { LogOut } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
 import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/backend';
 
@@ -48,25 +47,25 @@ export default function HomeScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
+    <ThemedView className="flex-1 flex-row justify-center">
+      <SafeAreaView className="max-w-[800px] flex-1 items-center gap-4 px-6 pb-4 ios:pb-[66px] android:pb-24">
+        <ThemedView className="flex-1 items-center justify-center gap-4 px-6">
           <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
+          <ThemedText className="text-center" type="title">
             Welcome back{session?.user.name ? `, ${session.user.name}` : ''}
           </ThemedText>
           {session?.user.email ? (
-            <ThemedText style={styles.email} themeColor="textSecondary">
+            <ThemedText className="text-center" themeColor="textSecondary">
               {session.user.email}
             </ThemedText>
           ) : null}
         </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
+        <ThemedText className="uppercase" type="code">
           authenticated session
         </ThemedText>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
+        <ThemedView className="self-stretch gap-4 rounded-3xl px-4 py-6" type="backgroundElement">
           <HintRow
             title="Try editing"
             hint={<ThemedText type="code">src/app/(tabs)/index.tsx</ThemedText>}
@@ -74,14 +73,10 @@ export default function HomeScreen() {
           <HintRow title="Dev tools" hint={getDevMenuHint()} />
           <Pressable
             accessibilityRole="button"
+            className={`min-h-12 flex-row items-center justify-center gap-2 rounded-2xl border-hairline border-[#E0E1E6] active:opacity-[0.65] dark:border-[#2E3135] ${isSigningOut ? 'opacity-50' : ''}`}
             disabled={isSigningOut}
             onPress={handleSignOut}
-            style={({ pressed }) => [
-              styles.signOutButton,
-              { borderColor: theme.backgroundSelected },
-              pressed && styles.pressed,
-              isSigningOut && styles.disabled,
-            ]}>
+          >
             {isSigningOut ? (
               <ActivityIndicator color={theme.text} size="small" />
             ) : (
@@ -94,57 +89,3 @@ export default function HomeScreen() {
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  email: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-  signOutButton: {
-    minHeight: 48,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Spacing.three,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-  },
-  pressed: {
-    opacity: 0.65,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-});

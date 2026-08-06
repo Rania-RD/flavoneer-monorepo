@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -7,7 +6,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   TextInput,
   View,
 } from 'react-native';
@@ -16,7 +14,7 @@ import { z } from 'zod';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Image } from '@/components/ui/image';
 import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/backend';
 
@@ -60,34 +58,36 @@ export default function SignInScreen() {
   };
 
   return (
-    <ThemedView style={styles.screen}>
-      <SafeAreaView style={styles.safeArea}>
+    <ThemedView className="flex-1">
+      <SafeAreaView className="flex-1">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardView}>
+          className="flex-1"
+        >
           <ScrollView
             automaticallyAdjustKeyboardInsets
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled">
-            <View style={styles.content}>
-              <View style={styles.brand}>
-                <View style={styles.logoContainer}>
+            contentContainerClassName="grow items-center justify-center px-6 py-8"
+            keyboardShouldPersistTaps="handled"
+          >
+            <View className="w-full max-w-[440px] gap-8">
+              <View className="items-center gap-2">
+                <View className="mb-4 size-[88px] items-center justify-center rounded-[28px] bg-[#D2F2D4]">
                   <Image
                     accessibilityLabel="Flavoneer"
+                    className="size-16"
                     source={require('@/assets/images/flavoneer-mark.png')}
-                    style={styles.logo}
                   />
                 </View>
-                <ThemedText type="subtitle" style={styles.title}>
+                <ThemedText className="text-center" type="subtitle">
                   Welcome back
                 </ThemedText>
-                <ThemedText style={styles.subtitle} themeColor="textSecondary">
+                <ThemedText className="text-center" themeColor="textSecondary">
                   Sign in to continue to Flavoneer.
                 </ThemedText>
               </View>
 
-              <View style={styles.form}>
-                <View style={styles.fieldGroup}>
+              <View className="gap-4">
+                <View className="gap-2">
                   <ThemedText type="smallBold">Email</ThemedText>
                   <TextInput
                     accessibilityLabel="Email"
@@ -102,29 +102,15 @@ export default function SignInScreen() {
                     placeholder="you@example.com"
                     placeholderTextColor={theme.textSecondary}
                     returnKeyType="next"
-                    style={[
-                      styles.input,
-                      {
-                        backgroundColor: theme.backgroundElement,
-                        borderColor: theme.backgroundSelected,
-                        color: theme.text,
-                      },
-                    ]}
+                    className="min-h-[54px] rounded-2xl border-hairline border-[#E0E1E6] bg-[#F0F0F3] px-4 text-base text-black dark:border-[#2E3135] dark:bg-[#212225] dark:text-white"
                     textContentType="username"
                     value={email}
                   />
                 </View>
 
-                <View style={styles.fieldGroup}>
+                <View className="gap-2">
                   <ThemedText type="smallBold">Password</ThemedText>
-                  <View
-                    style={[
-                      styles.passwordField,
-                      {
-                        backgroundColor: theme.backgroundElement,
-                        borderColor: theme.backgroundSelected,
-                      },
-                    ]}>
+                  <View className="min-h-[54px] flex-row items-center rounded-2xl border-hairline border-[#E0E1E6] bg-[#F0F0F3] dark:border-[#2E3135] dark:bg-[#212225]">
                     <TextInput
                       accessibilityLabel="Password"
                       autoCapitalize="none"
@@ -136,16 +122,17 @@ export default function SignInScreen() {
                       placeholderTextColor={theme.textSecondary}
                       returnKeyType="go"
                       secureTextEntry={!showPassword}
-                      style={[styles.passwordInput, { color: theme.text }]}
+                      className="min-h-[52px] flex-1 pl-4 text-base text-black dark:text-white"
                       textContentType="password"
                       value={password}
                     />
                     <Pressable
                       accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                       accessibilityRole="button"
+                      className="min-h-[52px] w-[52px] items-center justify-center active:opacity-70"
                       hitSlop={12}
                       onPress={() => setShowPassword((current) => !current)}
-                      style={({ pressed }) => [styles.visibilityButton, pressed && styles.pressed]}>
+                    >
                       {showPassword ? (
                         <EyeOff color={theme.textSecondary} size={20} />
                       ) : (
@@ -156,8 +143,11 @@ export default function SignInScreen() {
                 </View>
 
                 {errorMessage ? (
-                  <View accessibilityLiveRegion="polite" style={styles.errorContainer}>
-                    <ThemedText style={styles.errorText} type="small">
+                  <View
+                    accessibilityLiveRegion="polite"
+                    className="rounded-lg bg-[#FEF2F2] px-4 py-2"
+                  >
+                    <ThemedText className="!text-[#B91C1C]" type="small">
                       {errorMessage}
                     </ThemedText>
                   </View>
@@ -165,18 +155,14 @@ export default function SignInScreen() {
 
                 <Pressable
                   accessibilityRole="button"
+                  className={`mt-1 min-h-[54px] items-center justify-center rounded-2xl bg-black active:opacity-70 dark:bg-white ${isSubmitting ? 'opacity-[0.55]' : ''}`}
                   disabled={isSubmitting}
                   onPress={handleSignIn}
-                  style={({ pressed }) => [
-                    styles.submitButton,
-                    { backgroundColor: theme.text },
-                    pressed && styles.pressed,
-                    isSubmitting && styles.disabled,
-                  ]}>
+                >
                   {isSubmitting ? (
                     <ActivityIndicator color={theme.background} size="small" />
                   ) : (
-                    <ThemedText style={[styles.submitLabel, { color: theme.background }]}>
+                    <ThemedText className="text-base font-bold leading-[22px] !text-white dark:!text-black">
                       Sign in
                     </ThemedText>
                   )}
@@ -189,109 +175,3 @@ export default function SignInScreen() {
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.five,
-  },
-  content: {
-    width: '100%',
-    maxWidth: Math.min(MaxContentWidth, 440),
-    gap: Spacing.five,
-  },
-  brand: {
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 88,
-    height: 88,
-    marginBottom: Spacing.three,
-    borderRadius: 28,
-    backgroundColor: '#D2F2D4',
-  },
-  logo: {
-    width: 64,
-    height: 64,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  subtitle: {
-    textAlign: 'center',
-  },
-  form: {
-    gap: Spacing.three,
-  },
-  fieldGroup: {
-    gap: Spacing.two,
-  },
-  input: {
-    minHeight: 54,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
-  },
-  passwordField: {
-    minHeight: 54,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Spacing.three,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  passwordInput: {
-    flex: 1,
-    minHeight: 52,
-    paddingLeft: Spacing.three,
-    fontSize: 16,
-  },
-  visibilityButton: {
-    width: 52,
-    minHeight: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  errorContainer: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
-    backgroundColor: '#FEF2F2',
-  },
-  errorText: {
-    color: '#B91C1C',
-  },
-  submitButton: {
-    minHeight: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Spacing.three,
-    marginTop: Spacing.one,
-  },
-  submitLabel: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  disabled: {
-    opacity: 0.55,
-  },
-});

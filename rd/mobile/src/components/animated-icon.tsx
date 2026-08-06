@@ -1,12 +1,15 @@
-import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
+import { cssInterop } from 'nativewind';
 import { useEffect, useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { Image } from '@/components/ui/image';
+
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
+const AnimatedView = cssInterop(Animated.View, { className: 'style' }) as typeof Animated.View;
 
 export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
   const [animate, setAnimate] = useState(false);
@@ -42,22 +45,23 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
   });
 
   const image = (
-    <Image style={styles.image} source={require('@/assets/images/flavoneer-mark.png')} />
+    <Image className="size-24" source={require('@/assets/images/flavoneer-mark.png')} />
   );
 
   return animate ? (
-    <Animated.View
+    <AnimatedView
       entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
         'worklet';
         if (finished) {
           scheduleOnRN(setVisible, false);
         }
       })}
-      style={styles.splashOverlay}>
+      className="absolute inset-0 z-[1000] items-center justify-center bg-[#D2F2D4]"
+    >
       {image}
-    </Animated.View>
+    </AnimatedView>
   ) : (
-    <View style={styles.splashOverlay}>
+    <View className="absolute inset-0 z-[1000] items-center justify-center bg-[#D2F2D4]">
       {image}
     </View>
   );
@@ -101,52 +105,28 @@ const glowKeyframe = new Keyframe({
 
 export function AnimatedIcon() {
   return (
-    <View style={styles.iconContainer}>
-      <Animated.View entering={glowKeyframe.duration(60 * 1000 * 4)} style={styles.glow}>
-        <Image style={styles.glow} source={require('@/assets/images/flavoneer-glow.png')} />
-      </Animated.View>
+    <View className="z-[100] size-32 items-center justify-center">
+      <AnimatedView
+        className="absolute size-[201px]"
+        entering={glowKeyframe.duration(60 * 1000 * 4)}
+      >
+        <Image
+          className="absolute size-[201px]"
+          source={require('@/assets/images/flavoneer-glow.png')}
+        />
+      </AnimatedView>
 
-      <Animated.View entering={keyframe.duration(DURATION)} style={styles.background} />
-      <Animated.View style={styles.imageContainer} entering={logoKeyframe.duration(DURATION)}>
-        <Image style={styles.image} source={require('@/assets/images/flavoneer-mark.png')} />
-      </Animated.View>
+      <AnimatedView
+        className="absolute size-32 rounded-[40px]"
+        entering={keyframe.duration(DURATION)}
+        style={{ experimental_backgroundImage: 'linear-gradient(180deg, #E9F8EA, #D2F2D4)' }}
+      />
+      <AnimatedView
+        className="items-center justify-center"
+        entering={logoKeyframe.duration(DURATION)}
+      >
+        <Image className="size-24" source={require('@/assets/images/flavoneer-mark.png')} />
+      </AnimatedView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  imageContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  glow: {
-    width: 201,
-    height: 201,
-    position: 'absolute',
-  },
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 128,
-    height: 128,
-    zIndex: 100,
-  },
-  image: {
-    width: 96,
-    height: 96,
-  },
-  background: {
-    borderRadius: 40,
-    experimental_backgroundImage: `linear-gradient(180deg, #E9F8EA, #D2F2D4)`,
-    width: 128,
-    height: 128,
-    position: 'absolute',
-  },
-  splashOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: '#D2F2D4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-});

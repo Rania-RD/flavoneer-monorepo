@@ -1,0 +1,1740 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Implementation plan for mobile production-line monitoring records with offline autosave, Convex synchronization, QC submission, and production approval."
+    />
+    <title>Production Line Monitoring: Mobile Implementation Plan</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --forest: #173e33;
+        --forest-deep: #102f27;
+        --mint: #d2f2d4;
+        --mint-soft: #eef8eb;
+        --cream: #fffdf4;
+        --amber: #f5a623;
+        --orange: #ff7738;
+        --ink: #173e33;
+        --muted: #5e766d;
+        --line: rgba(23, 62, 51, 0.16);
+        --danger: #a43434;
+        --danger-soft: #fff0ed;
+        --success: #247a51;
+        --success-soft: #e8f7ed;
+        --warning-soft: #fff4d9;
+        --shadow: 0 18px 55px rgba(16, 47, 39, 0.09);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 5% 5%, rgba(210, 242, 212, 0.92), transparent 26rem),
+          radial-gradient(circle at 96% 25%, rgba(245, 166, 35, 0.12), transparent 25rem),
+          var(--mint-soft);
+        color: var(--ink);
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+        line-height: 1.62;
+      }
+
+      a {
+        color: var(--forest);
+        text-decoration-color: rgba(23, 62, 51, 0.34);
+        text-underline-offset: 0.18em;
+      }
+
+      a:hover {
+        text-decoration-color: var(--orange);
+      }
+
+      code,
+      pre {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      code {
+        border-radius: 0.35rem;
+        background: rgba(23, 62, 51, 0.075);
+        padding: 0.1rem 0.3rem;
+        font-size: 0.9em;
+      }
+
+      pre {
+        margin: 1rem 0 0;
+        overflow-x: auto;
+        border: 1px solid rgba(210, 242, 212, 0.15);
+        border-radius: 1.25rem;
+        background: var(--forest-deep);
+        color: #eff8ed;
+        padding: 1.1rem 1.2rem;
+        font-size: 0.84rem;
+        line-height: 1.62;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: minmax(14.5rem, 18rem) minmax(0, 1fr);
+        gap: 2rem;
+        width: min(100% - 2rem, 94rem);
+        margin: 0 auto;
+        padding: 1rem 0 4rem;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 1rem;
+        align-self: start;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+        border: 1px solid rgba(210, 242, 212, 0.12);
+        border-radius: 2rem;
+        background: var(--forest-deep);
+        color: #f7f4df;
+        padding: 1.35rem;
+        box-shadow: var(--shadow);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(210, 242, 212, 0.14);
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 2.5rem;
+        height: 2.5rem;
+        place-items: center;
+        border-radius: 0.85rem;
+        background: var(--amber);
+        color: var(--forest-deep);
+        font-weight: 900;
+      }
+
+      .brand strong,
+      .brand span {
+        display: block;
+      }
+
+      .brand span {
+        color: #a9cbbb;
+        font-size: 0.73rem;
+      }
+
+      .nav-label {
+        margin: 1.15rem 0 0.55rem;
+        color: #88aa9d;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .sidebar nav {
+        display: grid;
+        gap: 0.2rem;
+      }
+
+      .sidebar nav a {
+        display: block;
+        border-radius: 0.8rem;
+        color: #d9ecdf;
+        padding: 0.52rem 0.68rem;
+        text-decoration: none;
+        font-size: 0.79rem;
+        font-weight: 650;
+      }
+
+      .sidebar nav a:hover {
+        background: rgba(210, 242, 212, 0.09);
+        color: white;
+      }
+
+      .content {
+        min-width: 0;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 2.5rem;
+        background: var(--forest);
+        color: white;
+        padding: clamp(2rem, 5vw, 4.5rem);
+        box-shadow: var(--shadow);
+      }
+
+      .hero::after {
+        position: absolute;
+        inset: auto -8rem -10rem auto;
+        width: 28rem;
+        height: 28rem;
+        border: 5rem solid rgba(245, 166, 35, 0.16);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .eyebrow {
+        margin: 0 0 0.65rem;
+        color: #baddc9;
+        font-size: 0.76rem;
+        font-weight: 850;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        line-height: 1.15;
+      }
+
+      h1 {
+        position: relative;
+        z-index: 1;
+        max-width: 14ch;
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2.5rem, 6vw, 5.7rem);
+        font-weight: 700;
+        letter-spacing: -0.045em;
+      }
+
+      .hero-summary {
+        position: relative;
+        z-index: 1;
+        max-width: 55rem;
+        margin: 1.35rem 0 0;
+        color: #d7eadf;
+        font-size: 1.05rem;
+      }
+
+      .meta-row {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-top: 1.6rem;
+      }
+
+      .pill {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #f5f4e8;
+        padding: 0.42rem 0.78rem;
+        font-size: 0.76rem;
+        font-weight: 750;
+      }
+
+      section {
+        scroll-margin-top: 1.5rem;
+        margin-top: 1.25rem;
+        border: 1px solid var(--line);
+        border-radius: 2rem;
+        background: rgba(255, 253, 244, 0.93);
+        padding: clamp(1.25rem, 3vw, 2.4rem);
+        box-shadow: 0 10px 35px rgba(16, 47, 39, 0.055);
+      }
+
+      h2 {
+        margin: 0 0 1rem;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.65rem, 3vw, 2.5rem);
+        letter-spacing: -0.025em;
+      }
+
+      h3 {
+        margin: 1.75rem 0 0.65rem;
+        color: var(--forest-deep);
+        font-size: 1.18rem;
+      }
+
+      h4 {
+        margin: 1.25rem 0 0.5rem;
+        font-size: 0.98rem;
+      }
+
+      p {
+        margin: 0.6rem 0;
+      }
+
+      ul,
+      ol {
+        padding-inline-start: 1.4rem;
+      }
+
+      li + li {
+        margin-top: 0.36rem;
+      }
+
+      .decision {
+        border-inline-start: 0.4rem solid var(--amber);
+        border-radius: 0 1.3rem 1.3rem 0;
+        background: var(--warning-soft);
+        padding: 1rem 1.1rem;
+      }
+
+      .grid-2,
+      .grid-3,
+      .grid-4 {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 1.4rem;
+        background: #fffef9;
+        padding: 1rem;
+      }
+
+      .card h3,
+      .card h4 {
+        margin-top: 0;
+      }
+
+      .stat {
+        color: var(--forest-deep);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 2.1rem;
+        font-weight: 800;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .small {
+        font-size: 0.84rem;
+      }
+
+      .arabic {
+        font-family: "Tajawal", "Noto Sans Arabic", sans-serif;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        margin-top: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 1.25rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fffef9;
+        font-size: 0.83rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 0.72rem 0.8rem;
+        text-align: start;
+        vertical-align: top;
+      }
+
+      th {
+        background: rgba(210, 242, 212, 0.52);
+        color: var(--forest-deep);
+        font-size: 0.73rem;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .tag {
+        display: inline-block;
+        border-radius: 999px;
+        background: var(--mint);
+        color: var(--forest-deep);
+        padding: 0.18rem 0.48rem;
+        font-size: 0.71rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .tag.warning {
+        background: #ffe3b3;
+      }
+
+      .tag.danger {
+        background: #ffd9d3;
+        color: #822c2c;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(7.5rem, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+        overflow-x: auto;
+      }
+
+      .flow-step {
+        position: relative;
+        min-height: 8.5rem;
+        border: 1px solid var(--line);
+        border-radius: 1.2rem;
+        background: #fffef9;
+        padding: 0.9rem;
+      }
+
+      .flow-step:not(:last-child)::after {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: -0.68rem;
+        width: 0.6rem;
+        border-top: 2px solid var(--amber);
+        content: "";
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      .flow-step span {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .architecture {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: stretch;
+        gap: 0.7rem;
+        margin-top: 1rem;
+      }
+
+      .arch-node {
+        border: 1px solid var(--line);
+        border-radius: 1.4rem;
+        background: #fffef9;
+        padding: 1rem;
+      }
+
+      .arch-node.primary {
+        background: var(--forest);
+        color: white;
+      }
+
+      .arch-node.primary h3 {
+        color: white;
+      }
+
+      .arch-arrow {
+        display: grid;
+        place-items: center;
+        color: var(--orange);
+        font-size: 1.5rem;
+        font-weight: 900;
+      }
+
+      .callout {
+        margin-top: 1rem;
+        border: 1px solid rgba(164, 52, 52, 0.18);
+        border-radius: 1.2rem;
+        background: var(--danger-soft);
+        padding: 1rem;
+      }
+
+      .success-callout {
+        border-color: rgba(36, 122, 81, 0.22);
+        background: var(--success-soft);
+      }
+
+      .checklist {
+        list-style: none;
+        padding: 0;
+      }
+
+      .checklist li {
+        position: relative;
+        padding-inline-start: 1.65rem;
+      }
+
+      .checklist li::before {
+        position: absolute;
+        inset-inline-start: 0;
+        top: 0.12rem;
+        color: var(--success);
+        content: "✓";
+        font-weight: 900;
+      }
+
+      .timeline {
+        position: relative;
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding-inline-start: 1.5rem;
+      }
+
+      .timeline::before {
+        position: absolute;
+        inset-block: 0.5rem;
+        inset-inline-start: 0.43rem;
+        border-inline-start: 2px solid rgba(23, 62, 51, 0.18);
+        content: "";
+      }
+
+      .milestone {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 1.25rem;
+        background: #fffef9;
+        padding: 0.9rem 1rem;
+      }
+
+      .milestone::before {
+        position: absolute;
+        top: 1.05rem;
+        inset-inline-start: -1.48rem;
+        width: 0.65rem;
+        height: 0.65rem;
+        border: 3px solid var(--cream);
+        border-radius: 50%;
+        background: var(--amber);
+        content: "";
+      }
+
+      .milestone h3 {
+        margin: 0 0 0.35rem;
+      }
+
+      .footer {
+        margin-top: 1.5rem;
+        border-radius: 2rem;
+        background: var(--forest-deep);
+        color: #dcece2;
+        padding: 1.5rem;
+      }
+
+      .footer strong {
+        color: white;
+      }
+
+      @media (max-width: 70rem) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+          max-height: none;
+        }
+
+        .sidebar nav {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .nav-label {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 50rem) {
+        .grid-2,
+        .grid-3,
+        .grid-4 {
+          grid-template-columns: 1fr;
+        }
+
+        .architecture {
+          grid-template-columns: 1fr;
+        }
+
+        .arch-arrow {
+          transform: rotate(90deg);
+        }
+
+        .sidebar nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .hero,
+        section {
+          border-radius: 1.5rem;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+          color: black;
+          font-size: 10pt;
+        }
+
+        .shell {
+          display: block;
+          width: auto;
+          padding: 0;
+        }
+
+        .sidebar {
+          display: none;
+        }
+
+        .hero,
+        section,
+        .footer {
+          break-inside: avoid;
+          box-shadow: none;
+        }
+
+        .hero {
+          background: white;
+          color: black;
+          border: 2px solid black;
+        }
+
+        .hero-summary,
+        .eyebrow,
+        .pill,
+        .footer {
+          color: black;
+        }
+
+        section {
+          background: white;
+        }
+
+        a {
+          color: black;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Plan navigation">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">FL</div>
+          <div>
+            <strong>Flavoneer</strong>
+            <span>Quality Control design</span>
+          </div>
+        </div>
+
+        <p class="nav-label">Decision</p>
+        <nav>
+          <a href="#goal">Goal and scope</a>
+          <a href="#premises">Premises and signals</a>
+          <a href="#approach">Selected approach</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#fields">Form mapping</a>
+
+          <p class="nav-label">Implementation</p>
+          <a href="#mobile">Mobile experience</a>
+          <a href="#offline">Offline and sync</a>
+          <a href="#data">Data model</a>
+          <a href="#backend">Backend API</a>
+          <a href="#web">Web workspace</a>
+          <a href="#security">Security and records</a>
+          <a href="#files">File map</a>
+
+          <p class="nav-label">Delivery</p>
+          <a href="#tests">Test plan</a>
+          <a href="#rollout">Milestones and rollout</a>
+          <a href="#acceptance">Acceptance criteria</a>
+          <a href="#risks">Risks and questions</a>
+          <a href="#assignment">Next assignment</a>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <header class="hero">
+          <p class="eyebrow">Approach A · Detailed implementation plan</p>
+          <h1>Production line monitoring, built for the factory floor.</h1>
+          <p class="hero-summary">
+            A dedicated mobile workflow for
+            <span class="arabic" lang="ar" dir="rtl">نموذج مراقبة خط الإنتاج</span>.
+            QC records work during production, every change is saved locally, drafts sync to
+            Convex after reconnect, and the production manager reviews and co-signs in the web
+            Quality Control workspace.
+          </p>
+          <div class="meta-row" aria-label="Plan metadata">
+            <span class="pill">Date: 2026-08-06</span>
+            <span class="pill">Mode: Intrapreneurship</span>
+            <span class="pill">Stage: First factory pilot</span>
+            <span class="pill">Estimate: 5–7 engineering weeks</span>
+            <span class="pill">Status: DONE_WITH_CONCERNS</span>
+          </div>
+        </header>
+
+        <section id="goal">
+          <p class="eyebrow">01 · Goal</p>
+          <h2>Replace one active paper workflow end to end</h2>
+          <p>
+            The first release digitizes the production-line monitoring form without building a
+            generic form builder. The QC team enters the record in the Expo mobile app during
+            production. The record survives app restarts and lost connectivity. The production
+            manager reviews the submitted record and adds the second signature from the existing
+            web workspace.
+          </p>
+
+          <div class="grid-3" style="margin-top: 1rem">
+            <div class="card">
+              <div class="stat">1</div>
+              <strong>Fixed form</strong>
+              <p class="small muted">Production-line monitoring only. Other supplied forms remain out of scope.</p>
+            </div>
+            <div class="card">
+              <div class="stat">2</div>
+              <strong>Named signers</strong>
+              <p class="small muted">QC submits and signs. Production reviews and co-signs.</p>
+            </div>
+            <div class="card">
+              <div class="stat">0</div>
+              <strong>Required connectivity during entry</strong>
+              <p class="small muted">All data entry remains available when the device is offline.</p>
+            </div>
+          </div>
+
+          <h3>In scope</h3>
+          <ul>
+            <li>Arabic-first, RTL mobile entry with English translations available.</li>
+            <li>Local SQLite persistence after every field modification.</li>
+            <li>Draft recovery after app termination, device restart, or network loss.</li>
+            <li>A durable outbox that retries automatically after connectivity returns.</li>
+            <li>Header details, measurement rounds, 22 conformity checks, notes, and two signatures.</li>
+            <li>QC submit, production return-for-correction, production approve, and approved lock.</li>
+            <li>Web review queue, record detail, audit history, search, and PDF export.</li>
+            <li>Role checks, workspace isolation, immutable approval events, and attributed amendments.</li>
+          </ul>
+
+          <h3>Out of scope for this release</h3>
+          <ul>
+            <li>A generic form-template designer or generic mobile form renderer.</li>
+            <li>The laboratory, receiving, kitchen, kitchen-control, and raw-material forms.</li>
+            <li>Automatic machine or sensor ingestion.</li>
+            <li>Guaranteed background synchronization while the operating system suspends the app.</li>
+            <li>Claiming FDA, ISO 22000, HACCP, or local legal certification.</li>
+            <li>Replacing paper before the company completes a controlled parallel pilot.</li>
+          </ul>
+        </section>
+
+        <section id="premises">
+          <p class="eyebrow">02 · What was agreed</p>
+          <h2>Premises and operating signals</h2>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Premises</h3>
+              <ol>
+                <li>QC completes the form in the mobile app while production is running.</li>
+                <li>Production management reviews the submitted record.</li>
+                <li>QC and production both sign the same record revision.</li>
+                <li>Each modification is saved locally before synchronization is attempted.</li>
+                <li>Connectivity can disappear during entry, so the app cannot treat Convex as the draft store.</li>
+                <li>Approved records cannot be silently edited or deleted.</li>
+              </ol>
+            </div>
+            <div class="card">
+              <h3>Signals</h3>
+              <ul>
+                <li>The company already uses a concrete paper form, which is stronger evidence than a hypothetical request.</li>
+                <li>The responsible people and approval handoff are named.</li>
+                <li>The required device and moment of entry are named: mobile during production.</li>
+                <li>The offline and autosave requirements came from the expected operating environment.</li>
+                <li>The current mobile app has shared Convex and Better Auth wiring but no domain workflow yet.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>External landscape check</h3>
+          <p>
+            Food-production monitoring guidance supports timely records, assigned responsibility,
+            dated sign-off, deviation handling, readable records, access control, and changes that do
+            not hide previous entries. Mature mobile form tools separate drafts from finalized records
+            and explicitly support offline recovery. These sources guide record integrity, but they do
+            not establish which regulations apply to this company.
+          </p>
+          <ul class="small">
+            <li><a href="https://www.fda.gov/food/hazard-analysis-critical-control-point-haccp/haccp-principles-application-guidelines">FDA HACCP principles and monitoring guidance</a></li>
+            <li><a href="https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/inspection-guides/computerized-systems-food-processing-industry">FDA computerized systems in food processing</a></li>
+            <li><a href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application">FDA electronic records and signatures guidance</a></li>
+            <li><a href="https://docs.getodk.org/collect-filling-forms/">ODK offline form entry and draft recovery</a></li>
+            <li><a href="https://docs.getodk.org/form-audit-log/">ODK form audit log</a></li>
+            <li><a href="https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/">Expo SDK 57 SQLite documentation</a></li>
+            <li><a href="https://docs.expo.dev/versions/latest/sdk/network/">Expo Network documentation</a></li>
+            <li><a href="https://docs.convex.dev/client/react/overview">Convex React client behavior</a></li>
+          </ul>
+        </section>
+
+        <section id="approach">
+          <p class="eyebrow">03 · Selected approach</p>
+          <h2>Dedicated production-line form</h2>
+          <div class="decision">
+            <strong>Decision:</strong> build a typed form and workflow for one production use case.
+            Keep the storage boundaries clean enough to extract shared primitives after the team has
+            observed real mobile usage.
+          </div>
+
+          <div class="grid-2" style="margin-top: 1rem">
+            <div class="card">
+              <h3>Why this path</h3>
+              <ul>
+                <li>It gets one active workflow into factory use faster.</li>
+                <li>Fixed fields support stronger validation and a clearer mobile layout.</li>
+                <li>Offline sync is already a large engineering surface and should be tested before arbitrary form schemas are added.</li>
+                <li>Observed use will reveal which primitives are actually shared by the later forms.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Effort and risk</h3>
+              <p><strong>Effort:</strong> 5–7 engineering weeks for one engineer, including a controlled pilot.</p>
+              <p><strong>Risk:</strong> medium. The highest risks are offline conflict handling, auth expiry, signature meaning, and operational adoption.</p>
+            </div>
+          </div>
+
+          <h3>Rejected alternatives</h3>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Configurable compliance-form engine</h4>
+              <p class="small muted">
+                Rejected for the first release because arbitrary schemas, repeatable sections,
+                migrations, and offline rendering would delay the first factory form and increase the
+                test surface before mobile behavior is observed.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Production-session event timeline</h4>
+              <p class="small muted">
+                Rejected because it changes the familiar operating model. It may be a better later UX,
+                but the first pilot should preserve the recognizable form and approval process.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="workflow">
+          <p class="eyebrow">04 · Operational workflow</p>
+          <h2>One record, five controlled states</h2>
+
+          <div class="flow" aria-label="Record workflow">
+            <div class="flow-step">
+              <span class="tag">Editable</span>
+              <strong>Draft</strong>
+              <span>QC enters data. Every change saves locally and queues synchronization.</span>
+            </div>
+            <div class="flow-step">
+              <span class="tag warning">Queued</span>
+              <strong>Submission queued</strong>
+              <span>QC confirms the record offline. Final submission waits for a valid online session.</span>
+            </div>
+            <div class="flow-step">
+              <span class="tag warning">Review</span>
+              <strong>Production review</strong>
+              <span>QC revision is frozen. Production can approve or return it with a reason.</span>
+            </div>
+            <div class="flow-step">
+              <span class="tag danger">Editable</span>
+              <strong>Returned</strong>
+              <span>QC corrects the record. The old signed revision remains in the audit history.</span>
+            </div>
+            <div class="flow-step">
+              <span class="tag">Locked</span>
+              <strong>Approved</strong>
+              <span>Production co-signs. Direct edits and deletion are blocked.</span>
+            </div>
+          </div>
+
+          <h3>Step-by-step usage</h3>
+          <ol>
+            <li>QC signs in and opens the Quality tab in the mobile app.</li>
+            <li>QC selects “New production-line record.” The app creates a UUID-backed local draft immediately.</li>
+            <li>QC selects the department or line and product from cached reference data. A product-name snapshot is stored so the record stays readable if names change later.</li>
+            <li>QC enters one or more timed measurement rounds and completes all conformity checks.</li>
+            <li>Any non-conforming check requires a note and immediate action before submission.</li>
+            <li>The app displays “Saved on device,” “Waiting to sync,” or “Synced” independently from the form validation status.</li>
+            <li>QC reviews a summary, confirms identity, and taps “Sign and submit.” If offline, the action is queued and clearly marked as not yet submitted to the workspace.</li>
+            <li>On reconnect, the app syncs the latest draft, then sends the queued submission. If auth expired, it asks QC to sign in without removing the local record.</li>
+            <li>The production manager opens the web review queue, checks data and deviations, then approves or returns the record with a required reason.</li>
+            <li>Approval creates the second signature event, locks the revision, and makes the official PDF available.</li>
+          </ol>
+
+          <div class="callout">
+            <strong>Important distinction:</strong> “Saved on device” does not mean “submitted.” The UI must never show an offline queued signature as a completed server approval.
+          </div>
+        </section>
+
+        <section id="fields">
+          <p class="eyebrow">05 · Form mapping</p>
+          <h2>Typed fields for the supplied Arabic form</h2>
+
+          <h3>Record header</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Arabic label</th>
+                  <th>Stored field</th>
+                  <th>Input</th>
+                  <th>Rule</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="arabic" lang="ar" dir="rtl">القسم</td>
+                  <td><code>departmentId</code> and <code>departmentName</code></td>
+                  <td>Cached selector</td>
+                  <td>Required. Store the selected ID and name snapshot.</td>
+                </tr>
+                <tr>
+                  <td class="arabic" lang="ar" dir="rtl">الساعة</td>
+                  <td><code>startedAtClient</code></td>
+                  <td>Automatic time with explicit correction</td>
+                  <td>Required. Preserve device time and server receipt time.</td>
+                </tr>
+                <tr>
+                  <td class="arabic" lang="ar" dir="rtl">الصنف</td>
+                  <td><code>productId</code>, <code>productName</code></td>
+                  <td>Cached product selector</td>
+                  <td>Required. Manual snapshot fallback when offline reference data is missing.</td>
+                </tr>
+                <tr>
+                  <td>Operational context</td>
+                  <td><code>inspectionDate</code>, <code>shift</code>, <code>runId</code></td>
+                  <td>Date, shift, optional run link</td>
+                  <td>Date required. Run link optional for the pilot but recommended.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Repeatable measurement round</h3>
+          <p>
+            The paper example has one blank row. The mobile record should allow additional rows
+            because QC may inspect the same line more than once. Each row records its observation time
+            and observer identity.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Arabic label</th>
+                  <th>Field key</th>
+                  <th>Type and unit</th>
+                  <th>Initial validation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="arabic" lang="ar" dir="rtl">العدد في الكرتونة</td><td><code>cartonUnitCount</code></td><td>Integer</td><td>Required, 0 or greater</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن الصب</td><td><code>pourWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن المادة المضافة</td><td><code>additiveWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">حرارة الشوكولاته</td><td><code>chocolateTemperatureC</code></td><td>Decimal, °C</td><td>Required; business limit remains unconfigured until QC supplies it</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن الحب المغلف</td><td><code>coatedPieceWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن الكرتونة</td><td><code>cartonWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">نسبة النظافة</td><td><code>cleanlinessPercentage</code></td><td>Decimal, percent</td><td>Required, from 0 to 100</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Conformity checks</h3>
+          <p>
+            Each check has a fixed <code>checkKey</code>, translated label, status, optional note, and
+            sort order. Status values are <code>compliant</code>, <code>non_compliant</code>, and
+            <code>not_applicable</code>. A non-compliant result requires a deviation note and immediate
+            action. “Not applicable” requires a reason.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Group</th>
+                  <th>Fixed checks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Product and packaging</td>
+                  <td class="arabic" lang="ar" dir="rtl">ماكينة الختم، تاريخ الإنتاج، رقم الدفعة، الوزن أو الحجم، وزن الشوكولاته، التغليف، شكل المنتج</td>
+                </tr>
+                <tr>
+                  <td>Materials and people</td>
+                  <td class="arabic" lang="ar" dir="rtl">المواد الخام، العدد، الطعم، الارضيات، الترتيب، النظافة الشخصية، لباس العمل</td>
+                </tr>
+                <tr>
+                  <td>Environment and safety</td>
+                  <td class="arabic" lang="ar" dir="rtl">النفايات، السلامة المهنية، المغاسل، مواد التنظيف، الجدران والاسقف، القفازات، الماكينات والمعدات</td>
+                </tr>
+                <tr>
+                  <td>Maintenance</td>
+                  <td class="arabic" lang="ar" dir="rtl">معدات الصيانة</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Notes and signatures</h3>
+          <ul>
+            <li><span class="arabic" lang="ar" dir="rtl">ملاحظات</span>: free text entered by QC before submission.</li>
+            <li><span class="arabic" lang="ar" dir="rtl">الفاحص</span>: populated from the authenticated QC identity, never typed as an arbitrary name.</li>
+            <li><span class="arabic" lang="ar" dir="rtl">مسؤول القسم</span>: populated from the authenticated production reviewer.</li>
+            <li><span class="arabic" lang="ar" dir="rtl">ملاحظات مدير الجودة</span>: optional reviewer note included in the record. It does not replace either required signature.</li>
+            <li>The visual saved signature may be rendered in the PDF, but the authoritative signature is the server event containing signer identity, role, revision, and server time.</li>
+          </ul>
+        </section>
+
+        <section id="mobile">
+          <p class="eyebrow">06 · Mobile product shape</p>
+          <h2>Fast entry without reproducing a wide paper table</h2>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Navigation</h3>
+              <ul>
+                <li>Add a Quality tab to the authenticated Expo Router tab group.</li>
+                <li>Show “New,” “Drafts,” “Waiting to sync,” “Submitted,” and “Returned” filters.</li>
+                <li>Open the form as a stack screen so the tab bar does not compete with entry actions.</li>
+                <li>Display a persistent connectivity and save-state bar at the top.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Form layout</h3>
+              <ul>
+                <li>Step 1: department, product, date, shift, and optional run.</li>
+                <li>Step 2: measurement rounds shown as compact vertical cards.</li>
+                <li>Step 3: conformity checks grouped into four sections.</li>
+                <li>Step 4: deviations, notes, completion summary, and QC signature.</li>
+                <li>Sticky “Previous” and “Next” controls, with no disabled fields hidden from the user.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Interaction rules</h3>
+          <ul>
+            <li>Use numeric keyboards for weights, temperature, percentage, and carton count.</li>
+            <li>Keep measurement units visible beside inputs. Do not encode units only in placeholder text.</li>
+            <li>Use large segmented controls for compliant, non-compliant, and not applicable.</li>
+            <li>Move focus to the deviation note when “non-compliant” is selected.</li>
+            <li>Show completion by section, not one vague total percentage.</li>
+            <li>Save each committed input change in SQLite before updating the “Saved on device” indicator.</li>
+            <li>Flush pending text on blur, navigation, app background, and submit review.</li>
+            <li>Support Arabic RTL and English LTR using the same fixed field keys.</li>
+            <li>Do not put raw form values in Bugsink breadcrumbs or analytics events.</li>
+          </ul>
+
+          <h3>Mobile status language</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>State</th><th>User-facing meaning</th><th>Allowed action</th></tr></thead>
+              <tbody>
+                <tr><td><span class="tag">Saved on device</span></td><td>Latest input is durable in local SQLite.</td><td>Continue entry or close the app.</td></tr>
+                <tr><td><span class="tag warning">Waiting to sync</span></td><td>Local revision is newer than the server revision.</td><td>Continue entry; sync runs when reachable.</td></tr>
+                <tr><td><span class="tag">Synced</span></td><td>Server acknowledged the current local revision.</td><td>Continue entry or submit.</td></tr>
+                <tr><td><span class="tag danger">Sign-in required</span></td><td>The queue is safe locally, but the server rejected expired auth.</td><td>Reauthenticate and retry.</td></tr>
+                <tr><td><span class="tag danger">Conflict</span></td><td>A newer incompatible server revision exists.</td><td>Review server copy and create a corrected draft. No silent overwrite.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="offline">
+          <p class="eyebrow">07 · Offline architecture</p>
+          <h2>SQLite draft, durable outbox, idempotent Convex sync</h2>
+
+          <div class="architecture" aria-label="Offline data flow">
+            <div class="arch-node primary">
+              <h3>Mobile form</h3>
+              <p class="small">Typed state and Zod validation. Every edit calls the local repository.</p>
+            </div>
+            <div class="arch-arrow" aria-hidden="true">→</div>
+            <div class="arch-node">
+              <h3>SQLite</h3>
+              <p class="small">Draft snapshot, reference cache, sync queue, revisions, and local error state.</p>
+            </div>
+            <div class="arch-arrow" aria-hidden="true">→</div>
+            <div class="arch-node">
+              <h3>Convex</h3>
+              <p class="small">Workspace authority, workflow, signatures, audit events, queries, and web review.</p>
+            </div>
+          </div>
+
+          <h3>Local database</h3>
+          <p>
+            Add <code>expo-sqlite</code> for Expo SDK 57. SQLite persists across application restarts.
+            Enable WAL mode. Evaluate SQLCipher during the first implementation spike because enabling
+            it changes native configuration and requires a new mobile binary.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Local table</th><th>Purpose</th><th>Key fields</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><code>production_line_drafts</code></td>
+                  <td>One current JSON snapshot per local record.</td>
+                  <td><code>client_record_id</code>, <code>owner_user_id</code>, <code>payload_json</code>, <code>client_revision</code>, <code>server_revision</code>, <code>status</code>, timestamps</td>
+                </tr>
+                <tr>
+                  <td><code>production_line_outbox</code></td>
+                  <td>Durable sync and workflow operations.</td>
+                  <td><code>operation_id</code>, <code>client_record_id</code>, <code>operation_type</code>, <code>client_revision</code>, <code>payload_json</code>, attempts, retry time, last error</td>
+                </tr>
+                <tr>
+                  <td><code>quality_reference_cache</code></td>
+                  <td>Departments, products, runs, shifts, and workspace metadata for offline selection.</td>
+                  <td><code>cache_key</code>, <code>payload_json</code>, <code>fetched_at</code>, <code>expires_at</code></td>
+                </tr>
+                <tr>
+                  <td><code>local_schema_migrations</code></td>
+                  <td>Deterministic local database upgrades.</td>
+                  <td><code>version</code>, <code>applied_at</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Save transaction</h3>
+          <ol>
+            <li>Validate and normalize the changed field locally.</li>
+            <li>Increment <code>clientRevision</code>.</li>
+            <li>In one SQLite transaction, write the complete draft snapshot and upsert one coalesced <code>sync_draft</code> outbox row.</li>
+            <li>Only after the transaction commits, show “Saved on device.”</li>
+            <li>Debounce network work, not local durability. Rapid edits should replace the queued draft snapshot rather than create one request per keystroke.</li>
+          </ol>
+
+          <h3>Sync worker</h3>
+          <ol>
+            <li>Wake on app start, sign-in completion, foreground resume, manual retry, and network reachability changes.</li>
+            <li>Process one record at a time. Send the most recent coalesced draft before workflow operations such as submission.</li>
+            <li>Call an idempotent Convex mutation with <code>clientRecordId</code>, <code>clientRevision</code>, <code>baseServerRevision</code>, and the complete bounded snapshot.</li>
+            <li>On success, store the returned Convex ID and server revision locally, then remove only the acknowledged outbox operation.</li>
+            <li>On a transient error, keep the row and retry with capped exponential backoff and jitter.</li>
+            <li>On auth failure, pause the queue and request sign-in.</li>
+            <li>On stale revision, mark the draft as conflicted. Never use silent last-write-wins.</li>
+          </ol>
+
+          <h3>Conflict boundary</h3>
+          <p>
+            The pilot supports one editable owner and one primary device per draft. A second device can
+            view a synced draft but cannot take ownership while offline. An online “Take over editing”
+            action may be added after pilot feedback. This rule removes most multi-device merge cases.
+          </p>
+          <ul>
+            <li>If the same <code>clientRevision</code> and content arrive twice, the server returns the previous acknowledgement.</li>
+            <li>If an older client revision arrives, the server ignores it and returns the latest server revision.</li>
+            <li>If the client is based on an old server revision and its content differs, the server returns a conflict.</li>
+            <li>The conflict UI preserves both copies. QC can duplicate the local values into a new corrected draft, but cannot overwrite a submitted or approved revision.</li>
+          </ul>
+
+          <div class="callout success-callout">
+            <strong>Reason for a custom outbox:</strong> Convex reconnects its WebSocket and retries
+            outstanding online mutations, but the product requirement needs a durable local record,
+            explicit queue state, app-restart recovery, and controlled ordering between draft sync and
+            signature submission.
+          </div>
+        </section>
+
+        <section id="data">
+          <p class="eyebrow">08 · Shared data model</p>
+          <h2>Additive tables with fixed production semantics</h2>
+          <p>
+            Add normalized child tables rather than unbounded arrays on the parent record. The form has
+            a bounded set of checks, but measurement rounds and audit events can grow over time. All
+            shared records carry <code>teamId</code> directly or inherit it through an authorized parent.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Convex table</th><th>Purpose</th><th>Important fields and indexes</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><code>productionLineRecords</code></td>
+                  <td>Workflow root and searchable record summary.</td>
+                  <td>
+                    Team, client UUID, department and product snapshots, date, shift, optional run,
+                    notes, status, editable owner, client/server revisions, submit/approve timestamps,
+                    replacement link. Index by team plus status, team plus inspection date, and team plus client UUID.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>productionLineMeasurements</code></td>
+                  <td>Repeatable timed measurement rounds.</td>
+                  <td>
+                    Record ID, client row UUID, observed time, observer snapshot, seven typed numeric
+                    values, unit snapshot, sort order. Index by record ID.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>productionLineChecks</code></td>
+                  <td>The fixed 22 conformity outcomes.</td>
+                  <td>
+                    Record ID, check key, status, note, immediate action, sort order, updated time.
+                    Index by record ID and by record ID plus check key.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>productionLineSignatures</code></td>
+                  <td>Authoritative QC and production signature events.</td>
+                  <td>
+                    Record ID, signature role, signer user ID/name/role snapshot, signed server revision,
+                    snapshot hash, client time, server time, optional visual signature snapshot. Index by record ID.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>productionLineRecordSnapshots</code></td>
+                  <td>Immutable canonical content at each QC submission and production approval.</td>
+                  <td>
+                    Record ID, server revision, canonical JSON, hash, created time, reason. Index by record ID.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>productionLineRecordEvents</code></td>
+                  <td>Dedicated workflow and correction audit history.</td>
+                  <td>
+                    Record ID, team, action, actor identity, server revision, reason, safe metadata,
+                    server time. Index by record ID and team plus time.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>productionLineAmendments</code></td>
+                  <td>Attributable corrections after approval.</td>
+                  <td>
+                    Record ID, target path, previous/new value JSON, reason, requester, reviewer,
+                    status, timestamps. The approved original remains unchanged.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Conceptual parent shape</h3>
+          <pre><code>productionLineRecords: {
+  teamId,
+  clientRecordId,
+  departmentId?, departmentName,
+  productId?, productName,
+  runId?, inspectionDate, shift?, startedAtClient,
+  status: "draft" | "pending_production_review" | "returned" | "approved" | "voided",
+  editableOwnerUserId,
+  qcUserId, qcUserName,
+  notes?, qualityManagerNotes?, returnReason?,
+  clientRevision, serverRevision,
+  createdAt, updatedAt, submittedAt?, approvedAt?,
+  replacesRecordId?
+}</code></pre>
+
+          <h3>Data invariants</h3>
+          <ul>
+            <li><code>clientRecordId</code> is generated once on device and is unique within a workspace.</li>
+            <li>Only <code>draft</code> and <code>returned</code> records accept draft synchronization.</li>
+            <li>A record cannot enter production review until all required fields and checks are valid.</li>
+            <li>At least one complete measurement round is required.</li>
+            <li>Every non-compliant check has a deviation note and immediate action.</li>
+            <li>QC and production signatures must reference the exact server revision they signed.</li>
+            <li>Approval fails when the current revision differs from the QC-signed revision.</li>
+            <li>Approved records cannot be patched or deleted by client-facing mutations.</li>
+          </ul>
+        </section>
+
+        <section id="backend">
+          <p class="eyebrow">09 · Backend contract</p>
+          <h2>Small public API with server-side identity and authority checks</h2>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Function</th><th>Caller</th><th>Behavior</th></tr></thead>
+              <tbody>
+                <tr><td><code>getMobileReferenceData</code></td><td>Mobile QC</td><td>Returns workspace, departments, active products/runs, allowed units, and current user capability data for local caching.</td></tr>
+                <tr><td><code>listMine</code></td><td>Mobile QC</td><td>Returns the user's recent synced records and their server states.</td></tr>
+                <tr><td><code>getSyncSnapshot</code></td><td>Mobile QC</td><td>Returns one authorized record, children, signatures, and latest server revision.</td></tr>
+                <tr><td><code>syncDraft</code></td><td>Mobile QC</td><td>Idempotently creates or updates one editable record and bounded child snapshots after revision checks.</td></tr>
+                <tr><td><code>submitByQc</code></td><td>Mobile QC</td><td>Validates the complete server copy, creates an immutable snapshot and QC signature, then moves to review.</td></tr>
+                <tr><td><code>listForReview</code></td><td>Web production reviewer</td><td>Paginated, workspace-scoped review queue with status/date/product/department filters.</td></tr>
+                <tr><td><code>getForReview</code></td><td>Web reviewer</td><td>Returns the full record, deviation summary, signatures, and audit history.</td></tr>
+                <tr><td><code>returnToQc</code></td><td>Web production reviewer</td><td>Requires a reason, invalidates the current review state, preserves the signed snapshot, and returns edit ownership to QC.</td></tr>
+                <tr><td><code>approveByProduction</code></td><td>Web production reviewer</td><td>Checks signed revision, creates production signature and approval snapshot, then locks the record.</td></tr>
+                <tr><td><code>requestAmendment</code></td><td>Authorized QC or supervisor</td><td>Creates a proposed change against an approved record without editing the original.</td></tr>
+                <tr><td><code>approveAmendment</code></td><td>Production reviewer</td><td>Approves an attributed correction and adds it to the rendered amendment appendix.</td></tr>
+                <tr><td><code>voidRecord</code></td><td>Admin only</td><td>Voids a record with a required reason. It never deletes the record or signatures.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Permissions</h3>
+          <ul>
+            <li><code>record_production_checks</code>: create, edit owned drafts, and submit as QC.</li>
+            <li><code>review_production_checks</code>: review, return, and approve as production management.</li>
+            <li><code>view_production_checks</code>: read approved or assigned records.</li>
+            <li><code>void_production_checks</code>: void a record with a reason.</li>
+            <li><code>full_access</code> continues to bypass individual permission checks.</li>
+          </ul>
+          <p>
+            Add a <code>quality_officer</code> system role with record/view permissions and a
+            <code>production_manager</code> role with review/view permissions. Do not automatically
+            reassign existing users. Workspace admins assign roles explicitly. Existing admin and
+            supervisor behavior must be reviewed during migration so current access is not reduced.
+          </p>
+
+          <h3>Convex implementation constraints</h3>
+          <ul>
+            <li>Read <code>packages/backend/convex/_generated/ai/guidelines.md</code> before editing backend files.</li>
+            <li>Define every table in <code>schema.ts</code> and every shared validator in <code>validators.ts</code>.</li>
+            <li>Keep function argument validators, return validators, and handlers synchronized.</li>
+            <li>Resolve the authenticated user on the server. Never accept signer or actor identity from the client.</li>
+            <li>Validate workspace membership for every read and mutation.</li>
+            <li>Use indexes for review filters. Do not collect all workspace records and filter in memory.</li>
+            <li>Keep child synchronization bounded. Set a documented maximum of 50 measurement rounds per record for the first release.</li>
+            <li>Write the record, children, snapshot, signature, and audit event in one mutation when a workflow transition requires atomicity.</li>
+          </ul>
+        </section>
+
+        <section id="web">
+          <p class="eyebrow">10 · Quality Control workspace</p>
+          <h2>Production review, record search, and official output</h2>
+
+          <h3>Routes</h3>
+          <ul>
+            <li><code>/quality/production-line-records</code>: queue and searchable history.</li>
+            <li><code>/quality/production-line-records/:id</code>: review and record detail.</li>
+          </ul>
+
+          <h3>Review queue</h3>
+          <ul>
+            <li>Default to records waiting for production review.</li>
+            <li>Show department, product, batch, QC signer, submitted time, non-conformity count, and sync completeness.</li>
+            <li>Filter by status, date range, product, batch, department, QC user, and production reviewer.</li>
+            <li>Sort review work oldest first. Mark records with non-conformities clearly.</li>
+            <li>Use paginated Convex queries from the start.</li>
+          </ul>
+
+          <h3>Review detail</h3>
+          <ul>
+            <li>Render the same logical sections as mobile, optimized for desktop reading.</li>
+            <li>Show measurement rounds in a compact table with recorded times.</li>
+            <li>Separate non-conforming checks at the top while preserving the complete checklist below.</li>
+            <li>Show QC signature identity, signed revision, client time, and server time.</li>
+            <li>Require a reason when returning a record.</li>
+            <li>Require production-manager confirmation before approval. Approval must fail if the server revision changed.</li>
+            <li>Show audit history and approved amendments in chronological order.</li>
+          </ul>
+
+          <h3>PDF output</h3>
+          <ul>
+            <li>Generate an Arabic-capable official record with the company form title and familiar table groupings.</li>
+            <li>Include record ID, workspace, product, department, batch, dates, all measurement rounds, all checks, notes, and both signature receipts.</li>
+            <li>Include revision and snapshot hash in the footer.</li>
+            <li>Add an amendment appendix when approved corrections exist.</li>
+            <li>Do not regenerate an old approved PDF from current mutable profile data. Use signature and name snapshots stored at signing time.</li>
+          </ul>
+        </section>
+
+        <section id="security">
+          <p class="eyebrow">11 · Security and record integrity</p>
+          <h2>Authentication is necessary; immutable events make signatures meaningful</h2>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Mobile device</h3>
+              <ul>
+                <li>Keep Better Auth tokens in Expo SecureStore, as the current app does.</li>
+                <li>Store the SQLite encryption key in SecureStore if SQLCipher is enabled.</li>
+                <li>Bind local drafts to workspace and user IDs. Do not expose one user's queue to another user.</li>
+                <li>Do not delete unsynced drafts during sign-out. Pause and hide them until the original user returns.</li>
+                <li>Do not log field values, notes, product secrets, or signatures to Bugsink.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Server</h3>
+              <ul>
+                <li>Derive actor identity and permissions on every mutation.</li>
+                <li>Store server timestamps for authoritative workflow events.</li>
+                <li>Keep client timestamps to explain offline chronology, but do not trust them for authorization.</li>
+                <li>Reject updates to submitted, approved, voided, or wrong-workspace records.</li>
+                <li>Keep approved snapshots, signatures, events, and amendments append-only.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Signature policy</h3>
+          <p>
+            A drawn or uploaded signature image is presentation data. The authoritative signature
+            receipt contains the authenticated user ID, name and role snapshot, signature purpose,
+            signed revision, server timestamp, and immutable snapshot reference. An offline QC tap
+            creates a queued intent. The server creates the signature only after revalidating auth,
+            permission, record state, and content revision.
+          </p>
+
+          <h3>Deletion and correction</h3>
+          <ul>
+            <li>A local-only draft may be discarded after confirmation.</li>
+            <li>A synced draft is discarded through a server mutation that records the event.</li>
+            <li>A submitted record is returned, not reopened silently.</li>
+            <li>An approved record is never edited in place. Corrections use an amendment or a replacement record linked to the original.</li>
+            <li>Admin voiding changes status and records a reason. It does not physically delete the record.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>Regulatory boundary:</strong> this design follows common record-integrity controls,
+            but retention periods, signature wording, device controls, and whether specific regulations
+            apply must be approved by the company's quality and legal owners before paper is retired.
+          </div>
+        </section>
+
+        <section id="files">
+          <p class="eyebrow">12 · Codebase assignment map</p>
+          <h2>Files to add and existing files to change</h2>
+
+          <h3>Shared Convex backend</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Path</th><th>Assignment</th></tr></thead>
+              <tbody>
+                <tr><td><code>packages/backend/convex/schema.ts</code></td><td>Add the seven production-line tables and required indexes.</td></tr>
+                <tr><td><code>packages/backend/convex/validators.ts</code></td><td>Add record status, check status, signature purpose, workflow payload, and return validators.</td></tr>
+                <tr><td><code>packages/backend/convex/productionLineRecords.ts</code></td><td>Add mobile sync, submission, review, approval, amendment, void, and paginated query functions.</td></tr>
+                <tr><td><code>packages/backend/convex/productionLineRecordHelpers.ts</code></td><td>Canonical snapshots, completeness checks, transition guards, and child upsert helpers.</td></tr>
+                <tr><td><code>packages/backend/convex/roles.ts</code></td><td>Add quality-officer and production-manager roles plus new permission defaults.</td></tr>
+                <tr><td><code>packages/backend/convex/teamAuditLogs.ts</code></td><td>Reuse summary workspace events while dedicated form events keep detailed history.</td></tr>
+                <tr><td><code>packages/backend/convex/clearAllAppTables.ts</code></td><td>Include new tables only in the intentional local-development clearing workflow.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Expo mobile app</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Path</th><th>Assignment</th></tr></thead>
+              <tbody>
+                <tr><td><code>rd/mobile/package.json</code></td><td>Add Expo SQLite and the selected test/i18n dependencies after version checks.</td></tr>
+                <tr><td><code>rd/mobile/app.json</code></td><td>Add SQLite native configuration if SQLCipher is selected. This requires a new native build.</td></tr>
+                <tr><td><code>rd/mobile/src/app/_layout.tsx</code></td><td>Mount the local database and sync providers inside the authenticated app boundary.</td></tr>
+                <tr><td><code>rd/mobile/src/app/(tabs)/_layout.tsx</code></td><td>Add the Quality tab using translated labels.</td></tr>
+                <tr><td><code>rd/mobile/src/app/(tabs)/quality.tsx</code></td><td>Mobile record list, filters, queue counts, and new-record action.</td></tr>
+                <tr><td><code>rd/mobile/src/app/quality/production-line/[clientRecordId].tsx</code></td><td>Form entry stack screen.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/schema.ts</code></td><td>Zod form schema, field keys, structural validation, and status types.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/form-definition.ts</code></td><td>Fixed measurement and check metadata. This is not a generic remote template.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/local-db.ts</code></td><td>SQLite initialization, WAL setup, and local migration runner.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/repository.ts</code></td><td>Atomic draft save, load, list, discard, queue, and acknowledgement operations.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/sync-worker.ts</code></td><td>Queue ordering, connectivity triggers, auth pause, retry policy, and conflict results.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/use-production-line-draft.ts</code></td><td>Form state, validation, autosave, status, and submit intent.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/components/*</code></td><td>Header fields, measurement card, check group, deviation field, save banner, review summary, and signature action.</td></tr>
+                <tr><td><code>rd/mobile/src/locales/ar.json</code> and <code>en.json</code></td><td>All visible mobile text. Arabic is complete before pilot.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Web formulation lab</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Path</th><th>Assignment</th></tr></thead>
+              <tbody>
+                <tr><td><code>rd/formulation-lab/App.tsx</code></td><td>Add quality record list and detail routes.</td></tr>
+                <tr><td><code>rd/formulation-lab/components/Sidebar.tsx</code></td><td>Add Production Monitoring to Quality Control navigation.</td></tr>
+                <tr><td><code>rd/formulation-lab/pages/production-line-records.tsx</code></td><td>Paginated review queue and history filters.</td></tr>
+                <tr><td><code>rd/formulation-lab/pages/production-line-record-detail.tsx</code></td><td>Read-only record review, return, approval, signatures, and audit history.</td></tr>
+                <tr><td><code>rd/formulation-lab/components/quality/ProductionLineRecordPDF.tsx</code></td><td>Arabic-capable official PDF with immutable signature snapshots.</td></tr>
+                <tr><td><code>rd/formulation-lab/locales/ar.json</code> and <code>en.json</code></td><td>Quality navigation, queue, review, audit, return, approval, and PDF strings.</td></tr>
+                <tr><td><code>rd/formulation-lab/tests/production-line-review.spec.ts</code></td><td>Production manager review and approval browser coverage.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="small muted">
+            Existing uncommitted files in <code>rd/mobile</code> must be preserved. Implementation work
+            should rebase the assignments above onto the current mobile UI instead of replacing it.
+          </p>
+        </section>
+
+        <section id="tests">
+          <p class="eyebrow">13 · Verification</p>
+          <h2>Test the failure paths before the happy-path pilot</h2>
+
+          <h3>Local persistence tests</h3>
+          <ul class="checklist">
+            <li>Every field change updates the local snapshot and increments the client revision.</li>
+            <li>Draft and outbox writes commit atomically.</li>
+            <li>App termination immediately after entry does not lose the last committed field.</li>
+            <li>Local schema migrations preserve existing unsynced drafts.</li>
+            <li>Signing out hides but does not delete an unsynced queue.</li>
+          </ul>
+
+          <h3>Sync state-machine tests</h3>
+          <ul class="checklist">
+            <li>One hundred rapid edits coalesce to the latest correct snapshot.</li>
+            <li>Duplicate mutation delivery is idempotent.</li>
+            <li>Network loss during acknowledgement does not create duplicate records or signatures.</li>
+            <li>Queue order always syncs the latest draft before submission.</li>
+            <li>Expired auth pauses and resumes without removing queued data.</li>
+            <li>Network flapping respects retry limits and never spins continuously.</li>
+            <li>A stale server revision produces a visible conflict instead of overwriting data.</li>
+          </ul>
+
+          <h3>Backend authorization tests</h3>
+          <ul class="checklist">
+            <li>QC can update only editable records assigned to that user and workspace.</li>
+            <li>Production reviewers cannot edit field content.</li>
+            <li>Users without review permission cannot approve or return a record.</li>
+            <li>Cross-workspace reads and writes fail.</li>
+            <li>Approval fails if the QC-signed revision is no longer current.</li>
+            <li>Approved records reject patch and delete operations.</li>
+            <li>Void and amendment actions require reasons and create events.</li>
+          </ul>
+
+          <h3>Mobile behavior tests</h3>
+          <ul class="checklist">
+            <li>Arabic RTL order, labels, numeric fields, and validation render correctly on Android and iOS.</li>
+            <li>All controls meet practical touch-target size for factory use.</li>
+            <li>The form remains usable with airplane mode enabled before opening it.</li>
+            <li>A local draft reopens at the correct step after app restart.</li>
+            <li>Queued submission is distinguishable from server-confirmed submission.</li>
+            <li>Non-compliant and not-applicable checks require the correct explanations.</li>
+          </ul>
+
+          <h3>Web and document tests</h3>
+          <ul class="checklist">
+            <li>Review queue filters and pagination return only the active workspace.</li>
+            <li>Return requires a reason and reopens only the correct QC workflow.</li>
+            <li>Approval locks the record and writes the production signature once.</li>
+            <li>Arabic PDF text, tables, signatures, and page breaks render correctly.</li>
+            <li>PDF content continues to match the approved snapshot after profile names or signatures change.</li>
+          </ul>
+
+          <h3>Operational pilot scenarios</h3>
+          <ul>
+            <li>Start online, lose network mid-form, close the app, reopen offline, complete, reconnect, and approve.</li>
+            <li>Start fully offline using cached reference data, then sync after the production period.</li>
+            <li>Queue a submission, allow auth to expire, reauthenticate, then verify one submission and one signature.</li>
+            <li>Return a signed record, correct it on mobile, resubmit, and verify both signed revisions remain visible.</li>
+          </ul>
+        </section>
+
+        <section id="rollout">
+          <p class="eyebrow">14 · Delivery plan</p>
+          <h2>Five build milestones and one controlled pilot</h2>
+
+          <div class="timeline">
+            <article class="milestone">
+              <h3>Week 1: contract and local durability</h3>
+              <p>
+                Confirm field meanings and units with QC. Add additive Convex schema and validators.
+                Add SQLite, migrations, repository, and outbox. Prove one field survives app termination
+                and syncs idempotently.
+              </p>
+              <p class="small"><strong>Exit:</strong> one thin vertical slice is demonstrably durable offline and visible through a backend query.</p>
+            </article>
+
+            <article class="milestone">
+              <h3>Week 2: complete mobile form</h3>
+              <p>
+                Build Quality navigation, record list, header, measurement rounds, conformity groups,
+                deviations, notes, Arabic translations, validation, and save-state UI.
+              </p>
+              <p class="small"><strong>Exit:</strong> QC can complete and reopen the full form in airplane mode.</p>
+            </article>
+
+            <article class="milestone">
+              <h3>Week 3: sync hardening and QC submission</h3>
+              <p>
+                Implement reconnect triggers, coalescing, retry policy, auth pause, conflict handling,
+                immutable snapshots, and queued QC submission.
+              </p>
+              <p class="small"><strong>Exit:</strong> network-loss and duplicate-delivery tests pass.</p>
+            </article>
+
+            <article class="milestone">
+              <h3>Week 4: production review</h3>
+              <p>
+                Add permissions and roles, web review queue, detail view, return, approval, production
+                signature, audit timeline, and approved lock.
+              </p>
+              <p class="small"><strong>Exit:</strong> one record completes QC entry through production approval.</p>
+            </article>
+
+            <article class="milestone">
+              <h3>Week 5: PDF, amendments, and release gates</h3>
+              <p>
+                Add Arabic PDF output, approved amendments, tenant-isolation tests, mobile failure-path
+                tests, web Playwright coverage, observability, and operating documentation.
+              </p>
+              <p class="small"><strong>Exit:</strong> release candidate passes the full repository gate and the pilot checklist.</p>
+            </article>
+
+            <article class="milestone">
+              <h3>Weeks 6–7: shadow pilot and corrections</h3>
+              <p>
+                Run the app beside the paper form on one line and one shift. Compare every record,
+                observe QC without coaching, fix blockers, and obtain written quality/production approval
+                before considering paper retirement.
+              </p>
+              <p class="small"><strong>Exit:</strong> agreed pilot threshold is met with no missing or irreconcilable records.</p>
+            </article>
+          </div>
+
+          <h3>Distribution</h3>
+          <ol>
+            <li>Deploy additive Convex tables and functions. Existing records and flows remain untouched.</li>
+            <li>Ship the web review routes behind the new permissions.</li>
+            <li>Create a new EAS mobile binary because adding Expo SQLite and optional SQLCipher changes native configuration. Hot Updater alone is not enough for this first release.</li>
+            <li>Install the release on a small set of managed factory devices.</li>
+            <li>Preload the workspace and reference cache while online before the first shift.</li>
+            <li>Run paper and mobile in parallel during the pilot.</li>
+            <li>After the native dependency is present in the installed binary, compatible JavaScript fixes can use the existing Hot Updater production channel.</li>
+          </ol>
+
+          <h3>Operational metrics</h3>
+          <p>Collect metadata only, never field values:</p>
+          <ul>
+            <li>Local autosave failure count.</li>
+            <li>Outbox age, queue length, retry count, and sync latency.</li>
+            <li>Auth-paused and conflict counts.</li>
+            <li>QC submission-to-production-review time.</li>
+            <li>Return rate and non-conformity count by form, without note contents.</li>
+            <li>Crash-free form sessions and PDF generation failures.</li>
+          </ul>
+        </section>
+
+        <section id="acceptance">
+          <p class="eyebrow">15 · Release definition</p>
+          <h2>Acceptance criteria</h2>
+
+          <ul class="checklist">
+            <li>An authenticated QC user can create the form with no internet when reference data has been cached.</li>
+            <li>Every visible edit is present after force-closing and reopening the mobile app.</li>
+            <li>The app always distinguishes local save, queued sync, server sync, queued submission, and confirmed submission.</li>
+            <li>Reconnect synchronizes the newest draft exactly once, even after duplicate attempts.</li>
+            <li>A complete form includes the required header, at least one measurement round, all 22 conformity checks, and notes required by failed checks.</li>
+            <li>QC submission creates a signature event tied to an immutable revision.</li>
+            <li>The production manager can return with a reason or approve with the second signature.</li>
+            <li>No user can directly edit or delete an approved record.</li>
+            <li>An approved correction preserves the original and identifies old value, new value, reason, requester, reviewer, and times.</li>
+            <li>The web workspace can search and filter records by date, status, product, batch, and department.</li>
+            <li>The official Arabic PDF matches the approved snapshot and includes both signature receipts.</li>
+            <li>Cross-workspace access tests fail closed.</li>
+            <li>The pilot can reconcile every mobile record with its parallel paper record.</li>
+          </ul>
+        </section>
+
+        <section id="risks">
+          <p class="eyebrow">16 · Risks and open decisions</p>
+          <h2>Resolve these before paper retirement</h2>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Risk</th><th>Effect</th><th>Mitigation</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Business limits are not supplied</td>
+                  <td>The app cannot safely decide whether temperature or weights are within specification.</td>
+                  <td>Use structural validation only in the pilot. Get product-specific limits and units from QC before automatic pass/fail logic.</td>
+                </tr>
+                <tr>
+                  <td>Signature policy is not legally reviewed</td>
+                  <td>A digital sign-off may not meet the company's applicable policy or jurisdiction.</td>
+                  <td>Store strong signature receipts now. Obtain quality/legal approval for wording, reauthentication, retention, and device controls.</td>
+                </tr>
+                <tr>
+                  <td>Multiple devices edit one draft</td>
+                  <td>Offline changes cannot be safely merged field by field.</td>
+                  <td>Use one editable owner/device in the pilot and explicit conflicts. Add takeover only after observing the need.</td>
+                </tr>
+                <tr>
+                  <td>Reference cache is stale</td>
+                  <td>A renamed or closed product may be selected offline.</td>
+                  <td>Store ID plus name snapshot, show cache age, reconcile on sync, and allow production review to return the record.</td>
+                </tr>
+                <tr>
+                  <td>OS background limits</td>
+                  <td>Sync may not run until the app returns to the foreground.</td>
+                  <td>Promise foreground/reconnect sync only. Show queue age and instruct QC to confirm sync before ending the shift.</td>
+                </tr>
+                <tr>
+                  <td>Local device loss</td>
+                  <td>Unsynced drafts may exist only on one device.</td>
+                  <td>Use encryption, managed devices, frequent sync when reachable, clear ownership, and an end-of-shift pending-queue check.</td>
+                </tr>
+                <tr>
+                  <td>Paper layout is treated as mobile UX</td>
+                  <td>A wide table becomes slow and error-prone on a phone.</td>
+                  <td>Use vertical cards and grouped checks while preserving familiar section names and official PDF layout.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Open questions</h3>
+          <ol>
+            <li>What are the allowed units and acceptable limits for each product's weights and chocolate temperature?</li>
+            <li>Does one form represent a shift, one batch, one run, or one inspection time?</li>
+            <li>How many measurement rounds normally occur on one form?</li>
+            <li>Which devices and operating systems will be used on the production floor?</li>
+            <li>How long must approved records be retained, and who can void or amend them?</li>
+            <li>Must production managers be able to review and sign from mobile in the first release, or is web review sufficient?</li>
+            <li>Should QC re-enter a password or device biometric at signature time?</li>
+            <li>Are photos required for non-conformities in the pilot?</li>
+          </ol>
+        </section>
+
+        <section id="assignment">
+          <p class="eyebrow">17 · The assignment</p>
+          <h2>Build one thin offline vertical slice first</h2>
+          <div class="decision">
+            <strong>Concrete next action:</strong> implement one production-line draft containing the
+            header and one measurement value, save it atomically to SQLite, terminate and reopen the
+            app to prove recovery, reconnect and sync it through an idempotent
+            <code>productionLineRecords.syncDraft</code> mutation, then display the saved record in one
+            read-only web page.
+          </div>
+          <p>
+            Do not build all form sections before this slice passes app-restart, duplicate-delivery,
+            expired-auth, and workspace-isolation checks. That slice validates the hardest architectural
+            decision while the UI and schema are still cheap to change.
+          </p>
+
+          <h3>Completion status</h3>
+          <p>
+            <strong>DONE_WITH_CONCERNS:</strong> Approach A is selected and this plan is ready for
+            implementation. Business limits, retention policy, signature policy, target devices, and
+            the exact record frequency remain open and must be resolved during the first milestone.
+          </p>
+        </section>
+
+        <footer class="footer">
+          <strong>Suggested improvement:</strong> add a short repository document that defines the
+          shared mobile offline-data contract, including local encryption, outbox semantics, conflict
+          policy, and logout behavior. Future mobile workflows can reuse that contract without
+          rebuilding sync behavior independently.
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

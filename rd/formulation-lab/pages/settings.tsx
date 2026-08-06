@@ -117,8 +117,8 @@ const Settings: React.FC = () => {
               <section className="rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-[#1e293b]">
                 <div className="mb-8 border-gray-100 border-b pb-6 dark:border-slate-800">
                   <div className="mb-2 flex items-center gap-3">
-                    <div className="rounded-xl bg-indigo-50 p-2 dark:bg-indigo-900/30">
-                      <Palette className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                    <div className="rounded-xl bg-brand-mint p-2 dark:bg-brand-accent/30">
+                      <Palette className="h-6 w-6 text-brand-primary dark:text-brand-accent-hover" />
                     </div>
                     <h3 className="font-bold text-gray-900 text-xl dark:text-white">
                       {t("appearance_settings")}
@@ -154,14 +154,14 @@ const Settings: React.FC = () => {
                       </div>
                       <div className="flex rounded-lg border border-gray-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
                         <button
-                          className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "metric" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
+                          className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "metric" ? "bg-brand-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
                           onClick={() => setUnits("metric")}
                           type="button"
                         >
                           {t("metric")}
                         </button>
                         <button
-                          className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "imperial" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
+                          className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "imperial" ? "bg-brand-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
                           onClick={() => setUnits("imperial")}
                           type="button"
                         >

@@ -1,47 +1,63 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
+
+export const BrandColors = {
+  forest: '#1C4A3C',
+  deepForest: '#102F27',
+  ink: '#173E33',
+  mint: '#D2F2D4',
+  mintSoft: '#EEF8EB',
+  cream: '#FFFDF4',
+  amber: '#F5A623',
+  amberLight: '#FFC760',
+  orange: '#FF7738',
+  copy: '#527568',
+  darkCanvas: '#0D2B24',
+  darkSurface: '#173E33',
+  darkCopy: '#A9CBBB',
+} as const;
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: BrandColors.ink,
+    background: BrandColors.mintSoft,
+    backgroundElement: BrandColors.cream,
+    backgroundSelected: BrandColors.mint,
+    textSecondary: BrandColors.copy,
+    border: 'rgba(28, 74, 60, 0.14)',
+    primary: BrandColors.forest,
+    primaryText: BrandColors.cream,
+    accent: BrandColors.amber,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#F7F4DF',
+    background: BrandColors.darkCanvas,
+    backgroundElement: BrandColors.darkSurface,
+    backgroundSelected: '#285B4D',
+    textSecondary: BrandColors.darkCopy,
+    border: 'rgba(210, 242, 212, 0.14)',
+    primary: BrandColors.amber,
+    primaryText: BrandColors.ink,
+    accent: BrandColors.orange,
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ThemeColor =
+  | 'text'
+  | 'background'
+  | 'backgroundElement'
+  | 'backgroundSelected'
+  | 'textSecondary';
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-});
+export const Fonts = {
+  sans: 'DMSans_500Medium',
+  sansRegular: 'DMSans_400Regular',
+  sansSemibold: 'DMSans_600SemiBold',
+  sansBold: 'DMSans_700Bold',
+  sansExtraBold: 'DMSans_800ExtraBold',
+  display: 'Fraunces_800ExtraBold',
+  displayBold: 'Fraunces_900Black',
+  mono: Platform.select({ ios: 'ui-monospace', default: 'monospace' }),
+} as const;
 
 export const Spacing = {
   half: 2,

@@ -74,7 +74,7 @@ const NewRunGuard: React.FC = () => {
   return (
     <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
         <p className="font-medium text-gray-500">
           {t("initializing_lab_batch")}
         </p>

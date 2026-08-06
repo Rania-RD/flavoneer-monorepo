@@ -148,7 +148,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                         value={`${window.location.origin}/invite/${inviteToken}`}
                       />
                       <button
-                        className="flex-shrink-0 rounded-lg bg-gray-900 px-4 py-2.5 font-bold text-white text-xs transition-colors hover:bg-gray-800 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+                        className="flex-shrink-0 rounded-lg bg-gray-900 px-4 py-2.5 font-bold text-white text-xs transition-colors hover:bg-gray-800 dark:bg-brand-accent dark:hover:bg-brand-accent-hover"
                         onClick={handleCopyLink}
                       >
                         {t("copy")}
@@ -173,7 +173,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                     </label>
                     <input
                       autoFocus
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 text-sm placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-500/50"
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 text-sm placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-brand-accent/50"
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && email.trim()) {
@@ -232,7 +232,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                       {t("cancel")}
                     </button>
                     <button
-                      className="flex-1 rounded-2xl bg-gray-900 py-3.5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-indigo-600 dark:shadow-indigo-600/30 dark:hover:bg-indigo-500"
+                      className="flex-1 rounded-2xl bg-gray-900 py-3.5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                       disabled={!email.trim() || loading}
                       onClick={handleSubmit}
                     >

@@ -174,7 +174,7 @@ export const StepCard = ({
           >
             {stepIdStr}
           </div>
-          <div className="flex items-center gap-1.5 rounded-md border border-blue-100 bg-blue-50 px-2 py-1 font-bold text-[10px] text-blue-700 uppercase tracking-widest dark:border-blue-800/30 dark:bg-blue-900/30 dark:text-blue-300">
+          <div className="flex items-center gap-1.5 rounded-md border border-brand-primary/20 bg-brand-mint px-2 py-1 font-bold text-[10px] text-brand-primary uppercase tracking-widest dark:border-brand-mint/20 dark:bg-brand-accent/30 dark:text-brand-accent-hover">
             {typeIcons[step.type]} {typeLabels[step.type]}
           </div>
         </div>
@@ -233,7 +233,7 @@ export const StepCard = ({
               {stepLabelText}
             </label>
             <input
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
               disabled={readOnly}
               id={`step-label-${step.id}`}
               name={`stepLabel-${step.id}`}
@@ -263,7 +263,7 @@ export const StepCard = ({
                 {t("linked_inventory_item")}
               </label>
               <select
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
                 data-testid="step-ingredient-select"
                 disabled={readOnly}
                 id={`ingredient-select-${step.id}`}
@@ -303,7 +303,7 @@ export const StepCard = ({
               </label>
               <div className="flex items-center gap-2">
                 <input
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
                   data-testid="step-target-quantity-input"
                   disabled={readOnly}
                   id={`target-qty-${step.id}`}
@@ -320,7 +320,7 @@ export const StepCard = ({
                 />
                 <select
                   aria-label={t("unit_for_step", { stepId: step.id })}
-                  className="w-20 cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  className="w-20 cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                   data-testid="step-unit-select"
                   disabled={readOnly}
                   name={`unit-${step.id}`}
@@ -375,7 +375,7 @@ export const StepCard = ({
                 className={`w-full rounded-xl border bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 dark:bg-[#0f172a] dark:text-white ${
                   exceedsRegulationLimit
                     ? "border-red-300 focus:ring-red-500 dark:border-red-700"
-                    : "border-gray-200 focus:ring-blue-500 dark:border-slate-700"
+                    : "border-gray-200 focus:ring-brand-focus/50 dark:border-slate-700"
                 }`}
                 disabled={readOnly}
                 id={`max-limit-${step.id}`}
@@ -440,7 +440,7 @@ export const StepCard = ({
             </label>
             <div className="flex items-center gap-2">
               <input
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
                 disabled={readOnly}
                 id={`duration-${step.id}`}
                 name={`durationSeconds-${step.id}`}
@@ -468,7 +468,7 @@ export const StepCard = ({
                 {t("process_temp_c")}
               </label>
               <input
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
                 disabled={readOnly}
                 id={`process-temp-${step.id}`}
                 name={`processTemp-${step.id}`}
@@ -490,7 +490,7 @@ export const StepCard = ({
                 {t("process_speed_rpm_hz")}
               </label>
               <input
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-bold text-gray-900 text-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
                 disabled={readOnly}
                 id={`process-speed-${step.id}`}
                 name={`processSpeed-${step.id}`}

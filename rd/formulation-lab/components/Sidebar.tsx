@@ -41,7 +41,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     return currentPath === path || currentPath.startsWith(path);
   };
 
-  const navItems = useMemo<{ name: string; icon: LucideIcon; path: string }[]>(
+  const navItems = useMemo<
+    {
+      name: string;
+      icon: LucideIcon;
+      mirrorInRTL?: boolean;
+      path: string;
+    }[]
+  >(
     () =>
       activeSection === "quality"
         ? [
@@ -50,17 +57,27 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon: ClipboardCheck,
               path: "/reports",
             },
-            { name: t("run_review"), icon: PlayCircle, path: "/runs" },
+            {
+              name: t("run_review"),
+              icon: PlayCircle,
+              mirrorInRTL: true,
+              path: "/runs",
+            },
             { name: t("materials"), icon: Boxes, path: "/materials" },
           ]
         : [
             { name: t("dashboard"), icon: LayoutDashboard, path: "/" },
-            { name: t("runs"), icon: PlayCircle, path: "/runs" },
+            {
+              name: t("runs"),
+              icon: PlayCircle,
+              mirrorInRTL: true,
+              path: "/runs",
+            },
             { name: t("materials"), icon: Boxes, path: "/materials" },
             { name: t("reports"), icon: FileText, path: "/reports" },
             { name: t("team"), icon: UsersRound, path: "/team" },
           ],
-    [activeSection, t],
+    [activeSection, t]
   );
 
   return (
@@ -87,6 +104,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={item.icon}
               key={item.path}
               label={item.name}
+              mirrorInRTL={item.mirrorInRTL}
               to={item.path}
             />
           ))}
@@ -119,7 +137,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               key={item.path}
               to={item.path}
             >
-              <item.icon size={24} strokeWidth={active ? 2.5 : 2} />
+              <item.icon
+                className={item.mirrorInRTL ? "rtl:-scale-x-100" : undefined}
+                size={24}
+                strokeWidth={active ? 2.5 : 2}
+              />
               <span className="font-medium text-[10px]">{item.name}</span>
             </Link>
           );

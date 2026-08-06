@@ -312,7 +312,7 @@ export default function FinishedGoodSpecificationSheet({
       >
         <div className="spec-no-print mb-5 flex flex-col gap-3 border-slate-200 border-b pb-5 lg:flex-row lg:items-center lg:justify-between dark:border-slate-800">
           <div>
-            <p className="font-bold text-blue-700 text-xs uppercase tracking-[0.22em] dark:text-blue-300">
+            <p className="font-bold text-brand-primary text-xs uppercase tracking-[0.22em] dark:text-brand-accent-hover">
               {t("finished_good_specification_sheet")}
             </p>
             <h2 className="mt-1 font-bold text-2xl text-slate-950 dark:text-white">
@@ -321,7 +321,7 @@ export default function FinishedGoodSpecificationSheet({
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <select
-              className="min-w-[260px] rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-800 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40"
+              className="min-w-[260px] rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-800 text-sm outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-brand-accent/50"
               onChange={(event) => onSelectReport(event.target.value)}
               value={selectedReportId || ""}
             >
@@ -336,7 +336,7 @@ export default function FinishedGoodSpecificationSheet({
                 {t("regulation_area")}
               </span>
               <select
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-800 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-800 text-sm outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-brand-accent/50"
                 onChange={(event) =>
                   setNutritionRegulationArea(
                     event.target.value as NutritionRegulationArea
@@ -349,7 +349,7 @@ export default function FinishedGoodSpecificationSheet({
               </select>
             </label>
             <button
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-bold text-sm text-white transition hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-bold text-sm text-white transition hover:bg-brand-primary-hover dark:bg-brand-accent dark:hover:bg-brand-accent-hover"
               onClick={onPrint}
               type="button"
             >
@@ -375,11 +375,11 @@ export default function FinishedGoodSpecificationSheet({
           <div className="space-y-5 text-slate-900 dark:text-slate-100 print:space-y-3">
             <header className="spec-print-avoid grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 lg:grid-cols-[1.2fr_1fr] dark:border-slate-800 dark:bg-slate-900/60">
               <div className="flex items-start gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-blue-700 font-black text-white text-xl">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand-primary font-black text-white text-xl">
                   FG
                 </div>
                 <div>
-                  <p className="font-bold text-blue-700 text-xs uppercase tracking-[0.2em] dark:text-blue-300">
+                  <p className="font-bold text-brand-primary text-xs uppercase tracking-[0.2em] dark:text-brand-accent-hover">
                     {t("document_control")}
                   </p>
                   <h3 className="mt-2 font-black text-3xl text-slate-950 leading-tight dark:text-white">
@@ -411,7 +411,7 @@ export default function FinishedGoodSpecificationSheet({
                   <p className="font-bold text-[11px] text-slate-500 uppercase">
                     {t("version_tag")}
                   </p>
-                  <p className="mt-1 font-black text-blue-700 dark:text-blue-300">
+                  <p className="mt-1 font-black text-brand-primary dark:text-brand-accent-hover">
                     {versionTag}
                   </p>
                 </div>
@@ -455,7 +455,7 @@ export default function FinishedGoodSpecificationSheet({
                     {productBullets.map((bullet) => (
                       <li className="flex gap-2" key={bullet}>
                         <Check
-                          className="mt-0.5 shrink-0 text-blue-700"
+                          className="mt-0.5 shrink-0 text-brand-primary"
                           size={16}
                         />
                         <span>{bullet}</span>
@@ -672,15 +672,15 @@ export default function FinishedGoodSpecificationSheet({
                 </section>
               </main>
 
-              <aside className="space-y-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-blue-950 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-50">
+              <aside className="space-y-4 rounded-2xl border border-brand-primary/20 bg-brand-mint p-4 text-brand-primary dark:border-brand-mint/20 dark:bg-brand-accent/30 dark:text-brand-accent-hover">
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
-                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
+                  <p className="font-bold text-brand-primary text-xs uppercase dark:text-brand-accent-hover">
                     {t("shelf_life")}
                   </p>
                   <p className="mt-2 font-black text-2xl">{shelfLife}</p>
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
-                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
+                  <p className="font-bold text-brand-primary text-xs uppercase dark:text-brand-accent-hover">
                     {t("suggestive_storage")}
                   </p>
                   <p className="mt-2 font-bold text-lg">{storageConditions}</p>
@@ -694,7 +694,7 @@ export default function FinishedGoodSpecificationSheet({
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
-                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
+                  <p className="font-bold text-brand-primary text-xs uppercase dark:text-brand-accent-hover">
                     {t("package_content")}
                   </p>
                   <p className="mt-2 font-bold text-sm leading-6">
@@ -706,7 +706,7 @@ export default function FinishedGoodSpecificationSheet({
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
-                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
+                  <p className="font-bold text-brand-primary text-xs uppercase dark:text-brand-accent-hover">
                     {t("nutrition_facts")}
                   </p>
                   {nutritionRegulationArea === "FDA" ? (
@@ -817,7 +817,7 @@ export default function FinishedGoodSpecificationSheet({
                   )}
                 </div>
                 <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-950">
-                  <p className="font-bold text-blue-700 text-xs uppercase dark:text-blue-300">
+                  <p className="font-bold text-brand-primary text-xs uppercase dark:text-brand-accent-hover">
                     {t("microbiological_specification")}
                   </p>
                   <div className="mt-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
@@ -841,17 +841,17 @@ export default function FinishedGoodSpecificationSheet({
                     ))}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-blue-900 p-4 text-white shadow-sm">
-                  <p className="font-bold text-blue-200 text-xs uppercase">
+                <div className="rounded-2xl bg-brand-deep p-4 text-white shadow-sm">
+                  <p className="font-bold text-brand-cream text-xs uppercase">
                     {t("metadata_footer")}
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-blue-200">{t("version_no")}</p>
+                      <p className="text-brand-cream">{t("version_no")}</p>
                       <p className="font-black">{versionTag}</p>
                     </div>
                     <div>
-                      <p className="text-blue-200">{t("issue_date")}</p>
+                      <p className="text-brand-cream">{t("issue_date")}</p>
                       <p className="font-black">
                         {formatDate(activeReport.date)}
                       </p>

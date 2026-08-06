@@ -68,7 +68,7 @@ const StockUsageHistoryModal: React.FC<StockUsageHistoryModalProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between border-gray-100 border-b p-6 pb-4 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300">
+                <div className="rounded-xl bg-brand-mint p-2.5 text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover">
                   <History size={22} />
                 </div>
                 <div>
@@ -112,11 +112,11 @@ const StockUsageHistoryModal: React.FC<StockUsageHistoryModalProps> = ({
                   </span>
                 </p>
               </div>
-              <div className="rounded-2xl bg-blue-50 p-4 text-center dark:bg-blue-900/20">
-                <span className="font-bold text-[10px] text-blue-500 uppercase tracking-wider dark:text-blue-400">
+              <div className="rounded-2xl bg-brand-mint p-4 text-center dark:bg-brand-accent/20">
+                <span className="font-bold text-[10px] text-brand-primary uppercase tracking-wider dark:text-brand-accent-hover">
                   {t("projects_using")}
                 </span>
-                <p className="mt-1 font-bold text-blue-700 text-xl dark:text-blue-300">
+                <p className="mt-1 font-bold text-brand-primary text-xl dark:text-brand-accent-hover">
                   {item.usedIn?.length ?? 0}
                 </p>
               </div>
@@ -176,7 +176,7 @@ const StockUsageHistoryModal: React.FC<StockUsageHistoryModalProps> = ({
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <FlaskConical
-                                className="flex-shrink-0 text-indigo-400 dark:text-indigo-300"
+                                className="flex-shrink-0 text-brand-primary dark:text-brand-accent-hover"
                                 size={14}
                               />
                               <span className="max-w-[160px] truncate font-bold text-gray-900 dark:text-white">

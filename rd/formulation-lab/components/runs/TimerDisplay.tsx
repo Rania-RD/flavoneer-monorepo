@@ -52,7 +52,7 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({
             strokeWidth="4"
           />
           <circle
-            className="text-blue-500 transition-all duration-1000 ease-linear"
+            className="text-brand-primary transition-all duration-1000 ease-linear"
             cx="32"
             cy="32"
             fill="transparent"
@@ -63,7 +63,7 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({
             strokeWidth="4"
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center font-bold text-blue-600 text-xs dark:text-blue-400">
+        <div className="absolute inset-0 flex items-center justify-center font-bold text-brand-primary text-xs dark:text-brand-accent-hover">
           {Math.round(progress)}%
         </div>
       </div>
@@ -73,7 +73,7 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({
         </div>
         <div className="mt-1 flex gap-2">
           <button
-            className="font-bold text-blue-600 text-xs hover:underline"
+            className="font-bold text-brand-primary text-xs hover:underline"
             onClick={() => setIsRunning(!isRunning)}
           >
             {isRunning ? t("pause") : t("resume")}

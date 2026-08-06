@@ -60,8 +60,8 @@ export function getRunValidation({
     return {
       isValid: false,
       message: "Weigh ingredient to specification",
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      color: "text-brand-primary",
+      bgColor: "bg-brand-mint",
     };
   }
 
@@ -86,8 +86,8 @@ export function getRunValidation({
     return {
       isValid: false,
       message: "Start the timer",
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      color: "text-brand-primary",
+      bgColor: "bg-brand-mint",
     };
   }
 
@@ -112,8 +112,8 @@ export function getRunValidation({
     return {
       isValid: false,
       message: "Select Pass or Fail",
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      color: "text-brand-primary",
+      bgColor: "bg-brand-mint",
     };
   }
 
@@ -130,8 +130,8 @@ export function getRunValidation({
     return {
       isValid: false,
       message: "Log start time to proceed",
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      color: "text-brand-primary",
+      bgColor: "bg-brand-mint",
     };
   }
 

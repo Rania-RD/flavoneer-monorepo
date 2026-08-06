@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
 import NavTooltip from "./NavTooltip";
 import ProfileSettingsModal from "./ProfileSettingsModal";
+import UserAvatar from "./user-avatar";
 
 interface SidebarProfileMenuProps {
   placement: "desktop" | "mobile";
@@ -18,12 +19,6 @@ const SidebarProfileMenu: React.FC<SidebarProfileMenuProps> = ({
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-
-  const avatarUrl =
-    profile.avatarUrl ||
-    `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(
-      profile.name
-    )}`;
 
   const openProfileModal = () => {
     setIsTooltipVisible(false);
@@ -58,17 +53,16 @@ const SidebarProfileMenu: React.FC<SidebarProfileMenuProps> = ({
         ref={triggerRef}
         type="button"
       >
-        <img
-          alt=""
-          aria-hidden="true"
+        <UserAvatar
           className={
             placement === "desktop"
-              ? "h-full w-full rounded-full object-cover ring-2 ring-[#f5a623]/70"
-              : "h-6 w-6 rounded-full object-cover ring-1 ring-[#f5a623]/60"
+              ? "ring-2 ring-[#f5a623]/70"
+              : "ring-1 ring-[#f5a623]/60"
           }
-          height={44}
-          src={avatarUrl}
-          width={44}
+          name={profile.name}
+          seed={profile.email}
+          size={placement === "desktop" ? 40 : 24}
+          testId={`${placement}-profile-avatar`}
         />
         {placement === "mobile" && <span>{t("profile")}</span>}
       </button>

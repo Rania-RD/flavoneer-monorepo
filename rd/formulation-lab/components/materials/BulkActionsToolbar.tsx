@@ -39,7 +39,7 @@ export const BulkActionsToolbar = ({
     transition={{ type: "spring", stiffness: 300, damping: 25 }}
   >
     <div className="flex items-center gap-3 border-gray-700 border-e pe-4 text-white dark:border-slate-600">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-500 font-bold text-xs">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-primary font-bold text-xs">
         {selectedCount}
       </span>
       <span className="font-semibold text-sm">{t("selected")}</span>

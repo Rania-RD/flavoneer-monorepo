@@ -5,9 +5,12 @@
   "dependencies": {
     "@better-auth/expo": "1.5.6",
     "@convex-dev/better-auth": "^0.11.5",
+    "@expo-google-fonts/dm-sans": "^0.4.2",
+    "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo/ui": "~57.0.9",
     "@flavoneer/backend": "workspace:*",
     "@flavoneer/config": "workspace:*",
+    "@flavoneer/ui": "workspace:*",
     "@hookform/resolvers": "^5.4.0",
     "@hot-updater/react-native": "0.35.4",
     "@legendapp/list": "^3.3.3",

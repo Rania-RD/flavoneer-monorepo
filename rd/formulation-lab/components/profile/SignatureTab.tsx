@@ -39,7 +39,7 @@ const SigModeButton: React.FC<{
   <button
     className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-xs transition-all ${
       currentMode === mode
-        ? "bg-blue-600 text-white shadow-md"
+        ? "bg-brand-primary text-white shadow-md"
         : "border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
     }`}
     onClick={() => setMode(mode)}
@@ -130,16 +130,16 @@ const SignatureTab: React.FC<SignatureTabProps> = ({
   return (
     <div className="fade-in slide-in-from-end-4 animate-in space-y-5 duration-300">
       {/* Info banner */}
-      <div className="flex gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+      <div className="flex gap-3 rounded-2xl border border-brand-primary/20 bg-brand-mint p-4 dark:border-brand-mint/20 dark:bg-brand-accent/20">
         <ShieldCheck
-          className="flex-shrink-0 text-blue-600 dark:text-blue-400"
+          className="flex-shrink-0 text-brand-primary dark:text-brand-accent-hover"
           size={24}
         />
         <div>
-          <h4 className="font-bold text-blue-900 text-sm dark:text-blue-100">
+          <h4 className="font-bold text-brand-primary text-sm dark:text-brand-accent-hover">
             {t("legally_binding")}
           </h4>
-          <p className="mt-1 text-blue-700 text-xs dark:text-blue-300">
+          <p className="mt-1 text-brand-primary text-xs dark:text-brand-accent-hover">
             {t("this_digital_signature_will_be_used_to_s")}
           </p>
         </div>
@@ -171,7 +171,7 @@ const SignatureTab: React.FC<SignatureTabProps> = ({
               {t("signature_text")}
             </label>
             <input
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               onChange={(e) => setSigText(e.target.value)}
               placeholder={t("your_name")}
               value={sigText}
@@ -186,7 +186,7 @@ const SignatureTab: React.FC<SignatureTabProps> = ({
                 <button
                   className={`rounded-xl border px-4 py-3 text-lg transition-all ${
                     sigFont === f.value
-                      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/30 dark:bg-blue-900/30"
+                      ? "border-brand-primary bg-brand-mint ring-2 ring-brand-focus/50 dark:bg-brand-accent/30"
                       : "border-gray-200 bg-white hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
                   }`}
                   key={f.value}
@@ -201,7 +201,7 @@ const SignatureTab: React.FC<SignatureTabProps> = ({
 
           <div className="flex justify-end pt-2">
             <button
-              className="flex items-center gap-2 rounded-xl bg-gray-900 px-6 py-2.5 font-bold text-sm text-white shadow-md transition-transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600"
+              className="flex items-center gap-2 rounded-xl bg-gray-900 px-6 py-2.5 font-bold text-sm text-white shadow-md transition-transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-accent"
               disabled={!hasTextChanges}
               onClick={handleSaveTextSignature}
             >
@@ -251,7 +251,7 @@ const SignatureTab: React.FC<SignatureTabProps> = ({
             >
               {uploading ? (
                 <Loader2
-                  className="mb-2 animate-spin text-blue-500"
+                  className="mb-2 animate-spin text-brand-primary"
                   size={32}
                 />
               ) : (

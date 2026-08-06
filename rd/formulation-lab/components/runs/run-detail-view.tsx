@@ -120,7 +120,7 @@ const RunDetailView: React.FC<RunDetailViewProps> = ({
                     key={step.id || stepIndex}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 font-bold text-indigo-600 text-sm dark:bg-indigo-900/30 dark:text-indigo-400">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-mint font-bold text-brand-primary text-sm dark:bg-brand-accent/30 dark:text-brand-accent-hover">
                         {stepIndex + 1}
                       </div>
                       <div>

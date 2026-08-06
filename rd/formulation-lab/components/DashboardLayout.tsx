@@ -1,18 +1,14 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import WorkspaceSectionSwitcher, {
-  type WorkspaceSection,
-} from "./WorkspaceSectionSwitcher";
+import type { WorkspaceSection } from "./WorkspaceSectionSwitcher";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<WorkspaceSection>(() => {
@@ -48,15 +44,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     window.localStorage.setItem("flavoneer.workspace-section", section);
     navigate(section === "quality" ? "/reports" : "/");
   };
-
-  const workspaceLabel =
-    activeSection === "quality"
-      ? t("quality_control_workspace")
-      : t("workspace_label");
-  const workspaceStatus =
-    activeSection === "quality"
-      ? t("quality_workspace_status")
-      : t("brand_workspace_status");
 
   return (
     <div
@@ -97,34 +84,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               : "mx-auto min-w-0 max-w-[1600px]"
           }
         >
-          {!isFullScreenWorkspace && (
-            <header className="mb-6 flex items-center justify-between gap-4 rounded-[2rem] border border-[#1c4a3c]/10 bg-[#fffdf4]/85 px-5 py-4 shadow-[0_18px_55px_rgba(28,74,60,0.08)] backdrop-blur-xl dark:border-[#d2f2d4]/10 dark:bg-[#143d32]/85 dark:shadow-black/10">
-            <div className="flex min-w-0 items-center gap-3">
-              <WorkspaceSectionSwitcher
-                activeSection={activeSection}
-                onSectionChange={handleSectionChange}
-                placement="header"
-              />
-              <div className="hidden h-11 w-11 shrink-0 place-items-center rounded-[1rem] bg-[#f5a623] font-display font-black text-[#173e33] text-xl shadow-[inset_0_-3px_0_rgba(182,97,8,0.24)] md:grid">
-                {t("app_name").slice(0, 1)}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate font-display font-black text-[#173e33] text-xl leading-none dark:text-[#f7f4df]">
-                  {t("app_name")}
-                </p>
-                <p className="mt-1 truncate font-bold text-[#527568] text-[10px] uppercase tracking-[0.18em] dark:text-[#a9cbbb]">
-                  {workspaceLabel}
-                </p>
-              </div>
-            </div>
-
-            <div className="hidden items-center gap-2 rounded-full border border-[#1c4a3c]/10 bg-[#d2f2d4]/55 px-4 py-2 font-bold text-[#285b4d] text-xs sm:flex dark:border-[#d2f2d4]/10 dark:bg-[#d2f2d4]/8 dark:text-[#c8e4d4]">
-              <span className="h-2 w-2 rounded-full bg-[#ff7738] shadow-[0_0_0_4px_rgba(255,119,56,0.14)]" />
-              {workspaceStatus}
-            </div>
-            </header>
-          )}
-
           <div
             className={`dashboard-route-surface min-w-0 ${
               isFullScreenWorkspace ? "h-full min-h-0 overflow-hidden" : ""

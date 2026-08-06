@@ -70,8 +70,8 @@ const ShareTarget: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#FDFCF6] dark:bg-slate-900">
       <div className="flex flex-col items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100/50 dark:bg-blue-900/30">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-mint/50 dark:bg-brand-accent/30">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-primary dark:text-brand-accent-hover" />
         </div>
         <h2 className="font-bold text-slate-800 text-xl dark:text-white">
           {t("verifying_access")}

@@ -48,7 +48,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
 
   // Styles for Dark Mode Input Fields (Slate 700 bg, Slate 100 text, Slate 600 border)
   const inputClass =
-    "w-full px-4 py-3 bg-gray-50 dark:bg-[#334155] border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+    "w-full px-4 py-3 bg-gray-50 dark:bg-[#334155] border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 focus:border-transparent transition-all";
   const labelClass =
     "block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-2";
   const modal = (
@@ -167,18 +167,18 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 </div>
 
                 {/* Tile 2: Processing Parameters */}
-                <div className="rounded-[2rem] border border-sky-100 bg-sky-50 p-6 shadow-sm dark:border-sky-800/30 dark:bg-sky-900/10">
-                  <h3 className="mb-4 flex items-center gap-2 font-bold text-lg text-sky-900 dark:text-sky-100">
-                    <Thermometer className="text-sky-500" size={18} />{" "}
+                <div className="rounded-[2rem] border border-brand-primary/20 bg-brand-mint p-6 shadow-sm dark:border-brand-mint/20 dark:bg-brand-accent/10">
+                  <h3 className="mb-4 flex items-center gap-2 font-bold text-lg text-brand-primary dark:text-brand-accent-hover">
+                    <Thermometer className="text-brand-primary" size={18} />{" "}
                     {t("processing")}
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-2 block font-bold text-sky-700 text-xs uppercase tracking-wider dark:text-sky-300">
+                      <label className="mb-2 block font-bold text-brand-primary text-xs uppercase tracking-wider dark:text-brand-accent-hover">
                         {t("method")}
                       </label>
                       <input
-                        className="w-full rounded-xl border border-sky-200 bg-white px-4 py-3 text-sky-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-100"
+                        className="w-full rounded-xl border border-brand-primary/20 bg-white px-4 py-3 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-brand-mint/20 dark:bg-brand-accent/30 dark:text-brand-accent-hover"
                         onChange={(e) =>
                           handleInputChange("processingMethod", e.target.value)
                         }
@@ -187,11 +187,11 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="mb-2 block font-bold text-sky-700 text-xs uppercase tracking-wider dark:text-sky-300">
+                        <label className="mb-2 block font-bold text-brand-primary text-xs uppercase tracking-wider dark:text-brand-accent-hover">
                           {t("temp_c")}
                         </label>
                         <input
-                          className="w-full rounded-xl border border-sky-200 bg-white px-3 py-3 text-sky-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-100"
+                          className="w-full rounded-xl border border-brand-primary/20 bg-white px-3 py-3 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-brand-mint/20 dark:bg-brand-accent/30 dark:text-brand-accent-hover"
                           onChange={(e) =>
                             handleInputChange(
                               "processingTemp",
@@ -203,11 +203,11 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block font-bold text-sky-700 text-xs uppercase tracking-wider dark:text-sky-300">
+                        <label className="mb-2 block font-bold text-brand-primary text-xs uppercase tracking-wider dark:text-brand-accent-hover">
                           {t("time")}
                         </label>
                         <input
-                          className="w-full rounded-xl border border-sky-200 bg-white px-3 py-3 text-sky-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-100"
+                          className="w-full rounded-xl border border-brand-primary/20 bg-white px-3 py-3 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-brand-mint/20 dark:bg-brand-accent/30 dark:text-brand-accent-hover"
                           onChange={(e) =>
                             handleInputChange("processingTime", e.target.value)
                           }
@@ -393,7 +393,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   {t("cancel")}
                 </button>
                 <button
-                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3 font-bold text-white shadow-blue-500/30 shadow-lg transition-all hover:bg-blue-700"
+                  className="flex items-center gap-2 rounded-xl bg-brand-primary px-8 py-3 font-bold text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover"
                   type="submit"
                 >
                   <Save size={18} />

@@ -98,7 +98,7 @@ const ViewIngredientModal: React.FC<ViewIngredientModalProps> = ({
               <div
                 className={`flex items-center ${isRTL ? "space-x-4 space-x-reverse" : "space-x-4"}`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-indigo-600 text-white shadow-indigo-600/20 shadow-lg">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-brand-primary text-white shadow-brand-primary/20 shadow-lg">
                   <FlaskConical size={24} />
                 </div>
                 <div>
@@ -138,7 +138,7 @@ const ViewIngredientModal: React.FC<ViewIngredientModalProps> = ({
                 )}
                 
                 <button
-                  className="flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 font-bold text-indigo-600 text-sm transition-colors hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-400 dark:hover:bg-indigo-500/30"
+                  className="flex items-center gap-2 rounded-full bg-brand-mint px-4 py-2 font-bold text-brand-primary text-sm transition-colors hover:bg-brand-mint dark:bg-brand-accent/20 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/30"
                   onClick={onEdit}
                   type="button"
                 >
@@ -242,7 +242,7 @@ const ViewIngredientModal: React.FC<ViewIngredientModalProps> = ({
                 {/* General Info */}
                 <section className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/40">
                   <h3 className="mb-5 font-bold text-lg text-gray-900 dark:text-white border-b border-gray-100 dark:border-slate-700/50 pb-2">
-                    <span className="border-b-2 border-indigo-500 pb-2.5">
+                    <span className="border-b-2 border-brand-primary pb-2.5">
                       {t("general_info")}
                     </span>
                   </h3>
@@ -292,7 +292,7 @@ const ViewIngredientModal: React.FC<ViewIngredientModalProps> = ({
                 {/* Manufacturing Info */}
                 <section className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/40">
                   <h3 className="mb-5 font-bold text-lg text-gray-900 dark:text-white border-b border-gray-100 dark:border-slate-700/50 pb-2">
-                    <span className="border-b-2 border-blue-500 pb-2.5">
+                    <span className="border-b-2 border-brand-primary pb-2.5">
                       {t("manufacturing")}
                     </span>
                   </h3>

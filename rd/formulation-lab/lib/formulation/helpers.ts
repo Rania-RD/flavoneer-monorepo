@@ -32,12 +32,12 @@ export const COLORS: Record<
   }
 > = {
   blue: {
-    bg: "bg-blue-50",
-    border: "border-blue-100",
-    text: "text-blue-900",
-    darkBg: "dark:bg-blue-900/10",
-    darkBorder: "dark:border-blue-800/30",
-    darkText: "dark:text-blue-100",
+    bg: "bg-brand-mint",
+    border: "border-brand-primary/20",
+    text: "text-brand-primary",
+    darkBg: "dark:bg-brand-accent/10",
+    darkBorder: "dark:border-brand-mint/20",
+    darkText: "dark:text-brand-accent-hover",
   },
   green: {
     bg: "bg-green-50",

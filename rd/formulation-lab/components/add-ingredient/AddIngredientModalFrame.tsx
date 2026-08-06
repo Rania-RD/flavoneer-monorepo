@@ -18,7 +18,7 @@ export const AddIngredientModalHeader = ({
     <div
       className={`flex items-center ${isRTL ? "space-x-4 space-x-reverse" : "space-x-4"}`}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-indigo-600 text-white shadow-indigo-600/20 shadow-lg">
+      <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-brand-primary text-white shadow-brand-primary/20 shadow-lg">
         <FlaskConical size={24} />
       </div>
       <div>
@@ -62,7 +62,7 @@ export const AddIngredientModalTabs = ({
       <button
         className={`border-b-2 px-4 pb-3 font-bold text-sm uppercase tracking-wide transition-colors ${
           activeTab === "info"
-            ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+            ? "border-brand-primary text-brand-primary dark:border-brand-mint/20 dark:text-brand-accent-hover"
             : "border-transparent text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
         }`}
         onClick={() => setActiveTab("info")}
@@ -73,7 +73,7 @@ export const AddIngredientModalTabs = ({
       <button
         className={`border-b-2 px-4 pb-3 font-bold text-sm uppercase tracking-wide transition-colors ${
           activeTab === "nutrients"
-            ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+            ? "border-brand-primary text-brand-primary dark:border-brand-mint/20 dark:text-brand-accent-hover"
             : "border-transparent text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
         }`}
         onClick={() => setActiveTab("nutrients")}
@@ -141,7 +141,7 @@ export const AddIngredientModalFooter = ({
         <>
           {activeTab !== "nutrients" ? (
             <button
-              className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+              className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
               data-testid="add-ingredient-next-button"
               onClick={onNext}
               type="button"
@@ -154,7 +154,7 @@ export const AddIngredientModalFooter = ({
             </button>
           ) : (
             <button
-              className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+              className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
               data-testid="add-ingredient-save-button"
               disabled={isSubmitting || !canSubmit}
               form="add-ingredient-form"

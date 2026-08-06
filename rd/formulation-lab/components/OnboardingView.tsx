@@ -75,7 +75,7 @@ export default function OnboardingView() {
         </div>
         <h1 className="mb-4 font-extrabold text-4xl text-charcoal tracking-tight sm:text-5xl dark:text-white">
           {t("welcome_to")}{" "}
-          <span className="text-indigo-600 dark:text-indigo-400">
+          <span className="text-brand-primary dark:text-brand-accent-hover">
             {t("app_name")}
           </span>
         </h1>
@@ -96,7 +96,7 @@ export default function OnboardingView() {
           <div className="pointer-events-none absolute end-0 top-0 p-6 text-gray-100 transition-transform duration-500 group-hover:scale-110 dark:text-slate-700/30">
             <FlaskConical size={120} />
           </div>
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover">
             <Users size={28} />
           </div>
           <h3 className="relative z-10 mb-2 font-bold text-2xl text-gray-900 dark:text-white">
@@ -110,7 +110,7 @@ export default function OnboardingView() {
             onSubmit={handleCreateTeam}
           >
             <input
-              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-medium text-gray-900 placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder-slate-500"
+              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-medium text-gray-900 placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder-slate-500"
               data-testid="create-team-name-input"
               onChange={(e) => setNewTeamName(e.target.value)}
               placeholder={t("example_workspace")}
@@ -118,7 +118,7 @@ export default function OnboardingView() {
               value={newTeamName}
             />
             <button
-              className="flex shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-32"
+              className="flex shrink-0 items-center justify-center rounded-xl bg-brand-primary px-6 py-3 font-bold text-white transition-colors hover:bg-brand-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-32"
               data-testid="create-team-submit-button"
               disabled={!newTeamName.trim() || isCreating}
               type="submit"

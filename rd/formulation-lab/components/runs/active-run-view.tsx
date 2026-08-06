@@ -288,7 +288,7 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
               <div className="w-full max-w-4xl">
                 <div className="h-1.5 w-full overflow-hidden rounded-b-lg bg-gray-100 dark:bg-slate-800">
                   <div
-                    className="h-full bg-blue-600 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-blue-500"
+                    className="h-full bg-brand-primary transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-brand-accent"
                     style={{
                       width: `${getProgressWidth(
                         phases,
@@ -302,7 +302,7 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
                 <div className="flex w-full flex-col items-center justify-between gap-6 py-5 sm:flex-row">
                   <div className="flex w-full items-center gap-5 sm:w-auto">
                     <div
-                      className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 ring-inset transition-colors duration-300 ${validation.isValid ? "bg-green-50 text-green-600 ring-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20" : "bg-blue-50 text-blue-600 ring-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20"}`}
+                      className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 ring-inset transition-colors duration-300 ${validation.isValid ? "bg-green-50 text-green-600 ring-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20" : "bg-brand-mint text-brand-primary ring-brand-focus/50 dark:bg-brand-accent/10 dark:text-brand-accent-hover dark:ring-brand-accent/50"}`}
                     >
                       {validation.isValid ? (
                         <Check size={28} strokeWidth={2.5} />
@@ -364,7 +364,7 @@ const ActiveRunView: React.FC<ActiveRunViewProps> = ({
                       </button>
                     ) : (
                       <button
-                        className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-8 py-4 font-black text-sm text-white uppercase tracking-wide shadow-blue-600/20 shadow-xl transition-all will-change-transform hover:bg-blue-500 active:scale-[0.98] disabled:bg-gray-200 disabled:text-gray-400 sm:w-auto disabled:dark:bg-slate-800"
+                        className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-brand-primary px-8 py-4 font-black text-sm text-white uppercase tracking-wide shadow-brand-primary/20 shadow-xl transition-all will-change-transform hover:bg-brand-primary-hover active:scale-[0.98] disabled:bg-gray-200 disabled:text-gray-400 sm:w-auto disabled:dark:bg-slate-800"
                         disabled={!validation.isValid}
                         onClick={onNext}
                         type="button"

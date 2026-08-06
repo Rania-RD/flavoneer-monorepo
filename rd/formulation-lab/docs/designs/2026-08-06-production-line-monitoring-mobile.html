@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Implementation plan for mobile production-line monitoring records with offline autosave, Convex synchronization, QC submission, and production approval."
+      content="Implementation plan for hourly mobile production-line inspections with hall-prefixed serial numbers, carton-label evidence, configurable product limits, repeatable readings, QC submission, and web approval."
     />
     <title>Production Line Monitoring: Mobile Implementation Plan</title>
     <style>
@@ -401,7 +401,7 @@
 
       .flow {
         display: grid;
-        grid-template-columns: repeat(5, minmax(7.5rem, 1fr));
+        grid-template-columns: repeat(4, minmax(8.5rem, 1fr));
         gap: 0.75rem;
         margin-top: 1rem;
         overflow-x: auto;
@@ -499,23 +499,13 @@
         font-weight: 900;
       }
 
-      .timeline {
-        position: relative;
+      .phases {
         display: grid;
         gap: 1rem;
         margin-top: 1rem;
-        padding-inline-start: 1.5rem;
       }
 
-      .timeline::before {
-        position: absolute;
-        inset-block: 0.5rem;
-        inset-inline-start: 0.43rem;
-        border-inline-start: 2px solid rgba(23, 62, 51, 0.18);
-        content: "";
-      }
-
-      .milestone {
+      .phase {
         position: relative;
         border: 1px solid var(--line);
         border-radius: 1.25rem;
@@ -523,19 +513,7 @@
         padding: 0.9rem 1rem;
       }
 
-      .milestone::before {
-        position: absolute;
-        top: 1.05rem;
-        inset-inline-start: -1.48rem;
-        width: 0.65rem;
-        height: 0.65rem;
-        border: 3px solid var(--cream);
-        border-radius: 50%;
-        background: var(--amber);
-        content: "";
-      }
-
-      .milestone h3 {
+      .phase h3 {
         margin: 0 0 0.35rem;
       }
 
@@ -663,7 +641,7 @@
 
           <p class="nav-label">Implementation</p>
           <a href="#mobile">Mobile experience</a>
-          <a href="#offline">Offline and sync</a>
+          <a href="#autosave">Connected autosave</a>
           <a href="#data">Data model</a>
           <a href="#backend">Backend API</a>
           <a href="#web">Web workspace</a>
@@ -672,7 +650,7 @@
 
           <p class="nav-label">Delivery</p>
           <a href="#tests">Test plan</a>
-          <a href="#rollout">Milestones and rollout</a>
+          <a href="#rollout">Phases and rollout</a>
           <a href="#acceptance">Acceptance criteria</a>
           <a href="#risks">Risks and questions</a>
           <a href="#assignment">Next assignment</a>
@@ -686,15 +664,16 @@
           <p class="hero-summary">
             A dedicated mobile workflow for
             <span class="arabic" lang="ar" dir="rtl">نموذج مراقبة خط الإنتاج</span>.
-            QC records work during production, every change is saved locally, drafts sync to
-            Convex after reconnect, and the production manager reviews and co-signs in the web
-            Quality Control workspace.
+            QC completes one record for each hourly inspection. Each modification is saved to Convex
+            while connected, product-specific metric units and business limits come from the web Form Settings, the five process
+            measurements accept multiple readings, every record receives a hall-prefixed serial number,
+            and production management reviews and co-signs on web.
           </p>
           <div class="meta-row" aria-label="Plan metadata">
             <span class="pill">Date: 2026-08-06</span>
             <span class="pill">Mode: Intrapreneurship</span>
-            <span class="pill">Stage: First factory pilot</span>
-            <span class="pill">Estimate: 5–7 engineering weeks</span>
+            <span class="pill">Cadence: one inspection each hour</span>
+            <span class="pill">Delivery: phased</span>
             <span class="pill">Status: DONE_WITH_CONCERNS</span>
           </div>
         </header>
@@ -705,16 +684,17 @@
           <p>
             The first release digitizes the production-line monitoring form without building a
             generic form builder. The QC team enters the record in the Expo mobile app during
-            production. The record survives app restarts and lost connectivity. The production
-            manager reviews the submitted record and adds the second signature from the existing
-            web workspace.
+            production. One form represents one inspection time, performed every hour across the
+            factory's 24/7 operation. Each modification is saved through a connected Convex mutation.
+            The production manager reviews the submitted record and adds the second signature from the
+            existing web workspace.
           </p>
 
           <div class="grid-3" style="margin-top: 1rem">
             <div class="card">
-              <div class="stat">1</div>
-              <strong>Fixed form</strong>
-              <p class="small muted">Production-line monitoring only. Other supplied forms remain out of scope.</p>
+              <div class="stat">1/hr</div>
+              <strong>Inspection cadence</strong>
+              <p class="small muted">Each completed form covers one hourly inspection time.</p>
             </div>
             <div class="card">
               <div class="stat">2</div>
@@ -722,22 +702,26 @@
               <p class="small muted">QC submits and signs. Production reviews and co-signs.</p>
             </div>
             <div class="card">
-              <div class="stat">0</div>
-              <strong>Required connectivity during entry</strong>
-              <p class="small muted">All data entry remains available when the device is offline.</p>
+              <div class="stat">5×</div>
+              <strong>Repeatable process readings</strong>
+              <p class="small muted">Each named weight or temperature measurement accepts multiple readings.</p>
             </div>
           </div>
 
           <h3>In scope</h3>
           <ul>
             <li>Arabic-first, RTL mobile entry with English translations available.</li>
-            <li>Local SQLite persistence after every field modification.</li>
-            <li>Draft recovery after app termination, device restart, or network loss.</li>
-            <li>A durable outbox that retries automatically after connectivity returns.</li>
-            <li>Header details, measurement rounds, 22 conformity checks, notes, and two signatures.</li>
-            <li>QC submit, production return-for-correction, production approve, and approved lock.</li>
+            <li>Connected Convex autosave after every committed field modification.</li>
+            <li>Repeatable readings for pour weight, additive weight, chocolate temperature, coated-piece weight, and carton weight.</li>
+            <li>Single carton-count and cleanliness-percentage values, 22 conformity checks, notes, and two signatures.</li>
+            <li>Versioned per-product metric units and acceptable business limits supplied through Form Settings in the web workspace.</li>
+            <li>One required photo for every non-conforming check, uploaded from iOS or Android.</li>
+            <li>QC submit, web production return-for-correction, web production approve, and approved lock.</li>
             <li>Web review queue, record detail, audit history, search, and PDF export.</li>
-            <li>Role checks, workspace isolation, immutable approval events, and attributed amendments.</li>
+            <li>Hourly inspection identity and duplicate prevention for the same line, product, and hour.</li>
+            <li>Server-assigned form serial numbers such as <code>A 1126</code> and <code>B 1233</code>, where the letter identifies the production hall and the number is a non-reused counting sequence.</li>
+            <li>A required camera photo for <span class="arabic" lang="ar" dir="rtl">رقم الدفعة</span>, plus the structured printed code used for validation and search.</li>
+            <li>Role checks, workspace isolation, immutable approval events, and indefinite retention until a policy is approved.</li>
           </ul>
 
           <h3>Out of scope for this release</h3>
@@ -745,9 +729,12 @@
             <li>A generic form-template designer or generic mobile form renderer.</li>
             <li>The laboratory, receiving, kitchen, kitchen-control, and raw-material forms.</li>
             <li>Automatic machine or sensor ingestion.</li>
-            <li>Guaranteed background synchronization while the operating system suspends the app.</li>
+            <li>Local draft persistence and deferred saving without a backend connection.</li>
             <li>Claiming FDA, ISO 22000, HACCP, or local legal certification.</li>
             <li>Replacing paper before the company completes a controlled parallel pilot.</li>
+            <li>Production-manager review or approval from mobile.</li>
+            <li>Password or biometric re-entry when QC signs.</li>
+            <li>Voiding, amending, or automated retention deletion before the company defines an ownership and retention policy.</li>
           </ul>
         </section>
 
@@ -762,8 +749,16 @@
                 <li>QC completes the form in the mobile app while production is running.</li>
                 <li>Production management reviews the submitted record.</li>
                 <li>QC and production both sign the same record revision.</li>
-                <li>Each modification is saved locally before synchronization is attempted.</li>
-                <li>Connectivity can disappear during entry, so the app cannot treat Convex as the draft store.</li>
+                <li>Each committed modification is saved directly to Convex.</li>
+                <li>The five named process measurements may each contain multiple readings.</li>
+                <li>The current phase requires an active connection for editing and submission.</li>
+                <li>One form represents one inspection time and a new form is due every hour, continuously.</li>
+                <li>Each form has a hall-prefixed serial identifier. The serial identifies a form instance and is separate from product-specification version numbers.</li>
+                <li>This plan assumes Convex allocates the next serial. If the factory uses pre-numbered physical forms that QC must transcribe, the creation workflow must change before implementation.</li>
+                <li>The QC inspector photographs the printed carton label for <span class="arabic" lang="ar" dir="rtl">رقم الدفعة</span>.</li>
+                <li>This plan assumes QC manually confirms the printed batch code against the required photo; OCR is not authoritative in the first release.</li>
+                <li>Metric units and business limits vary by product and are supplied by an authorized user through the web Form Settings.</li>
+                <li>Every non-conformity requires at least one photo before QC can submit.</li>
                 <li>Approved records cannot be silently edited or deleted.</li>
               </ol>
             </div>
@@ -773,7 +768,7 @@
                 <li>The company already uses a concrete paper form, which is stronger evidence than a hypothetical request.</li>
                 <li>The responsible people and approval handoff are named.</li>
                 <li>The required device and moment of entry are named: mobile during production.</li>
-                <li>The offline and autosave requirements came from the expected operating environment.</li>
+                <li>The current scope requires connectivity and does not include local persistence.</li>
                 <li>The current mobile app has shared Convex and Better Auth wiring but no domain workflow yet.</li>
               </ul>
             </div>
@@ -783,18 +778,14 @@
           <p>
             Food-production monitoring guidance supports timely records, assigned responsibility,
             dated sign-off, deviation handling, readable records, access control, and changes that do
-            not hide previous entries. Mature mobile form tools separate drafts from finalized records
-            and explicitly support offline recovery. These sources guide record integrity, but they do
-            not establish which regulations apply to this company.
+            not hide previous entries. These sources guide record integrity, but they do not establish
+            which regulations apply to this company.
           </p>
           <ul class="small">
             <li><a href="https://www.fda.gov/food/hazard-analysis-critical-control-point-haccp/haccp-principles-application-guidelines">FDA HACCP principles and monitoring guidance</a></li>
             <li><a href="https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/inspection-guides/computerized-systems-food-processing-industry">FDA computerized systems in food processing</a></li>
             <li><a href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application">FDA electronic records and signatures guidance</a></li>
-            <li><a href="https://docs.getodk.org/collect-filling-forms/">ODK offline form entry and draft recovery</a></li>
             <li><a href="https://docs.getodk.org/form-audit-log/">ODK form audit log</a></li>
-            <li><a href="https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/">Expo SDK 57 SQLite documentation</a></li>
-            <li><a href="https://docs.expo.dev/versions/latest/sdk/network/">Expo Network documentation</a></li>
             <li><a href="https://docs.convex.dev/client/react/overview">Convex React client behavior</a></li>
           </ul>
         </section>
@@ -814,14 +805,14 @@
               <ul>
                 <li>It gets one active workflow into factory use faster.</li>
                 <li>Fixed fields support stronger validation and a clearer mobile layout.</li>
-                <li>Offline sync is already a large engineering surface and should be tested before arbitrary form schemas are added.</li>
+                <li>The fixed model can represent repeated readings without introducing arbitrary form schemas.</li>
                 <li>Observed use will reveal which primitives are actually shared by the later forms.</li>
               </ul>
             </div>
             <div class="card">
-              <h3>Effort and risk</h3>
-              <p><strong>Effort:</strong> 5–7 engineering weeks for one engineer, including a controlled pilot.</p>
-              <p><strong>Risk:</strong> medium. The highest risks are offline conflict handling, auth expiry, signature meaning, and operational adoption.</p>
+              <h3>Delivery and risk</h3>
+              <p><strong>Delivery:</strong> five implementation phases followed by a controlled pilot.</p>
+              <p><strong>Risk:</strong> medium. The highest risks are network availability, concurrent edits, signature meaning, and operational adoption.</p>
             </div>
           </div>
 
@@ -831,12 +822,12 @@
               <h4>Configurable compliance-form engine</h4>
               <p class="small muted">
                 Rejected for the first release because arbitrary schemas, repeatable sections,
-                migrations, and offline rendering would delay the first factory form and increase the
+                migrations, and generic rendering would delay the first factory form and increase the
                 test surface before mobile behavior is observed.
               </p>
             </div>
             <div class="card">
-              <h4>Production-session event timeline</h4>
+              <h4>Production-session event stream</h4>
               <p class="small muted">
                 Rejected because it changes the familiar operating model. It may be a better later UX,
                 but the first pilot should preserve the recognizable form and approval process.
@@ -847,23 +838,18 @@
 
         <section id="workflow">
           <p class="eyebrow">04 · Operational workflow</p>
-          <h2>One record, five controlled states</h2>
+          <h2>One record, four controlled states</h2>
 
           <div class="flow" aria-label="Record workflow">
             <div class="flow-step">
               <span class="tag">Editable</span>
               <strong>Draft</strong>
-              <span>QC enters data. Every change saves locally and queues synchronization.</span>
-            </div>
-            <div class="flow-step">
-              <span class="tag warning">Queued</span>
-              <strong>Submission queued</strong>
-              <span>QC confirms the record offline. Final submission waits for a valid online session.</span>
+              <span>QC enters data. Every committed change saves directly to Convex.</span>
             </div>
             <div class="flow-step">
               <span class="tag warning">Review</span>
               <strong>Production review</strong>
-              <span>QC revision is frozen. Production can approve or return it with a reason.</span>
+              <span>QC signs online. The signed revision is frozen while production reviews it.</span>
             </div>
             <div class="flow-step">
               <span class="tag danger">Editable</span>
@@ -880,19 +866,23 @@
           <h3>Step-by-step usage</h3>
           <ol>
             <li>QC signs in and opens the Quality tab in the mobile app.</li>
-            <li>QC selects “New production-line record.” The app creates a UUID-backed local draft immediately.</li>
-            <li>QC selects the department or line and product from cached reference data. A product-name snapshot is stored so the record stays readable if names change later.</li>
-            <li>QC enters one or more timed measurement rounds and completes all conformity checks.</li>
-            <li>Any non-conforming check requires a note and immediate action before submission.</li>
-            <li>The app displays “Saved on device,” “Waiting to sync,” or “Synced” independently from the form validation status.</li>
-            <li>QC reviews a summary, confirms identity, and taps “Sign and submit.” If offline, the action is queued and clearly marked as not yet submitted to the workspace.</li>
-            <li>On reconnect, the app syncs the latest draft, then sends the queued submission. If auth expired, it asks QC to sign in without removing the local record.</li>
+            <li>QC selects production hall A or B, department or line, and product for the current hourly inspection slot.</li>
+            <li>A connected Convex mutation creates one draft for that line, product, and hour, then atomically assigns the next non-reused serial for the selected hall.</li>
+            <li>The active web Form Settings version, product name, metric units, and business limits are snapshotted on the record.</li>
+            <li>QC photographs the printed carton label, enters the visible code such as <code>060826 1</code>, and confirms that the image and entered code match.</li>
+            <li>QC adds one or more readings for each repeatable measurement and completes all conformity checks.</li>
+            <li>Each reading is evaluated against the snapshotted product limit. Out-of-range readings are clearly marked.</li>
+            <li>Any non-conforming check requires a note, immediate action, and at least one uploaded photo before submission.</li>
+            <li>The app displays “Saving,” “Saved,” or “Save failed” independently from form validation.</li>
+            <li>QC reviews a summary and taps “Sign and submit.” The current authenticated session is sufficient; no password or biometric prompt is added.</li>
             <li>The production manager opens the web review queue, checks data and deviations, then approves or returns the record with a required reason.</li>
             <li>Approval creates the second signature event, locks the revision, and makes the official PDF available.</li>
           </ol>
 
           <div class="callout">
-            <strong>Important distinction:</strong> “Saved on device” does not mean “submitted.” The UI must never show an offline queued signature as a completed server approval.
+            <strong>Connection boundary:</strong> editing and submission require connectivity in this
+            phase. The UI must not show “Saved” until the backend acknowledges the mutation, and it
+            must block submission while any change has failed to save.
           </div>
         </section>
 
@@ -913,38 +903,117 @@
               </thead>
               <tbody>
                 <tr>
+                  <td>Production hall</td>
+                  <td><code>productionHallCode</code></td>
+                  <td>Required segmented selector</td>
+                  <td>Allowed values are <code>A</code> and <code>B</code>. Store the selected hall on the record.</td>
+                </tr>
+                <tr>
+                  <td>Form serial number</td>
+                  <td><code>serialSequence</code> and <code>displaySerial</code></td>
+                  <td>Server-generated, read-only</td>
+                  <td>Format is <code>{hall} {sequence}</code>, for example <code>A 1126</code>. The number is allocated atomically and is never reused.</td>
+                </tr>
+                <tr>
                   <td class="arabic" lang="ar" dir="rtl">القسم</td>
                   <td><code>departmentId</code> and <code>departmentName</code></td>
-                  <td>Cached selector</td>
+                  <td>Workspace selector</td>
                   <td>Required. Store the selected ID and name snapshot.</td>
                 </tr>
                 <tr>
                   <td class="arabic" lang="ar" dir="rtl">الساعة</td>
-                  <td><code>startedAtClient</code></td>
+                  <td><code>inspectionAt</code></td>
                   <td>Automatic time with explicit correction</td>
                   <td>Required. Preserve device time and server receipt time.</td>
                 </tr>
                 <tr>
                   <td class="arabic" lang="ar" dir="rtl">الصنف</td>
                   <td><code>productId</code>, <code>productName</code></td>
-                  <td>Cached product selector</td>
-                  <td>Required. Manual snapshot fallback when offline reference data is missing.</td>
+                  <td>Workspace product selector</td>
+                  <td>Required. Store the selected ID and name snapshot.</td>
                 </tr>
                 <tr>
                   <td>Operational context</td>
-                  <td><code>inspectionDate</code>, <code>shift</code>, <code>runId</code></td>
-                  <td>Date, shift, optional run link</td>
-                  <td>Date required. Run link optional for the pilot but recommended.</td>
+                  <td><code>inspectionAt</code>, <code>inspectionHourKey</code>, <code>runId</code></td>
+                  <td>Automatic hourly slot and optional run link</td>
+                  <td>One form per department or line, product, and team-local hour. Run link remains optional.</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h3>Repeatable measurement round</h3>
+          <h3>Carton batch-label image: <span class="arabic" lang="ar" dir="rtl">رقم الدفعة</span></h3>
           <p>
-            The paper example has one blank row. The mobile record should allow additional rows
-            because QC may inspect the same line more than once. Each row records its observation time
-            and observer identity.
+            This is a required image field, not a plain batch-number input. QC uses the mobile camera
+            to photograph the printed label on the carton. The image is the primary evidence; the
+            structured code is stored so the record can be validated, filtered, and reconciled.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Stored field</th><th>Example</th><th>Rule</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>batchLabelPhotoStorageId</code></td><td>Captured carton-label image</td><td>Required before QC submission. Capture from the camera during the inspection; do not satisfy this field from the photo library.</td></tr>
+                <tr><td><code>printedBatchCode</code></td><td><code>060826 1</code></td><td>QC enters the visible printed code and confirms it matches the photo.</td></tr>
+                <tr><td><code>labelProductionDate</code></td><td><code>2026-08-06</code></td><td>Parse the first six digits as <code>DDMMYY</code>, interpret the year as <code>20YY</code>, and reject an impossible calendar date.</td></tr>
+                <tr><td><code>dailyBatchSequence</code></td><td><code>1</code></td><td>Parse the final digit as 1–9. It starts at 1 for the first mix batch of that production date and increments when a new mix batch is prepared.</td></tr>
+                <tr><td><code>batchLabelConfirmedAt</code> and confirmer</td><td>QC identity and server time</td><td>Record who confirmed that the typed code matches the captured label.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            <li>Validate the pilot format as six date digits, one space, and one sequence digit from 1–9. Normalize display as <code>DDMMYY N</code> while preserving the original entered text in the audit event.</li>
+            <li>The first release uses QC confirmation as the authoritative transcription. OCR may suggest a value later, but it must not silently approve or replace the QC-confirmed code.</li>
+            <li>If the label date differs from the inspection date, show a warning and require QC confirmation; do not block submission until the cross-midnight production rule is confirmed.</li>
+            <li>QC may replace the image while the record is editable. Replacement removes the old draft attachment through an audited mutation.</li>
+            <li>The submitted snapshot binds the label image, printed code, parsed date, and daily batch sequence to the signed revision.</li>
+          </ul>
+
+          <h3>Per-product specifications in web Form Settings</h3>
+          <p>
+            The web workspace is the authoritative source of business limits. An authorized team user
+            supplies one metric unit and acceptable range for each product and measurement key through
+            Form Settings. Specifications are versioned. Activating a new version affects future hourly
+            forms only; existing drafts and approved records keep their original specification snapshot.
+            A product without complete, active Form Settings cannot start a production-line form.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Configuration</th>
+                  <th>Stored value</th>
+                  <th>Rule</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Product</td><td><code>productId</code> and product-name snapshot</td><td>One active specification version per product and team.</td></tr>
+                <tr><td>Measurement</td><td>One of the five fixed <code>readingKey</code> values</td><td>Every active specification contains all five keys.</td></tr>
+                <tr><td>Entry unit</td><td><code>unit</code></td><td>Selected per product from metric-only choices: <code>mg</code>, <code>g</code>, or <code>kg</code> for weights; <code>°C</code> for temperature.</td></tr>
+                <tr><td>Acceptable minimum</td><td><code>minimum</code></td><td>Required numeric lower bound.</td></tr>
+                <tr><td>Acceptable maximum</td><td><code>maximum</code></td><td>Required numeric upper bound and must be at least the minimum.</td></tr>
+                <tr><td>Target</td><td><code>target</code></td><td>Optional reference value inside the configured range.</td></tr>
+                <tr><td>Required readings</td><td><code>minimumReadingCount</code></td><td>Configurable positive integer so completeness can vary by product.</td></tr>
+                <tr><td>Version</td><td><code>version</code>, <code>effectiveAt</code>, author</td><td>Published versions are immutable. Revisions create a new version.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small muted">
+            These are the complete allowed unit choices. Only metric choices are available. Web Form
+            Settings selects one entry unit and numeric business range for each product and measurement.
+            Unit conversion during form entry is not part of the first release, so range evaluation is
+            direct and auditable.
+          </p>
+
+          <h3>Single values and repeatable readings</h3>
+          <p>
+            Carton count and cleanliness percentage are single form-level values. The five named
+            process measurements are independent repeatable lists. Each reading stores its value,
+            unit, observation time, observer identity, and order. QC can add, edit, or remove readings
+            while the record is a draft. Phase 1 must confirm whether the factory captures these five
+            measurements together as one sample set. Until then, the data model must not invent row
+            alignment between independently collected readings.
           </p>
           <div class="table-wrap">
             <table>
@@ -957,13 +1026,13 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td class="arabic" lang="ar" dir="rtl">العدد في الكرتونة</td><td><code>cartonUnitCount</code></td><td>Integer</td><td>Required, 0 or greater</td></tr>
-                <tr><td class="arabic" lang="ar" dir="rtl">وزن الصب</td><td><code>pourWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
-                <tr><td class="arabic" lang="ar" dir="rtl">وزن المادة المضافة</td><td><code>additiveWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
-                <tr><td class="arabic" lang="ar" dir="rtl">حرارة الشوكولاته</td><td><code>chocolateTemperatureC</code></td><td>Decimal, °C</td><td>Required; business limit remains unconfigured until QC supplies it</td></tr>
-                <tr><td class="arabic" lang="ar" dir="rtl">وزن الحب المغلف</td><td><code>coatedPieceWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
-                <tr><td class="arabic" lang="ar" dir="rtl">وزن الكرتونة</td><td><code>cartonWeight</code></td><td>Decimal plus configured unit</td><td>Required, 0 or greater</td></tr>
-                <tr><td class="arabic" lang="ar" dir="rtl">نسبة النظافة</td><td><code>cleanlinessPercentage</code></td><td>Decimal, percent</td><td>Required, from 0 to 100</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">العدد في الكرتونة</td><td><code>cartonUnitCount</code></td><td>Single integer</td><td>Required, 0 or greater</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن الصب</td><td><code>pour_weight</code></td><td>Repeatable decimal; configured mass unit</td><td>Configured minimum count and acceptable numeric range</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن المادة المضافة</td><td><code>additive_weight</code></td><td>Repeatable decimal; configured mass unit</td><td>Configured minimum count and acceptable numeric range</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">حرارة الشوكولاته</td><td><code>chocolate_temperature</code></td><td>Repeatable decimal; configured temperature unit</td><td>Configured minimum count and acceptable numeric range</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن الحب المغلف</td><td><code>coated_piece_weight</code></td><td>Repeatable decimal; configured mass unit</td><td>Configured minimum count and acceptable numeric range</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">وزن الكرتونة</td><td><code>carton_weight</code></td><td>Repeatable decimal; configured mass unit</td><td>Configured minimum count and acceptable numeric range</td></tr>
+                <tr><td class="arabic" lang="ar" dir="rtl">نسبة النظافة</td><td><code>cleanlinessPercentage</code></td><td>Single decimal, percent</td><td>Required, from 0 to 100</td></tr>
               </tbody>
             </table>
           </div>
@@ -1004,6 +1073,15 @@
             </table>
           </div>
 
+          <h3>Required non-conformity evidence</h3>
+          <ul>
+            <li>Selecting <code>non_compliant</code> immediately reveals note, immediate-action, and photo controls.</li>
+            <li>At least one successfully uploaded photo is required for each non-compliant check.</li>
+            <li>The pilot allows up to three photos per check, subject to confirmation with the quality team.</li>
+            <li>The app compresses images before upload and stores file metadata separately from the check.</li>
+            <li>Changing a check back to compliant does not silently delete evidence. The draft asks for confirmation, then removes the attachment through an audited server mutation.</li>
+          </ul>
+
           <h3>Notes and signatures</h3>
           <ul>
             <li><span class="arabic" lang="ar" dir="rtl">ملاحظات</span>: free text entered by QC before submission.</li>
@@ -1023,7 +1101,8 @@
               <h3>Navigation</h3>
               <ul>
                 <li>Add a Quality tab to the authenticated Expo Router tab group.</li>
-                <li>Show “New,” “Drafts,” “Waiting to sync,” “Submitted,” and “Returned” filters.</li>
+                <li>Show the current team-local hourly inspection slot when QC creates a record.</li>
+                <li>Show “New,” “Drafts,” “Submitted,” and “Returned” filters.</li>
                 <li>Open the form as a stack screen so the tab bar does not compete with entry actions.</li>
                 <li>Display a persistent connectivity and save-state bar at the top.</li>
               </ul>
@@ -1031,10 +1110,10 @@
             <div class="card">
               <h3>Form layout</h3>
               <ul>
-                <li>Step 1: department, product, date, shift, and optional run.</li>
-                <li>Step 2: measurement rounds shown as compact vertical cards.</li>
+                <li>Step 1: production hall, read-only form serial, hourly inspection time, department or line, product, carton batch-label capture, printed-code confirmation, and optional run.</li>
+                <li>Step 2: active product specification plus five measurement groups, each with an “Add reading” action and ordered reading rows.</li>
                 <li>Step 3: conformity checks grouped into four sections.</li>
-                <li>Step 4: deviations, notes, completion summary, and QC signature.</li>
+                <li>Step 4: deviations, required photos, notes, completion summary, and QC signature.</li>
                 <li>Sticky “Previous” and “Next” controls, with no disabled fields hidden from the user.</li>
               </ul>
             </div>
@@ -1044,12 +1123,18 @@
           <ul>
             <li>Use numeric keyboards for weights, temperature, percentage, and carton count.</li>
             <li>Keep measurement units visible beside inputs. Do not encode units only in placeholder text.</li>
+            <li>Show the configured acceptable range beside each repeatable measurement and mark every out-of-range reading.</li>
             <li>Use large segmented controls for compliant, non-compliant, and not applicable.</li>
             <li>Move focus to the deviation note when “non-compliant” is selected.</li>
+            <li>Open camera or photo-library capture from the non-conforming check and show upload progress.</li>
+            <li>Use camera capture only for <span class="arabic" lang="ar" dir="rtl">رقم الدفعة</span>, show the captured carton label beside the printed-code field, and require an explicit match confirmation.</li>
+            <li>Keep the server-assigned form serial visible in the header and read-only throughout the workflow.</li>
             <li>Show completion by section, not one vague total percentage.</li>
-            <li>Save each committed input change in SQLite before updating the “Saved on device” indicator.</li>
-            <li>Flush pending text on blur, navigation, app background, and submit review.</li>
+            <li>Save each committed modification through a Convex mutation.</li>
+            <li>Save selectors and conformity choices immediately. Debounce free-text fields, then flush them on blur, navigation, and submit review.</li>
+            <li>Serialize saves per record so a slower response cannot replace a newer value.</li>
             <li>Support Arabic RTL and English LTR using the same fixed field keys.</li>
+            <li>Verify the same flow on supported iOS and Android phones.</li>
             <li>Do not put raw form values in Bugsink breadcrumbs or analytics events.</li>
           </ul>
 
@@ -1058,109 +1143,72 @@
             <table>
               <thead><tr><th>State</th><th>User-facing meaning</th><th>Allowed action</th></tr></thead>
               <tbody>
-                <tr><td><span class="tag">Saved on device</span></td><td>Latest input is durable in local SQLite.</td><td>Continue entry or close the app.</td></tr>
-                <tr><td><span class="tag warning">Waiting to sync</span></td><td>Local revision is newer than the server revision.</td><td>Continue entry; sync runs when reachable.</td></tr>
-                <tr><td><span class="tag">Synced</span></td><td>Server acknowledged the current local revision.</td><td>Continue entry or submit.</td></tr>
-                <tr><td><span class="tag danger">Sign-in required</span></td><td>The queue is safe locally, but the server rejected expired auth.</td><td>Reauthenticate and retry.</td></tr>
-                <tr><td><span class="tag danger">Conflict</span></td><td>A newer incompatible server revision exists.</td><td>Review server copy and create a corrected draft. No silent overwrite.</td></tr>
+                <tr><td><span class="tag warning">Saving</span></td><td>A modification is being written to Convex.</td><td>Continue entry; submission remains blocked until saves finish.</td></tr>
+                <tr><td><span class="tag">Saved</span></td><td>Convex acknowledged the latest modification.</td><td>Continue entry, close the form, or submit when complete.</td></tr>
+                <tr><td><span class="tag danger">Save failed</span></td><td>The latest modification is not durable on the server.</td><td>Retry. Do not submit or leave without an explicit warning.</td></tr>
+                <tr><td><span class="tag danger">Connection required</span></td><td>The app cannot save changes in the current phase.</td><td>Restore the connection before editing or signing.</td></tr>
+                <tr><td><span class="tag danger">Sign-in required</span></td><td>The server rejected an expired session.</td><td>Reauthenticate, reopen the current server draft, and continue.</td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <section id="offline">
-          <p class="eyebrow">07 · Offline architecture</p>
-          <h2>SQLite draft, durable outbox, idempotent Convex sync</h2>
+        <section id="autosave">
+          <p class="eyebrow">07 · Connected autosave</p>
+          <h2>Granular Convex mutations after each modification</h2>
 
-          <div class="architecture" aria-label="Offline data flow">
+          <div class="architecture" aria-label="Connected save flow">
             <div class="arch-node primary">
               <h3>Mobile form</h3>
-              <p class="small">Typed state and Zod validation. Every edit calls the local repository.</p>
+              <p class="small">Typed state, local validation, optimistic UI, and a visible save status.</p>
             </div>
             <div class="arch-arrow" aria-hidden="true">→</div>
             <div class="arch-node">
-              <h3>SQLite</h3>
-              <p class="small">Draft snapshot, reference cache, sync queue, revisions, and local error state.</p>
+              <h3>Save coordinator</h3>
+              <p class="small">Debounces text, serializes writes per record, and tracks the last acknowledged revision.</p>
             </div>
             <div class="arch-arrow" aria-hidden="true">→</div>
             <div class="arch-node">
               <h3>Convex</h3>
-              <p class="small">Workspace authority, workflow, signatures, audit events, queries, and web review.</p>
+              <p class="small">Authoritative drafts, readings, checks, revisions, signatures, events, and web review.</p>
             </div>
           </div>
 
-          <h3>Local database</h3>
+          <h3>Save behavior</h3>
+          <ol>
+            <li>Create the draft online before opening editable fields.</li>
+            <li>Apply structural validation in the mobile form.</li>
+            <li>For selectors, toggles, reading additions, reading edits, and reading removals, call the matching mutation immediately.</li>
+            <li>For notes and other free text, debounce saves for 500 milliseconds and flush on blur or navigation.</li>
+            <li>Keep one serialized mutation chain per record so saves are applied in user order.</li>
+            <li>Show “Saved” only after the latest requested revision is acknowledged.</li>
+            <li>On failure, keep the value visible in memory, mark it unsaved, provide retry, and block signing.</li>
+          </ol>
+
+          <h3>Reading operations</h3>
           <p>
-            Add <code>expo-sqlite</code> for Expo SDK 57. SQLite persists across application restarts.
-            Enable WAL mode. Evaluate SQLCipher during the first implementation spike because enabling
-            it changes native configuration and requires a new mobile binary.
+            Each repeatable reading is its own child record. Adding a reading creates a new row with a
+            server ID. Editing changes only that row. Removing a reading deletes it only while the
+            parent record is editable. Reordering is optional in the first phase; display order may use
+            observation time and creation order.
           </p>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Local table</th><th>Purpose</th><th>Key fields</th></tr></thead>
-              <tbody>
-                <tr>
-                  <td><code>production_line_drafts</code></td>
-                  <td>One current JSON snapshot per local record.</td>
-                  <td><code>client_record_id</code>, <code>owner_user_id</code>, <code>payload_json</code>, <code>client_revision</code>, <code>server_revision</code>, <code>status</code>, timestamps</td>
-                </tr>
-                <tr>
-                  <td><code>production_line_outbox</code></td>
-                  <td>Durable sync and workflow operations.</td>
-                  <td><code>operation_id</code>, <code>client_record_id</code>, <code>operation_type</code>, <code>client_revision</code>, <code>payload_json</code>, attempts, retry time, last error</td>
-                </tr>
-                <tr>
-                  <td><code>quality_reference_cache</code></td>
-                  <td>Departments, products, runs, shifts, and workspace metadata for offline selection.</td>
-                  <td><code>cache_key</code>, <code>payload_json</code>, <code>fetched_at</code>, <code>expires_at</code></td>
-                </tr>
-                <tr>
-                  <td><code>local_schema_migrations</code></td>
-                  <td>Deterministic local database upgrades.</td>
-                  <td><code>version</code>, <code>applied_at</code></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
 
-          <h3>Save transaction</h3>
-          <ol>
-            <li>Validate and normalize the changed field locally.</li>
-            <li>Increment <code>clientRevision</code>.</li>
-            <li>In one SQLite transaction, write the complete draft snapshot and upsert one coalesced <code>sync_draft</code> outbox row.</li>
-            <li>Only after the transaction commits, show “Saved on device.”</li>
-            <li>Debounce network work, not local durability. Rapid edits should replace the queued draft snapshot rather than create one request per keystroke.</li>
-          </ol>
-
-          <h3>Sync worker</h3>
-          <ol>
-            <li>Wake on app start, sign-in completion, foreground resume, manual retry, and network reachability changes.</li>
-            <li>Process one record at a time. Send the most recent coalesced draft before workflow operations such as submission.</li>
-            <li>Call an idempotent Convex mutation with <code>clientRecordId</code>, <code>clientRevision</code>, <code>baseServerRevision</code>, and the complete bounded snapshot.</li>
-            <li>On success, store the returned Convex ID and server revision locally, then remove only the acknowledged outbox operation.</li>
-            <li>On a transient error, keep the row and retry with capped exponential backoff and jitter.</li>
-            <li>On auth failure, pause the queue and request sign-in.</li>
-            <li>On stale revision, mark the draft as conflicted. Never use silent last-write-wins.</li>
-          </ol>
-
-          <h3>Conflict boundary</h3>
+          <h3>Concurrent edit boundary</h3>
           <p>
             The pilot supports one editable owner and one primary device per draft. A second device can
-            view a synced draft but cannot take ownership while offline. An online “Take over editing”
-            action may be added after pilot feedback. This rule removes most multi-device merge cases.
+            view the record but cannot edit it. An explicit “Take over editing” action may be added after
+            pilot feedback. This rule removes most multi-device ordering problems.
           </p>
           <ul>
-            <li>If the same <code>clientRevision</code> and content arrive twice, the server returns the previous acknowledgement.</li>
-            <li>If an older client revision arrives, the server ignores it and returns the latest server revision.</li>
-            <li>If the client is based on an old server revision and its content differs, the server returns a conflict.</li>
-            <li>The conflict UI preserves both copies. QC can duplicate the local values into a new corrected draft, but cannot overwrite a submitted or approved revision.</li>
+            <li>Each save includes the last acknowledged <code>recordRevision</code>.</li>
+            <li>The server rejects a stale revision and returns the current record state.</li>
+            <li>The mobile app stops further saves and asks the user to reload rather than overwriting a newer server value.</li>
+            <li>Submitted and approved revisions remain protected by workflow-state checks.</li>
           </ul>
 
-          <div class="callout success-callout">
-            <strong>Reason for a custom outbox:</strong> Convex reconnects its WebSocket and retries
-            outstanding online mutations, but the product requirement needs a durable local record,
-            explicit queue state, app-restart recovery, and controlled ordering between draft sync and
-            signature submission.
+          <div class="callout">
+            <strong>Connection boundary:</strong> if connectivity drops, the app marks the form
+            unavailable for further edits until the backend connection returns.
           </div>
         </section>
 
@@ -1169,7 +1217,7 @@
           <h2>Additive tables with fixed production semantics</h2>
           <p>
             Add normalized child tables rather than unbounded arrays on the parent record. The form has
-            a bounded set of checks, but measurement rounds and audit events can grow over time. All
+            a bounded set of checks, but process readings and audit events can grow over time. All
             shared records carry <code>teamId</code> directly or inherit it through an authorized parent.
           </p>
 
@@ -1178,20 +1226,44 @@
               <thead><tr><th>Convex table</th><th>Purpose</th><th>Important fields and indexes</th></tr></thead>
               <tbody>
                 <tr>
+                  <td><code>productionLineSettings</code></td>
+                  <td>Team-level inspection behavior.</td>
+                  <td>Team, IANA timezone, 60-minute inspection interval, enabled hall codes A and B, and updated-by metadata. One row per team.</td>
+                </tr>
+                <tr>
+                  <td><code>productionLineSerialCounters</code></td>
+                  <td>Atomic non-reused form serial allocation by production hall.</td>
+                  <td>Team, hall code, next sequence, last allocated time, and actor. Unique index by team plus hall code.</td>
+                </tr>
+                <tr>
+                  <td><code>productionLineSpecifications</code></td>
+                  <td>Versioned product-specific specification header.</td>
+                  <td>Team, product, version, draft or active status, effective time, creator, publisher. Index by team plus product and status.</td>
+                </tr>
+                <tr>
+                  <td><code>productionLineSpecificationLimits</code></td>
+                  <td>Unit and acceptable range for each fixed reading key.</td>
+                  <td>Specification ID, reading key, unit, minimum, maximum, optional target, minimum reading count. Index by specification ID.</td>
+                </tr>
+                <tr>
                   <td><code>productionLineRecords</code></td>
                   <td>Workflow root and searchable record summary.</td>
                   <td>
-                    Team, client UUID, department and product snapshots, date, shift, optional run,
-                    notes, status, editable owner, client/server revisions, submit/approve timestamps,
-                    replacement link. Index by team plus status, team plus inspection date, and team plus client UUID.
+                    Team, production hall, serial sequence and display serial, department and product
+                    snapshots, inspection time and hour key, printed batch code, parsed label date and
+                    daily batch sequence, batch-label storage metadata, optional run, specification
+                    ID/version snapshot, single carton count, single cleanliness percentage, notes,
+                    status, editable owner, record revision, and submit/approve times. Index by team plus
+                    status, team plus hall and serial, team plus inspection hour, team plus printed batch
+                    code, and team plus department/product/hour.
                   </td>
                 </tr>
                 <tr>
-                  <td><code>productionLineMeasurements</code></td>
-                  <td>Repeatable timed measurement rounds.</td>
+                  <td><code>productionLineReadings</code></td>
+                  <td>Independent repeatable process readings.</td>
                   <td>
-                    Record ID, client row UUID, observed time, observer snapshot, seven typed numeric
-                    values, unit snapshot, sort order. Index by record ID.
+                    Record ID, reading key, numeric value, unit and limit snapshot, within-limit result,
+                    observed time, observer identity snapshot, and sort order. Index by record ID and by record ID plus reading key.
                   </td>
                 </tr>
                 <tr>
@@ -1203,10 +1275,15 @@
                   </td>
                 </tr>
                 <tr>
+                  <td><code>productionLineCheckPhotos</code></td>
+                  <td>Required evidence for non-conforming checks.</td>
+                  <td>Record ID, check ID, Convex storage ID, mime type, size, captured time, uploader identity, and sort order. Index by check ID and record ID.</td>
+                </tr>
+                <tr>
                   <td><code>productionLineSignatures</code></td>
                   <td>Authoritative QC and production signature events.</td>
                   <td>
-                    Record ID, signature role, signer user ID/name/role snapshot, signed server revision,
+                    Record ID, signature role, signer user ID/name/role snapshot, signed record revision,
                     snapshot hash, client time, server time, optional visual signature snapshot. Index by record ID.
                   </td>
                 </tr>
@@ -1214,23 +1291,15 @@
                   <td><code>productionLineRecordSnapshots</code></td>
                   <td>Immutable canonical content at each QC submission and production approval.</td>
                   <td>
-                    Record ID, server revision, canonical JSON, hash, created time, reason. Index by record ID.
+                    Record ID, record revision, canonical JSON, hash, created time, reason. Index by record ID.
                   </td>
                 </tr>
                 <tr>
                   <td><code>productionLineRecordEvents</code></td>
-                  <td>Dedicated workflow and correction audit history.</td>
+                  <td>Dedicated workflow audit history.</td>
                   <td>
-                    Record ID, team, action, actor identity, server revision, reason, safe metadata,
+                    Record ID, team, action, actor identity, record revision, reason, safe metadata,
                     server time. Index by record ID and team plus time.
-                  </td>
-                </tr>
-                <tr>
-                  <td><code>productionLineAmendments</code></td>
-                  <td>Attributable corrections after approval.</td>
-                  <td>
-                    Record ID, target path, previous/new value JSON, reason, requester, reviewer,
-                    status, timestamps. The approved original remains unchanged.
                   </td>
                 </tr>
               </tbody>
@@ -1240,29 +1309,64 @@
           <h3>Conceptual parent shape</h3>
           <pre><code>productionLineRecords: {
   teamId,
-  clientRecordId,
+  productionHallCode: "A" | "B",
+  serialSequence, displaySerial,
   departmentId?, departmentName,
   productId?, productName,
-  runId?, inspectionDate, shift?, startedAtClient,
-  status: "draft" | "pending_production_review" | "returned" | "approved" | "voided",
+  runId?, inspectionAt, inspectionHourKey,
+  batchLabelPhotoStorageId?, batchLabelMimeType?, batchLabelSize?,
+  printedBatchCode?, labelProductionDate?, dailyBatchSequence?,
+  batchLabelConfirmedBy?, batchLabelConfirmedAt?,
+  specificationId, specificationVersion,
+  cartonUnitCount?, cleanlinessPercentage?,
+  status: "draft" | "pending_production_review" | "returned" | "approved",
   editableOwnerUserId,
   qcUserId, qcUserName,
   notes?, qualityManagerNotes?, returnReason?,
-  clientRevision, serverRevision,
-  createdAt, updatedAt, submittedAt?, approvedAt?,
-  replacesRecordId?
+  recordRevision,
+  createdAt, updatedAt, submittedAt?, approvedAt?
+}</code></pre>
+
+          <h3>Conceptual reading shape</h3>
+          <pre><code>productionLineReadings: {
+  recordId,
+  readingKey:
+    | "pour_weight"
+    | "additive_weight"
+    | "chocolate_temperature"
+    | "coated_piece_weight"
+    | "carton_weight",
+  value,
+  unit,
+  acceptableMinimum,
+  acceptableMaximum,
+  isWithinLimit,
+  observedAtClient,
+  recordedAtServer,
+  observerUserId,
+  observerName,
+  sortOrder
 }</code></pre>
 
           <h3>Data invariants</h3>
           <ul>
-            <li><code>clientRecordId</code> is generated once on device and is unique within a workspace.</li>
-            <li>Only <code>draft</code> and <code>returned</code> records accept draft synchronization.</li>
+            <li>The draft is created in Convex before editable fields are shown.</li>
+            <li>Draft creation atomically allocates the next serial for the selected production hall; the display value is the hall code, one space, and the sequence.</li>
+            <li>Serial numbers are unique within team and hall and are never reused, including after a draft is discarded.</li>
+            <li>Only one record may exist for the same team, department or line, product, and team-local hourly slot.</li>
+            <li>A record snapshots one active product specification version when it is created.</li>
+            <li>Only <code>draft</code> and <code>returned</code> records accept autosave mutations.</li>
             <li>A record cannot enter production review until all required fields and checks are valid.</li>
-            <li>At least one complete measurement round is required.</li>
-            <li>Every non-compliant check has a deviation note and immediate action.</li>
-            <li>QC and production signatures must reference the exact server revision they signed.</li>
+            <li>Each reading uses the snapshotted unit and is evaluated against the snapshotted limits.</li>
+            <li>Each reading key meets its configured minimum reading count.</li>
+            <li>Carton count and cleanliness percentage remain single record-level values.</li>
+            <li>Submission requires one captured carton-label photo, a valid QC-confirmed printed code, its parsed production date, and a daily batch sequence from 1–9.</li>
+            <li>The serial number identifies the form record; <code>specificationVersion</code> identifies the business-limit version. They must never be presented as the same value.</li>
+            <li>Every non-compliant check has a deviation note, immediate action, and at least one uploaded photo.</li>
+            <li>QC and production signatures must reference the exact record revision they signed.</li>
             <li>Approval fails when the current revision differs from the QC-signed revision.</li>
             <li>Approved records cannot be patched or deleted by client-facing mutations.</li>
+            <li>Approved records are retained indefinitely until the company adopts a retention and correction policy.</li>
           </ul>
         </section>
 
@@ -1274,18 +1378,31 @@
             <table>
               <thead><tr><th>Function</th><th>Caller</th><th>Behavior</th></tr></thead>
               <tbody>
-                <tr><td><code>getMobileReferenceData</code></td><td>Mobile QC</td><td>Returns workspace, departments, active products/runs, allowed units, and current user capability data for local caching.</td></tr>
-                <tr><td><code>listMine</code></td><td>Mobile QC</td><td>Returns the user's recent synced records and their server states.</td></tr>
-                <tr><td><code>getSyncSnapshot</code></td><td>Mobile QC</td><td>Returns one authorized record, children, signatures, and latest server revision.</td></tr>
-                <tr><td><code>syncDraft</code></td><td>Mobile QC</td><td>Idempotently creates or updates one editable record and bounded child snapshots after revision checks.</td></tr>
+                <tr><td><code>settings.get</code></td><td>Web Form Settings</td><td>Returns timezone, enabled halls, and last allocated serial metadata without exposing a writable counter.</td></tr>
+                <tr><td><code>settings.initializeHallSerial</code></td><td>Authorized web administrator</td><td>Seeds the next sequence for hall A or B exactly once before that hall creates its first digital record; rejects later resets.</td></tr>
+                <tr><td><code>specifications.listByProduct</code></td><td>Web Form Settings</td><td>Returns version history and the active specification for a product.</td></tr>
+                <tr><td><code>specifications.createDraft</code></td><td>Web Form Settings</td><td>Creates a new specification version copied from the active version or from fixed defaults.</td></tr>
+                <tr><td><code>specifications.updateLimit</code></td><td>Web Form Settings</td><td>Saves the metric unit, minimum, maximum, target, and minimum reading count for one fixed reading key.</td></tr>
+                <tr><td><code>specifications.publish</code></td><td>Web Form Settings</td><td>Validates all five business limits and atomically makes the new immutable version active.</td></tr>
+                <tr><td><code>getMobileReferenceData</code></td><td>Mobile QC</td><td>Returns workspace, team timezone, enabled production halls, departments, active products/runs, active specification summaries, and current user capabilities.</td></tr>
+                <tr><td><code>listMine</code></td><td>Mobile QC</td><td>Returns the user's recent server records and their workflow states.</td></tr>
+                <tr><td><code>get</code></td><td>Mobile QC</td><td>Returns one authorized record, form serial, authorized carton-label image, readings, checks and photos, signatures, and current record revision.</td></tr>
+                <tr><td><code>createDraft</code></td><td>Mobile QC</td><td>Creates one authorized draft for the team-local hourly slot, rejects or returns the existing duplicate, atomically allocates the next serial for hall A or B, and snapshots the active product specification.</td></tr>
+                <tr><td><code>updateHeader</code></td><td>Mobile QC</td><td>Saves department, product, inspection time, run, carton count, and cleanliness percentage. Hall and serial are immutable after creation.</td></tr>
+                <tr><td><code>updateBatchLabelCode</code></td><td>Mobile QC</td><td>Normalizes the printed code, validates the <code>DDMMYY N</code> pilot format, real calendar date, and 1–9 daily sequence, stores parsed fields, and records QC confirmation.</td></tr>
+                <tr><td><code>upsertReading</code></td><td>Mobile QC</td><td>Adds or edits one typed reading, evaluates its snapshotted range, and increments the record revision.</td></tr>
+                <tr><td><code>removeReading</code></td><td>Mobile QC</td><td>Removes one reading while the parent record remains editable.</td></tr>
+                <tr><td><code>updateCheck</code></td><td>Mobile QC</td><td>Saves one conformity outcome, note, and immediate action.</td></tr>
+                <tr><td><code>generatePhotoUploadUrl</code></td><td>Mobile QC</td><td>Returns a short-lived authorized Convex storage upload URL for an editable record and declared purpose: carton batch label or non-conformity evidence.</td></tr>
+                <tr><td><code>attachBatchLabelPhoto</code></td><td>Mobile QC</td><td>Attaches one camera-captured carton-label image to the editable record and records capture metadata and actor.</td></tr>
+                <tr><td><code>attachCheckPhoto</code></td><td>Mobile QC</td><td>Attaches uploaded file metadata to one non-conforming check and records the actor.</td></tr>
+                <tr><td><code>removeCheckPhoto</code></td><td>Mobile QC</td><td>Removes a draft attachment with confirmation and records the event.</td></tr>
+                <tr><td><code>updateNotes</code></td><td>Mobile QC</td><td>Saves debounced record notes and optional quality-manager notes.</td></tr>
                 <tr><td><code>submitByQc</code></td><td>Mobile QC</td><td>Validates the complete server copy, creates an immutable snapshot and QC signature, then moves to review.</td></tr>
                 <tr><td><code>listForReview</code></td><td>Web production reviewer</td><td>Paginated, workspace-scoped review queue with status/date/product/department filters.</td></tr>
-                <tr><td><code>getForReview</code></td><td>Web reviewer</td><td>Returns the full record, deviation summary, signatures, and audit history.</td></tr>
+                <tr><td><code>getForReview</code></td><td>Web reviewer</td><td>Returns the full record, form serial, authorized carton-label evidence, deviation summary and photos, signatures, and audit history.</td></tr>
                 <tr><td><code>returnToQc</code></td><td>Web production reviewer</td><td>Requires a reason, invalidates the current review state, preserves the signed snapshot, and returns edit ownership to QC.</td></tr>
                 <tr><td><code>approveByProduction</code></td><td>Web production reviewer</td><td>Checks signed revision, creates production signature and approval snapshot, then locks the record.</td></tr>
-                <tr><td><code>requestAmendment</code></td><td>Authorized QC or supervisor</td><td>Creates a proposed change against an approved record without editing the original.</td></tr>
-                <tr><td><code>approveAmendment</code></td><td>Production reviewer</td><td>Approves an attributed correction and adds it to the rendered amendment appendix.</td></tr>
-                <tr><td><code>voidRecord</code></td><td>Admin only</td><td>Voids a record with a required reason. It never deletes the record or signatures.</td></tr>
               </tbody>
             </table>
           </div>
@@ -1295,7 +1412,8 @@
             <li><code>record_production_checks</code>: create, edit owned drafts, and submit as QC.</li>
             <li><code>review_production_checks</code>: review, return, and approve as production management.</li>
             <li><code>view_production_checks</code>: read approved or assigned records.</li>
-            <li><code>void_production_checks</code>: void a record with a reason.</li>
+            <li><code>manage_production_specifications</code>: create and publish product metric units and business limits in the web Form Settings.</li>
+            <li><code>manage_production_line_settings</code>: configure timezone and halls and initialize each hall's digital serial counter before its first allocation.</li>
             <li><code>full_access</code> continues to bypass individual permission checks.</li>
           </ul>
           <p>
@@ -1313,8 +1431,12 @@
             <li>Resolve the authenticated user on the server. Never accept signer or actor identity from the client.</li>
             <li>Validate workspace membership for every read and mutation.</li>
             <li>Use indexes for review filters. Do not collect all workspace records and filter in memory.</li>
-            <li>Keep child synchronization bounded. Set a documented maximum of 50 measurement rounds per record for the first release.</li>
-            <li>Write the record, children, snapshot, signature, and audit event in one mutation when a workflow transition requires atomicity.</li>
+            <li>Allocate the serial counter and create the record in one mutation. Check the hourly-slot identity before incrementing so a retry returns the existing record without consuming another serial.</li>
+            <li>Validate hall code server-side and never accept a client-supplied serial sequence.</li>
+            <li>Parse batch-label dates with an explicit <code>DDMMYY</code> rule and real calendar validation; do not rely on locale-dependent date parsing.</li>
+            <li>Keep child reads bounded. Set a documented maximum number of readings per measurement key for the first release.</li>
+            <li>Write the record, children, specification snapshot, signature, and audit event in one mutation when a workflow transition requires atomicity.</li>
+            <li>Do not expose void, amendment, or delete mutations for approved records until the company adopts a policy.</li>
           </ul>
         </section>
 
@@ -1326,13 +1448,34 @@
           <ul>
             <li><code>/quality/production-line-records</code>: queue and searchable history.</li>
             <li><code>/quality/production-line-records/:id</code>: review and record detail.</li>
+            <li><code>/settings</code>, Production Line Form Settings section: versioned per-product metric units and business limits.</li>
+          </ul>
+
+          <h3>Web Form Settings: Production Line Specifications</h3>
+          <ul>
+            <li>Restrict editing and publishing to <code>manage_production_specifications</code>.</li>
+            <li>Select a product, view the active version, and create a new draft version.</li>
+            <li>Configure a metric unit, minimum, maximum, optional target, and minimum reading count for all five reading keys.</li>
+            <li>Limit weight units to <code>mg</code>, <code>g</code>, and <code>kg</code>; use <code>°C</code> for chocolate temperature.</li>
+            <li>Validate that every maximum is at least its minimum and every optional target falls inside the range.</li>
+            <li>Preview how readings will appear in mobile before publishing.</li>
+            <li>Publishing makes the version immutable and active for future hourly forms.</li>
+            <li>Show which approved records use each specification version. Never recalculate historical records against new limits.</li>
+          </ul>
+
+          <h3>Web Form Settings: Production halls and serial counters</h3>
+          <ul>
+            <li>Configure the enabled hall codes as A and B and show the last allocated serial for each hall.</li>
+            <li>Before the first digital form is created, an authorized administrator seeds the next sequence from the corresponding paper-form counter.</li>
+            <li>After allocation begins, the next sequence is server-managed and read-only in normal settings. Correcting it requires a separately audited administrative procedure.</li>
+            <li>Display serial examples as <code>A 1126</code> and <code>B 1233</code>. Do not call the product specification version a form serial.</li>
           </ul>
 
           <h3>Review queue</h3>
           <ul>
             <li>Default to records waiting for production review.</li>
-            <li>Show department, product, batch, QC signer, submitted time, non-conformity count, and sync completeness.</li>
-            <li>Filter by status, date range, product, batch, department, QC user, and production reviewer.</li>
+            <li>Show form serial, production hall, department, product, printed batch code, QC signer, submitted time, non-conformity count, and reading completeness.</li>
+            <li>Filter by status, date range, hall, form serial, product, printed batch code, department, QC user, and production reviewer.</li>
             <li>Sort review work oldest first. Mark records with non-conformities clearly.</li>
             <li>Use paginated Convex queries from the start.</li>
           </ul>
@@ -1340,20 +1483,22 @@
           <h3>Review detail</h3>
           <ul>
             <li>Render the same logical sections as mobile, optimized for desktop reading.</li>
-            <li>Show measurement rounds in a compact table with recorded times.</li>
+            <li>Show the five reading groups in compact tables with value, unit, observer, and observation time.</li>
             <li>Separate non-conforming checks at the top while preserving the complete checklist below.</li>
             <li>Show QC signature identity, signed revision, client time, and server time.</li>
             <li>Require a reason when returning a record.</li>
-            <li>Require production-manager confirmation before approval. Approval must fail if the server revision changed.</li>
-            <li>Show audit history and approved amendments in chronological order.</li>
+            <li>Require production-manager confirmation before approval. Approval must fail if the record revision changed.</li>
+            <li>Show the active specification snapshot and audit history in chronological order.</li>
+            <li>Show the captured carton label beside its QC-confirmed printed batch code, parsed production date, and daily batch sequence.</li>
+            <li>Show required non-conformity photos beside their checks.</li>
           </ul>
 
           <h3>PDF output</h3>
           <ul>
             <li>Generate an Arabic-capable official record with the company form title and familiar table groupings.</li>
-            <li>Include record ID, workspace, product, department, batch, dates, all measurement rounds, all checks, notes, and both signature receipts.</li>
+            <li>Include form serial, record ID, workspace, hall, product, department, printed batch code, parsed label date and sequence, carton-label image, inspection dates, all repeatable readings, all checks, notes, and both signature receipts.</li>
+            <li>Until grouped sampling is confirmed, render each repeatable measurement as its own numbered list with observation times. Do not align unrelated readings into artificial rows.</li>
             <li>Include revision and snapshot hash in the footer.</li>
-            <li>Add an amendment appendix when approved corrections exist.</li>
             <li>Do not regenerate an old approved PDF from current mutable profile data. Use signature and name snapshots stored at signing time.</li>
           </ul>
         </section>
@@ -1367,9 +1512,8 @@
               <h3>Mobile device</h3>
               <ul>
                 <li>Keep Better Auth tokens in Expo SecureStore, as the current app does.</li>
-                <li>Store the SQLite encryption key in SecureStore if SQLCipher is enabled.</li>
-                <li>Bind local drafts to workspace and user IDs. Do not expose one user's queue to another user.</li>
-                <li>Do not delete unsynced drafts during sign-out. Pause and hide them until the original user returns.</li>
+                <li>Stop autosave and switch the form to a connection-required state when Convex is unavailable.</li>
+                <li>Clear in-memory form state during sign-out and reload the authoritative record after sign-in.</li>
                 <li>Do not log field values, notes, product secrets, or signatures to Bugsink.</li>
               </ul>
             </div>
@@ -1378,9 +1522,9 @@
               <ul>
                 <li>Derive actor identity and permissions on every mutation.</li>
                 <li>Store server timestamps for authoritative workflow events.</li>
-                <li>Keep client timestamps to explain offline chronology, but do not trust them for authorization.</li>
-                <li>Reject updates to submitted, approved, voided, or wrong-workspace records.</li>
-                <li>Keep approved snapshots, signatures, events, and amendments append-only.</li>
+                <li>Keep client observation times for production context, but do not trust them for authorization.</li>
+                <li>Reject content updates to submitted, approved, or wrong-workspace records.</li>
+                <li>Keep approved snapshots, signatures, events, specification snapshots, carton-label images, and non-conformity photos immutable.</li>
               </ul>
             </div>
           </div>
@@ -1389,18 +1533,26 @@
           <p>
             A drawn or uploaded signature image is presentation data. The authoritative signature
             receipt contains the authenticated user ID, name and role snapshot, signature purpose,
-            signed revision, server timestamp, and immutable snapshot reference. An offline QC tap
-            creates a queued intent. The server creates the signature only after revalidating auth,
-            permission, record state, and content revision.
+            signed revision, server timestamp, and immutable snapshot reference. The server creates
+            the signature only after revalidating auth, permission, record state, content revision,
+            and the absence of failed or pending autosaves. The current authenticated QC session is
+            sufficient; the first release does not request a password or device biometric again.
           </p>
+
+          <h3>Photo access and validation</h3>
+          <ul>
+            <li>Authorize every upload attachment and download against the record workspace and the caller's role.</li>
+            <li>Accept only configured image MIME types and size limits, compress on mobile, and store file metadata with its declared batch-label or non-conformity purpose.</li>
+            <li>Do not expose permanent public file URLs. Resolve photos through authorized backend queries.</li>
+            <li>Allow photo removal only while the draft is editable, and record the removal event.</li>
+          </ul>
 
           <h3>Deletion and correction</h3>
           <ul>
-            <li>A local-only draft may be discarded after confirmation.</li>
-            <li>A synced draft is discarded through a server mutation that records the event.</li>
+            <li>A server draft is discarded through an authorized mutation that records the event.</li>
             <li>A submitted record is returned, not reopened silently.</li>
-            <li>An approved record is never edited in place. Corrections use an amendment or a replacement record linked to the original.</li>
-            <li>Admin voiding changes status and records a reason. It does not physically delete the record.</li>
+            <li>An approved record is retained indefinitely in the first release and cannot be edited, voided, amended, or deleted.</li>
+            <li>Operational errors in approved records are escalated outside the app during the pilot until ownership and correction policy are approved.</li>
           </ul>
 
           <div class="callout">
@@ -1419,10 +1571,13 @@
             <table>
               <thead><tr><th>Path</th><th>Assignment</th></tr></thead>
               <tbody>
-                <tr><td><code>packages/backend/convex/schema.ts</code></td><td>Add the seven production-line tables and required indexes.</td></tr>
-                <tr><td><code>packages/backend/convex/validators.ts</code></td><td>Add record status, check status, signature purpose, workflow payload, and return validators.</td></tr>
-                <tr><td><code>packages/backend/convex/productionLineRecords.ts</code></td><td>Add mobile sync, submission, review, approval, amendment, void, and paginated query functions.</td></tr>
-                <tr><td><code>packages/backend/convex/productionLineRecordHelpers.ts</code></td><td>Canonical snapshots, completeness checks, transition guards, and child upsert helpers.</td></tr>
+                <tr><td><code>packages/backend/convex/schema.ts</code></td><td>Add eleven tables: line settings, hall serial counters, specifications, specification limits, records, readings, checks, check photos, signatures, snapshots, and events, with their indexes.</td></tr>
+                <tr><td><code>packages/backend/convex/validators.ts</code></td><td>Add hall code, printed batch code, specification, measurement unit, record status, check status, photo purpose and metadata, signature purpose, workflow payload, and return validators.</td></tr>
+                <tr><td><code>packages/backend/convex/productionLineSettings.ts</code></td><td>Add timezone and hall configuration, one-time serial-counter initialization, and read-only allocation-status queries.</td></tr>
+                <tr><td><code>packages/backend/convex/productionLineSpecifications.ts</code></td><td>Add web Form Settings queries and mutations for draft specifications, metric units, business limits, validation, publishing, and immutable version history.</td></tr>
+                <tr><td><code>packages/backend/convex/productionLineRecords.ts</code></td><td>Add hourly draft creation with atomic hall serial allocation, granular autosave, batch-label code and photo attachment, readings, non-conformity photos, submission, return, approval, and paginated queries.</td></tr>
+                <tr><td><code>packages/backend/convex/productionLineRecordHelpers.ts</code></td><td>Build hourly slot keys, allocate display serials, parse printed batch codes, snapshot active specifications, evaluate limits, create canonical snapshots, check completeness, guard transitions, and upsert children.</td></tr>
+                <tr><td><code>packages/backend/convex/files.ts</code></td><td>Reuse the authorized upload and storage flow for carton-label and non-conformity photos, adding production-record ownership and photo-purpose checks.</td></tr>
                 <tr><td><code>packages/backend/convex/roles.ts</code></td><td>Add quality-officer and production-manager roles plus new permission defaults.</td></tr>
                 <tr><td><code>packages/backend/convex/teamAuditLogs.ts</code></td><td>Reuse summary workspace events while dedicated form events keep detailed history.</td></tr>
                 <tr><td><code>packages/backend/convex/clearAllAppTables.ts</code></td><td>Include new tables only in the intentional local-development clearing workflow.</td></tr>
@@ -1435,19 +1590,17 @@
             <table>
               <thead><tr><th>Path</th><th>Assignment</th></tr></thead>
               <tbody>
-                <tr><td><code>rd/mobile/package.json</code></td><td>Add Expo SQLite and the selected test/i18n dependencies after version checks.</td></tr>
-                <tr><td><code>rd/mobile/app.json</code></td><td>Add SQLite native configuration if SQLCipher is selected. This requires a new native build.</td></tr>
-                <tr><td><code>rd/mobile/src/app/_layout.tsx</code></td><td>Mount the local database and sync providers inside the authenticated app boundary.</td></tr>
+                <tr><td><code>rd/mobile/package.json</code></td><td>Use the existing image-picker and image-manipulator packages for photos. Add only selected test and i18n dependencies after version checks; no local database dependency is required.</td></tr>
+                <tr><td><code>rd/mobile/src/app/_layout.tsx</code></td><td>Keep the existing authenticated Convex provider and add shared form save-state handling if needed.</td></tr>
                 <tr><td><code>rd/mobile/src/app/(tabs)/_layout.tsx</code></td><td>Add the Quality tab using translated labels.</td></tr>
-                <tr><td><code>rd/mobile/src/app/(tabs)/quality.tsx</code></td><td>Mobile record list, filters, queue counts, and new-record action.</td></tr>
-                <tr><td><code>rd/mobile/src/app/quality/production-line/[clientRecordId].tsx</code></td><td>Form entry stack screen.</td></tr>
-                <tr><td><code>rd/mobile/src/features/production-line/schema.ts</code></td><td>Zod form schema, field keys, structural validation, and status types.</td></tr>
+                <tr><td><code>rd/mobile/src/app/(tabs)/quality.tsx</code></td><td>Mobile record list, workflow counts, and new-record action.</td></tr>
+                <tr><td><code>rd/mobile/src/app/quality/production-line/[recordId].tsx</code></td><td>Form entry stack screen.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/schema.ts</code></td><td>Zod form schema, hall and serial types, <code>DDMMYY N</code> batch-label parsing, field keys, structural validation, and status types.</td></tr>
                 <tr><td><code>rd/mobile/src/features/production-line/form-definition.ts</code></td><td>Fixed measurement and check metadata. This is not a generic remote template.</td></tr>
-                <tr><td><code>rd/mobile/src/features/production-line/local-db.ts</code></td><td>SQLite initialization, WAL setup, and local migration runner.</td></tr>
-                <tr><td><code>rd/mobile/src/features/production-line/repository.ts</code></td><td>Atomic draft save, load, list, discard, queue, and acknowledgement operations.</td></tr>
-                <tr><td><code>rd/mobile/src/features/production-line/sync-worker.ts</code></td><td>Queue ordering, connectivity triggers, auth pause, retry policy, and conflict results.</td></tr>
-                <tr><td><code>rd/mobile/src/features/production-line/use-production-line-draft.ts</code></td><td>Form state, validation, autosave, status, and submit intent.</td></tr>
-                <tr><td><code>rd/mobile/src/features/production-line/components/*</code></td><td>Header fields, measurement card, check group, deviation field, save banner, review summary, and signature action.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/save-coordinator.ts</code></td><td>Text debounce, per-record save serialization, revision checks, retry action, and save-state reporting.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/use-production-line-draft.ts</code></td><td>Server-backed form state, validation, autosave mutations, status, and submit action.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/photo-upload.ts</code></td><td>Validate, compress, upload, attach, retry, and replace carton-label and non-conformity photos while preserving their distinct purposes.</td></tr>
+                <tr><td><code>rd/mobile/src/features/production-line/components/*</code></td><td>Hall and serial header, carton-label camera field, printed-code confirmation, reading group, reading row, limit result, check group, deviation field, non-conformity photo field, save banner, review summary, and signature action.</td></tr>
                 <tr><td><code>rd/mobile/src/locales/ar.json</code> and <code>en.json</code></td><td>All visible mobile text. Arabic is complete before pilot.</td></tr>
               </tbody>
             </table>
@@ -1458,13 +1611,16 @@
             <table>
               <thead><tr><th>Path</th><th>Assignment</th></tr></thead>
               <tbody>
-                <tr><td><code>rd/formulation-lab/App.tsx</code></td><td>Add quality record list and detail routes.</td></tr>
+                <tr><td><code>rd/formulation-lab/App.tsx</code></td><td>Add quality record list, record detail, and Production Line Form Settings routes.</td></tr>
                 <tr><td><code>rd/formulation-lab/components/Sidebar.tsx</code></td><td>Add Production Monitoring to Quality Control navigation.</td></tr>
+                <tr><td><code>rd/formulation-lab/components/Settings/ProductionLineSettingsSection.tsx</code></td><td>Configure timezone and halls, initialize each hall's next digital serial once, and show read-only allocation status.</td></tr>
+                <tr><td><code>rd/formulation-lab/components/Settings/ProductionLineSpecificationsSection.tsx</code></td><td>Configure product metric units, minimum and maximum business limits, optional targets, minimum reading counts, and publish immutable versions.</td></tr>
                 <tr><td><code>rd/formulation-lab/pages/production-line-records.tsx</code></td><td>Paginated review queue and history filters.</td></tr>
-                <tr><td><code>rd/formulation-lab/pages/production-line-record-detail.tsx</code></td><td>Read-only record review, return, approval, signatures, and audit history.</td></tr>
+                <tr><td><code>rd/formulation-lab/pages/production-line-record-detail.tsx</code></td><td>Read-only record review with specification snapshot, limit results, photo gallery, return, approval, signatures, and audit history.</td></tr>
                 <tr><td><code>rd/formulation-lab/components/quality/ProductionLineRecordPDF.tsx</code></td><td>Arabic-capable official PDF with immutable signature snapshots.</td></tr>
                 <tr><td><code>rd/formulation-lab/locales/ar.json</code> and <code>en.json</code></td><td>Quality navigation, queue, review, audit, return, approval, and PDF strings.</td></tr>
-                <tr><td><code>rd/formulation-lab/tests/production-line-review.spec.ts</code></td><td>Production manager review and approval browser coverage.</td></tr>
+                <tr><td><code>rd/formulation-lab/tests/production-line-settings.spec.ts</code></td><td>Hall serial initialization, specification draft, validation, publishing, permission, and immutable-version browser coverage.</td></tr>
+                <tr><td><code>rd/formulation-lab/tests/production-line-review.spec.ts</code></td><td>Production manager web review, photo display, return, and approval browser coverage.</td></tr>
               </tbody>
             </table>
           </div>
@@ -1479,24 +1635,15 @@
           <p class="eyebrow">13 · Verification</p>
           <h2>Test the failure paths before the happy-path pilot</h2>
 
-          <h3>Local persistence tests</h3>
+          <h3>Autosave coordinator tests</h3>
           <ul class="checklist">
-            <li>Every field change updates the local snapshot and increments the client revision.</li>
-            <li>Draft and outbox writes commit atomically.</li>
-            <li>App termination immediately after entry does not lose the last committed field.</li>
-            <li>Local schema migrations preserve existing unsynced drafts.</li>
-            <li>Signing out hides but does not delete an unsynced queue.</li>
-          </ul>
-
-          <h3>Sync state-machine tests</h3>
-          <ul class="checklist">
-            <li>One hundred rapid edits coalesce to the latest correct snapshot.</li>
-            <li>Duplicate mutation delivery is idempotent.</li>
-            <li>Network loss during acknowledgement does not create duplicate records or signatures.</li>
-            <li>Queue order always syncs the latest draft before submission.</li>
-            <li>Expired auth pauses and resumes without removing queued data.</li>
-            <li>Network flapping respects retry limits and never spins continuously.</li>
-            <li>A stale server revision produces a visible conflict instead of overwriting data.</li>
+            <li>Every committed selector, toggle, and reading change calls its mutation.</li>
+            <li>Rapid text edits debounce to the last value and flush on blur.</li>
+            <li>Per-record serialization prevents an older response from replacing a newer modification.</li>
+            <li>Save failure marks the field or form as unsaved and blocks submission.</li>
+            <li>Manual retry writes the latest visible value, not a stale captured value.</li>
+            <li>Expired auth requests sign-in and does not claim that the change was saved.</li>
+            <li>A stale record revision stops further edits until the server copy is reloaded.</li>
           </ul>
 
           <h3>Backend authorization tests</h3>
@@ -1507,94 +1654,123 @@
             <li>Cross-workspace reads and writes fail.</li>
             <li>Approval fails if the QC-signed revision is no longer current.</li>
             <li>Approved records reject patch and delete operations.</li>
-            <li>Void and amendment actions require reasons and create events.</li>
+            <li>Only authorized web Form Settings users can draft and publish product specifications.</li>
+            <li>Only <code>manage_production_line_settings</code> can seed a hall counter, and initialization fails after that hall allocates its first digital serial.</li>
+            <li>A second record for the same workspace, line, product, and local hourly slot is rejected.</li>
+            <li>Concurrent creation of different hourly drafts in the same hall produces distinct increasing serial sequences.</li>
+            <li>A retry after a committed draft creation returns the existing hourly record without allocating another serial.</li>
+            <li>Hall A and hall B records receive the correct prefix and cannot collide inside their hall sequence.</li>
+            <li>Batch-label parsing rejects invalid calendar dates, missing date digits, missing separators, sequence 0, and multi-digit sequences in the confirmed pilot format.</li>
+            <li>Submission fails without both the carton-label photo and QC-confirmed printed batch code.</li>
+            <li>Submission fails when a non-conforming check has no attached photo.</li>
           </ul>
 
           <h3>Mobile behavior tests</h3>
           <ul class="checklist">
             <li>Arabic RTL order, labels, numeric fields, and validation render correctly on Android and iOS.</li>
             <li>All controls meet practical touch-target size for factory use.</li>
-            <li>The form remains usable with airplane mode enabled before opening it.</li>
-            <li>A local draft reopens at the correct step after app restart.</li>
-            <li>Queued submission is distinguishable from server-confirmed submission.</li>
-            <li>Non-compliant and not-applicable checks require the correct explanations.</li>
+            <li>Each of the five measurement groups can add, edit, and remove multiple readings.</li>
+            <li>Each measurement displays the configured unit and acceptable range, and marks an out-of-range reading immediately after server acknowledgement.</li>
+            <li>Carton count and cleanliness percentage remain single-value inputs.</li>
+            <li>The form serial is read-only and remains stable after reload, return, and resubmission.</li>
+            <li>The carton-label field opens the device camera, not the photo library, and requires the printed code to be confirmed against the captured image.</li>
+            <li><code>060826 1</code> is normalized, parsed as 2026-08-06 and daily batch 1, then restored identically after reload.</li>
+            <li>Connection loss switches the screen to a clear connection-required state.</li>
+            <li>The submit action remains blocked while a save is pending or failed.</li>
+            <li>Non-compliant checks require an explanation, corrective action, and at least one photo.</li>
+            <li>Camera and photo-library capture, compression, upload progress, retry, preview, and draft removal work on supported iOS and Android phones.</li>
           </ul>
 
           <h3>Web and document tests</h3>
           <ul class="checklist">
             <li>Review queue filters and pagination return only the active workspace.</li>
+            <li>Web Form Settings rejects non-metric units and validates every fixed measurement key before publishing a specification version.</li>
+            <li>Publishing a new version changes future hourly forms but does not alter existing record snapshots.</li>
             <li>Return requires a reason and reopens only the correct QC workflow.</li>
+            <li>Production-manager review and approval work on web without requiring a mobile review screen.</li>
+            <li>The queue can search by form serial and printed batch code.</li>
+            <li>The review and PDF show the same immutable carton-label image and parsed code that QC signed.</li>
             <li>Approval locks the record and writes the production signature once.</li>
+            <li>The review and PDF show authorized non-conformity photos from the approved snapshot.</li>
             <li>Arabic PDF text, tables, signatures, and page breaks render correctly.</li>
             <li>PDF content continues to match the approved snapshot after profile names or signatures change.</li>
           </ul>
 
           <h3>Operational pilot scenarios</h3>
           <ul>
-            <li>Start online, lose network mid-form, close the app, reopen offline, complete, reconnect, and approve.</li>
-            <li>Start fully offline using cached reference data, then sync after the production period.</li>
-            <li>Queue a submission, allow auth to expire, reauthenticate, then verify one submission and one signature.</li>
+            <li>Enter several readings in each measurement group, reload the record, and compare every value and time.</li>
+            <li>Seed hall A to sequence 1126, create a form, and verify the server assigns <code>A 1126</code> exactly once.</li>
+            <li>Create records in halls A and B and verify each hall uses its own configured counter assumption.</li>
+            <li>Capture a carton label showing <code>060826 1</code>, confirm the transcription, reload, and compare the image and parsed fields.</li>
+            <li>Capture a later label for the same date with daily sequence 2 and verify it is searchable as a separate mix batch.</li>
+            <li>Attempt to create two forms for the same line, product, and hour, and verify that the second action opens or reports the existing record.</li>
+            <li>Publish a new product specification and verify that an existing draft keeps its old snapshot while the next hourly form receives the new version.</li>
+            <li>Mark a check non-conforming and verify submission stays blocked until its photo is uploaded and attached.</li>
+            <li>Lose connectivity mid-edit and verify the app reports the unsaved modification without claiming success.</li>
+            <li>Allow auth to expire during entry, reauthenticate, reload, and continue from the last server-confirmed value.</li>
             <li>Return a signed record, correct it on mobile, resubmit, and verify both signed revisions remain visible.</li>
           </ul>
         </section>
 
         <section id="rollout">
           <p class="eyebrow">14 · Delivery plan</p>
-          <h2>Five build milestones and one controlled pilot</h2>
+          <h2>Five implementation phases and one controlled pilot</h2>
 
-          <div class="timeline">
-            <article class="milestone">
-              <h3>Week 1: contract and local durability</h3>
+          <div class="phases">
+            <article class="phase">
+              <h3>Phase 1: field contract and data model</h3>
               <p>
-                Confirm field meanings and units with QC. Add additive Convex schema and validators.
-                Add SQLite, migrations, repository, and outbox. Prove one field survives app termination
-                and syncs idempotently.
+                Confirm field meanings and team-local timezone. Add line settings, product specification
+                drafts and published versions, hourly slot identity, hall serial counters, carton-label
+                fields, the record schema, validators, granular autosave mutations, and permission checks.
               </p>
-              <p class="small"><strong>Exit:</strong> one thin vertical slice is demonstrably durable offline and visible through a backend query.</p>
+              <p class="small"><strong>Exit:</strong> web Form Settings can publish one complete metric product specification, and an authorized hourly draft snapshots it, receives the next hall serial, and stores multiple readings.</p>
             </article>
 
-            <article class="milestone">
-              <h3>Week 2: complete mobile form</h3>
+            <article class="phase">
+              <h3>Phase 2: mobile form and connected autosave</h3>
               <p>
-                Build Quality navigation, record list, header, measurement rounds, conformity groups,
-                deviations, notes, Arabic translations, validation, and save-state UI.
+                Build Quality navigation, record list, header, repeatable reading groups, conformity
+                checks, limit feedback, carton-label camera capture and code confirmation, deviations,
+                non-conformity photo capture and upload, notes, Arabic translations, validation, and the
+                save-state UI. Test the form on supported iOS and Android phones.
               </p>
-              <p class="small"><strong>Exit:</strong> QC can complete and reopen the full form in airplane mode.</p>
+              <p class="small"><strong>Exit:</strong> QC can complete, reload, and verify the full server-backed draft while connected.</p>
             </article>
 
-            <article class="milestone">
-              <h3>Week 3: sync hardening and QC submission</h3>
+            <article class="phase">
+              <h3>Phase 3: QC submission and record locking</h3>
               <p>
-                Implement reconnect triggers, coalescing, retry policy, auth pause, conflict handling,
-                immutable snapshots, and queued QC submission.
+                Complete save ordering, revision checks, error recovery, auth handling, completeness
+                validation, immutable snapshots, and online QC signing.
               </p>
-              <p class="small"><strong>Exit:</strong> network-loss and duplicate-delivery tests pass.</p>
+              <p class="small"><strong>Exit:</strong> a complete saved revision can be signed once and moved to production review.</p>
             </article>
 
-            <article class="milestone">
-              <h3>Week 4: production review</h3>
+            <article class="phase">
+              <h3>Phase 4: production review and approval</h3>
               <p>
                 Add permissions and roles, web review queue, detail view, return, approval, production
-                signature, audit timeline, and approved lock.
+                signature, audit history, and approved lock.
               </p>
               <p class="small"><strong>Exit:</strong> one record completes QC entry through production approval.</p>
             </article>
 
-            <article class="milestone">
-              <h3>Week 5: PDF, amendments, and release gates</h3>
+            <article class="phase">
+              <h3>Phase 5: PDF, hourly reporting, and release gates</h3>
               <p>
-                Add Arabic PDF output, approved amendments, tenant-isolation tests, mobile failure-path
-                tests, web Playwright coverage, observability, and operating documentation.
+                Add Arabic PDF output, hourly completion reporting, tenant-isolation tests, mobile
+                failure-path tests, web browser coverage, observability, and operating documentation.
               </p>
               <p class="small"><strong>Exit:</strong> release candidate passes the full repository gate and the pilot checklist.</p>
             </article>
 
-            <article class="milestone">
-              <h3>Weeks 6–7: shadow pilot and corrections</h3>
+            <article class="phase">
+              <h3>Pilot phase: parallel paper and mobile use</h3>
               <p>
-                Run the app beside the paper form on one line and one shift. Compare every record,
-                observe QC without coaching, fix blockers, and obtain written quality/production approval
-                before considering paper retirement.
+                Run the app beside the hourly paper form on one line across selected day and night
+                coverage. Compare every scheduled inspection, observe QC without coaching, fix blockers,
+                and obtain written quality/production approval before considering paper retirement.
               </p>
               <p class="small"><strong>Exit:</strong> agreed pilot threshold is met with no missing or irreconcilable records.</p>
             </article>
@@ -1603,20 +1779,21 @@
           <h3>Distribution</h3>
           <ol>
             <li>Deploy additive Convex tables and functions. Existing records and flows remain untouched.</li>
+            <li>Seed the next serial sequence for halls A and B from the paper-form counters before enabling mobile draft creation.</li>
             <li>Ship the web review routes behind the new permissions.</li>
-            <li>Create a new EAS mobile binary because adding Expo SQLite and optional SQLCipher changes native configuration. Hot Updater alone is not enough for this first release.</li>
-            <li>Install the release on a small set of managed factory devices.</li>
-            <li>Preload the workspace and reference cache while online before the first shift.</li>
+            <li>Deliver the JavaScript-only mobile feature through the existing compatible Hot Updater channel. Use a new native build only if implementation introduces a separate native dependency.</li>
+            <li>Install or update the release on a small set of managed factory devices.</li>
             <li>Run paper and mobile in parallel during the pilot.</li>
-            <li>After the native dependency is present in the installed binary, compatible JavaScript fixes can use the existing Hot Updater production channel.</li>
           </ol>
 
           <h3>Operational metrics</h3>
           <p>Collect metadata only, never field values:</p>
           <ul>
-            <li>Local autosave failure count.</li>
-            <li>Outbox age, queue length, retry count, and sync latency.</li>
-            <li>Auth-paused and conflict counts.</li>
+            <li>Autosave latency, failure count, and manual retry success.</li>
+            <li>Connection-required sessions and stale-revision responses.</li>
+            <li>Hourly records created, duplicate-slot attempts, and expected-hour reconciliation during the pilot.</li>
+            <li>Serial allocation conflicts or gaps by hall, without form contents.</li>
+            <li>Carton-label and non-conformity photo upload failures and retries, without filenames or image contents.</li>
             <li>QC submission-to-production-review time.</li>
             <li>Return rate and non-conformity count by form, without note contents.</li>
             <li>Crash-free form sessions and PDF generation failures.</li>
@@ -1628,17 +1805,29 @@
           <h2>Acceptance criteria</h2>
 
           <ul class="checklist">
-            <li>An authenticated QC user can create the form with no internet when reference data has been cached.</li>
-            <li>Every visible edit is present after force-closing and reopening the mobile app.</li>
-            <li>The app always distinguishes local save, queued sync, server sync, queued submission, and confirmed submission.</li>
-            <li>Reconnect synchronizes the newest draft exactly once, even after duplicate attempts.</li>
-            <li>A complete form includes the required header, at least one measurement round, all 22 conformity checks, and notes required by failed checks.</li>
-            <li>QC submission creates a signature event tied to an immutable revision.</li>
-            <li>The production manager can return with a reason or approve with the second signature.</li>
+            <li>An authenticated QC user with an active connection can create a server draft.</li>
+            <li>Each form identifies one inspection time and one team-local hourly slot; the same workspace, line, product, and slot cannot have two records.</li>
+            <li>Each draft has a server-assigned read-only serial formatted as hall A or B, one space, and a non-reused counting number.</li>
+            <li>Serial allocation is atomic and idempotent: concurrent creation cannot duplicate a serial, and retrying the same hourly draft does not consume another number.</li>
+            <li>An authorized user can configure and publish metric weight units, Celsius temperature, minimum and maximum business limits, optional targets, and minimum reading counts per product in web Form Settings.</li>
+            <li>A record stores the specification version and limit snapshot used when it was created; later settings changes affect only later hourly forms.</li>
+            <li>Every acknowledged modification is present after closing and reopening the mobile app.</li>
+            <li>The app always distinguishes saving, saved, save failed, and connection required.</li>
+            <li>A save failure blocks submission and provides a retry action.</li>
+            <li>Pour weight, additive weight, chocolate temperature, coated-piece weight, and carton weight each accept multiple readings.</li>
+            <li>Each reading stores value, unit, observation time, observer, order, applicable limits, and the computed within-limit result.</li>
+            <li>A complete form includes the required header, the configured minimum readings for each repeatable measurement, carton count, cleanliness percentage, all 22 conformity checks, and required non-conformity details.</li>
+            <li>QC must capture a carton-label photo with the device camera and confirm its printed code before submission.</li>
+            <li>The code <code>060826 1</code> is stored in normalized form, parsed as production date 2026-08-06 and daily mix-batch sequence 1, and bound to the signed snapshot.</li>
+            <li>Daily batch sequence accepts 1–9 so a newly prepared mix can advance from 1 to 2 and onward on the same label date within the confirmed one-digit format.</li>
+            <li>Each non-conforming check requires at least one authorized photo before submission.</li>
+            <li>The entry and photo flow passes supported-device checks on both iOS and Android phones.</li>
+            <li>QC submission creates a signature event tied to an immutable revision using the current authenticated session, with no password or biometric re-entry.</li>
+            <li>The production manager can review on web, return with a reason, or approve with the second signature.</li>
             <li>No user can directly edit or delete an approved record.</li>
-            <li>An approved correction preserves the original and identifies old value, new value, reason, requester, reviewer, and times.</li>
-            <li>The web workspace can search and filter records by date, status, product, batch, and department.</li>
-            <li>The official Arabic PDF matches the approved snapshot and includes both signature receipts.</li>
+            <li>The first release exposes no void, amend, or approved-record deletion action; approved records remain retained until a formal policy is implemented.</li>
+            <li>The web workspace can search and filter records by inspection date, hall, form serial, product, printed batch code, parsed label date, daily batch sequence, status, and department.</li>
+            <li>The official Arabic PDF matches the approved snapshot and includes the form serial, carton-label evidence, and both signature receipts.</li>
             <li>Cross-workspace access tests fail closed.</li>
             <li>The pilot can reconcile every mobile record with its parallel paper record.</li>
           </ul>
@@ -1653,34 +1842,49 @@
               <thead><tr><th>Risk</th><th>Effect</th><th>Mitigation</th></tr></thead>
               <tbody>
                 <tr>
-                  <td>Business limits are not supplied</td>
-                  <td>The app cannot safely decide whether temperature or weights are within specification.</td>
-                  <td>Use structural validation only in the pilot. Get product-specific limits and units from QC before automatic pass/fail logic.</td>
+                  <td>Product specification is configured incorrectly</td>
+                  <td>Hourly readings can be assessed against the wrong unit or acceptable range.</td>
+                  <td>Require complete limits for all five keys, validate min/target/max ordering, restrict publishing permission, show a pre-publish summary, and retain immutable versions.</td>
                 </tr>
                 <tr>
                   <td>Signature policy is not legally reviewed</td>
                   <td>A digital sign-off may not meet the company's applicable policy or jurisdiction.</td>
-                  <td>Store strong signature receipts now. Obtain quality/legal approval for wording, reauthentication, retention, and device controls.</td>
+                  <td>Store strong signature receipts now. The agreed pilot uses the current authenticated session without reauthentication; obtain quality/legal approval for wording, retention, and device controls before paper retirement.</td>
+                </tr>
+                <tr>
+                  <td>Retention, void, and amendment ownership is undefined</td>
+                  <td>The team has no approved in-app process for correcting or disposing of approved records.</td>
+                  <td>Retain approved records indefinitely and expose no void, amendment, or delete action in the first release. Define the policy before adding those workflows.</td>
+                </tr>
+                <tr>
+                  <td>Hall serial scope or cutover value is wrong</td>
+                  <td>Digital forms can duplicate an existing paper serial or continue the wrong hall's sequence.</td>
+                  <td>Confirm whether counters are independent per hall, reconcile the last paper serial for A and B, seed each counter once, allocate server-side atomically, and never reuse an allocated number.</td>
+                </tr>
+                <tr>
+                  <td>Printed batch code is transcribed incorrectly</td>
+                  <td>Search and reconciliation metadata can disagree with the carton-label evidence.</td>
+                  <td>Show the image beside the input, parse the date and sequence structurally, require QC match confirmation, preserve the image in the signed snapshot, and expose both to the web reviewer.</td>
                 </tr>
                 <tr>
                   <td>Multiple devices edit one draft</td>
-                  <td>Offline changes cannot be safely merged field by field.</td>
-                  <td>Use one editable owner/device in the pilot and explicit conflicts. Add takeover only after observing the need.</td>
+                  <td>Concurrent autosaves can overwrite newer values or produce confusing failures.</td>
+                  <td>Use one editable owner/device, serialize saves, and reject stale record revisions. Add takeover only after observing the need.</td>
                 </tr>
                 <tr>
-                  <td>Reference cache is stale</td>
-                  <td>A renamed or closed product may be selected offline.</td>
-                  <td>Store ID plus name snapshot, show cache age, reconcile on sync, and allow production review to return the record.</td>
+                  <td>Factory connectivity is unstable</td>
+                  <td>QC cannot save or submit during an outage in the current phases.</td>
+                  <td>Show connection state before entry, fail visibly, and keep paper as the pilot fallback.</td>
                 </tr>
                 <tr>
-                  <td>OS background limits</td>
-                  <td>Sync may not run until the app returns to the foreground.</td>
-                  <td>Promise foreground/reconnect sync only. Show queue age and instruct QC to confirm sync before ending the shift.</td>
+                  <td>High autosave mutation volume</td>
+                  <td>Rapid typing or many readings can create avoidable writes and visible latency.</td>
+                  <td>Save discrete controls immediately, debounce text, serialize per record, and measure save latency during the pilot.</td>
                 </tr>
                 <tr>
-                  <td>Local device loss</td>
-                  <td>Unsynced drafts may exist only on one device.</td>
-                  <td>Use encryption, managed devices, frequent sync when reachable, clear ownership, and an end-of-shift pending-queue check.</td>
+                  <td>Photo upload fails on a weak connection</td>
+                  <td>A required carton-label or non-conformity photo can delay hourly submission.</td>
+                  <td>Compress images, display upload progress and retry, keep the form editable until attachment succeeds, and retain paper as the pilot fallback.</td>
                 </tr>
                 <tr>
                   <td>Paper layout is treated as mobile UX</td>
@@ -1693,46 +1897,53 @@
 
           <h3>Open questions</h3>
           <ol>
-            <li>What are the allowed units and acceptable limits for each product's weights and chocolate temperature?</li>
-            <li>Does one form represent a shift, one batch, one run, or one inspection time?</li>
-            <li>How many measurement rounds normally occur on one form?</li>
-            <li>Which devices and operating systems will be used on the production floor?</li>
+            <li>What is the maximum expected number of readings for each repeatable measurement?</li>
+            <li>Are the five readings normally captured together at one observation time or independently?</li>
             <li>How long must approved records be retained, and who can void or amend them?</li>
-            <li>Must production managers be able to review and sign from mobile in the first release, or is web review sufficient?</li>
-            <li>Should QC re-enter a password or device biometric at signature time?</li>
-            <li>Are photos required for non-conformities in the pilot?</li>
+            <li>Which web Form Settings timezone defines the hourly slot, especially during timezone or daylight-saving changes?</li>
+            <li>How are active production lines and products assigned so the system can distinguish a missed hourly inspection from an intentionally idle line?</li>
+            <li>Does the counting sequence run independently for hall A and hall B, or is one number sequence shared across both halls?</li>
+            <li>What are the next serial numbers for halls A and B when digital entry starts?</li>
+            <li>Are gaps acceptable when a numbered draft is discarded, provided its serial is never reused?</li>
+            <li>Can the daily mix-batch sequence exceed one digit, for example <code>060826 10</code>?</li>
+            <li>May the carton-label production date differ from the hourly inspection date when production crosses midnight?</li>
+            <li>Should the digital app allocate each form serial, or must QC transcribe a serial already printed on a controlled paper form?</li>
+            <li>Should the printed batch code remain manual QC transcription, become OCR-assisted with QC confirmation, or be stored as image-only evidence?</li>
           </ol>
         </section>
 
         <section id="assignment">
           <p class="eyebrow">17 · The assignment</p>
-          <h2>Build one thin offline vertical slice first</h2>
+          <h2>Build one thin connected-autosave slice first</h2>
           <div class="decision">
-            <strong>Concrete next action:</strong> implement one production-line draft containing the
-            header and one measurement value, save it atomically to SQLite, terminate and reopen the
-            app to prove recovery, reconnect and sync it through an idempotent
-            <code>productionLineRecords.syncDraft</code> mutation, then display the saved record in one
-            read-only web page.
+            <strong>Concrete next action:</strong> seed hall A's test counter at 1126, create one hourly
+            mobile draft for an already-configured product, verify it receives <code>A 1126</code>, capture
+            and confirm a carton label showing <code>060826 1</code>, reload the mobile screen, and display
+            the same serial, image, normalized code, parsed date, and daily sequence on one read-only web page.
           </div>
           <p>
-            Do not build all form sections before this slice passes app-restart, duplicate-delivery,
-            expired-auth, and workspace-isolation checks. That slice validates the hardest architectural
-            decision while the UI and schema are still cheap to change.
+            Do not build all form sections before this slice passes save ordering, save failure,
+            duplicate-create retry, concurrent serial allocation, batch-code validation, failed photo
+            upload, expired-auth, and workspace-isolation checks. That slice validates the new form
+            identity and carton-label evidence contract while they are still cheap to change.
           </p>
 
           <h3>Completion status</h3>
           <p>
             <strong>DONE_WITH_CONCERNS:</strong> Approach A is selected and this plan is ready for
-            implementation. Business limits, retention policy, signature policy, target devices, and
-            the exact record frequency remain open and must be resolved during the first milestone.
+            implementation. The retention/void/amendment policy, maximum reading counts, grouped versus
+            independent sampling, team timezone, active-line schedule, hall counter scope and starting
+            values, discarded-serial gap rule, maximum daily batch sequence, and cross-midnight label-date
+            rule remain open. Serial allocation ownership and whether batch-code transcription should be
+            manual or OCR-assisted must be confirmed before implementation.
           </p>
         </section>
 
         <footer class="footer">
           <strong>Suggested improvement:</strong> add a short repository document that defines the
-          shared mobile offline-data contract, including local encryption, outbox semantics, conflict
-          policy, and logout behavior. Future mobile workflows can reuse that contract without
-          rebuilding sync behavior independently.
+          shared compliance-record contract for hall serial allocation, hourly slot identity, printed
+          batch-code parsing, specification snapshots, signatures, photos, and audit events. Future
+          quality forms can reuse those rules without requiring a generic form builder in the first release.
         </footer>
       </main>
     </div>

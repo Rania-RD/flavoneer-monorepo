@@ -17,8 +17,8 @@ const PAGE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const PAGE_COLORS: Record<string, string> = {
-  Dashboard: "#3B82F6",
-  Formulation: "#8B5CF6",
+  Dashboard: "#F5A623",
+  Formulation: "#FF7738",
   Inventory: "#10B981",
 };
 

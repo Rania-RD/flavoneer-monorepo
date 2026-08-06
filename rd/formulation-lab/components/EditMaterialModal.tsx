@@ -173,7 +173,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
 
   // ── Style tokens ────────────────────────────────────────
   const inputClasses =
-    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:focus:ring-indigo-400/50 transition-all";
+    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:focus:ring-brand-accent/50 transition-all";
   const labelClasses =
     "block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ms-1";
 
@@ -207,7 +207,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
               <div
                 className={`flex items-center ${isRTL ? "space-x-4 space-x-reverse" : "space-x-4"}`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-indigo-600 text-white shadow-indigo-600/20 shadow-lg">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-brand-primary text-white shadow-brand-primary/20 shadow-lg">
                   <Package size={24} />
                 </div>
                 <div>
@@ -235,7 +235,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-bold text-sm uppercase tracking-wide transition-colors ${
                     activeTab === "info"
-                      ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                      ? "border-brand-primary text-brand-primary dark:border-brand-mint/20 dark:text-brand-accent-hover"
                       : "border-transparent text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                   }`}
                   onClick={() => setActiveTab("info")}
@@ -246,7 +246,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-bold text-sm uppercase tracking-wide transition-colors ${
                     activeTab === "stock"
-                      ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                      ? "border-brand-primary text-brand-primary dark:border-brand-mint/20 dark:text-brand-accent-hover"
                       : "border-transparent text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                   }`}
                   onClick={() => setActiveTab("stock")}
@@ -597,7 +597,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
 
                 {activeTab !== "stock" ? (
                   <button
-                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                     onClick={nextTab}
                     type="button"
                   >
@@ -609,7 +609,7 @@ const EditMaterialModal: React.FC<EditMaterialModalProps> = ({
                   </button>
                 ) : (
                   <button
-                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                     disabled={isSubmitting}
                     form="edit-material-form"
                     type="submit"

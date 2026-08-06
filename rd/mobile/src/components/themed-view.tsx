@@ -9,21 +9,14 @@ export type ThemedViewProps = ViewProps & {
 };
 
 const colorClassNames: Record<ThemeColor, string> = {
-  text: 'bg-black dark:bg-white',
-  background: 'bg-white dark:bg-black',
-  backgroundElement: 'bg-[#F0F0F3] dark:bg-[#212225]',
-  backgroundSelected: 'bg-[#E0E1E6] dark:bg-[#2E3135]',
-  textSecondary: 'bg-[#60646C] dark:bg-[#B0B4BA]',
+  text: 'bg-[#173E33] dark:bg-[#F7F4DF]',
+  background: 'bg-[#EEF8EB] dark:bg-[#0D2B24]',
+  backgroundElement: 'bg-[#FFFDF4] dark:bg-[#173E33]',
+  backgroundSelected: 'bg-[#D2F2D4] dark:bg-[#285B4D]',
+  textSecondary: 'bg-[#527568] dark:bg-[#A9CBBB]',
 };
 
-export function ThemedView({
-  className,
-  style,
-  lightColor,
-  darkColor,
-  type,
-  ...otherProps
-}: ThemedViewProps) {
+export function ThemedView({ className, style, type, ...otherProps }: ThemedViewProps) {
   return (
     <View
       className={`${colorClassNames[type ?? 'background']} ${className ?? ''}`}

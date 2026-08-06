@@ -35,9 +35,9 @@ const StepSidebar: React.FC<StepSidebarProps> = ({
             <div
               className={`relative cursor-pointer rounded-xl border-2 p-3 transition-all duration-300 ${
                 isPhaseActive
-                  ? "border-indigo-500 bg-white shadow-md dark:bg-slate-800"
+                  ? "border-brand-primary bg-white shadow-md dark:bg-slate-800"
                   : isPhaseCompleted
-                    ? "border-transparent bg-indigo-50 text-indigo-600 dark:bg-indigo-900/10"
+                    ? "border-transparent bg-brand-mint text-brand-primary dark:bg-brand-accent/10"
                     : "pointer-events-none border-transparent bg-gray-50 text-gray-400 opacity-60 dark:bg-slate-900"
               }`}
               onClick={() => !isPhaseLocked && onPhaseSelect(pIndex)}
@@ -46,9 +46,9 @@ const StepSidebar: React.FC<StepSidebarProps> = ({
                 <div
                   className={`flex h-7 w-7 items-center justify-center rounded-lg font-bold text-xs ${
                     isPhaseActive
-                      ? "bg-indigo-500 text-white"
+                      ? "bg-brand-primary text-white"
                       : isPhaseCompleted
-                        ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+                        ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover"
                         : "bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400"
                   }`}
                 >
@@ -67,7 +67,7 @@ const StepSidebar: React.FC<StepSidebarProps> = ({
 
             {/* Render Steps within the Phase */}
             {isPhaseActive && phase.steps && phase.steps.length > 0 && (
-              <div className="my-1 ms-5 flex flex-col gap-1 border-indigo-100 border-s-2 ps-4 dark:border-indigo-900/30">
+              <div className="my-1 ms-5 flex flex-col gap-1 border-brand-primary/20 border-s-2 ps-4 dark:border-brand-mint/20">
                 {phase.steps.map((step, sIndex) => {
                   const isStepActive =
                     isPhaseActive && sIndex === activeStepIndex;
@@ -82,9 +82,9 @@ const StepSidebar: React.FC<StepSidebarProps> = ({
                     <div
                       className={`relative flex cursor-pointer items-center gap-2 rounded-lg p-2 transition-all duration-200 ${
                         isStepActive
-                          ? "bg-indigo-50 font-bold text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
+                          ? "bg-brand-mint font-bold text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover"
                           : isStepCompleted
-                            ? "text-indigo-600 opacity-70 hover:opacity-100 dark:text-indigo-400"
+                            ? "text-brand-primary opacity-70 hover:opacity-100 dark:text-brand-accent-hover"
                             : "pointer-events-none text-gray-400 opacity-60 dark:text-slate-500"
                       }`}
                       key={step.id}
@@ -98,9 +98,9 @@ const StepSidebar: React.FC<StepSidebarProps> = ({
                       <div
                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${
                           isStepActive
-                            ? "bg-indigo-500 ring-4 ring-indigo-200 dark:ring-indigo-900/50"
+                            ? "bg-brand-primary ring-4 ring-brand-focus/50 dark:ring-brand-accent/50"
                             : isStepCompleted
-                              ? "bg-indigo-400"
+                              ? "bg-brand-primary"
                               : "bg-gray-300 dark:bg-slate-600"
                         }`}
                       />

@@ -1,36 +1,31 @@
-import * as Device from 'expo-device';
-import { LogOut } from 'lucide-react-native';
+import { Bell, ChevronRight, FlaskConical, LogOut, ShieldCheck } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import {
+  BrandEntrance,
+  BrandHeader,
+  BrandScreen,
+  BrandSurface,
+  StatusPill,
+} from '@/components/brand-screen';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { BrandColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/backend';
 
-function getDevMenuHint() {
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export default function HomeScreen() {
   const { data: session } = authClient.useSession();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const theme = useTheme();
+  const firstName = session?.user.name?.trim().split(/\s+/)[0];
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -47,33 +42,110 @@ export default function HomeScreen() {
   };
 
   return (
-    <ThemedView className="flex-1 flex-row justify-center">
-      <SafeAreaView className="max-w-[800px] flex-1 items-center gap-4 px-6 pb-4 ios:pb-[66px] android:pb-24">
-        <ThemedView className="flex-1 items-center justify-center gap-4 px-6">
-          <AnimatedIcon />
-          <ThemedText className="text-center" type="title">
-            Welcome back{session?.user.name ? `, ${session.user.name}` : ''}
-          </ThemedText>
-          {session?.user.email ? (
-            <ThemedText className="text-center" themeColor="textSecondary">
-              {session.user.email}
-            </ThemedText>
-          ) : null}
-        </ThemedView>
+    <BrandScreen>
+      <BrandEntrance>
+        <BrandHeader
+          action={
+            <View className="size-11 items-center justify-center rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4]/80 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]">
+              <Bell color={theme.textSecondary} size={19} strokeWidth={2.2} />
+              <View className="absolute end-2.5 top-2.5 size-2 rounded-full border border-[#FFFDF4] bg-[#FF7738] dark:border-[#173E33]" />
+            </View>
+          }
+        />
+      </BrandEntrance>
 
-        <ThemedText className="uppercase" type="code">
-          authenticated session
+      <BrandEntrance className="mb-7" delay={70}>
+        <ThemedText themeColor="textSecondary" type="overline">
+          Lab overview
         </ThemedText>
+        <ThemedText className="mt-2 max-w-[360px]" type="title">
+          {getGreeting()}
+          {firstName ? `, ${firstName}.` : '.'}
+        </ThemedText>
+        <View className="mt-4">
+          <StatusPill>Workspace online</StatusPill>
+        </View>
+      </BrandEntrance>
 
-        <ThemedView className="self-stretch gap-4 rounded-3xl px-4 py-6" type="backgroundElement">
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/(tabs)/index.tsx</ThemedText>}
+      <BrandEntrance delay={140}>
+        <View
+          className="relative mb-8 min-h-[280px] overflow-hidden rounded-[40px] bg-[#1C4A3C] p-7 dark:bg-[#102F27]"
+          style={{
+            elevation: 5,
+            shadowColor: BrandColors.deepForest,
+            shadowOffset: { width: 0, height: 18 },
+            shadowOpacity: 0.2,
+            shadowRadius: 28,
+          }}
+        >
+          <View className="absolute -end-20 -top-20 size-56 rounded-full border-[40px] border-[#F5A623]/15" />
+          <View className="absolute -bottom-16 -start-12 size-40 rounded-full bg-[#D2F2D4]/5" />
+
+          <View className="mb-auto size-14 items-center justify-center rounded-[19px] bg-[#F5A623]">
+            <FlaskConical color={BrandColors.ink} size={27} strokeWidth={2.4} />
+          </View>
+          <View className="mt-10 max-w-[290px]">
+            <ThemedText className="!text-[#B9D8C8]" type="overline">
+              Current run
+            </ThemedText>
+            <ThemedText className="mt-2 !text-[#FFFDF4]" type="display">
+              No batch in progress
+            </ThemedText>
+            <ThemedText className="mt-3 !text-[#D3E7DB]" type="small">
+              Start a run in the formulation workspace. Active steps and checks will appear here.
+            </ThemedText>
+          </View>
+        </View>
+      </BrandEntrance>
+
+      <BrandEntrance className="mb-3 flex-row items-end justify-between px-1" delay={220}>
+        <View>
+          <ThemedText themeColor="textSecondary" type="overline">
+            Workspace
+          </ThemedText>
+          <ThemedText className="mt-1" type="section">
+            Connected areas
+          </ThemedText>
+        </View>
+        <ThemedText themeColor="textSecondary" type="caption">
+          2 available
+        </ThemedText>
+      </BrandEntrance>
+
+      <BrandEntrance delay={270}>
+        <BrandSurface className="mb-6 !p-0">
+          <WorkspaceRow
+            detail="Formulations and controlled versions"
+            icon={<FlaskConical color={BrandColors.forest} size={21} />}
+            title="Research & development"
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
+          <View className="ms-[76px] h-px bg-[#1C4A3C]/10 dark:bg-[#D2F2D4]/10" />
+          <WorkspaceRow
+            detail="Reports and finished-good records"
+            icon={<ShieldCheck color={BrandColors.forest} size={21} />}
+            title="Quality control"
+          />
+        </BrandSurface>
+      </BrandEntrance>
+
+      <BrandEntrance delay={320}>
+        <BrandSurface className="gap-5">
+          <View>
+            <ThemedText themeColor="textSecondary" type="overline">
+              Signed in as
+            </ThemedText>
+            <ThemedText className="mt-1" type="smallBold">
+              {session?.user.name || 'Flavoneer member'}
+            </ThemedText>
+            {session?.user.email ? (
+              <ThemedText className="mt-0.5" themeColor="textSecondary" type="caption">
+                {session.user.email}
+              </ThemedText>
+            ) : null}
+          </View>
           <Pressable
             accessibilityRole="button"
-            className={`min-h-12 flex-row items-center justify-center gap-2 rounded-2xl border-hairline border-[#E0E1E6] active:opacity-[0.65] dark:border-[#2E3135] ${isSigningOut ? 'opacity-50' : ''}`}
+            className={`min-h-[52px] flex-row items-center justify-center gap-2 rounded-[18px] border border-[#1C4A3C]/12 bg-[#EEF8EB] active:scale-[0.98] active:opacity-70 dark:border-[#D2F2D4]/10 dark:bg-[#285B4D] ${isSigningOut ? 'opacity-50' : ''}`}
             disabled={isSigningOut}
             onPress={handleSignOut}
           >
@@ -84,8 +156,37 @@ export default function HomeScreen() {
             )}
             <ThemedText type="smallBold">Sign out</ThemedText>
           </Pressable>
-        </ThemedView>
-      </SafeAreaView>
-    </ThemedView>
+        </BrandSurface>
+      </BrandEntrance>
+    </BrandScreen>
+  );
+}
+
+function WorkspaceRow({
+  detail,
+  icon,
+  title,
+}: {
+  detail: string;
+  icon: React.ReactNode;
+  title: string;
+}) {
+  const theme = useTheme();
+
+  return (
+    <View className="flex-row items-center gap-4 px-5 py-5">
+      <View className="size-11 items-center justify-center rounded-[16px] bg-[#D2F2D4]">
+        {icon}
+      </View>
+      <View className="min-w-0 flex-1">
+        <ThemedText numberOfLines={1} type="smallBold">
+          {title}
+        </ThemedText>
+        <ThemedText className="mt-0.5" numberOfLines={1} themeColor="textSecondary" type="caption">
+          {detail}
+        </ThemedText>
+      </View>
+      <ChevronRight color={theme.textSecondary} size={18} />
+    </View>
   );
 }

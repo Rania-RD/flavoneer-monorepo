@@ -1,12 +1,16 @@
-import { Text, type TextProps } from 'react-native';
+import { Text, type TextProps, type TextStyle } from 'react-native';
 
-import type { ThemeColor } from '@/constants/theme';
+import { Fonts, type ThemeColor } from '@/constants/theme';
 
 type TextType =
   | 'default'
   | 'title'
+  | 'display'
+  | 'section'
   | 'small'
   | 'smallBold'
+  | 'overline'
+  | 'caption'
   | 'subtitle'
   | 'link'
   | 'linkPrimary'
@@ -18,22 +22,41 @@ export type ThemedTextProps = TextProps & {
 };
 
 const typeClassNames: Record<TextType, string> = {
-  small: 'text-sm font-medium leading-5',
-  smallBold: 'text-sm font-bold leading-5',
-  default: 'text-base font-medium leading-6',
-  title: 'text-5xl font-semibold leading-[52px]',
-  subtitle: 'text-[32px] font-semibold leading-[44px]',
-  link: 'text-sm leading-[30px]',
-  linkPrimary: 'text-sm leading-[30px] text-[#3c87f7]',
-  code: 'font-[monospace] text-xs font-medium ios:font-[ui-monospace] android:font-bold',
+  small: 'text-sm leading-5',
+  smallBold: 'text-sm leading-5',
+  default: 'text-base leading-6',
+  title: 'text-[38px] leading-[43px]',
+  display: 'text-[34px] leading-[39px]',
+  section: 'text-[22px] leading-7',
+  subtitle: 'text-[30px] leading-[38px]',
+  overline: 'text-[11px] leading-4 uppercase tracking-[2px]',
+  caption: 'text-xs leading-[18px]',
+  link: 'text-sm leading-[22px]',
+  linkPrimary: 'text-sm leading-[22px]',
+  code: 'text-xs leading-[18px]',
+};
+
+const typeStyles: Record<TextType, TextStyle> = {
+  small: { fontFamily: Fonts.sans },
+  smallBold: { fontFamily: Fonts.sansBold },
+  default: { fontFamily: Fonts.sans },
+  title: { fontFamily: Fonts.displayBold, letterSpacing: -1.25 },
+  display: { fontFamily: Fonts.display, letterSpacing: -0.8 },
+  section: { fontFamily: Fonts.display },
+  subtitle: { fontFamily: Fonts.display },
+  overline: { fontFamily: Fonts.sansExtraBold },
+  caption: { fontFamily: Fonts.sans },
+  link: { fontFamily: Fonts.sansBold },
+  linkPrimary: { fontFamily: Fonts.sansBold },
+  code: { fontFamily: Fonts.mono },
 };
 
 const colorClassNames: Record<ThemeColor, string> = {
-  text: 'text-black dark:text-white',
-  background: 'text-white dark:text-black',
-  backgroundElement: 'text-[#F0F0F3] dark:text-[#212225]',
-  backgroundSelected: 'text-[#E0E1E6] dark:text-[#2E3135]',
-  textSecondary: 'text-[#60646C] dark:text-[#B0B4BA]',
+  text: 'text-[#173E33] dark:text-[#F7F4DF]',
+  background: 'text-[#EEF8EB] dark:text-[#0D2B24]',
+  backgroundElement: 'text-[#FFFDF4] dark:text-[#173E33]',
+  backgroundSelected: 'text-[#D2F2D4] dark:text-[#285B4D]',
+  textSecondary: 'text-[#527568] dark:text-[#A9CBBB]',
 };
 
 export function ThemedText({
@@ -48,7 +71,7 @@ export function ThemedText({
   return (
     <Text
       className={`${colorClassName} ${typeClassNames[type]} ${className ?? ''}`}
-      style={style}
+      style={[typeStyles[type], style]}
       {...rest}
     />
   );

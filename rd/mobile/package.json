@@ -10,6 +10,7 @@
     "@expo/ui": "~57.0.9",
     "@flavoneer/backend": "workspace:*",
     "@flavoneer/config": "workspace:*",
+    "@flavoneer/ui": "workspace:*",
     "@hookform/resolvers": "^5.4.0",
     "@hot-updater/react-native": "0.35.4",
     "@legendapp/list": "^3.3.3",

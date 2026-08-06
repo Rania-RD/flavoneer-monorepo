@@ -23,7 +23,7 @@ export const CriticalCheckControls = ({
         {t("critical_parameter_e_g_ph_brix")}
       </label>
       <input
-        className="mb-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
+        className="mb-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-900 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-[#0f172a] dark:text-white"
         disabled={readOnly}
         id={`crit-name-${step.id}`}
         name={`criticalParamsName-${step.id}`}
@@ -95,7 +95,7 @@ export const CriticalCheckControls = ({
       >
         <input
           checked={step.requiresSignOff}
-          className="rounded border border-gray-300 bg-white text-blue-600 focus:ring-blue-500"
+          className="rounded border border-gray-300 bg-white text-brand-primary focus:ring-brand-focus/50"
           disabled={readOnly}
           id={`signoff-${step.id}`}
           name={`requiresSignOff-${step.id}`}

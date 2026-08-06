@@ -81,7 +81,7 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
                 </label>
                 <input
                   autoFocus
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-indigo-500"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-brand-accent/50"
                   onChange={(e) => setTeamName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && teamName.trim()) {
@@ -106,7 +106,7 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
                   {t("cancel")}
                 </button>
                 <button
-                  className="rounded-xl bg-gray-900 px-4 py-2 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+                  className="rounded-xl bg-gray-900 px-4 py-2 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                   disabled={!teamName.trim() || isSubmitting}
                   onClick={handleCreate}
                 >

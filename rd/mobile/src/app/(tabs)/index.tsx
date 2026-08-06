@@ -1,4 +1,5 @@
-import { Bell, ChevronRight, FlaskConical, LogOut, ShieldCheck } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { ChevronRight, FlaskConical, LogOut, ShieldCheck } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 
@@ -10,6 +11,7 @@ import {
   StatusPill,
 } from '@/components/brand-screen';
 import { ThemedText } from '@/components/themed-text';
+import { UserAvatar } from '@/components/user-avatar';
 import { BrandColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/backend';
@@ -24,6 +26,7 @@ function getGreeting() {
 export default function HomeScreen() {
   const { data: session } = authClient.useSession();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const router = useRouter();
   const theme = useTheme();
   const firstName = session?.user.name?.trim().split(/\s+/)[0];
 
@@ -46,10 +49,19 @@ export default function HomeScreen() {
       <BrandEntrance>
         <BrandHeader
           action={
-            <View className="size-11 items-center justify-center rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4]/80 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]">
-              <Bell color={theme.textSecondary} size={19} strokeWidth={2.2} />
-              <View className="absolute end-2.5 top-2.5 size-2 rounded-full border border-[#FFFDF4] bg-[#FF7738] dark:border-[#173E33]" />
-            </View>
+            <Pressable
+              accessibilityHint="Opens your account and session settings"
+              accessibilityLabel="User settings"
+              accessibilityRole="button"
+              className="size-11 items-center justify-center rounded-full active:scale-95 active:opacity-70"
+              onPress={() => router.navigate('/user-settings')}
+            >
+              <UserAvatar
+                name={session?.user.name || session?.user.email}
+                seed={session?.user.email}
+                size={44}
+              />
+            </Pressable>
           }
         />
       </BrandEntrance>

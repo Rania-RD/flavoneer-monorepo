@@ -150,7 +150,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
         aria-controls={showSuggestions ? listboxId : undefined}
         aria-expanded={showSuggestions}
         autoComplete="off"
-        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
         onChange={(event) => {
           onChange(event.target.value);
           setActiveIndex(-1);
@@ -175,7 +175,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
               aria-selected={index === activeIndex}
               className={`cursor-pointer rounded-lg px-3 py-2 text-start text-sm transition-colors ${
                 index === activeIndex
-                  ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200"
+                  ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover"
                   : "text-gray-700 hover:bg-gray-50 dark:text-slate-200 dark:hover:bg-slate-700"
               }`}
               id={`${listboxId}-option-${index}`}
@@ -311,7 +311,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
   };
 
   const inputClasses =
-    "w-full px-4 py-2.5 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all";
+    "w-full px-4 py-2.5 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 focus:border-transparent transition-all";
 
   const labelClasses =
     "text-sm font-semibold text-gray-700 dark:text-slate-200";
@@ -346,7 +346,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
               <div
                 className={`flex items-center ${isRTL ? "space-x-3 space-x-reverse" : "space-x-3"}`}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover">
                   <FlaskConical size={20} />
                 </div>
                 <div>
@@ -392,7 +392,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                     ))}
                   </select>
                   {selectedRun && (
-                    <p className="mt-1 font-medium text-indigo-600 text-xs dark:text-indigo-400">
+                    <p className="mt-1 font-medium text-brand-primary text-xs dark:text-brand-accent-hover">
                       {t("project")} {selectedRun.projectName} {t("batch")}{" "}
                       {selectedRun.batchCode}
                     </p>
@@ -432,7 +432,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                   <div className="mb-3 flex items-center justify-between">
                     <label className={labelClasses}>{t("test_results")}</label>
                     <button
-                      className="flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 font-bold text-indigo-600 text-xs transition-colors hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+                      className="flex items-center gap-1.5 rounded-lg bg-brand-mint px-3 py-1.5 font-bold text-brand-primary text-xs transition-colors hover:bg-brand-mint dark:bg-brand-accent/20 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/30"
                       onClick={handleAddResult}
                       type="button"
                     >
@@ -493,7 +493,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                               {t("min")}
                             </label>
                             <input
-                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                               onChange={(e) =>
                                 handleResultChange(
                                   index,
@@ -512,7 +512,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                               {t("max")}
                             </label>
                             <input
-                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                               onChange={(e) =>
                                 handleResultChange(
                                   index,
@@ -531,7 +531,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                               {t("actual_value")}
                             </label>
                             <input
-                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                               onChange={(e) =>
                                 handleResultChange(
                                   index,
@@ -563,7 +563,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                 {t("cancel")}
               </button>
               <button
-                className="flex items-center rounded-lg bg-indigo-600 px-6 py-2 font-medium text-sm text-white shadow-indigo-600/20 shadow-lg transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex items-center rounded-lg bg-brand-primary px-6 py-2 font-medium text-sm text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={saving || !selectedRunId}
                 form="lab-report-form"
                 type="submit"

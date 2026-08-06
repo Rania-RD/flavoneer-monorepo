@@ -16,12 +16,12 @@ export const ConditionalStepControls = ({
   const { t } = useTranslation();
 
   return (
-    <div className="col-span-1 mt-2 space-y-3 border-indigo-100 border-t pt-4 lg:col-span-2 dark:border-indigo-800/30">
+    <div className="col-span-1 mt-2 space-y-3 border-brand-primary/20 border-t pt-4 lg:col-span-2 dark:border-brand-mint/20">
       <div className="mb-2 flex items-center gap-2">
-        <div className="rounded-lg bg-indigo-100 p-1.5 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
+        <div className="rounded-lg bg-brand-mint p-1.5 text-brand-primary dark:bg-brand-accent/50 dark:text-brand-accent-hover">
           <CheckSquare size={16} />
         </div>
-        <h4 className="font-bold text-indigo-900 text-sm dark:text-indigo-100">
+        <h4 className="font-bold text-brand-primary text-sm dark:text-brand-accent-hover">
           {t("quality_control_condition")}
         </h4>
       </div>

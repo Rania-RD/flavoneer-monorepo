@@ -36,7 +36,7 @@ const EmptyLibrary = ({
   t: TFunction;
 }) => (
   <div className="flex flex-1 flex-col items-center justify-center rounded-[2.5rem] border border-gray-200 border-dashed bg-gray-50/50 p-12 text-center dark:border-slate-700 dark:bg-slate-800/30">
-    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400">
+    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-mint text-brand-primary dark:bg-brand-accent/10 dark:text-brand-accent-hover">
       <Package size={32} strokeWidth={1.5} />
     </div>
     <h3 className="mb-2 font-bold text-gray-900 text-xl dark:text-white">
@@ -46,7 +46,7 @@ const EmptyLibrary = ({
       {t("library_placeholder_desc")}
     </p>
     <button
-      className="flex items-center gap-2 rounded-[1.2rem] bg-indigo-600 px-6 py-3 font-bold text-sm text-white shadow-lg transition-all hover:bg-indigo-500 active:scale-95"
+      className="flex items-center gap-2 rounded-[1.2rem] bg-brand-primary px-6 py-3 font-bold text-sm text-white shadow-lg transition-all hover:bg-brand-primary-hover active:scale-95"
       data-testid="add-ingredient-library-button"
       onClick={onAddIngredient}
     >

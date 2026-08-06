@@ -77,8 +77,8 @@ const VersionControlConfig: React.FC = () => {
     <section className="mt-8 overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm dark:border-slate-800 dark:bg-[#1e293b]">
       <div className="border-gray-100 border-b p-8 dark:border-slate-800">
         <div className="mb-2 flex items-center gap-3">
-          <div className="rounded-xl bg-indigo-50 p-2 dark:bg-indigo-900/30">
-            <GitBranch className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="rounded-xl bg-brand-mint p-2 dark:bg-brand-accent/30">
+            <GitBranch className="h-6 w-6 text-brand-primary dark:text-brand-accent-hover" />
           </div>
           <h3 className="font-bold text-gray-900 text-xl dark:text-white">
             {t("version_control")}
@@ -96,7 +96,7 @@ const VersionControlConfig: React.FC = () => {
               {t("version_prefix")}
             </label>
             <input
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-gray-900 text-sm transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-gray-900 text-sm transition-all focus:border-transparent focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
               onChange={(e) => setTempPrefix(e.target.value)}
               placeholder={t("example_prefix")}
               type="text"
@@ -108,7 +108,7 @@ const VersionControlConfig: React.FC = () => {
               {t("versioning_style")}
             </label>
             <select
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 text-sm transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 text-sm transition-all focus:border-transparent focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
               onChange={(e) => setTempStyle(e.target.value)}
               value={tempStyle}
             >
@@ -128,12 +128,12 @@ const VersionControlConfig: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-800/50 dark:bg-indigo-900/20">
+        <div className="flex items-center justify-between rounded-xl border border-brand-primary/20 bg-brand-mint p-4 dark:border-brand-mint/20 dark:bg-brand-accent/20">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-indigo-700 text-xs uppercase tracking-wider dark:text-indigo-400">
+            <span className="font-bold text-brand-primary text-xs uppercase tracking-wider dark:text-brand-accent-hover">
               {t("preview_layout")}
             </span>
-            <span className="font-bold font-mono text-base text-indigo-900 dark:text-indigo-300">
+            <span className="font-bold font-mono text-base text-brand-primary dark:text-brand-accent-hover">
               {t("next_version_example")} {previewId}
             </span>
           </div>
@@ -142,13 +142,13 @@ const VersionControlConfig: React.FC = () => {
         {canManageVersionControl && (
           <div className="flex items-center justify-end gap-4 border-gray-100 border-t pt-4 dark:border-slate-800">
             {saved && (
-              <span className="fade-in slide-in-from-end-4 flex animate-in items-center font-medium text-indigo-600 text-sm dark:text-indigo-400">
+              <span className="fade-in slide-in-from-end-4 flex animate-in items-center font-medium text-brand-primary text-sm dark:text-brand-accent-hover">
                 <Check className="me-1 h-4 w-4" /> {t("configuration_saved")}
               </span>
             )}
             {hasChanges && !isSaving && !saved && (
               <button
-                className="font-semibold text-indigo-600 text-sm underline underline-offset-2 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="font-semibold text-brand-primary text-sm underline underline-offset-2 transition-colors hover:text-brand-primary dark:text-brand-accent-hover dark:hover:text-brand-cream"
                 onClick={handleDiscard}
               >
                 {t("discard")}
@@ -158,7 +158,7 @@ const VersionControlConfig: React.FC = () => {
               className={`flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-sm text-white shadow-md transition-all active:scale-95 disabled:opacity-50 ${
                 saved
                   ? "bg-green-600 hover:bg-green-700"
-                  : "bg-indigo-600 hover:bg-indigo-500" // Using indigo to match the section theme visually
+                  : "bg-brand-primary hover:bg-brand-primary-hover" // Brand primary action
               }`}
               disabled={isSaving || !(hasChanges || saved)}
               onClick={handleSave}

@@ -222,7 +222,7 @@ const RoleManagementSection: React.FC = () => {
         <button
           className={`flex items-center gap-2 rounded-xl px-4 py-2 font-semibold text-sm transition-all ${
             activeTab === "matrix"
-              ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+              ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover"
               : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
           }`}
           onClick={() => setActiveTab("matrix")}
@@ -235,7 +235,7 @@ const RoleManagementSection: React.FC = () => {
         <button
           className={`flex items-center gap-2 rounded-xl px-4 py-2 font-semibold text-sm transition-all ${
             activeTab === "users"
-              ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+              ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover"
               : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
           }`}
           onClick={() => setActiveTab("users")}
@@ -319,7 +319,7 @@ const RoleManagementSection: React.FC = () => {
             <button
               className={`rounded-xl px-6 py-2.5 font-semibold text-sm transition-all ${
                 hasPermissionChanges && !isSavingPermissions
-                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-indigo-600"
+                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-brand-accent"
                   : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500"
               }`}
               disabled={!hasPermissionChanges || isSavingPermissions}
@@ -357,7 +357,7 @@ const RoleManagementSection: React.FC = () => {
                 </div>
 
                 <select
-                  className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-gray-100"
+                  className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-600 dark:bg-slate-900 dark:text-gray-100"
                   onChange={(e) =>
                     handleUserRoleChange(user._id, e.target.value)
                   }
@@ -390,7 +390,7 @@ const RoleManagementSection: React.FC = () => {
             <button
               className={`rounded-xl px-6 py-2.5 font-semibold text-sm transition-all ${
                 hasUserChanges && !isSavingUsers
-                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-indigo-600"
+                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-brand-accent"
                   : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500"
               }`}
               disabled={!hasUserChanges || isSavingUsers}

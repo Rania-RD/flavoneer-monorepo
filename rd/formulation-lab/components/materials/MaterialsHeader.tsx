@@ -38,7 +38,7 @@ export const MaterialsHeader = ({
               size={20}
             />
             <input
-              className="w-full rounded-full bg-white py-3 ps-11 pe-6 font-medium text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 md:w-64 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:ring-indigo-500/50"
+              className="w-full rounded-full bg-white py-3 ps-11 pe-6 font-medium text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 md:w-64 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:ring-brand-accent/50"
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder={t("search_inventory_placeholder")}
               type="text"
@@ -46,7 +46,7 @@ export const MaterialsHeader = ({
             />
           </div>
           <button
-            className="flex h-12 flex-shrink-0 items-center justify-center gap-2 rounded-full bg-gray-900 px-5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-colors hover:bg-gray-800 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+            className="flex h-12 flex-shrink-0 items-center justify-center gap-2 rounded-full bg-gray-900 px-5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-colors hover:bg-gray-800 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
             data-testid="add-material-button"
             onClick={onAddMaterial}
             title={t("add_material")}

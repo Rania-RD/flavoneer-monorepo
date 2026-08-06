@@ -183,7 +183,7 @@ export function AddIngredientInfoTab({
         </div>
       </div>
 
-      <div className="rounded-3xl border border-indigo-100 bg-indigo-50/50 p-5 dark:border-indigo-800/30 dark:bg-indigo-900/10">
+      <div className="rounded-3xl border border-brand-primary/20 bg-brand-mint/50 p-5 dark:border-brand-mint/20 dark:bg-brand-accent/10">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h3 className="font-bold text-gray-900 text-lg dark:text-white">
@@ -260,7 +260,7 @@ export function AddIngredientInfoTab({
             <label className={labelClasses}>{t("upload_image")}</label>
             <input
               accept="image/png, image/jpeg, image/jpg"
-              className="w-full text-gray-500 text-sm transition-all file:mr-4 file:rounded-full file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:font-semibold file:text-indigo-700 file:text-sm hover:file:bg-indigo-100 dark:text-slate-400 dark:file:bg-indigo-500/20 dark:file:text-indigo-300"
+              className="w-full text-gray-500 text-sm transition-all file:mr-4 file:rounded-full file:border-0 file:bg-brand-mint file:px-4 file:py-2 file:font-semibold file:text-brand-primary file:text-sm hover:file:bg-brand-mint dark:text-slate-400 dark:file:bg-brand-accent/20 dark:file:text-brand-cream"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
@@ -305,7 +305,7 @@ export function AddIngredientInfoTab({
           </div>
         </div>
         <p className="flex flex-row items-center gap-2 text-gray-500 text-xs dark:text-slate-400">
-          <FlaskConical className="text-indigo-400" size={14} />
+          <FlaskConical className="text-brand-primary" size={14} />
           {t("isn_hint")}
         </p>
       </div>
@@ -361,7 +361,7 @@ export function AddIngredientInfoTab({
           {t("conversions_and_measurements")}
         </h3>
         <button
-          className="flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 font-bold text-indigo-600 text-sm transition hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-400 dark:hover:bg-indigo-500/30"
+          className="flex items-center gap-1.5 rounded-full bg-brand-mint px-3 py-1.5 font-bold text-brand-primary text-sm transition hover:bg-brand-mint dark:bg-brand-accent/20 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/30"
           onClick={handleAddConversion}
           type="button"
         >
@@ -460,7 +460,7 @@ export function AddIngredientInfoTab({
               {t("sub_ingredients")}
             </h4>
             <button
-              className="flex items-center gap-1.5 rounded-full bg-indigo-100 px-3 py-1.5 font-bold text-indigo-600 text-sm transition hover:bg-indigo-200 dark:bg-indigo-500/30 dark:text-indigo-300"
+              className="flex items-center gap-1.5 rounded-full bg-brand-mint px-3 py-1.5 font-bold text-brand-primary text-sm transition hover:bg-brand-mint dark:bg-brand-accent/30 dark:text-brand-accent-hover"
               onClick={handleAddSubIngredient}
               type="button"
             >

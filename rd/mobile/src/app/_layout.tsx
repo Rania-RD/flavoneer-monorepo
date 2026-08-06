@@ -66,6 +66,7 @@ function AppNavigator() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={Boolean(session)}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="user-settings" />
         </Stack.Protected>
 
         <Stack.Protected guard={!session}>

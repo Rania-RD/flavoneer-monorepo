@@ -191,7 +191,7 @@ const Dashboard: React.FC = () => {
               <button
                 className={`whitespace-nowrap rounded-full border px-5 py-2.5 font-bold text-sm transition-all ${
                   filter === item.key
-                    ? "scale-105 border-gray-900 bg-gray-900 text-white shadow-md hover:bg-black dark:border-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+                    ? "scale-105 border-gray-900 bg-gray-900 text-white shadow-md hover:bg-black dark:border-brand-mint/20 dark:bg-brand-accent dark:hover:bg-brand-accent-hover"
                     : "border-transparent bg-white/80 text-gray-600 shadow-sm hover:border-gray-200 hover:bg-white hover:text-gray-900 dark:bg-[#1e293b] dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
                 } active:scale-95`}
                 key={item.key}
@@ -211,7 +211,7 @@ const Dashboard: React.FC = () => {
               size={20}
             />
             <input
-              className="w-full rounded-full border border-transparent bg-white py-3 ps-11 pe-6 font-medium text-charcoal text-sm shadow-sm placeholder:text-charcoal/40 focus:outline-none focus:ring-2 focus:ring-charcoal/10 md:w-64 dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-indigo-500/50"
+              className="w-full rounded-full border border-transparent bg-white py-3 ps-11 pe-6 font-medium text-charcoal text-sm shadow-sm placeholder:text-charcoal/40 focus:outline-none focus:ring-2 focus:ring-charcoal/10 md:w-64 dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-brand-accent/50"
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t("search")}
               type="text"
@@ -220,7 +220,7 @@ const Dashboard: React.FC = () => {
           </div>
           <button
             aria-label={t("newProject")}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white shadow-black/20 shadow-xl transition-all hover:scale-105 hover:bg-black dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white shadow-black/20 shadow-xl transition-all hover:scale-105 hover:bg-black dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
             data-testid="new-project-button"
             onClick={() => setIsModalOpen(true)}
             title={t("newProject")}
@@ -295,8 +295,8 @@ const Dashboard: React.FC = () => {
               initial="hidden"
               variants={modalVariants}
             >
-              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30">
-                <Loader2 className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-brand-mint dark:bg-brand-accent/30">
+                <Loader2 className="h-10 w-10 animate-spin text-brand-primary dark:text-brand-accent-hover" />
               </div>
               <h3 className="mb-2 font-black text-2xl text-gray-900 dark:text-white">
                 {t("initializing_batch")}

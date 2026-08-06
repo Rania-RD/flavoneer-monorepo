@@ -210,7 +210,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
   // High contrast input classes
   const inputClasses =
-    "w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+    "w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 focus:border-transparent transition-all";
   const isArabicContent = contentLanguage === "ar";
   const localizedFieldNames = {
     title: isArabicContent ? ("nameAr" as const) : ("name" as const),
@@ -250,7 +250,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between border-gray-100 border-b bg-white p-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-mint text-brand-primary">
                   <Beaker size={20} />
                 </div>
                 <div>
@@ -278,7 +278,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-medium text-sm transition-colors ${
                     activeTab === "general"
-                      ? "border-blue-600 text-blue-600"
+                      ? "border-brand-primary text-brand-primary"
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                   onClick={() => setActiveTab("general")}
@@ -289,7 +289,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-medium text-sm transition-colors ${
                     activeTab === "technical"
-                      ? "border-blue-600 text-blue-600"
+                      ? "border-brand-primary text-brand-primary"
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                   onClick={() => setActiveTab("technical")}
@@ -300,7 +300,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-medium text-sm transition-colors ${
                     activeTab === "compliance"
-                      ? "border-blue-600 text-blue-600"
+                      ? "border-brand-primary text-brand-primary"
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                   onClick={() => setActiveTab("compliance")}
@@ -625,7 +625,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                             <div
                               className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
                                 formData.testingRequirements.includes(req)
-                                  ? "border-blue-600 bg-blue-600"
+                                  ? "border-brand-primary bg-brand-primary"
                                   : "border-gray-300 bg-white"
                               }`}
                             >
@@ -692,7 +692,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
               {activeTab === "compliance" && (
                 <button
-                  className="flex items-center rounded-lg bg-blue-600 px-6 py-2 font-medium text-sm text-white shadow-blue-600/20 shadow-lg transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center rounded-lg bg-brand-primary px-6 py-2 font-medium text-sm text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                   data-testid="project-submit-button"
                   disabled={isSubmitting}
                   form="project-form"

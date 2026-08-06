@@ -83,7 +83,7 @@ export const Phase: React.FC<PhaseProps> = ({
 
   return (
     <div
-      className={`space-y-6 ${colorStyle.bg} ${colorStyle.darkBg || ""} rounded-[2.5rem] border p-6 shadow-sm lg:p-8 ${colorStyle.border} ${colorStyle.darkBorder || ""} relative transition-all ${isAnyMenuOpen ? "z-[100] scale-[1.01] shadow-lg ring-2 ring-indigo-500/20" : "z-10 hover:z-20"}`}
+      className={`space-y-6 ${colorStyle.bg} ${colorStyle.darkBg || ""} rounded-[2.5rem] border p-6 shadow-sm lg:p-8 ${colorStyle.border} ${colorStyle.darkBorder || ""} relative transition-all ${isAnyMenuOpen ? "z-[100] scale-[1.01] shadow-lg ring-2 ring-brand-focus/50" : "z-10 hover:z-20"}`}
     >
       <div className="relative z-10 flex flex-col items-start gap-4 border-gray-200/50 border-b pb-6 md:flex-row md:items-center dark:border-slate-700/50">
         {!readOnly && (

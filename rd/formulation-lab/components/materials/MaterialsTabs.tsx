@@ -24,7 +24,7 @@ export const MaterialsTabs = ({
     <button
       className={`relative px-4 pb-4 font-semibold text-sm transition-colors ${
         activeTab === "library"
-          ? "text-indigo-600 dark:text-indigo-400"
+          ? "text-brand-primary dark:text-brand-accent-hover"
           : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
       }`}
       data-testid="materials-tab-library"
@@ -33,7 +33,7 @@ export const MaterialsTabs = ({
       {t("ingredient_library")}
       {activeTab === "library" && (
         <MotionDiv
-          className="absolute inset-x-0 bottom-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
+          className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-primary dark:bg-brand-accent"
           layoutId="mats-tab"
         />
       )}
@@ -41,7 +41,7 @@ export const MaterialsTabs = ({
     <button
       className={`relative px-4 pb-4 font-semibold text-sm transition-colors ${
         activeTab === "current"
-          ? "text-indigo-600 dark:text-indigo-400"
+          ? "text-brand-primary dark:text-brand-accent-hover"
           : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
       }`}
       data-testid="materials-tab-current"
@@ -50,7 +50,7 @@ export const MaterialsTabs = ({
       {t("current_inventory")}
       {activeTab === "current" && (
         <MotionDiv
-          className="absolute inset-x-0 bottom-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
+          className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-primary dark:bg-brand-accent"
           layoutId="mats-tab"
         />
       )}

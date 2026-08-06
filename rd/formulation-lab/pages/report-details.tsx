@@ -37,7 +37,7 @@ const ReportDetails: React.FC = () => {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-gray-500 dark:text-slate-400">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-primary border-t-transparent" />
           <p className="animate-pulse font-medium">
             {t("loading_report_data")}
           </p>
@@ -53,7 +53,7 @@ const ReportDetails: React.FC = () => {
           <FileText className="text-gray-300 dark:text-slate-600" size={48} />
           <p className="font-bold text-xl">{t("report_not_found")}</p>
           <button
-            className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 font-bold text-white transition hover:bg-indigo-700"
+            className="mt-4 rounded-lg bg-brand-primary px-4 py-2 font-bold text-white transition hover:bg-brand-primary-hover"
             onClick={() => navigate("/reports")}
             type="button"
           >
@@ -117,7 +117,7 @@ const ReportDetails: React.FC = () => {
           </div>
         </div>
         <button
-          className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 font-medium text-gray-700 text-sm shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 font-medium text-gray-700 text-sm shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           onClick={async () => {
             try {
               toast.info(t("generating_pdf_summary"));
@@ -148,7 +148,7 @@ const ReportDetails: React.FC = () => {
       {/* Stats row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-[#1e293b]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover">
             <Calendar size={24} />
           </div>
           <div>
@@ -191,7 +191,7 @@ const ReportDetails: React.FC = () => {
       {/* Results Table */}
       <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm dark:border-slate-800 dark:bg-[#1e293b]">
         <div className="flex items-center gap-3 border-gray-100 border-b bg-gray-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/50">
-          <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+          <div className="rounded-lg bg-brand-mint p-2 text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover">
             <TestTube size={20} />
           </div>
           <h2 className="font-bold text-gray-900 text-lg dark:text-white">
@@ -271,12 +271,12 @@ const ReportDetails: React.FC = () => {
       {/* Official Sign-Off Stamp */}
       {report.status === "Approved" && report.signoffData && (
         <div className="flex justify-end pe-8 pt-8">
-          <div className="flex min-w-[250px] flex-col items-center border-indigo-200 border-t-2 pt-4 dark:border-indigo-900/50">
-            <span className="mb-2 font-bold text-[10px] text-indigo-500 uppercase tracking-widest">
+          <div className="flex min-w-[250px] flex-col items-center border-brand-primary/20 border-t-2 pt-4 dark:border-brand-mint/20">
+            <span className="mb-2 font-bold text-[10px] text-brand-primary uppercase tracking-widest">
               {t("electronically_signed_by")}
             </span>
             <span
-              className="px-4 py-2 text-4xl text-indigo-900 dark:text-indigo-100"
+              className="px-4 py-2 text-4xl text-brand-primary dark:text-brand-accent-hover"
               style={{ fontFamily: report.signoffFont || "inherit" }}
             >
               {report.signoffData}

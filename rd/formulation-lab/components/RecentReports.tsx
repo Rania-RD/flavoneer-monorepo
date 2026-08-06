@@ -93,7 +93,7 @@ const RecentReports: React.FC = () => {
   }
 
   return (
-    <div className="rounded-[2.5rem] border border-black/5 bg-vivid-blue p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
+    <div className="rounded-[2.5rem] border border-black/5 bg-brand-mint p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
       <div className="mb-6">
         <h3 className="font-bold text-charcoal dark:text-slate-100">
           {t("recentReports")}
@@ -120,7 +120,7 @@ const RecentReports: React.FC = () => {
               className="min-w-0 flex-1 text-start"
               onClick={() => navigate(`/reports/${report._id}`)}
             >
-              <h4 className="truncate font-bold text-charcoal text-sm transition-colors group-hover:text-action-pink dark:text-slate-100 dark:group-hover:text-blue-400">
+              <h4 className="truncate font-bold text-charcoal text-sm transition-colors group-hover:text-action-pink dark:text-slate-100 dark:group-hover:text-brand-accent-hover">
                 {report.projectName}
               </h4>
               <div className="mt-0.5 flex items-center gap-2">

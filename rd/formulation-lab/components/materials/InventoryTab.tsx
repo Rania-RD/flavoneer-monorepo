@@ -56,18 +56,18 @@ const SelectAllToggle = ({
 }) => (
   <div className="flex w-fit items-center gap-3 rounded-xl border border-gray-100 bg-white/50 px-4 py-2.5 shadow-sm dark:border-white/5 dark:bg-slate-800/30">
     <button
-      className="flex items-center justify-center text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+      className="flex items-center justify-center text-gray-400 transition-colors hover:text-brand-primary dark:hover:text-brand-accent-hover"
       onClick={onToggleAll}
     >
       {selectedCount === filteredCount ? (
         <CheckSquare
-          className="text-indigo-600 dark:text-indigo-400"
+          className="text-brand-primary dark:text-brand-accent-hover"
           size={20}
         />
       ) : selectedCount > 0 ? (
         <div className="relative flex items-center justify-center">
           <Square className="text-gray-400" size={20} />
-          <div className="absolute h-2.5 w-2.5 rounded-sm bg-indigo-600" />
+          <div className="absolute h-2.5 w-2.5 rounded-sm bg-brand-primary" />
         </div>
       ) : (
         <Square size={20} />
@@ -96,14 +96,14 @@ const InventoryCard = ({
 
   return (
     <div
-      className={`${theme.bg} ${isSelected ? "scale-[1.02] shadow-xl ring-2 ring-indigo-500 dark:ring-indigo-400" : ""} group relative flex h-[320px] cursor-pointer flex-col justify-between rounded-[2.5rem] p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:border dark:border-white/5 dark:hover:bg-opacity-30`}
+      className={`${theme.bg} ${isSelected ? "scale-[1.02] shadow-xl ring-2 ring-brand-focus/50 dark:ring-brand-accent/50" : ""} group relative flex h-[320px] cursor-pointer flex-col justify-between rounded-[2.5rem] p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:border dark:border-white/5 dark:hover:bg-opacity-30`}
       data-testid="inventory-card"
       onClick={() => onShowHistory(item)}
     >
       <div className="z-10 flex items-start justify-between">
         <div className="flex items-center justify-center gap-3">
           <button
-            className="flex-shrink-0 text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+            className="flex-shrink-0 text-gray-400 transition-colors hover:text-brand-primary dark:hover:text-brand-accent-hover"
             onClick={(event) => {
               event.stopPropagation();
               onToggleSelection(item._id);
@@ -111,7 +111,7 @@ const InventoryCard = ({
           >
             {isSelected ? (
               <CheckSquare
-                className="text-indigo-600 dark:text-indigo-400"
+                className="text-brand-primary dark:text-brand-accent-hover"
                 size={22}
               />
             ) : (

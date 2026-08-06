@@ -72,7 +72,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
       case "Testing":
         return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300";
       case "Prototype":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300";
+        return "bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover";
       case "Review":
         return "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300";
       default:
@@ -155,7 +155,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                       </button>
                     )}
                     <button
-                      className="flex items-center gap-2 rounded-[1.5rem] bg-gray-900 px-6 py-3 font-bold text-white shadow-lg transition-transform hover:scale-105 dark:bg-indigo-600"
+                      className="flex items-center gap-2 rounded-[1.5rem] bg-gray-900 px-6 py-3 font-bold text-white shadow-lg transition-transform hover:scale-105 dark:bg-brand-accent"
                       onClick={handleEditIngredients}
                     >
                       <FlaskConical size={18} />
@@ -201,34 +201,34 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                   </div>
 
                   {/* 2. Processing Parameters (Col Span 1) */}
-                  <div className="flex flex-col justify-between rounded-[2.5rem] border border-sky-100 bg-[#E0F2FE] p-8 dark:border-sky-800/30 dark:bg-sky-900/20">
+                  <div className="flex flex-col justify-between rounded-[2.5rem] border border-brand-primary/20 bg-[#D2F2D4] p-8 dark:border-brand-mint/20 dark:bg-brand-accent/20">
                     <div>
-                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/60 text-sky-600 shadow-sm dark:bg-sky-500/20 dark:text-sky-300">
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/60 text-brand-primary shadow-sm dark:bg-brand-accent/20 dark:text-brand-accent-hover">
                         <Thermometer size={24} />
                       </div>
-                      <h3 className="mb-1 font-bold text-lg text-sky-900 dark:text-sky-100">
+                      <h3 className="mb-1 font-bold text-lg text-brand-primary dark:text-brand-accent-hover">
                         {t("processing")}
                       </h3>
-                      <p className="text-sky-700/70 text-sm dark:text-sky-200/60">
+                      <p className="text-brand-primary text-sm dark:text-brand-accent-hover">
                         {project.processingMethod || "Standard"}
                       </p>
                     </div>
                     <div className="mt-6 space-y-3">
-                      <div className="flex items-center justify-between rounded-2xl bg-white/40 p-3 dark:bg-sky-950/40">
-                        <span className="font-bold text-sky-800 text-xs uppercase dark:text-sky-200">
+                      <div className="flex items-center justify-between rounded-2xl bg-white/40 p-3 dark:bg-brand-accent/40">
+                        <span className="font-bold text-brand-primary text-xs uppercase dark:text-brand-accent-hover">
                           {t("temp")}
                         </span>
-                        <span className="font-bold text-sky-900 text-xl dark:text-slate-100">
+                        <span className="font-bold text-brand-primary text-xl dark:text-slate-100">
                           {project.processingTemp
                             ? formatTemp(project.processingTemp)
                             : "--"}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between rounded-2xl bg-white/40 p-3 dark:bg-sky-950/40">
-                        <span className="font-bold text-sky-800 text-xs uppercase dark:text-sky-200">
+                      <div className="flex items-center justify-between rounded-2xl bg-white/40 p-3 dark:bg-brand-accent/40">
+                        <span className="font-bold text-brand-primary text-xs uppercase dark:text-brand-accent-hover">
                           {t("time")}
                         </span>
-                        <span className="font-bold text-sky-900 text-xl dark:text-slate-100">
+                        <span className="font-bold text-brand-primary text-xl dark:text-slate-100">
                           {project.processingTime || "--"}
                         </span>
                       </div>
@@ -297,7 +297,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                   <div className="flex flex-col rounded-[2.5rem] border border-gray-100 bg-white p-8 dark:border-slate-800 dark:bg-[#1e293b]">
                     <div className="mb-1 flex items-center justify-between">
                       <h3 className="flex items-center gap-2 font-bold text-gray-900 text-lg dark:text-slate-100">
-                        <Droplet className="text-blue-500" size={20} />
+                        <Droplet className="text-brand-primary" size={20} />
 
                         {t("ingredients")}
                       </h3>

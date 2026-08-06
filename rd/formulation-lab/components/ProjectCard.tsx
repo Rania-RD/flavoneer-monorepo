@@ -1,3 +1,4 @@
+import type { Id } from "@flavoneer/backend/data-model";
 import { AnimatePresence, type HTMLMotionProps, motion } from "framer-motion";
 import {
   Archive,
@@ -16,9 +17,9 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
-import type { Id } from "@flavoneer/backend/data-model";
 import type { EnrichedProject } from "../types";
 import ShareModal from "./ShareModal";
+import UserAvatar from "./user-avatar";
 
 const MotionDiv = motion.div as React.FC<
   HTMLMotionProps<"div"> & { className?: string; children?: React.ReactNode }
@@ -31,7 +32,7 @@ interface ProjectCardProps {
   onStartRun?: (projectId: Id<"projects">) => void;
   onViewDetails?: (project: EnrichedProject) => void;
   project: EnrichedProject;
-  teamMembers?: { userName: string; userAvatarUrl?: string }[];
+  teamMembers?: { userEmail: string; userId: string; userName: string }[];
 }
 
 // Flavoneer tonal palette — deterministic, brand-safe project differentiation.
@@ -225,16 +226,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                       </button>
                       <button
                         className={`flex items-center gap-3 rounded-xl px-3 py-2 text-start font-bold text-sm transition-colors ${
-                          project.status !== "Released"
-                            ? "hidden cursor-not-allowed bg-gray-50/50 text-gray-400 dark:bg-slate-800/50 dark:text-gray-600"
-                            : "text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10"
+                          project.status === "Released"
+                            ? "text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10"
+                            : "hidden cursor-not-allowed bg-gray-50/50 text-gray-400 dark:bg-slate-800/50 dark:text-gray-600"
                         }`}
                         disabled={project.status !== "Released"}
                         onClick={handleStartRun}
                         title={
-                          project.status !== "Released"
-                            ? "Cannot start a run for a non-released formulation"
-                            : ""
+                          project.status === "Released"
+                            ? ""
+                            : "Cannot start a run for a non-released formulation"
                         }
                       >
                         <Play size={16} /> {t("startNewRun")}
@@ -305,15 +306,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             {teamMembers && teamMembers.length > 0 && (
               <div className="mb-4 flex items-center">
                 <div className="flex -space-x-2.5">
-                  {teamMembers.slice(0, 4).map((member, idx) => (
-                    <img
-                      alt={member.userName}
+                  {teamMembers.slice(0, 4).map((member) => (
+                    <UserAvatar
                       className="h-8 w-8 rounded-full border-2 border-white object-cover shadow-sm dark:border-slate-800"
-                      key={idx}
-                      src={
-                        member.userAvatarUrl ||
-                        `https://api.dicebear.com/9.x/thumbs/svg?seed=${member.userName}`
-                      }
+                      key={member.userId}
+                      label={member.userName}
+                      name={member.userName}
+                      seed={member.userEmail}
+                      size={32}
                       title={member.userName}
                     />
                   ))}
@@ -329,7 +329,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             )}
 
             <button
-              className={`group/btn flex w-full items-center justify-center gap-2 rounded-2xl bg-white/90 py-4 font-black text-gray-900 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white dark:bg-white/10 dark:text-white ${theme.buttonHover}`}
+              className={`group/btn flex w-full items-center justify-center gap-2 rounded-2xl bg-white/90 py-4 font-black text-gray-900 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white dark:bg-white/10 dark:text-white dark:hover:bg-white/15 ${theme.buttonHover}`}
               onClick={() => (onViewDetails ? onViewDetails(project) : null)}
             >
               {t("viewDetails")}

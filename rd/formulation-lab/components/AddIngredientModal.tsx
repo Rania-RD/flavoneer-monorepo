@@ -552,7 +552,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
 
   // ── Style tokens ────────────────────────────────────────
   const inputClasses =
-    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:focus:ring-indigo-400/50 transition-all";
+    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:focus:ring-brand-accent/50 transition-all";
   const labelClasses =
     "block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ms-1";
 

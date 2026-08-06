@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   signoffLine: {
     borderTopWidth: 1,
-    borderTopColor: "#4F46E5",
+    borderTopColor: "#1C4A3C",
     width: 200,
     paddingTop: 5,
     marginTop: 40,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   signoffSignature: {
     fontSize: 16,
-    color: "#312E81",
+    color: "#102F27",
     marginBottom: 5,
   },
 });

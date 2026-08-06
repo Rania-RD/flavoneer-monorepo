@@ -305,7 +305,7 @@ const PrintLabelModal: React.FC<PrintLabelModalProps> = ({ item, onClose }) => {
               </h2>
               <div className="flex items-center gap-2">
                 <button
-                  className="flex items-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-colors hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+                  className="flex items-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-colors hover:bg-gray-800 active:scale-95 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                   onClick={handlePrint}
                 >
                   <Printer size={16} />

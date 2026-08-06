@@ -1,3 +1,4 @@
+import { api } from "@flavoneer/backend/api";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -8,6 +9,7 @@ import {
   Crown,
   History,
   LogOut,
+  type LucideIcon,
   Mail,
   MailPlus,
   MoreHorizontal,
@@ -21,14 +23,13 @@ import {
   UsersRound,
   UserX,
   XCircle,
-  type LucideIcon,
 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import InviteMemberModal from "../components/InviteMemberModal";
+import UserAvatar from "../components/user-avatar";
 import { useTeam } from "../context/TeamContext";
-import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 
 // ─── Role badge component ────────────────────────────
@@ -87,7 +88,10 @@ const InviteStatusBadge: React.FC<{
 };
 
 // ─── Audit action label formatting ───────────────────
-function formatAction(action: string, t: ReturnType<typeof useTranslation>["t"]): React.ReactNode {
+function formatAction(
+  action: string,
+  t: ReturnType<typeof useTranslation>["t"]
+): React.ReactNode {
   const map: Record<string, { icon: LucideIcon; key: string }> = {
     "team.created": { icon: Building2, key: "team_created_action" },
     "team.updated": { icon: PencilLine, key: "team_updated_action" },
@@ -112,7 +116,10 @@ function formatAction(action: string, t: ReturnType<typeof useTranslation>["t"])
   );
 }
 
-function timeAgo(timestamp: number, t: ReturnType<typeof useTranslation>["t"]): string {
+function timeAgo(
+  timestamp: number,
+  t: ReturnType<typeof useTranslation>["t"]
+): string {
   const diff = Date.now() - timestamp;
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) {
@@ -206,7 +213,7 @@ const TeamPage = () => {
               {t("createYourFirstTeam")}
             </p>
             <button
-              className="rounded-full bg-gray-900 px-6 py-2 font-bold text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+              className="rounded-full bg-gray-900 px-6 py-2 font-bold text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
               onClick={() => setCreateTeamModalOpen(true)}
             >
               {t("createTeam")}
@@ -267,7 +274,7 @@ const TeamPage = () => {
               <div
                 className={`flex items-center gap-4 rounded-2xl border p-4 transition-all ${
                   isActive
-                    ? "border-pink-200 bg-white shadow-sm ring-1 ring-pink-100 dark:border-indigo-500/50 dark:bg-slate-800 dark:ring-indigo-500/20"
+                    ? "border-pink-200 bg-white shadow-sm ring-1 ring-pink-100 dark:border-brand-mint/20 dark:bg-slate-800 dark:ring-brand-accent/50"
                     : "border-gray-100 bg-white/50 hover:border-pink-100 hover:bg-white dark:border-slate-700 dark:bg-slate-800/30 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                 }`}
                 key={team._id}
@@ -293,7 +300,7 @@ const TeamPage = () => {
 
                 {!isActive && (
                   <button
-                    className="rounded-lg bg-pink-50 px-3 py-1.5 font-bold text-[#FF85A1] text-xs transition-colors hover:bg-[#FF85A1] hover:text-white dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white"
+                    className="rounded-lg bg-pink-50 px-3 py-1.5 font-bold text-[#FF85A1] text-xs transition-colors hover:bg-[#FF85A1] hover:text-white dark:bg-brand-accent/20 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover dark:hover:text-white"
                     onClick={() => setActiveTeamId(team._id)}
                   >
                     {t("switch")}
@@ -348,7 +355,7 @@ const TeamPage = () => {
                 </h3>
                 {isAdmin && (
                   <button
-                    className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 font-bold text-white text-xs shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/30 dark:hover:bg-indigo-500"
+                    className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 font-bold text-white text-xs shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                     onClick={() => setInviteModalOpen(true)}
                   >
                     <Plus size={14} />
@@ -365,22 +372,11 @@ const TeamPage = () => {
                     key={member._id}
                   >
                     {/* Avatar */}
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100 font-bold text-sm text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
-                      {member.userAvatarUrl ? (
-                        <img
-                          alt={member.userName}
-                          className="h-full w-full object-cover"
-                          src={member.userAvatarUrl}
-                        />
-                      ) : (
-                        member.userName
-                          .split(" ")
-                          .map((w: string) => w[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()
-                      )}
-                    </div>
+                    <UserAvatar
+                      name={member.userName}
+                      seed={member.userEmail}
+                      size={40}
+                    />
 
                     {/* Info */}
                     <div className="min-w-0 flex-1">
@@ -494,7 +490,7 @@ const TeamPage = () => {
                 </h3>
                 {isAdmin && (
                   <button
-                    className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 font-bold text-white text-xs shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/30 dark:hover:bg-indigo-500"
+                    className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 font-bold text-white text-xs shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                     onClick={() => setInviteModalOpen(true)}
                   >
                     <Plus size={14} />
@@ -510,9 +506,9 @@ const TeamPage = () => {
                     className="flex items-center gap-4 rounded-[1.5rem] bg-gray-50 p-4 dark:bg-slate-800/50"
                     key={invite._id}
                   >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-mint dark:bg-brand-accent/30">
                       <Mail
-                        className="text-blue-600 dark:text-blue-400"
+                        className="text-brand-primary dark:text-brand-accent-hover"
                         size={18}
                       />
                     </div>

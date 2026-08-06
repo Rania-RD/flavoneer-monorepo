@@ -45,12 +45,12 @@ export const IngredientInfoBanner = ({
 
   return (
     <div className="col-span-1 mt-2 space-y-3 lg:col-span-2">
-      <div className="flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 text-sm dark:border-indigo-800/30 dark:bg-indigo-900/10">
+      <div className="flex flex-col gap-3 rounded-xl border border-brand-primary/20 bg-brand-mint/50 p-4 text-sm dark:border-brand-mint/20 dark:bg-brand-accent/10">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-indigo-900 dark:text-indigo-100">
+          <span className="font-bold text-brand-primary dark:text-brand-accent-hover">
             {t("allergens")}:
           </span>
-          <span className="font-medium text-indigo-800 dark:text-indigo-300">
+          <span className="font-medium text-brand-primary dark:text-brand-accent-hover">
             {hasAllergens
               ? selectedItem.allergens.join(", ")
               : t("none")}
@@ -77,7 +77,7 @@ export const IngredientInfoBanner = ({
           )}
         </div>
         {selectedItem.isAdditive && (
-          <div className="rounded-lg border border-indigo-100 bg-white/70 p-3 dark:border-indigo-800/30 dark:bg-slate-800/70">
+          <div className="rounded-lg border border-brand-primary/20 bg-white/70 p-3 dark:border-brand-mint/20 dark:bg-slate-800/70">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <span className="font-bold text-gray-700 dark:text-slate-300">
                 {t("additive_limit")}

@@ -64,7 +64,7 @@ export function AddIngredientNutrientsTab({
             {t("nutritional_data")}
           </h3>
           <button
-            className="flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 font-bold text-indigo-600 text-sm transition hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-400 dark:hover:bg-indigo-500/30"
+            className="flex items-center gap-1.5 rounded-full bg-brand-mint px-3 py-1.5 font-bold text-brand-primary text-sm transition hover:bg-brand-mint dark:bg-brand-accent/20 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/30"
             onClick={handleAddNutrient}
             type="button"
           >
@@ -178,7 +178,7 @@ export function AddIngredientNutrientsTab({
                       </label>
                       <div className="relative">
                         <input
-                          className={`${inputClasses} ${isDerived ? "border-indigo-100 bg-indigo-50/50 pe-8 font-bold text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400" : ""}`}
+                          className={`${inputClasses} ${isDerived ? "border-brand-primary/20 bg-brand-mint/50 pe-8 font-bold text-brand-primary dark:border-brand-mint/20 dark:bg-brand-accent/10 dark:text-brand-accent-hover" : ""}`}
                           onChange={(e) => {
                             if (isDerived) {
                               setOverriddenNutrients((prev) => ({
@@ -199,7 +199,7 @@ export function AddIngredientNutrientsTab({
                         />
                         {isDerived && (
                           <button
-                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-indigo-400 transition hover:text-indigo-600"
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-primary transition hover:text-brand-primary"
                             onClick={() => {
                               setOverriddenNutrients((prev) => ({
                                 ...prev,
@@ -243,7 +243,7 @@ export function AddIngredientNutrientsTab({
                   <label className={labelClasses}>
                     {t("reference_value")}
                   </label>
-                  <div className="flex h-[46px] items-center justify-center rounded-[1rem] border border-transparent bg-indigo-50/50 font-bold text-indigo-700 text-sm dark:bg-indigo-900/20 dark:text-indigo-300">
+                  <div className="flex h-[46px] items-center justify-center rounded-[1rem] border border-transparent bg-brand-mint/50 font-bold text-brand-primary text-sm dark:bg-brand-accent/20 dark:text-brand-accent-hover">
                     {calculateDailyValue(
                       n.predefinedId,
                       n.value,
@@ -303,7 +303,7 @@ export function AddIngredientNutrientsTab({
                  markDirty();
                  toast.success(t("allergens_verified_success"));
               }}
-              className="flex h-[46px] items-center justify-center rounded-[1rem] bg-indigo-50 px-6 font-bold text-indigo-600 text-sm transition hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-400"
+              className="flex h-[46px] items-center justify-center rounded-[1rem] bg-brand-mint px-6 font-bold text-brand-primary text-sm transition hover:bg-brand-mint dark:bg-brand-accent/20 dark:text-brand-accent-hover"
            >
               {t("verify_allergens")}
            </button>
@@ -315,19 +315,19 @@ export function AddIngredientNutrientsTab({
                <label className="flex items-center gap-2 cursor-pointer font-bold text-gray-700 dark:text-slate-300">
                  <input 
                    type="checkbox" 
-                   className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
+                   className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-focus/50"
                    checked={allergenValues.includes(allergenKey)}
                    onChange={() => toggleAllergen(allergenKey)}
                  />
                  <span className="text-sm">{t(allergenKey)}</span>
                </label>
                {allergenKey === "allergen_tree_nuts" && allergenValues.includes(allergenKey) && (
-                  <div className="ms-6 flex flex-col gap-2 border-s-2 border-indigo-100 ps-4 pt-2 dark:border-indigo-500/20">
+                  <div className="ms-6 flex flex-col gap-2 border-s-2 border-brand-primary/20 ps-4 pt-2 dark:border-brand-mint/20">
                      {TREE_NUT_OPTIONS.map((subKey) => (
                        <label key={subKey} className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 dark:text-slate-400">
                          <input 
                            type="checkbox" 
-                           className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
+                           className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-focus/50"
                            checked={subAllergens[allergenKey]?.includes(subKey) || false}
                            onChange={() => toggleSubAllergen(allergenKey, subKey)}
                          />

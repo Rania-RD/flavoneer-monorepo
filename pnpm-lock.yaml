@@ -100,6 +100,9 @@ importers:
       '@flavoneer/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@flavoneer/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@formulajs/formulajs':
         specifier: ^4.6.0
         version: 4.6.0
@@ -230,6 +233,9 @@ importers:
       '@flavoneer/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@flavoneer/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.78.0(react@19.2.3))

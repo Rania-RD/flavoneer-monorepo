@@ -54,9 +54,9 @@ a Bearer token when configured.
 ## Better Auth workspace migration
 
 Better Auth organizations own workspace membership, invitations, and the
-coarse `owner`, `admin`, and `member` roles. The local `teams`, `teamMembers`,
-and `teamInvites` tables remain bounded read projections because formulation
-records still reference Convex team IDs. Product permissions remain in the
+coarse `owner`, `admin`, and `member` roles. The local `organizations`, `organizationMembers`,
+and `organizationInvites` tables remain bounded read projections because formulation
+records still reference Convex organization IDs. Product permissions remain in the
 local role system.
 
 Deploy the widened schema before starting the backfill. Run a dry run against
@@ -69,7 +69,7 @@ pnpm --filter @flavoneer/backend exec convex run migrations:run '{"fn":"migratio
 ```
 
 The migration reuses matching organization and member records, assigns new
-Better Auth IDs to pending legacy invitations, and preserves the Convex team
+Better Auth IDs to pending legacy invitations, and preserves the Convex organization
 IDs referenced by domain data. It does not send replacement emails for legacy
 invitations; workspace admins should copy the new acceptance links from the
 Invitations tab. Do not run with `--prod` until `workspaceMigration:inventory`

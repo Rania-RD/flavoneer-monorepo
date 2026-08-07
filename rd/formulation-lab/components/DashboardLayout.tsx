@@ -36,6 +36,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     };
   }, [isFullScreenWorkspace]);
 
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/quality/") &&
+      activeSection !== "quality"
+    ) {
+      setActiveSection("quality");
+      window.localStorage.setItem("flavoneer.workspace-section", "quality");
+    }
+  }, [activeSection, location.pathname]);
+
   const handleSectionChange = (section: WorkspaceSection) => {
     if (section === activeSection) {
       return;
@@ -48,9 +58,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   return (
     <div
       className={`flavoneer-dashboard relative isolate min-w-0 bg-[#eef8eb] font-sans text-[#143d32] transition-colors duration-300 dark:bg-[#0d2b24] dark:text-[#f5f4e8] ${
-        isFullScreenWorkspace
-          ? "h-dvh min-h-0 overflow-hidden"
-          : "min-h-dvh"
+        isFullScreenWorkspace ? "h-dvh min-h-0 overflow-hidden" : "min-h-dvh"
       }`}
       data-layout={isFullScreenWorkspace ? "workspace" : "dashboard"}
     >

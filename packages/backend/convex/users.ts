@@ -14,7 +14,7 @@ const normalizeEmail = (email: string | null | undefined) =>
 
 /**
  * Mutation to sync the betterAuth user with the local users table.
- * Team owners and the first local user receive Admin; other users receive Operator.
+ * Organization owners and the first local user receive Admin; other users receive Operator.
  */
 export const syncCurrentUser = mutation({
   args: {},
@@ -34,9 +34,9 @@ export const syncCurrentUser = mutation({
 
     const normalizedEmail = normalizeEmail(authUser.email);
     const isCreator = normalizedEmail === CREATOR_EMAIL;
-    const ownsTeam =
+    const ownsOrganization =
       (await ctx.db
-        .query("teams")
+        .query("organizations")
         .withIndex("by_ownerId", (q) => q.eq("ownerId", authUser._id))
         .first()) !== null;
 
@@ -61,7 +61,7 @@ export const syncCurrentUser = mutation({
         adminRoleId: adminRole._id,
         currentRoleId: localUser.roleId,
         defaultRoleId,
-        ownsTeam,
+        ownsOrganization,
       });
 
       // Update name, email or role if changed
@@ -88,7 +88,7 @@ export const syncCurrentUser = mutation({
         currentRoleId: undefined,
         defaultRoleId:
           existingUserCount === 0 ? adminRole._id : operatorRole._id,
-        ownsTeam,
+        ownsOrganization,
       });
 
       const userId = await ctx.db.insert("users", {

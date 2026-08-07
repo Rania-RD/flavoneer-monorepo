@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import {
@@ -12,13 +14,11 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
-import { createPortal } from "react-dom";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { usePermissions } from "../hooks/usePermissions";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import type { EnrichedProject } from "../types";
@@ -28,9 +28,12 @@ import VersionHistoryModal from "./VersionHistoryModal";
 interface ProjectDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdateProject?: (project: EnrichedProject) => void;
+  onUpdateProject?: (
+    project: EnrichedProject,
+    photoStorageId?: Id<"_storage"> | null
+  ) => Promise<void> | void;
   project: EnrichedProject | null;
-  teamMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
+  organizationMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
 }
 
 const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
@@ -38,7 +41,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
   onClose,
   project,
   onUpdateProject,
-  teamMembers = [],
+  organizationMembers = [],
 }) => {
   const { isRTL, language } = useSettings();
   const { t } = useTranslation();
@@ -56,9 +59,12 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
     navigate(`/project/${project._id}`);
   };
 
-  const handleSaveEdit = (updated: EnrichedProject) => {
+  const handleSaveEdit = async (
+    updated: EnrichedProject,
+    photoStorageId?: Id<"_storage"> | null
+  ) => {
     if (onUpdateProject) {
-      onUpdateProject(updated);
+      await onUpdateProject(updated, photoStorageId);
     }
     // The parent Dashboard handles the state update, which flows back down to 'project' prop here
     setIsEditModalOpen(false);
@@ -120,20 +126,31 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
               <div className="space-y-6 p-6 md:p-8">
                 {/* Header Section */}
                 <div className="mb-2 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-                  <div>
-                    <div className="mb-2 flex items-center gap-3">
-                      <span
-                        className={`rounded-full px-4 py-1.5 font-bold text-xs uppercase tracking-wider ${getStatusStyle(project.status)}`}
-                      >
-                        {project.status}
-                      </span>
-                      <span className="font-medium text-gray-400 text-sm dark:text-slate-500">
-                        v{project.version}
-                      </span>
+                  <div className="flex min-w-0 items-end gap-4">
+                    {project.photoUrl && (
+                      <img
+                        alt={t("project_photo_for", { name: project.name })}
+                        className="h-24 w-24 shrink-0 rounded-[1.75rem] border border-white object-cover shadow-sm dark:border-slate-700"
+                        height={96}
+                        src={project.photoUrl}
+                        width={96}
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="mb-2 flex items-center gap-3">
+                        <span
+                          className={`rounded-full px-4 py-1.5 font-bold text-xs uppercase tracking-wider ${getStatusStyle(project.status)}`}
+                        >
+                          {project.status}
+                        </span>
+                        <span className="font-medium text-gray-400 text-sm dark:text-slate-500">
+                          v{project.version}
+                        </span>
+                      </div>
+                      <h2 className="break-words font-bold text-3xl text-gray-900 tracking-tight md:text-4xl dark:text-slate-100">
+                        {project.name}
+                      </h2>
                     </div>
-                    <h2 className="font-bold text-3xl text-gray-900 tracking-tight md:text-4xl dark:text-slate-100">
-                      {project.name}
-                    </h2>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <button
@@ -206,7 +223,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/60 text-brand-primary shadow-sm dark:bg-brand-accent/20 dark:text-brand-accent-hover">
                         <Thermometer size={24} />
                       </div>
-                      <h3 className="mb-1 font-bold text-lg text-brand-primary dark:text-brand-accent-hover">
+                      <h3 className="mb-1 font-bold text-brand-primary text-lg dark:text-brand-accent-hover">
                         {t("processing")}
                       </h3>
                       <p className="text-brand-primary text-sm dark:text-brand-accent-hover">
@@ -339,7 +356,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveEdit}
         project={project}
-        teamMembers={teamMembers}
+        organizationMembers={organizationMembers}
       />
 
       <VersionHistoryModal

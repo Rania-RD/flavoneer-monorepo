@@ -7,6 +7,7 @@ const FORMULATION_NAME = `E2E Formulation - ${timestamp}`;
 const INITIAL_STOCK = 100;
 const REQUIRED_WEIGHT = 20;
 const EXPECTED_FINAL_STOCK = INITIAL_STOCK - REQUIRED_WEIGHT;
+const NON_EMPTY_TEXT_PATTERN = /\S/;
 
 test.describe("Core Manufacturing Flow (E2E)", () => {
   // Increase timeout for the entire suite to account for complex flows
@@ -56,12 +57,12 @@ test.describe("Core Manufacturing Flow (E2E)", () => {
       throw e;
     }
 
-    // Handle initial onboarding if it's a completely new account (Team creation)
-    const createTeamInput = page.getByTestId("create-team-name-input");
+    // Handle initial onboarding if it's a completely new account (Organization creation)
+    const createOrganizationInput = page.getByTestId("create-organization-name-input");
     try {
-      await createTeamInput.waitFor({ state: "visible", timeout: 5000 });
-      await createTeamInput.fill("E2E Test Team");
-      await page.getByTestId("create-team-submit-button").click();
+      await createOrganizationInput.waitFor({ state: "visible", timeout: 5000 });
+      await createOrganizationInput.fill("E2E Test Organization");
+      await page.getByTestId("create-organization-submit-button").click();
 
       // Wait for the onboarding to finish and the normal dashboard to appear
       await expect(page.getByTestId("new-project-button").first()).toBeVisible({
@@ -199,11 +200,13 @@ test.describe("Core Manufacturing Flow (E2E)", () => {
         .first();
       await expect(projectCard).toBeVisible();
 
-      // Provide sign-off signature
-      const signatureInput = projectCard.getByTestId("run-signature-input");
-      if (await signatureInput.isVisible()) {
-        await signatureInput.fill("E2E Auto Sign");
-      }
+      // The profile name is the sign-off signature; there is no manual input.
+      await expect(projectCard.getByTestId("run-signature-input")).toHaveCount(
+        0
+      );
+      await expect(projectCard.getByTestId("run-signature-name")).toHaveText(
+        NON_EMPTY_TEXT_PATTERN
+      );
 
       // Click Run Procedure
       await projectCard.getByTestId("run-procedure-button").click();

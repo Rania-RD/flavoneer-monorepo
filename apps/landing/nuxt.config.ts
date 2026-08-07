@@ -28,7 +28,7 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content:
-            'Flavoneer gives food R&D teams one intelligent workspace for formulation, compliance, costing, and scale-up.',
+            'Flavoneer gives food R&D organizations one intelligent workspace for formulation, compliance, costing, and scale-up.',
         },
         { name: 'theme-color', content: '#1c4a3c' },
       ],

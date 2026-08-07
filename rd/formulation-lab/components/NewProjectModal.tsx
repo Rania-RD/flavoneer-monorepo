@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import { useMutation } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import {
   Beaker,
@@ -10,19 +12,22 @@ import {
   X,
 } from "lucide-react";
 import type React from "react";
-import { createPortal } from "react-dom";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
+import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
+import { uploadProjectPhoto } from "../lib/projectPhoto";
 import { type EnrichedProject, ProjectStatus } from "../types";
 import { GsfaCategorySelect } from "./GsfaCategorySelect";
+import ProjectPhotoField from "./ProjectPhotoField";
 
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (project: EnrichedProject) => Promise<void> | void;
-  teamMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
+  organizationMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
 }
 
 type ContentLanguage = "en" | "ar";
@@ -59,16 +64,19 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  teamMembers = [],
+  organizationMembers = [],
 }) => {
   const { profile } = useSettings();
   const { i18n } = useTranslation();
+  const { toast } = useToast();
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const [activeTab, setActiveTab] = useState<
     "general" | "technical" | "compliance"
   >("general");
   const [contentLanguage, setContentLanguage] = useState<ContentLanguage>("en");
   const t = i18n.getFixedT(contentLanguage);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     nameAr: "",
@@ -124,6 +132,9 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
     setIsSubmitting(true);
 
     try {
+      const photoStorageId = photoFile
+        ? await uploadProjectPhoto(photoFile, generateUploadUrl)
+        : undefined;
       const fallbackName = formData.name || formData.nameAr;
       const fallbackDescription =
         formData.description || formData.descriptionAr;
@@ -141,6 +152,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
           en: formData.description || fallbackDescription,
           ar: formData.descriptionAr || fallbackDescription,
         },
+        photoStorageId,
         ingredients: [],
         category: formData.category,
         gsfaCategoryCode: formData.gsfaCategoryCode || undefined,
@@ -185,8 +197,10 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       });
       setActiveTab("general");
       setContentLanguage("en");
+      setPhotoFile(null);
     } catch (error) {
       console.error("Failed to create project:", error);
+      toast.error(t("project_save_failed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -411,6 +425,14 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       />
                     </div>
 
+                    <ProjectPhotoField
+                      disabled={isSubmitting}
+                      file={photoFile}
+                      language={contentLanguage}
+                      onChange={setPhotoFile}
+                      onRemove={() => setPhotoFile(null)}
+                    />
+
                     <div className="space-y-1.5">
                       <label className="font-semibold text-gray-700 text-sm">
                         {t("formulation_state")}
@@ -438,7 +460,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                         value={formData.authorizedExecutor}
                       >
                         <option value="">{t("anyone_no_restrictions")}</option>
-                        {teamMembers.map((member) => (
+                        {organizationMembers.map((member) => (
                           <option key={member.userId} value={member.userId}>
                             {member.userName}
                           </option>

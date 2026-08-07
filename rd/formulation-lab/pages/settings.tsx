@@ -1,11 +1,11 @@
-import { Fingerprint, GitBranch, Palette, Shield } from "lucide-react";
-import React, { useState } from "react";
+import { Factory, Fingerprint, GitBranch, Shield } from "lucide-react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import ProductionLineSettingsSection from "../components/Settings/ProductionLineSettingsSection";
 import RoleManagementSection from "../components/Settings/RoleManagementSection";
 import TraceabilityConfig from "../components/Settings/TraceabilityConfig";
 import VersionControlConfig from "../components/Settings/VersionControlConfig";
-import ThemeToggle from "../components/ThemeToggle";
 import { usePermissions } from "../hooks/usePermissions";
 import { isAdminRole } from "../lib/role-access";
 import {
@@ -19,7 +19,6 @@ const Settings: React.FC = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasPermission, isLoading, role } = usePermissions();
-  const [units, setUnits] = useState("metric");
   const requestedTab = searchParams.get("tab");
   const isAdmin = isAdminRole(role);
   const canManageVersionControl = hasPermission(
@@ -35,7 +34,7 @@ const Settings: React.FC = () => {
   }, [activeTab, isLoading, requestedTab, setSearchParams]);
 
   const tabDefinitions = {
-    appearance: { label: t("appearance"), icon: Palette },
+    productionLine: { label: t("production_line_settings"), icon: Factory },
     traceability: { label: t("traceability_id"), icon: Fingerprint },
     roles: { label: t("roles_permissions"), icon: Shield },
     versionControl: { label: t("version_control"), icon: GitBranch },
@@ -46,10 +45,11 @@ const Settings: React.FC = () => {
   }));
 
   const selectTab = (tab: WorkspaceSettingsTab) => {
-    if (!getVisibleWorkspaceSettingsTabs(access).includes(tab)) {
+    const visibleTabs = getVisibleWorkspaceSettingsTabs(access);
+    if (!visibleTabs.includes(tab)) {
       return;
     }
-    setSearchParams(tab === "appearance" ? {} : { tab }, { replace: true });
+    setSearchParams(tab === visibleTabs[0] ? {} : { tab }, { replace: true });
   };
 
   const sidebarContent = (
@@ -108,71 +108,12 @@ const Settings: React.FC = () => {
         <div className="relative min-h-[600px] w-full overflow-hidden md:w-3/4">
           <div
             className={`transform transition-all duration-300 ease-out ${
-              activeTab === "appearance"
+              activeTab === "productionLine"
                 ? "block translate-x-0 opacity-100"
                 : "hidden translate-x-8 opacity-0"
-            }`}
+            } [&>section]:mt-0`}
           >
-            <div className="space-y-6">
-              <section className="rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-[#1e293b]">
-                <div className="mb-8 border-gray-100 border-b pb-6 dark:border-slate-800">
-                  <div className="mb-2 flex items-center gap-3">
-                    <div className="rounded-xl bg-brand-mint p-2 dark:bg-brand-accent/30">
-                      <Palette className="h-6 w-6 text-brand-primary dark:text-brand-accent-hover" />
-                    </div>
-                    <h3 className="font-bold text-gray-900 text-xl dark:text-white">
-                      {t("appearance_settings")}
-                    </h3>
-                  </div>
-                  <p className="text-gray-500 text-sm dark:text-gray-400">
-                    {t("customize_the_look_and_feel_of_your_work")}
-                  </p>
-                </div>
-
-                <div className="space-y-8">
-                  <div>
-                    <h4 className="mb-4 font-semibold text-gray-900 text-sm dark:text-white">
-                      {t("dark_mode")}
-                    </h4>
-                    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
-                      <ThemeToggle />
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="mb-4 font-semibold text-gray-900 text-sm dark:text-white">
-                      {t("measurement_units")}
-                    </h4>
-                    <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
-                      <div>
-                        <p className="font-medium text-gray-900 text-sm dark:text-white">
-                          {t("preferred_system")}
-                        </p>
-                        <p className="text-gray-500 text-sm dark:text-gray-400">
-                          {t("choose_between_metric_or_imperial_units")}
-                        </p>
-                      </div>
-                      <div className="flex rounded-lg border border-gray-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
-                        <button
-                          className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "metric" ? "bg-brand-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
-                          onClick={() => setUnits("metric")}
-                          type="button"
-                        >
-                          {t("metric")}
-                        </button>
-                        <button
-                          className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${units === "imperial" ? "bg-brand-primary text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
-                          onClick={() => setUnits("imperial")}
-                          type="button"
-                        >
-                          {t("imperial")}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
+            {isAdmin ? <ProductionLineSettingsSection /> : null}
           </div>
 
           {isAdmin && (

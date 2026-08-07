@@ -108,6 +108,15 @@ backend development loop from the repository root:
 pnpm dev:backend
 ```
 
+The active organization is selected from user settings. The app persists the
+matching organization ID in SecureStore and uses it for production queries after the
+user returns to the production screen.
+
+Appearance is also a per-user Convex setting shared with the formulation lab.
+`ThemePreferenceProvider` supports Light, Dark, and System. System follows the
+device color scheme, while an explicit choice updates NativeWind, Expo Router,
+and the status bar together.
+
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
 ## Get a fresh project

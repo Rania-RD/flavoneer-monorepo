@@ -34,10 +34,10 @@ async function signInOrCreateAccount(page: Page) {
     }
   }
 
-  const createTeamInput = page.getByTestId("create-team-name-input");
-  if (await createTeamInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await createTeamInput.fill("E2E Unit Conversion Team");
-    await page.getByTestId("create-team-submit-button").click();
+  const createOrganizationInput = page.getByTestId("create-organization-name-input");
+  if (await createOrganizationInput.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await createOrganizationInput.fill("E2E Unit Conversion Organization");
+    await page.getByTestId("create-organization-submit-button").click();
   }
 
   await expect(page.locator("aside")).toBeVisible({ timeout: 20_000 });

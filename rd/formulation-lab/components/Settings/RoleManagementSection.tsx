@@ -1,10 +1,14 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
+import {
+  getEffectiveSystemPermissions,
+  isConfigurableSystemRole,
+} from "@flavoneer/backend/system-role-access";
 import { useMutation, useQuery } from "convex/react";
 import { Check, Loader2, ShieldAlert, Users } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { usePermissions } from "../../hooks/usePermissions";
 import { isAdminRole } from "../../lib/role-access";
 import { Switch } from "../ui/Switch";
@@ -43,6 +47,13 @@ const AVAILABLE_PERMISSIONS = [
   },
 ];
 
+const haveSamePermissions = (
+  first: readonly string[] | undefined,
+  second: readonly string[]
+) =>
+  JSON.stringify([...(first ?? [])].sort()) ===
+  JSON.stringify([...second].sort());
+
 const RoleManagementSection: React.FC = () => {
   const { t } = useTranslation();
   const { isLoading: isPermissionLoading, role } = usePermissions();
@@ -52,6 +63,7 @@ const RoleManagementSection: React.FC = () => {
     api.users.listUsersWithRoles,
     canManageRoles ? {} : "skip"
   );
+  const matrixRoles = roles?.filter(isConfigurableSystemRole) ?? [];
   const updateRolePermissions = useMutation(api.roles.updateRolePermissions);
   const updateUserRole = useMutation(api.users.updateUserRole);
 
@@ -75,9 +87,12 @@ const RoleManagementSection: React.FC = () => {
   useEffect(() => {
     if (roles) {
       const initialMap: Record<string, string[]> = {};
-      roles.forEach((r) => {
-        initialMap[r._id] = [...r.permissions];
-      });
+      for (const currentRole of roles) {
+        if (isConfigurableSystemRole(currentRole)) {
+          initialMap[currentRole._id] =
+            getEffectiveSystemPermissions(currentRole);
+        }
+      }
       setLocalPermissions(initialMap);
     }
   }, [roles]);
@@ -119,13 +134,10 @@ const RoleManagementSection: React.FC = () => {
     setPermissionsSaved(false);
 
     try {
-      const promises = roles.map(async (role) => {
+      const promises = matrixRoles.map(async (role) => {
         const newPerms = localPermissions[role._id];
-        // Only save if different (shallow compare is fine here)
-        if (
-          JSON.stringify(newPerms?.sort()) !==
-          JSON.stringify(role.permissions.sort())
-        ) {
+        // Only save roles whose permission set changed.
+        if (!haveSamePermissions(newPerms, role.permissions)) {
           await updateRolePermissions({
             roleId: role._id as Id<"roles">,
             permissions: newPerms,
@@ -174,10 +186,8 @@ const RoleManagementSection: React.FC = () => {
     }
   };
 
-  const hasPermissionChanges = roles?.some(
-    (role) =>
-      JSON.stringify(localPermissions[role._id]?.sort()) !==
-      JSON.stringify(role.permissions.sort())
+  const hasPermissionChanges = matrixRoles.some(
+    (role) => !haveSamePermissions(localPermissions[role._id], role.permissions)
   );
 
   const hasUserChanges = users?.some(
@@ -257,7 +267,7 @@ const RoleManagementSection: React.FC = () => {
                   <th className="border-gray-100 border-b p-4 text-start font-semibold text-gray-900 text-sm dark:border-slate-800 dark:text-white">
                     {t("permission")}
                   </th>
-                  {roles.map((role) => (
+                  {matrixRoles.map((role) => (
                     <th
                       className="min-w-[120px] border-gray-100 border-b p-4 text-center font-semibold text-gray-900 text-sm dark:border-slate-800 dark:text-white"
                       key={role._id}
@@ -281,14 +291,10 @@ const RoleManagementSection: React.FC = () => {
                         {t(perm.desc)}
                       </div>
                     </td>
-                    {roles.map((role) => {
+                    {matrixRoles.map((role) => {
                       const isChecked = localPermissions[role._id]?.includes(
                         perm.key
                       );
-                      // Optional: disable editing 'admin' role directly to prevent lockout,
-                      // but allowing it for flexibility as per prompt. We'll leave it enabled.
-                      const roleIsAdmin =
-                        role.key === "admin" && perm.key === "full_access";
                       return (
                         <td
                           className="p-4 text-center align-middle"
@@ -296,7 +302,6 @@ const RoleManagementSection: React.FC = () => {
                         >
                           <Switch
                             checked={!!isChecked}
-                            disabled={roleIsAdmin}
                             onChange={() =>
                               handleTogglePermission(role._id, perm.key)
                             }

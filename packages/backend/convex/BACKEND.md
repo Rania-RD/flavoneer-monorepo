@@ -62,6 +62,9 @@ This separation preserves history.
 ## 4. Key Modules
 
 - **Projects**: Core recipes. Complex update logic allows replacing ingredients/phases.
+- **Project photos**: Projects may reference one JPEG, PNG, or WebP file in
+  Convex storage through `photoStorageId`. Project queries resolve that ID to a
+  signed `photoUrl`; update and delete mutations remove replaced files.
 - **Runs**: Executing a recipe. Handles inventory deduction upon completion.
 - **Inventory**: Stock management. Linked to `materialUsageLogs` for traceability.
 
@@ -72,9 +75,9 @@ This separation preserves history.
 - Better Auth organizations are the authority for workspace lifecycle,
   membership, pending invitations, active organization, and the coarse Owner,
   Admin, and Member roles.
-- The local `teams`, `teamMembers`, and `teamInvites` tables are domain anchors
+- The local `organizations`, `organizationMembers`, and `organizationInvites` tables are domain anchors
   and bounded read projections. Existing projects and regulated records keep
-  their Convex `teamId`; application code must not treat a projection row as
+  their Convex `organizationId`; application code must not treat a projection row as
   the authorization source after a workspace has `authOrganizationId`.
 - `workspaceAccess.ts` resolves centralized membership first and falls back to
   the local membership table only for workspaces that have not been migrated.
@@ -91,11 +94,15 @@ This separation preserves history.
 - Only the first user synchronized into a deployment receives the Admin role by
   default. Every later non-owner receives Operator, without email-based
   overrides.
-- Creating a team grants the creator the team-level Owner role and the Admin
-  system role. `users.syncCurrentUser` also promotes existing team owners to
+- Creating an organization grants the creator the organization-level Owner role and the Admin
+  system role. `users.syncCurrentUser` also promotes existing organization owners to
   Admin so ownership and administrative access cannot drift.
 - Role keys are stable authorization identifiers. The frontend translates role
   titles from those keys; persisted English `name` values are fallbacks only.
+- The `admin` role key always resolves to `full_access`, including for existing
+  deployments whose stored Admin permission list predates that permission. It
+  is omitted from the permissions matrix, and permission updates targeting it
+  are rejected by the backend.
 - `manage_version_control` is the dedicated capability for viewing and updating
   Workspace Settings version-control behavior. The Admin role receives it by
   default through `full_access`; administrators may grant it explicitly to

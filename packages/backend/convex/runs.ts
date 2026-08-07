@@ -9,7 +9,7 @@ import {
 } from "./_generated/server";
 import { authComponent } from "./auth";
 import { makeLocalizedString, selectLocalizedString } from "./localization";
-import { logTeamAction } from "./teamAuditLogs";
+import { logOrganizationAction } from "./organizationAuditLogs";
 import { convertUnits } from "./units";
 import {
   enrichedRunReturnValidator,
@@ -190,15 +190,15 @@ async function deductInventory(
 }
 
 export const getLabUtilization = query({
-  args: { teamId: v.optional(v.id("teams")) },
+  args: { organizationId: v.optional(v.id("organizations")) },
   returns: v.number(),
   handler: async (ctx, args) => {
     const authUser = await authComponent.safeGetAuthUser(ctx);
     if (!authUser) {
       throw new Error("Not authenticated");
     }
-    if (args.teamId && !(await getWorkspaceAccess(ctx, args.teamId))) {
-      throw new Error("Not a member of this team");
+    if (args.organizationId && !(await getWorkspaceAccess(ctx, args.organizationId))) {
+      throw new Error("Not a member of this organization");
     }
 
     const activeRuns = await ctx.db
@@ -206,16 +206,16 @@ export const getLabUtilization = query({
       .withIndex("by_status", (q) => q.eq("status", "In Progress"))
       .take(200);
     return activeRuns.filter((run) =>
-      args.teamId
-        ? run.teamId === args.teamId
-        : run.userId === authUser._id && run.teamId === undefined
+      args.organizationId
+        ? run.organizationId === args.organizationId
+        : run.userId === authUser._id && run.organizationId === undefined
     ).length;
   },
 });
 
 export const list = query({
   args: {
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     paginationOpts: paginationOptsValidator,
     language: v.optional(languageValidator),
   },
@@ -226,7 +226,7 @@ export const list = query({
     }
     const authUserId = authUser._id;
 
-    if (args.teamId && !(await getWorkspaceAccess(ctx, args.teamId))) {
+    if (args.organizationId && !(await getWorkspaceAccess(ctx, args.organizationId))) {
       return { page: [], isDone: true, continueCursor: "" };
     }
 
@@ -235,9 +235,9 @@ export const list = query({
       isDone: boolean;
       continueCursor: string;
     };
-    if (args.teamId) {
-      // If teamId is specified, fetch specifically for that team (needs index by_teamId though... or fallback to JS filter if no index. Assuming schema has it or we can just filter JS)
-      // Since schema.ts defines index("by_teamId", ["teamId"]) but wait, no, runs doesn't have by_teamId!
+    if (args.organizationId) {
+      // If organizationId is specified, fetch specifically for that organization (needs index by_organizationId though... or fallback to JS filter if no index. Assuming schema has it or we can just filter JS)
+      // Since schema.ts defines index("by_organizationId", ["organizationId"]) but wait, no, runs doesn't have by_organizationId!
       // runs has by_projectId and by_status... Wait, we can just use the base pagination.
       result = await ctx.db
         .query("runs")
@@ -250,20 +250,20 @@ export const list = query({
         .paginate(args.paginationOpts);
     }
 
-    const pageTeamIds = Array.from(
+    const pageOrganizationIds = Array.from(
       new Set(
         result.page
-          .map((run) => run.teamId)
-          .filter((teamId): teamId is Id<"teams"> => teamId !== undefined)
+          .map((run) => run.organizationId)
+          .filter((organizationId): organizationId is Id<"organizations"> => organizationId !== undefined)
       )
     );
-    const teamAccessEntries = await Promise.all(
-      pageTeamIds.map(async (teamId) => [
-        teamId,
-        Boolean(await getWorkspaceAccess(ctx, teamId)),
+    const organizationAccessEntries = await Promise.all(
+      pageOrganizationIds.map(async (organizationId) => [
+        organizationId,
+        Boolean(await getWorkspaceAccess(ctx, organizationId)),
       ] as const)
     );
-    const teamAccess = new Map(teamAccessEntries);
+    const organizationAccess = new Map(organizationAccessEntries);
 
     // Get user's explicit sharedAccess for runs
     const sharedAccess = await ctx.db
@@ -279,12 +279,12 @@ export const list = query({
     }
 
     const visibleRuns = result.page.filter((r) => {
-      if (args.teamId && r.teamId !== args.teamId) {
+      if (args.organizationId && r.organizationId !== args.organizationId) {
         return false;
       }
       return (
         r.userId === authUserId ||
-        (r.teamId && teamAccess.get(r.teamId)) ||
+        (r.organizationId && organizationAccess.get(r.organizationId)) ||
         sharedRunMap.has(r._id)
       );
     });
@@ -321,10 +321,10 @@ export const get = query({
 
     let sharedRole: "viewer" | "editor" | undefined;
 
-    if (run.teamId) {
-      const teamMember = await getWorkspaceAccess(ctx, run.teamId);
+    if (run.organizationId) {
+      const organizationMember = await getWorkspaceAccess(ctx, run.organizationId);
 
-      if (!teamMember) {
+      if (!organizationMember) {
         const access = await ctx.db
           .query("sharedAccess")
           .withIndex("by_userId_entityId", (q) =>
@@ -404,7 +404,7 @@ export const startRun = mutation({
       projectNameI18n: makeLocalizedString(project.name, project.nameI18n),
       data: {},
       userId: authUser._id,
-      teamId: project.teamId || undefined,
+      organizationId: project.organizationId || undefined,
     });
 
     // 2. Snapshot phases + steps into run-scoped tables
@@ -493,7 +493,7 @@ export const createNewRun = mutation({
       status: "In Progress",
       data: {},
       userId: authUser._id,
-      teamId: project.teamId || undefined,
+      organizationId: project.organizationId || undefined,
     });
 
     // 2. Fetch master phases and steps
@@ -556,9 +556,9 @@ export const createNewRun = mutation({
       }
     }
 
-    if (project.teamId) {
-      await logTeamAction(ctx, {
-        teamId: project.teamId,
+    if (project.organizationId) {
+      await logOrganizationAction(ctx, {
+        organizationId: project.organizationId,
         actorId: authUser._id,
         actorName: authUser.name || authUser.email || "Unknown User",
         action: "Run Started",
@@ -568,8 +568,8 @@ export const createNewRun = mutation({
       });
 
       if (signOffRequired && project.authorizedExecutor) {
-        await logTeamAction(ctx, {
-          teamId: project.teamId,
+        await logOrganizationAction(ctx, {
+          organizationId: project.organizationId,
           actorId: authUser._id,
           actorName: "System",
           action: "Sign-off Required",
@@ -638,9 +638,9 @@ export const finishRun = mutation({
     // 3. Trigger Audit Log if Failed
     if (status === "failed") {
       const authUser = await authComponent.getAuthUser(ctx);
-      if (run.teamId && authUser) {
-        await logTeamAction(ctx, {
-          teamId: run.teamId,
+      if (run.organizationId && authUser) {
+        await logOrganizationAction(ctx, {
+          organizationId: run.organizationId,
           actorId: authUser._id,
           actorName: authUser.name || authUser.email || "Unknown User",
           action: "Run Failed",
@@ -719,7 +719,7 @@ export const create = mutation({
     const runId = await ctx.db.insert("runs", {
       ...runData,
       userId: authUser._id,
-      teamId: project.teamId || undefined,
+      organizationId: project.organizationId || undefined,
     });
 
     let projectName = "";

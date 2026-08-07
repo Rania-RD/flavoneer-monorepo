@@ -19,7 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
+import { useOrganization } from "../context/OrganizationContext";
 import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
@@ -49,7 +49,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isRTL, language } = useSettings();
-  const { teams, activeTeamId } = useTeam();
+  const { organizations, activeOrganizationId } = useOrganization();
   const createItem = useMutation(api.inventory.create);
   const logActivity = useMutation(api.activities.log);
   const ingredientsRaw = useQuery(api.ingredients.list, { language }) ?? [];
@@ -86,17 +86,17 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   );
 
   const generateBatchId = useCallback((): string => {
-    const activeTeam = teams.find((tm) => tm._id === activeTeamId);
-    const teamInitials = activeTeam ? getInitials(activeTeam.name) : "";
+    const activeOrganization = organizations.find((tm) => tm._id === activeOrganizationId);
+    const organizationInitials = activeOrganization ? getInitials(activeOrganization.name) : "";
     const productInitials = formData.name.trim()
       ? getInitials(formData.name)
       : "";
     const seq = String(Date.now() % 1000).padStart(3, "0");
-    const parts = [teamInitials, productInitials, seq].filter(
+    const parts = [organizationInitials, productInitials, seq].filter(
       (p, i) => i === 2 || p.length > 0
     );
     return parts.join("-");
-  }, [teams, activeTeamId, formData.name, getInitials]);
+  }, [organizations, activeOrganizationId, formData.name, getInitials]);
 
   useEffect(() => {
     if (!batchIdTouched && formData.name.trim()) {

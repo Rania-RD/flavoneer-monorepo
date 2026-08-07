@@ -223,6 +223,8 @@ All content cards share:
 - Hover: `hover:-translate-y-1 hover:shadow-lg`
 - Progress bar at bottom: `h-2.5 rounded-full` with theme-colored fill
 - Footer CTA button: `rounded-2xl py-3.5 font-bold active:scale-95`
+- Optional project photos use a compact `object-cover` crop beside the project
+  title. Projects without photos keep the existing pastel card treatment.
 
 ### 7.2 Placeholder "Add" Cards
 
@@ -453,9 +455,9 @@ slide-in-from-right-4 /* Form tab transitions */
 
 ## 9. Dark Mode
 
-### 9.1 Toggle Mechanism
+### 9.1 Theme Preference
 
-Dark mode is controlled via `SettingsContext` → `toggleDarkMode()`, which adds/removes the `dark` class on `document.documentElement`. TailwindCSS is configured with `darkMode: 'class'`.
+Appearance is a per-user preference managed from the profile settings modal. `SettingsContext` exposes `themePreference` and `setThemePreference()` for `light`, `dark`, and `system`; it resolves System with `prefers-color-scheme` and adds or removes the `dark` class on `document.documentElement`. TailwindCSS is configured with `darkMode: 'class'`.
 
 ### 9.2 Color Mapping
 
@@ -681,7 +683,7 @@ visible string and apply direction to the modal root, including portaled UI.
       active ? 'bg-white shadow-md text-gray-900' : 'text-gray-400'
     }`}
   >
-    Metric (g, °C)
+    Active option
   </button>
 </div>
 ```
@@ -694,7 +696,7 @@ visible string and apply direction to the modal root, including portaled UI.
 
 ```
 App
-└── SettingsProvider        ← units, dark mode, profile, language, RTL
+└── SettingsProvider        ← theme preference, profile, language, RTL
     └── NotificationProvider  ← notification state, add/read/clear
         └── Router → Layout → Pages
 ```
@@ -702,15 +704,15 @@ App
 ### 15.2 Custom Hooks
 
 ```tsx
-useSettings() // Returns: units, darkMode, profile, language, isRTL, t(), formatMass(), formatTemp()
+useSettings() // Returns: themePreference, setThemePreference(), darkMode, profile, language, isRTL
 useNotifications() // Returns: notifications, unreadCount, addNotification(), markAllAsRead(), markAsRead(), clearNotifications()
 ```
 
 ### 15.3 Unit Formatting
 
 ```tsx
-formatMass(kgValue) // → "500g" or "1.10lbs"
-formatTemp(celsiusValue) // → "135°C" or "275.0°F"
+formatMass(kgValue) // → "500g" or "1.10kg"
+formatTemp(celsiusValue) // → "135°C"
 ```
 
 ---
@@ -850,7 +852,7 @@ Food-R-D-Lab-/
 │   └── Schedule.tsx           ← Calendar timeline + agenda
 │
 ├── context/
-│   ├── SettingsContext.tsx     ← Theme, units, profile, i18n
+│   ├── SettingsContext.tsx     ← Theme, profile, i18n
 │   └── NotificationContext.tsx ← In-app notification management
 │
 └── ../../packages/backend/convex/ ← Shared backend (Convex functions + schema)

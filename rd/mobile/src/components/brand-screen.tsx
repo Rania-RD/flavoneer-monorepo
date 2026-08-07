@@ -6,8 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Image } from '@/components/ui/image';
-import { BottomTabInset } from '@/constants/theme';
+import { WorkspaceSectionSwitcher } from '@/components/workspace-section-switcher';
 import { useTheme } from '@/hooks/use-theme';
 
 const AnimatedView = cssInterop(Animated.View, { className: 'style' }) as typeof Animated.View;
@@ -24,7 +23,7 @@ export function BrandScreen({ children }: PropsWithChildren) {
         <ScrollView
           className="flex-1"
           contentContainerClassName="mx-auto w-full max-w-[800px] px-5 pt-3"
-          contentContainerStyle={{ paddingBottom: BottomTabInset + 28 }}
+          contentContainerStyle={{ paddingBottom: 28 }}
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -51,26 +50,25 @@ export function BrandEntrance({
   );
 }
 
-export function BrandHeader({ action }: { action?: ReactNode }) {
+export function BrandHeader({
+  action,
+  className = 'mb-8',
+  subtitle,
+}: {
+  action?: ReactNode;
+  className?: string;
+  subtitle?: ReactNode;
+}) {
   return (
-    <View className="mb-8 flex-row items-center justify-between gap-4">
+    <View className={`${className} flex-row items-center justify-between gap-4`}>
       <View className="min-w-0 flex-1 flex-row items-center gap-3">
-        <View
-          className="size-12 items-center justify-center rounded-[17px] bg-[#F5A623]"
-          style={{ elevation: 3, shadowColor: '#102F27', shadowOpacity: 0.16, shadowRadius: 10 }}
-        >
-          <Image
-            accessibilityLabel="Flavoneer"
-            className="size-9"
-            source={require('@/assets/images/flavoneer-mark.png')}
-          />
-        </View>
+        <WorkspaceSectionSwitcher />
         <View className="min-w-0 flex-1">
           <ThemedText className="leading-6" type="section">
             Flavoneer
           </ThemedText>
           <ThemedText className="mt-0.5" themeColor="textSecondary" type="overline">
-            R&amp;D workspace
+            {subtitle ?? 'R&D workspace'}
           </ThemedText>
         </View>
       </View>

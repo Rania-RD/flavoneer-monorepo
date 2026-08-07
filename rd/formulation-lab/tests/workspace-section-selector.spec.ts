@@ -29,18 +29,23 @@ test("flask selector switches the workspace navigation to quality control", asyn
   await page.getByRole("menuitemradio", { name: /Quality Control/ }).click();
 
   await expect(page).toHaveURL(/\/reports$/);
-  await expect(page.getByText("Quality Control Workspace")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Lab Reports", level: 1 })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Production Monitoring" })
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: "Lab Reports" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Run review" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Team" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Organization" })).toHaveCount(0);
   await expect(selector.locator('[data-mode-icon="quality"]')).toBeVisible();
 
   await page.reload();
   await expect(page.getByTestId("rail-section-selector")).toBeVisible();
   await expect(
     page.getByTestId("desktop-workspace-navigation").getByRole("link")
-  ).toHaveCount(3);
+  ).toHaveCount(4);
   await expect
     .poll(() =>
       page.evaluate(() =>

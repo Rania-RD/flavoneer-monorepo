@@ -9,72 +9,57 @@ export const projectStatusValidator = v.union(
   v.literal("Under Review"),
   v.literal("Approved"),
   v.literal("Released"),
-  v.literal("On Hold")
+  v.literal("On Hold"),
 );
 
-export const formulationStateValidator = v.union(
-  v.literal("Liquid"),
-  v.literal("Solid")
-);
+export const formulationStateValidator = v.union(v.literal("Liquid"), v.literal("Solid"));
 
-export const servingSizeModeValidator = v.union(
-  v.literal("recipeMakes"),
-  v.literal("servingIs")
-);
+export const servingSizeModeValidator = v.union(v.literal("recipeMakes"), v.literal("servingIs"));
 
 export const servingSizeUnitValidator = v.union(
   v.literal("g"),
   v.literal("kg"),
   v.literal("mg"),
-  v.literal("ml")
+  v.literal("ml"),
 );
 
-export const sharedRoleValidator = v.union(
-  v.literal("viewer"),
-  v.literal("editor")
-);
+export const sharedRoleValidator = v.union(v.literal("viewer"), v.literal("editor"));
 
-export const sharedEntityTypeValidator = v.union(
-  v.literal("project"),
-  v.literal("run")
-);
+export const sharedEntityTypeValidator = v.union(v.literal("project"), v.literal("run"));
 
 export const stockStatusValidator = v.union(v.literal("ok"), v.literal("low"));
 
 export const labReportStatusValidator = v.union(
   v.literal("Approved"),
   v.literal("Pending"),
-  v.literal("Failed")
+  v.literal("Failed"),
 );
 
 export const equipmentStatusValidator = v.union(
   v.literal("Available"),
   v.literal("In Use"),
-  v.literal("Reserved")
+  v.literal("Reserved"),
 );
 
 export const equipmentTypeValidator = v.union(
   v.literal("ph"),
   v.literal("mixer"),
   v.literal("incubator"),
-  v.literal("viscometer")
+  v.literal("viscometer"),
 );
 
 export const inviteStatusValidator = v.union(
   v.literal("pending"),
   v.literal("accepted"),
-  v.literal("revoked")
+  v.literal("revoked"),
 );
 
-export const inviteRoleValidator = v.union(
-  v.literal("admin"),
-  v.literal("member")
-);
+export const inviteRoleValidator = v.union(v.literal("admin"), v.literal("member"));
 
-export const teamMemberRoleValidator = v.union(
+export const organizationMemberRoleValidator = v.union(
   v.literal("owner"),
   v.literal("admin"),
-  v.literal("member")
+  v.literal("member"),
 );
 
 export const stepTypeValidator = v.union(
@@ -83,39 +68,58 @@ export const stepTypeValidator = v.union(
   v.literal("process"),
   v.literal("critical_check"),
   v.literal("conditional"),
-  v.literal("spreadsheet_note")
+  v.literal("spreadsheet_note"),
 );
 
-export const signatureTypeValidator = v.union(
-  v.literal("upload"),
-  v.literal("text")
-);
+export const signatureTypeValidator = v.union(v.literal("upload"), v.literal("text"));
 
-export const unitsValidator = v.union(
-  v.literal("metric"),
-  v.literal("imperial")
-);
+export const unitsValidator = v.union(v.literal("metric"), v.literal("imperial"));
 
 export const languageValidator = v.union(v.literal("en"), v.literal("ar"));
+
+export const productionHallCodeValidator = v.union(v.literal("A"), v.literal("B"));
+
+export const productionLineSpecificationStatusValidator = v.union(
+  v.literal("draft"),
+  v.literal("active"),
+  v.literal("superseded"),
+);
+
+export const productionLineReadingKeyValidator = v.union(
+  v.literal("pour_weight"),
+  v.literal("additive_weight"),
+  v.literal("chocolate_temperature"),
+  v.literal("coated_piece_weight"),
+  v.literal("carton_weight"),
+);
+
+export const productionLineMeasurementUnitValidator = v.union(
+  v.literal("mg"),
+  v.literal("g"),
+  v.literal("kg"),
+  v.literal("°C"),
+);
+
+export const productionLineRecordStatusValidator = v.union(
+  v.literal("draft"),
+  v.literal("pending_production_review"),
+  v.literal("returned"),
+  v.literal("approved"),
+);
+
 export const localizedStringValidator = v.object({
   en: v.optional(v.string()),
   ar: v.optional(v.string()),
 });
 
-export const runOutcomeValidator = v.union(
-  v.literal("success"),
-  v.literal("failure")
-);
+export const runOutcomeValidator = v.union(v.literal("success"), v.literal("failure"));
 
-export const versionTagValidator = v.union(
-  v.literal("current"),
-  v.literal("previous")
-);
+export const versionTagValidator = v.union(v.literal("current"), v.literal("previous"));
 
 export const batchCodeFormatValidator = v.union(
   v.literal("prefix-seq"),
   v.literal("prefix-date-seq"),
-  v.literal("prefix-random")
+  v.literal("prefix-random"),
 );
 
 // ─── Composite Validators (Args) ─────────────────────
@@ -131,21 +135,14 @@ export const ingredientValidator = v.object({
   costPerKg: v.optional(v.number()),
 });
 
-export const spreadsheetCellValueValidator = v.union(
-  v.string(),
-  v.number(),
-  v.boolean(),
-  v.null()
-);
+export const spreadsheetCellValueValidator = v.union(v.string(), v.number(), v.boolean(), v.null());
 
 export const spreadsheetCellValidator = v.object({
   raw: v.string(),
   value: v.optional(spreadsheetCellValueValidator),
   display: v.optional(v.string()),
   formula: v.optional(v.string()),
-  error: v.optional(
-    v.union(v.literal("ERROR"), v.literal("REF"), v.literal("CYCLE"))
-  ),
+  error: v.optional(v.union(v.literal("ERROR"), v.literal("REF"), v.literal("CYCLE"))),
   updatedAt: v.optional(v.number()),
   updatedBy: v.optional(v.string()),
 });
@@ -186,17 +183,14 @@ export const stepValidator = v.object({
         min: v.optional(v.number()),
         max: v.optional(v.number()),
         unit: v.optional(v.string()),
-      })
-    )
+      }),
+    ),
   ),
   onFail: v.optional(
     v.object({
-      action: v.union(
-        v.literal("redirect_dispose"),
-        v.literal("report_reason")
-      ),
+      action: v.union(v.literal("redirect_dispose"), v.literal("report_reason")),
       reasonPrompt: v.optional(v.string()),
-    })
+    }),
   ),
   spreadsheet: v.optional(miniSpreadsheetValidator),
 });
@@ -249,17 +243,14 @@ export const stepReturnValidator = v.object({
         min: v.optional(v.number()),
         max: v.optional(v.number()),
         unit: v.optional(v.string()),
-      })
-    )
+      }),
+    ),
   ),
   onFail: v.optional(
     v.object({
-      action: v.union(
-        v.literal("redirect_dispose"),
-        v.literal("report_reason")
-      ),
+      action: v.union(v.literal("redirect_dispose"), v.literal("report_reason")),
       reasonPrompt: v.optional(v.string()),
-    })
+    }),
   ),
   spreadsheet: v.optional(miniSpreadsheetValidator),
 });
@@ -289,6 +280,8 @@ export const enrichedProjectReturnValidator = v.object({
   lead: v.string(),
   description: v.string(),
   descriptionI18n: v.optional(localizedStringValidator),
+  photoStorageId: v.optional(v.id("_storage")),
+  photoUrl: v.optional(v.string()),
   category: v.optional(v.string()),
   categoryI18n: v.optional(localizedStringValidator),
   gsfaCategoryCode: v.optional(v.string()),
@@ -333,7 +326,7 @@ export const enrichedProjectReturnValidator = v.object({
   batchCodePrefix: v.optional(v.string()),
   batchCodeFormat: v.optional(v.string()),
   userId: v.optional(v.union(v.string(), v.null())),
-  teamId: v.optional(v.union(v.id("teams"), v.null())),
+  organizationId: v.optional(v.union(v.id("organizations"), v.null())),
   releaseNotes: v.optional(v.string()),
   releasedBy: v.optional(v.string()),
   releasedAt: v.optional(v.string()),
@@ -369,18 +362,15 @@ export const enrichedRunReturnValidator = v.object({
       texture: v.number(),
       color: v.number(),
       taste: v.number(),
-    })
+    }),
   ),
   stepLogs: v.optional(
-    v.record(
-      v.string(),
-      v.object({ startTime: v.number(), observation: v.string() })
-    )
+    v.record(v.string(), v.object({ startTime: v.number(), observation: v.string() })),
   ),
   runOutcome: v.optional(v.string()),
   image: v.optional(v.string()),
   userId: v.optional(v.string()),
-  teamId: v.optional(v.id("teams")),
+  organizationId: v.optional(v.id("organizations")),
   phases: v.optional(v.array(phaseReturnValidator)),
   signoffData: v.optional(v.string()),
   signoffFont: v.optional(v.string()),
@@ -414,13 +404,13 @@ export const enrichedInventoryReturnValidator = v.object({
   ingredientCode: v.optional(v.string()),
   ingredientId: v.optional(v.string()),
   userId: v.optional(v.string()),
-  teamId: v.optional(v.id("teams")),
+  organizationId: v.optional(v.id("organizations")),
   usedIn: v.array(
     v.object({
       id: v.string(),
       name: v.string(),
       nameI18n: v.optional(localizedStringValidator),
-    })
+    }),
   ),
 });
 
@@ -453,7 +443,7 @@ export const enrichedLabReportReturnValidator = v.object({
   sampleType: v.string(),
   hash: v.string(),
   userId: v.optional(v.string()),
-  teamId: v.optional(v.id("teams")),
+  organizationId: v.optional(v.id("organizations")),
   results: v.array(testResultReturnValidator),
   signoffData: v.optional(v.string()),
   signoffFont: v.optional(v.string()),
@@ -476,8 +466,14 @@ export const equipmentReturnValidator = v.object({
   meta: v.string(),
   user: v.optional(v.string()),
   type: equipmentTypeValidator,
-  teamId: v.optional(v.id("teams")),
+  organizationId: v.optional(v.id("organizations")),
 });
+
+export const themePreferenceValidator = v.union(
+  v.literal("dark"),
+  v.literal("light"),
+  v.literal("system"),
+);
 
 /** User settings — returned by settings.get */
 export const userSettingsReturnValidator = v.object({
@@ -486,6 +482,7 @@ export const userSettingsReturnValidator = v.object({
   settingsKey: v.string(),
   units: unitsValidator,
   darkMode: v.boolean(),
+  themePreference: v.optional(themePreferenceValidator),
   language: languageValidator,
   appAlerts: v.boolean(),
   emailSummaries: v.boolean(),
@@ -493,15 +490,12 @@ export const userSettingsReturnValidator = v.object({
   title: v.optional(v.string()),
   email: v.optional(v.string()),
   avatarUrl: v.optional(v.string()),
-  signatureType: v.optional(signatureTypeValidator),
-  signatureData: v.optional(v.string()),
-  signatureFont: v.optional(v.string()),
   profile: v.optional(v.record(v.string(), v.string())),
 });
 
-/** Team (with role) — returned by teams.list */
-export const teamWithRoleReturnValidator = v.object({
-  _id: v.id("teams"),
+/** Organization (with role) — returned by organizations.list */
+export const organizationWithRoleReturnValidator = v.object({
+  _id: v.id("organizations"),
   _creationTime: v.number(),
   name: v.string(),
   slug: v.string(),
@@ -510,12 +504,12 @@ export const teamWithRoleReturnValidator = v.object({
   createdAt: v.number(),
   autoVersioning: v.optional(v.boolean()),
   authOrganizationId: v.optional(v.string()),
-  role: teamMemberRoleValidator,
+  role: organizationMemberRoleValidator,
 });
 
-/** Team document — returned by teams.get */
-export const teamReturnValidator = v.object({
-  _id: v.id("teams"),
+/** Organization document — returned by organizations.get */
+export const organizationReturnValidator = v.object({
+  _id: v.id("organizations"),
   _creationTime: v.number(),
   name: v.string(),
   slug: v.string(),
@@ -526,25 +520,25 @@ export const teamReturnValidator = v.object({
   authOrganizationId: v.optional(v.string()),
 });
 
-/** Team member document — returned by teamMembers queries */
-export const teamMemberReturnValidator = v.object({
-  _id: v.id("teamMembers"),
+/** Organization member document — returned by organizationMembers queries */
+export const organizationMemberReturnValidator = v.object({
+  _id: v.id("organizationMembers"),
   _creationTime: v.number(),
-  teamId: v.id("teams"),
+  organizationId: v.id("organizations"),
   userId: v.string(),
   userName: v.string(),
   userEmail: v.string(),
   userAvatarUrl: v.optional(v.string()),
-  role: teamMemberRoleValidator,
+  role: organizationMemberRoleValidator,
   joinedAt: v.number(),
   authMemberId: v.optional(v.string()),
 });
 
-/** Team invite doc — returned by teamInvites queries */
-export const teamInviteReturnValidator = v.object({
-  _id: v.id("teamInvites"),
+/** Organization invite doc — returned by organizationInvites queries */
+export const organizationInviteReturnValidator = v.object({
+  _id: v.id("organizationInvites"),
   _creationTime: v.number(),
-  teamId: v.id("teams"),
+  organizationId: v.id("organizations"),
   email: v.string(),
   role: inviteRoleValidator,
   token: v.string(),
@@ -556,11 +550,11 @@ export const teamInviteReturnValidator = v.object({
   authInvitationId: v.optional(v.string()),
 });
 
-/** Team invite with team name — returned by teamInvites.getByToken */
-export const teamInviteWithTeamReturnValidator = v.object({
-  _id: v.id("teamInvites"),
+/** Organization invite with organization name — returned by organizationInvites.getByToken */
+export const organizationInviteWithOrganizationReturnValidator = v.object({
+  _id: v.id("organizationInvites"),
   _creationTime: v.number(),
-  teamId: v.id("teams"),
+  organizationId: v.id("organizations"),
   email: v.string(),
   role: inviteRoleValidator,
   token: v.string(),
@@ -570,14 +564,14 @@ export const teamInviteWithTeamReturnValidator = v.object({
   createdAt: v.number(),
   expiresAt: v.optional(v.number()),
   authInvitationId: v.optional(v.string()),
-  teamName: v.string(),
+  organizationName: v.string(),
 });
 
-/** Team audit log — returned by teamAuditLogs.list */
-export const teamAuditLogReturnValidator = v.object({
-  _id: v.id("teamAuditLogs"),
+/** Organization audit log — returned by organizationAuditLogs.list */
+export const organizationAuditLogReturnValidator = v.object({
+  _id: v.id("organizationAuditLogs"),
   _creationTime: v.number(),
-  teamId: v.id("teams"),
+  organizationId: v.id("organizations"),
   actorId: v.string(),
   actorName: v.string(),
   action: v.string(),
@@ -700,21 +694,18 @@ export const recipePhaseWithStepsReturnValidator = v.object({
             min: v.optional(v.number()),
             max: v.optional(v.number()),
             unit: v.optional(v.string()),
-          })
-        )
+          }),
+        ),
       ),
       sortOrder: v.number(),
       onFail: v.optional(
         v.object({
-          action: v.union(
-            v.literal("redirect_dispose"),
-            v.literal("report_reason")
-          ),
+          action: v.union(v.literal("redirect_dispose"), v.literal("report_reason")),
           reasonPrompt: v.optional(v.string()),
-        })
+        }),
       ),
       spreadsheet: v.optional(miniSpreadsheetValidator),
-    })
+    }),
   ),
 });
 
@@ -747,19 +738,15 @@ export const legacyIngredientsValidator = v.optional(
       unit: v.optional(v.string()),
       percentage: v.optional(v.number()),
       costPerKg: v.optional(v.number()),
-    })
-  )
+    }),
+  ),
 );
 
 /** Audit log meta — arbitrary key-value metadata */
-export const auditLogMetaValidator = v.optional(
-  v.record(v.string(), v.string())
-);
+export const auditLogMetaValidator = v.optional(v.record(v.string(), v.string()));
 
 /** Deprecated user profile — was a catch-all object */
-export const legacyProfileValidator = v.optional(
-  v.record(v.string(), v.string())
-);
+export const legacyProfileValidator = v.optional(v.record(v.string(), v.string()));
 
 /** Project version snapshot data — subset of project fields */
 export const versionSnapshotDataValidator = v.object({
@@ -815,7 +802,7 @@ export const versionSnapshotDataValidator = v.object({
   batchCodePrefix: v.optional(v.string()),
   batchCodeFormat: v.optional(v.string()),
   userId: v.optional(v.union(v.string(), v.null())),
-  teamId: v.optional(v.union(v.id("teams"), v.null())),
+  organizationId: v.optional(v.union(v.id("organizations"), v.null())),
   releasedBy: v.optional(v.string()),
   releasedAt: v.optional(v.string()),
   formattedId: v.optional(v.string()),
@@ -831,8 +818,8 @@ export const versionSnapshotDataValidator = v.object({
         unit: v.optional(v.string()),
         percentage: v.optional(v.number()),
         costPerKg: v.optional(v.number()),
-      })
-    )
+      }),
+    ),
   ),
   progress: v.optional(v.number()),
   authorizedExecutor: v.optional(v.string()),
@@ -853,7 +840,7 @@ export const versionSnapshotIngredientsValidator = v.array(
     costPerKg: v.optional(v.number()),
     versionTag: versionTagValidator,
     sortOrder: v.number(),
-  })
+  }),
 );
 
 /** Project version snapshot phases — array of phase docs with nested steps */
@@ -897,23 +884,20 @@ export const versionSnapshotPhasesValidator = v.array(
               min: v.optional(v.number()),
               max: v.optional(v.number()),
               unit: v.optional(v.string()),
-            })
-          )
+            }),
+          ),
         ),
         sortOrder: v.number(),
         onFail: v.optional(
           v.object({
-            action: v.union(
-              v.literal("redirect_dispose"),
-              v.literal("report_reason")
-            ),
+            action: v.union(v.literal("redirect_dispose"), v.literal("report_reason")),
             reasonPrompt: v.optional(v.string()),
-          })
+          }),
         ),
         spreadsheet: v.optional(miniSpreadsheetValidator),
-      })
+      }),
     ),
-  })
+  }),
 );
 
 /** Project version document — returned by projectVersions queries */

@@ -1,6 +1,7 @@
 import {
   Boxes,
   ClipboardCheck,
+  Factory,
   FileText,
   LayoutDashboard,
   type LucideIcon,
@@ -53,6 +54,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       activeSection === "quality"
         ? [
             {
+              name: t("production_monitoring"),
+              icon: Factory,
+              path: "/quality/production-line-records",
+            },
+            {
               name: t("lab_reports"),
               icon: ClipboardCheck,
               path: "/reports",
@@ -75,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             },
             { name: t("materials"), icon: Boxes, path: "/materials" },
             { name: t("reports"), icon: FileText, path: "/reports" },
-            { name: t("team"), icon: UsersRound, path: "/team" },
+            { name: t("organization"), icon: UsersRound, path: "/organization" },
           ],
     [activeSection, t]
   );

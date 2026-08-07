@@ -9,7 +9,7 @@ const Invite = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
-  const acceptInvite = useMutation(api.teamInvites.accept);
+  const acceptInvite = useMutation(api.organizationInvites.accept);
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState("");
   const [accepted, setAccepted] = useState(false);

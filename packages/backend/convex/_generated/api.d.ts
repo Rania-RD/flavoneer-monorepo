@@ -11,6 +11,7 @@
 import type * as activities from "../activities.js";
 import type * as auth from "../auth.js";
 import type * as backdoor from "../backdoor.js";
+import type * as betterAuthOrganizationMigration from "../betterAuthOrganizationMigration.js";
 import type * as clearAllAppTables from "../clearAllAppTables.js";
 import type * as comments from "../comments.js";
 import type * as equipment from "../equipment.js";
@@ -26,7 +27,15 @@ import type * as labReports from "../labReports.js";
 import type * as labTestResults from "../labTestResults.js";
 import type * as localization from "../localization.js";
 import type * as migrations from "../migrations.js";
+import type * as organizationAuditLogs from "../organizationAuditLogs.js";
+import type * as organizationInvites from "../organizationInvites.js";
+import type * as organizationMembers from "../organizationMembers.js";
+import type * as organizations from "../organizations.js";
 import type * as permissions from "../permissions.js";
+import type * as productionLineRecordHelpers from "../productionLineRecordHelpers.js";
+import type * as productionLineRecords from "../productionLineRecords.js";
+import type * as productionLineSettings from "../productionLineSettings.js";
+import type * as productionLineSpecifications from "../productionLineSpecifications.js";
 import type * as projectIngredients from "../projectIngredients.js";
 import type * as projectVersions from "../projectVersions.js";
 import type * as projects from "../projects.js";
@@ -41,15 +50,10 @@ import type * as sharedLinks from "../sharedLinks.js";
 import type * as spreadsheetSteps from "../spreadsheetSteps.js";
 import type * as stepDependencies from "../stepDependencies.js";
 import type * as systemConfig from "../systemConfig.js";
-import type * as teamAuditLogs from "../teamAuditLogs.js";
-import type * as teamInvites from "../teamInvites.js";
-import type * as teamMembers from "../teamMembers.js";
-import type * as teams from "../teams.js";
 import type * as units from "../units.js";
 import type * as users from "../users.js";
 import type * as validators from "../validators.js";
 import type * as workspaceAccess from "../workspaceAccess.js";
-import type * as workspaceMigration from "../workspaceMigration.js";
 
 import type {
   ApiFromModules,
@@ -61,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   auth: typeof auth;
   backdoor: typeof backdoor;
+  betterAuthOrganizationMigration: typeof betterAuthOrganizationMigration;
   clearAllAppTables: typeof clearAllAppTables;
   comments: typeof comments;
   equipment: typeof equipment;
@@ -76,7 +81,15 @@ declare const fullApi: ApiFromModules<{
   labTestResults: typeof labTestResults;
   localization: typeof localization;
   migrations: typeof migrations;
+  organizationAuditLogs: typeof organizationAuditLogs;
+  organizationInvites: typeof organizationInvites;
+  organizationMembers: typeof organizationMembers;
+  organizations: typeof organizations;
   permissions: typeof permissions;
+  productionLineRecordHelpers: typeof productionLineRecordHelpers;
+  productionLineRecords: typeof productionLineRecords;
+  productionLineSettings: typeof productionLineSettings;
+  productionLineSpecifications: typeof productionLineSpecifications;
   projectIngredients: typeof projectIngredients;
   projectVersions: typeof projectVersions;
   projects: typeof projects;
@@ -91,15 +104,10 @@ declare const fullApi: ApiFromModules<{
   spreadsheetSteps: typeof spreadsheetSteps;
   stepDependencies: typeof stepDependencies;
   systemConfig: typeof systemConfig;
-  teamAuditLogs: typeof teamAuditLogs;
-  teamInvites: typeof teamInvites;
-  teamMembers: typeof teamMembers;
-  teams: typeof teams;
   units: typeof units;
   users: typeof users;
   validators: typeof validators;
   workspaceAccess: typeof workspaceAccess;
-  workspaceMigration: typeof workspaceMigration;
 }>;
 
 /**

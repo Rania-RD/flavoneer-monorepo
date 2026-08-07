@@ -1,20 +1,37 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
+import { useMutation } from "convex/react";
 import { AnimatePresence } from "framer-motion";
-import { Activity, Hash, Save, Target, Thermometer, X } from "lucide-react";
+import {
+  Activity,
+  Hash,
+  Loader2,
+  Save,
+  Target,
+  Thermometer,
+  X,
+} from "lucide-react";
 import type React from "react";
-import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
+import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
+import { uploadProjectPhoto } from "../lib/projectPhoto";
 import type { EnrichedProject } from "../types";
 import { GsfaCategorySelect } from "./GsfaCategorySelect";
+import ProjectPhotoField from "./ProjectPhotoField";
 
 interface EditProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedProject: EnrichedProject) => void;
+  onSave: (
+    updatedProject: EnrichedProject,
+    photoStorageId?: Id<"_storage"> | null
+  ) => Promise<void> | void;
   project: EnrichedProject;
-  teamMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
+  organizationMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
 }
 
 const EditProjectModal: React.FC<EditProjectModalProps> = ({
@@ -22,15 +39,22 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
   onClose,
   project,
   onSave,
-  teamMembers = [],
+  organizationMembers = [],
 }) => {
   const { isRTL } = useSettings();
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const [formData, setFormData] = useState<EnrichedProject>(project);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [isPhotoRemoved, setIsPhotoRemoved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync with project prop when it changes or modal opens
   useEffect(() => {
     setFormData(project);
+    setPhotoFile(null);
+    setIsPhotoRemoved(false);
   }, [project, isOpen]);
 
   const handleInputChange = (
@@ -40,10 +64,27 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    setIsSubmitting(true);
+    try {
+      let nextPhotoStorageId: Id<"_storage"> | null | undefined;
+      if (photoFile) {
+        nextPhotoStorageId = await uploadProjectPhoto(
+          photoFile,
+          generateUploadUrl
+        );
+      } else if (isPhotoRemoved) {
+        nextPhotoStorageId = null;
+      }
+      await onSave(formData, nextPhotoStorageId);
+      onClose();
+    } catch (error) {
+      console.error("Failed to update project:", error);
+      toast.error(t("project_save_failed"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Styles for Dark Mode Input Fields (Slate 700 bg, Slate 100 text, Slate 600 border)
@@ -142,7 +183,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         value={formData.authorizedExecutor || ""}
                       >
                         <option value="">{t("anyone_no_restrictions")}</option>
-                        {teamMembers.map((member) => (
+                        {organizationMembers.map((member) => (
                           <option key={member.userId} value={member.userId}>
                             {member.userName}
                           </option>
@@ -163,12 +204,28 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         value={formData.description}
                       />
                     </div>
+                    <div className="md:col-span-2">
+                      <ProjectPhotoField
+                        disabled={isSubmitting}
+                        existingPhotoUrl={formData.photoUrl}
+                        file={photoFile}
+                        isRemoved={isPhotoRemoved}
+                        onChange={(file) => {
+                          setPhotoFile(file);
+                          setIsPhotoRemoved(false);
+                        }}
+                        onRemove={() => {
+                          setPhotoFile(null);
+                          setIsPhotoRemoved(true);
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Tile 2: Processing Parameters */}
                 <div className="rounded-[2rem] border border-brand-primary/20 bg-brand-mint p-6 shadow-sm dark:border-brand-mint/20 dark:bg-brand-accent/10">
-                  <h3 className="mb-4 flex items-center gap-2 font-bold text-lg text-brand-primary dark:text-brand-accent-hover">
+                  <h3 className="mb-4 flex items-center gap-2 font-bold text-brand-primary text-lg dark:text-brand-accent-hover">
                     <Thermometer className="text-brand-primary" size={18} />{" "}
                     {t("processing")}
                   </h3>
@@ -242,14 +299,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                         inputClassName="w-full rounded-xl border border-amber-200 bg-white px-4 py-3 text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
                         labelClassName="mb-2 block font-bold text-amber-700 text-xs uppercase tracking-wider dark:text-amber-300"
                         onChange={(category) => {
-                          handleInputChange(
-                            "gsfaCategoryCode",
-                            category.code
-                          );
-                          handleInputChange(
-                            "gsfaCategoryName",
-                            category.name
-                          );
+                          handleInputChange("gsfaCategoryCode", category.code);
+                          handleInputChange("gsfaCategoryName", category.name);
                         }}
                         value={{
                           code: formData.gsfaCategoryCode,
@@ -394,10 +445,15 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 </button>
                 <button
                   className="flex items-center gap-2 rounded-xl bg-brand-primary px-8 py-3 font-bold text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover"
+                  disabled={isSubmitting}
                   type="submit"
                 >
-                  <Save size={18} />
-                  {t("saveChanges")}
+                  {isSubmitting ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <Save size={18} />
+                  )}
+                  {t(isSubmitting ? "saving" : "saveChanges")}
                 </button>
               </div>
             </form>

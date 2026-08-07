@@ -4,7 +4,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { UserProfile } from "../../context/SettingsContext";
-import { useTeam } from "../../context/TeamContext";
+import { useOrganization } from "../../context/OrganizationContext";
 import UserAvatar from "../user-avatar";
 
 interface IdentityTabProps {
@@ -17,12 +17,12 @@ const IdentityTab: React.FC<IdentityTabProps> = ({
   updateProfile,
 }) => {
   const { t } = useTranslation();
-  const { teams, activeTeamId, setActiveTeamId } = useTeam();
+  const { organizations, activeOrganizationId, setActiveOrganizationId } = useOrganization();
 
   // Local state for editing
   const [name, setName] = useState(profile.name || "");
   const [title, setTitle] = useState(profile.title || "");
-  const [selectedTeamId, setSelectedTeamId] = useState(activeTeamId ?? "");
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState(activeOrganizationId ?? "");
 
   // Sync if profile changes externally (e.g. initial load)
   useEffect(() => {
@@ -30,22 +30,22 @@ const IdentityTab: React.FC<IdentityTabProps> = ({
     setTitle(profile.title || "");
   }, [profile.name, profile.title]);
 
-  // Sync team selection with context
+  // Sync organization selection with context
   useEffect(() => {
-    setSelectedTeamId(activeTeamId ?? "");
-  }, [activeTeamId]);
+    setSelectedOrganizationId(activeOrganizationId ?? "");
+  }, [activeOrganizationId]);
 
   const handleSave = () => {
     updateProfile({ name, title });
-    if (selectedTeamId && selectedTeamId !== (activeTeamId ?? "")) {
-      setActiveTeamId(selectedTeamId as Id<"teams">);
+    if (selectedOrganizationId && selectedOrganizationId !== (activeOrganizationId ?? "")) {
+      setActiveOrganizationId(selectedOrganizationId as Id<"organizations">);
     }
   };
 
   const hasChanges =
     name !== (profile.name || "") ||
     title !== (profile.title || "") ||
-    selectedTeamId !== (activeTeamId ?? "");
+    selectedOrganizationId !== (activeOrganizationId ?? "");
   return (
     <div className="fade-in slide-in-from-end-4 animate-in space-y-6 duration-300">
       <div className="mb-8 flex items-center gap-6">
@@ -98,21 +98,21 @@ const IdentityTab: React.FC<IdentityTabProps> = ({
         <div>
           <label
             className="mb-2 block font-bold text-gray-500 text-xs uppercase dark:text-slate-400"
-            htmlFor="profile-team"
+            htmlFor="profile-organization"
           >
-            {t("teamName")}
+            {t("organizationName")}
           </label>
           <div className="relative">
             <select
               className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pe-10 text-gray-900 outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              id="profile-team"
-              onChange={(e) => setSelectedTeamId(e.target.value)}
-              value={selectedTeamId}
+              id="profile-organization"
+              onChange={(e) => setSelectedOrganizationId(e.target.value)}
+              value={selectedOrganizationId}
             >
-              <option value="">{t("no_team_selected")}</option>
-              {teams.map((team) => (
-                <option key={team._id} value={team._id}>
-                  {team.name}
+              <option value="">{t("no_organization_selected")}</option>
+              {organizations.map((organization) => (
+                <option key={organization._id} value={organization._id}>
+                  {organization.name}
                 </option>
               ))}
             </select>

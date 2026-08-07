@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import {
   languageValidator,
-  signatureTypeValidator,
+  themePreferenceValidator,
   unitsValidator,
   userSettingsReturnValidator,
 } from "./validators";
@@ -12,12 +12,7 @@ export const get = query({
   args: {},
   returns: v.union(userSettingsReturnValidator, v.null()),
   handler: async (ctx) => {
-    let authUser;
-    try {
-      authUser = await authComponent.getAuthUser(ctx);
-    } catch {
-      return null;
-    }
+    const authUser = await authComponent.getAuthUser(ctx).catch(() => null);
     if (!authUser) {
       return null;
     }
@@ -27,7 +22,42 @@ export const get = query({
       .query("userSettings")
       .withIndex("by_settingsKey", (q) => q.eq("settingsKey", userId))
       .first();
-    return settings;
+    if (!settings) {
+      return null;
+    }
+
+    const legacyProfile = settings.profile;
+    const legacyIdentityProfile = legacyProfile
+      ? {
+          ...(legacyProfile.name !== undefined && { name: legacyProfile.name }),
+          ...(legacyProfile.title !== undefined && { title: legacyProfile.title }),
+          ...(legacyProfile.email !== undefined && { email: legacyProfile.email }),
+          ...(legacyProfile.avatarUrl !== undefined && {
+            avatarUrl: legacyProfile.avatarUrl,
+          }),
+        }
+      : undefined;
+
+    return {
+      _id: settings._id,
+      _creationTime: settings._creationTime,
+      settingsKey: settings.settingsKey,
+      units: settings.units,
+      darkMode: settings.darkMode,
+      ...(settings.themePreference !== undefined && {
+        themePreference: settings.themePreference,
+      }),
+      language: settings.language,
+      appAlerts: settings.appAlerts,
+      emailSummaries: settings.emailSummaries,
+      ...(settings.name !== undefined && { name: settings.name }),
+      ...(settings.title !== undefined && { title: settings.title }),
+      ...(settings.email !== undefined && { email: settings.email }),
+      ...(settings.avatarUrl !== undefined && { avatarUrl: settings.avatarUrl }),
+      ...(legacyIdentityProfile !== undefined && {
+        profile: legacyIdentityProfile,
+      }),
+    };
   },
 });
 
@@ -35,6 +65,7 @@ export const upsert = mutation({
   args: {
     units: v.optional(unitsValidator),
     darkMode: v.optional(v.boolean()),
+    themePreference: v.optional(themePreferenceValidator),
     language: v.optional(languageValidator),
     appAlerts: v.optional(v.boolean()),
     emailSummaries: v.optional(v.boolean()),
@@ -43,9 +74,6 @@ export const upsert = mutation({
     title: v.optional(v.string()),
     email: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
-    signatureType: v.optional(signatureTypeValidator),
-    signatureData: v.optional(v.string()),
-    signatureFont: v.optional(v.string()),
   },
   returns: v.id("userSettings"),
   handler: async (ctx, args) => {
@@ -67,6 +95,15 @@ export const upsert = mutation({
       }
       if (args.darkMode !== undefined) {
         updates.darkMode = args.darkMode;
+        if (args.themePreference === undefined) {
+          updates.themePreference = args.darkMode ? "dark" : "light";
+        }
+      }
+      if (args.themePreference !== undefined) {
+        updates.themePreference = args.themePreference;
+        if (args.themePreference !== "system" && args.darkMode === undefined) {
+          updates.darkMode = args.themePreference === "dark";
+        }
       }
       if (args.language !== undefined) {
         updates.language = args.language;
@@ -91,16 +128,6 @@ export const upsert = mutation({
       if (args.avatarUrl !== undefined) {
         updates.avatarUrl = args.avatarUrl;
       }
-      if (args.signatureType !== undefined) {
-        updates.signatureType = args.signatureType;
-      }
-      if (args.signatureData !== undefined) {
-        updates.signatureData = args.signatureData;
-      }
-      if (args.signatureFont !== undefined) {
-        updates.signatureFont = args.signatureFont;
-      }
-
       await ctx.db.patch(existing._id, updates);
       return existing._id;
     }
@@ -109,6 +136,9 @@ export const upsert = mutation({
       settingsKey: userId,
       units: args.units ?? "metric",
       darkMode: args.darkMode ?? false,
+      themePreference:
+        args.themePreference ??
+        (args.darkMode === undefined ? "system" : args.darkMode ? "dark" : "light"),
       language: args.language ?? "en",
       appAlerts: args.appAlerts ?? true,
       emailSummaries: args.emailSummaries ?? false,
@@ -116,9 +146,6 @@ export const upsert = mutation({
       title: args.title ?? "",
       email: args.email ?? authUser.email ?? "",
       avatarUrl: args.avatarUrl ?? authUser.image ?? "",
-      signatureType: args.signatureType,
-      signatureData: args.signatureData,
-      signatureFont: args.signatureFont,
     });
   },
 });

@@ -204,7 +204,7 @@ export const getIngredientValidationMessage = ({
 };
 
 export const buildIngredientSavePayload = ({
-  activeTeamId,
+  activeOrganizationId,
   allergenRegion,
   allergenValues,
   allergenVerified,
@@ -221,7 +221,7 @@ export const buildIngredientSavePayload = ({
   subIngredients,
   t,
 }: {
-  activeTeamId?: Id<"teams">;
+  activeOrganizationId?: Id<"organizations">;
   allergenRegion: AllergenRegion;
   allergenValues: string[];
   allergenVerified: boolean;
@@ -296,7 +296,7 @@ export const buildIngredientSavePayload = ({
     allergenRegion,
     allergenVerified,
     subAllergenValues: subAllergens,
-    teamId: activeTeamId ?? undefined,
+    organizationId: activeOrganizationId ?? undefined,
     coverImageId,
   };
 };

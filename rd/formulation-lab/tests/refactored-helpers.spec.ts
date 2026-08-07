@@ -418,7 +418,7 @@ test.describe("formulation save payload helpers", () => {
     const project = {
       _id: "project-1",
       _creationTime: 1,
-      teamId: "team-1",
+      organizationId: "organization-1",
       userId: "user-1",
       updatedAt: 2,
       batchWeight: 999,
@@ -468,7 +468,7 @@ test.describe("formulation save payload helpers", () => {
     });
     expect(payload).not.toHaveProperty("_id");
     expect(payload).not.toHaveProperty("_creationTime");
-    expect(payload).not.toHaveProperty("teamId");
+    expect(payload).not.toHaveProperty("organizationId");
     expect(payload).not.toHaveProperty("userId");
     expect(payload).not.toHaveProperty("updatedAt");
   });

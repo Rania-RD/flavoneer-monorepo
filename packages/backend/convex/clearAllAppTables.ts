@@ -19,10 +19,10 @@ const APP_TABLES = [
   "equipment",
   "runs",
   "userSettings",
-  "teams",
-  "teamMembers",
-  "teamInvites",
-  "teamAuditLogs",
+  "organizations",
+  "organizationMembers",
+  "organizationInvites",
+  "organizationAuditLogs",
   "materialUsageLogs",
   "runPhases",
   "runSteps",
@@ -30,6 +30,12 @@ const APP_TABLES = [
   "foodCategories",
   "foodAdditives",
   "additiveLimits",
+  "productionLineRecordEvents",
+  "productionLineRecords",
+  "productionLineSpecificationLimits",
+  "productionLineSpecifications",
+  "productionLineSerialCounters",
+  "productionLineSettings",
 ] as const;
 
 export const run = internalMutation({

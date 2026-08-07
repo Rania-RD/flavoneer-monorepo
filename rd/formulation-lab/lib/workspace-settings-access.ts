@@ -1,7 +1,7 @@
 export const MANAGE_VERSION_CONTROL_PERMISSION = "manage_version_control";
 
 export type WorkspaceSettingsTab =
-  | "appearance"
+  | "productionLine"
   | "traceability"
   | "roles"
   | "versionControl";
@@ -15,7 +15,7 @@ export const getVisibleWorkspaceSettingsTabs = ({
   canManageVersionControl,
   isAdmin,
 }: WorkspaceSettingsAccess): WorkspaceSettingsTab[] => [
-  "appearance",
+  ...(isAdmin ? (["productionLine"] as const) : []),
   "traceability",
   ...(isAdmin ? (["roles"] as const) : []),
   ...(canManageVersionControl ? (["versionControl"] as const) : []),
@@ -28,5 +28,5 @@ export const resolveWorkspaceSettingsTab = (
   const visibleTabs = getVisibleWorkspaceSettingsTabs(access);
   return visibleTabs.includes(requestedTab as WorkspaceSettingsTab)
     ? (requestedTab as WorkspaceSettingsTab)
-    : "appearance";
+    : visibleTabs[0];
 };

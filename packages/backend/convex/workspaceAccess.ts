@@ -11,7 +11,7 @@ type WorkspaceCtx = QueryCtx | MutationCtx;
 
 interface WorkspaceAccess {
   authUser: Awaited<ReturnType<typeof authComponent.getAuthUser>>;
-  team: Doc<"teams">;
+  organization: Doc<"organizations">;
   role: WorkspaceRole;
   authMemberId?: string;
 }
@@ -35,21 +35,21 @@ export async function getAuthUserOrThrow(
 
 export async function getWorkspaceAccess(
   ctx: WorkspaceCtx,
-  teamId: Id<"teams">
+  organizationId: Id<"organizations">
 ): Promise<WorkspaceAccess | null> {
   const authUser = await getAuthUserOrThrow(ctx);
-  const team = await ctx.db.get(teamId);
-  if (!team) {
+  const organization = await ctx.db.get(organizationId);
+  if (!organization) {
     return null;
   }
 
-  if (team.authOrganizationId) {
+  if (organization.authOrganizationId) {
     const member = await ctx.runQuery(components.betterAuth.adapter.findOne, {
       model: "member",
       where: [
         {
           field: "organizationId",
-          value: team.authOrganizationId,
+          value: organization.authOrganizationId,
         },
         {
           field: "userId",
@@ -62,16 +62,16 @@ export async function getWorkspaceAccess(
     }
     return {
       authUser,
-      team,
+      organization,
       role: normalizeWorkspaceRole(member.role),
       authMemberId: member._id,
     };
   }
 
   const legacyMember = await ctx.db
-    .query("teamMembers")
-    .withIndex("by_teamId_userId", (q) =>
-      q.eq("teamId", teamId).eq("userId", authUser._id)
+    .query("organizationMembers")
+    .withIndex("by_organizationId_and_userId", (q) =>
+      q.eq("organizationId", organizationId).eq("userId", authUser._id)
     )
     .unique();
   if (!legacyMember) {
@@ -79,7 +79,7 @@ export async function getWorkspaceAccess(
   }
   return {
     authUser,
-    team,
+    organization,
     role: legacyMember.role,
     authMemberId: legacyMember.authMemberId,
   };
@@ -87,20 +87,20 @@ export async function getWorkspaceAccess(
 
 export async function requireWorkspaceMember(
   ctx: WorkspaceCtx,
-  teamId: Id<"teams">
+  organizationId: Id<"organizations">
 ): Promise<WorkspaceAccess> {
-  const access = await getWorkspaceAccess(ctx, teamId);
+  const access = await getWorkspaceAccess(ctx, organizationId);
   if (!access) {
-    throw new Error("Not a member of this team");
+    throw new Error("Not a member of this organization");
   }
   return access;
 }
 
 export async function requireWorkspaceAdmin(
   ctx: WorkspaceCtx,
-  teamId: Id<"teams">
+  organizationId: Id<"organizations">
 ): Promise<WorkspaceAccess> {
-  const access = await requireWorkspaceMember(ctx, teamId);
+  const access = await requireWorkspaceMember(ctx, organizationId);
   if (access.role === "member") {
     throw new Error("Insufficient permissions");
   }
@@ -109,26 +109,26 @@ export async function requireWorkspaceAdmin(
 
 export async function requireWorkspaceOwner(
   ctx: WorkspaceCtx,
-  teamId: Id<"teams">
+  organizationId: Id<"organizations">
 ): Promise<WorkspaceAccess> {
-  const access = await requireWorkspaceMember(ctx, teamId);
+  const access = await requireWorkspaceMember(ctx, organizationId);
   if (access.role !== "owner") {
-    throw new Error("Only the team owner can perform this action");
+    throw new Error("Only the organization owner can perform this action");
   }
   return access;
 }
 
-/** Authorize a team-owned resource or a personal resource owned by the caller. */
+/** Authorize an organization-owned resource or a personal resource owned by the caller. */
 export async function requirePersonalOrWorkspaceAccess(
   ctx: WorkspaceCtx,
   resource: {
-    teamId?: Id<"teams"> | null;
+    organizationId?: Id<"organizations"> | null;
     userId?: string | null;
   }
 ): Promise<Awaited<ReturnType<typeof authComponent.getAuthUser>>> {
   const authUser = await getAuthUserOrThrow(ctx);
-  if (resource.teamId) {
-    await requireWorkspaceMember(ctx, resource.teamId);
+  if (resource.organizationId) {
+    await requireWorkspaceMember(ctx, resource.organizationId);
     return authUser;
   }
   if (resource.userId && resource.userId !== authUser._id) {

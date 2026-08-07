@@ -12,10 +12,10 @@ export type FoodAdditiveDoc = Doc<"foodAdditives">;
 export type AdditiveLimitDoc = Doc<"additiveLimits">;
 export type LabReport = Doc<"labReports">;
 export type Equipment = Doc<"equipment">;
-export type Team = Doc<"teams">;
-export type TeamMember = Doc<"teamMembers">;
-export type TeamInvite = Doc<"teamInvites">;
-export type TeamAuditLog = Doc<"teamAuditLogs">;
+export type Organization = Doc<"organizations">;
+export type OrganizationMember = Doc<"organizationMembers">;
+export type OrganizationInvite = Doc<"organizationInvites">;
+export type OrganizationAuditLog = Doc<"organizationAuditLogs">;
 
 // ─── New normalized table types ──────────────────────────────
 export type ProjectIngredientDoc = Doc<"projectIngredients">;
@@ -238,7 +238,7 @@ export interface StatCardProps {
 }
 
 export type EquipmentStatus = "Available" | "In Use" | "Reserved";
-export type TeamRole = "owner" | "admin" | "member";
+export type OrganizationRole = "owner" | "admin" | "member";
 
 // ─── Run Execution Types ─────────────────────────────────────
 

@@ -20,6 +20,21 @@ test.describe("workspace settings access policy", () => {
     ).not.toContain("roles");
   });
 
+  test("shows production-line settings only to Admin users", () => {
+    expect(
+      getVisibleWorkspaceSettingsTabs({
+        canManageVersionControl: false,
+        isAdmin: true,
+      })
+    ).toContain("productionLine");
+    expect(
+      getVisibleWorkspaceSettingsTabs({
+        canManageVersionControl: false,
+        isAdmin: false,
+      })
+    ).not.toContain("productionLine");
+  });
+
   test("shows version control only with its dedicated permission", () => {
     expect(
       getVisibleWorkspaceSettingsTabs({
@@ -41,12 +56,12 @@ test.describe("workspace settings access policy", () => {
         canManageVersionControl: true,
         isAdmin: false,
       })
-    ).toBe("appearance");
+    ).toBe("traceability");
     expect(
       resolveWorkspaceSettingsTab("versionControl", {
         canManageVersionControl: false,
         isAdmin: true,
       })
-    ).toBe("appearance");
+    ).toBe("productionLine");
   });
 });

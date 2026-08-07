@@ -6,31 +6,31 @@ import { createAuth } from "./auth";
 export const migrations = new Migrations<DataModel>(components.migrations);
 
 export const attachBetterAuthOrganizations = migrations.define({
-  table: "teams",
+  table: "organizations",
   batchSize: 1,
-  migrateOne: async (ctx, team) => {
-    if (team.authOrganizationId) {
+  migrateOne: async (ctx, organization) => {
+    if (organization.authOrganizationId) {
       return;
     }
 
     const localMembers = await ctx.db
-      .query("teamMembers")
-      .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
+      .query("organizationMembers")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", organization._id))
       .take(101);
     if (localMembers.length > 100) {
       throw new Error(
-        `Workspace ${team._id} exceeds the Better Auth membership limit`
+        `Organization ${organization._id} exceeds the Better Auth membership limit`,
       );
     }
     const pendingInvites = (
       await ctx.db
-        .query("teamInvites")
-        .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
+        .query("organizationInvites")
+        .withIndex("by_organizationId", (q) => q.eq("organizationId", organization._id))
         .take(101)
     ).filter((invite) => invite.status === "pending");
     if (pendingInvites.length > 100) {
       throw new Error(
-        `Workspace ${team._id} exceeds the Better Auth invitation limit`
+        `Organization ${organization._id} exceeds the Better Auth invitation limit`,
       );
     }
 
@@ -39,24 +39,22 @@ export const attachBetterAuthOrganizations = migrations.define({
       components.betterAuth.adapter.findOne,
       {
         model: "organization",
-        where: [{ field: "slug", value: team.slug }],
-      }
+        where: [{ field: "slug", value: organization.slug }],
+      },
     );
-    const organization =
+    const authOrganization =
       existingOrganization ??
       (await auth.api.createOrganization({
         body: {
-          name: team.name,
-          slug: team.slug,
-          userId: team.ownerId,
+          name: organization.name,
+          slug: organization.slug,
+          userId: organization.ownerId,
           keepCurrentActiveOrganization: true,
         },
       }));
 
-    await ctx.db.patch(team._id, {
-      authOrganizationId: organization._id ?? organization.id,
-    });
-    const authOrganizationId = organization._id ?? organization.id;
+    const authOrganizationId = authOrganization._id ?? authOrganization.id;
+    await ctx.db.patch(organization._id, { authOrganizationId });
 
     for (const localMember of localMembers) {
       const existingMember = await ctx.runQuery(
@@ -67,7 +65,7 @@ export const attachBetterAuthOrganizations = migrations.define({
             { field: "organizationId", value: authOrganizationId },
             { field: "userId", value: localMember.userId },
           ],
-        }
+        },
       );
       const authMember =
         existingMember ??
@@ -98,7 +96,7 @@ export const attachBetterAuthOrganizations = migrations.define({
             { field: "email", value: pendingInvite.email.toLowerCase() },
             { field: "status", value: "pending" },
           ],
-        }
+        },
       );
       const authInvitation =
         existingInvitation ??

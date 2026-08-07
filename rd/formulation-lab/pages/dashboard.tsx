@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { AnimatePresence, type HTMLMotionProps, motion } from "framer-motion";
 import { Loader2, Plus, Search } from "lucide-react";
@@ -5,16 +7,13 @@ import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-
 import InfiniteScrollObserver from "../components/InfiniteScrollObserver";
 import NewProjectModal from "../components/NewProjectModal";
 import OnboardingView from "../components/OnboardingView";
 import ProjectCard from "../components/ProjectCard";
 import ProjectDetailsModal from "../components/ProjectDetailsModal";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
+import { useOrganization } from "../context/OrganizationContext";
 import { modalVariants, overlayVariants } from "../lib/animations";
 import type { EnrichedProject } from "../types";
 
@@ -35,21 +34,21 @@ const Dashboard: React.FC = () => {
   const [isStartingRun, setIsStartingRun] = useState(false);
   const navigate = useNavigate();
 
-  // Team context
-  const { activeTeamId, teams, teamsLoading } = useTeam();
+  // Organization context
+  const { activeOrganizationId, organizations, organizationsLoading } = useOrganization();
 
   const {
     results: projectsRaw,
     status: projectsStatus,
     loadMore: loadMoreProjects,
   } = usePaginatedQuery(
-    api.projects.listByTeam,
-    activeTeamId ? { teamId: activeTeamId, language } : { language },
+    api.projects.listByOrganization,
+    activeOrganizationId ? { organizationId: activeOrganizationId, language } : { language },
     { initialNumItems: 50 }
   );
-  const teamMembersRaw = useQuery(
-    api.teamMembers.list,
-    activeTeamId ? { teamId: activeTeamId } : "skip"
+  const organizationMembersRaw = useQuery(
+    api.organizationMembers.list,
+    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
   );
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
@@ -60,7 +59,7 @@ const Dashboard: React.FC = () => {
 
   const projects: EnrichedProject[] =
     (projectsRaw as unknown as EnrichedProject[]) ?? [];
-  const teamMembers = teamMembersRaw ?? [];
+  const organizationMembers = organizationMembersRaw ?? [];
 
   const handleOpenDetails = (project: EnrichedProject) => {
     setSelectedProject(project);
@@ -73,10 +72,10 @@ const Dashboard: React.FC = () => {
   };
 
   const onAddProject = async (projectData: EnrichedProject) => {
-    const { _id, _creationTime, userId, teamId, ...data } = projectData;
+    const { _id, _creationTime, userId, organizationId, ...data } = projectData;
     const newProjectId = await createProject({
       ...data,
-      teamId: activeTeamId ?? undefined,
+      organizationId: activeOrganizationId ?? undefined,
     });
     logActivity({
       action: "Created Project",
@@ -86,11 +85,24 @@ const Dashboard: React.FC = () => {
     navigate(`/project/${newProjectId}?tab=formulation`);
   };
 
-  const handleProjectUpdate = async (updated: EnrichedProject) => {
-    const { _id, _creationTime, updatedAt, teamId, userId, ...data } = updated;
+  const handleProjectUpdate = async (
+    updated: EnrichedProject,
+    photoStorageId?: Id<"_storage"> | null
+  ) => {
+    const {
+      _id,
+      _creationTime,
+      updatedAt,
+      organizationId,
+      userId,
+      photoStorageId: _existingPhotoStorageId,
+      photoUrl: _photoUrl,
+      ...data
+    } = updated;
     await updateProject({
       id: _id,
       ...data,
+      ...(photoStorageId === undefined ? {} : { photoStorageId }),
     });
     logActivity({
       action: "Updated Project",
@@ -102,7 +114,15 @@ const Dashboard: React.FC = () => {
     // But since it's real-time, it should update automatically.
     // However, selectedProject is local state, so we update it to reflect changes in the modal
     if (selectedProject?._id === updated._id) {
-      setSelectedProject(updated);
+      setSelectedProject({
+        ...updated,
+        ...(photoStorageId === undefined
+          ? {}
+          : {
+              photoStorageId: photoStorageId ?? undefined,
+              photoUrl: undefined,
+            }),
+      });
     }
   };
 
@@ -158,11 +178,15 @@ const Dashboard: React.FC = () => {
       .includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+  const selectedProjectFromQuery = selectedProject
+    ? (projects.find((project) => project._id === selectedProject._id) ??
+      selectedProject)
+    : null;
 
   if (
-    teamsLoading ||
+    organizationsLoading ||
     projectsRaw === undefined ||
-    (activeTeamId && teamMembersRaw === undefined)
+    (activeOrganizationId && organizationMembersRaw === undefined)
   ) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center p-8 text-center text-gray-500">
@@ -171,7 +195,7 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  if (!activeTeamId && teams.length === 0) {
+  if (!activeOrganizationId && organizations.length === 0) {
     return <OnboardingView />;
   }
   return (
@@ -240,7 +264,7 @@ const Dashboard: React.FC = () => {
             onStartRun={handleStartRun}
             onViewDetails={handleOpenDetails}
             project={project}
-            teamMembers={teamMembers}
+            organizationMembers={organizationMembers}
           />
         ))}
 
@@ -266,15 +290,15 @@ const Dashboard: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={onAddProject}
-        teamMembers={teamMembers}
+        organizationMembers={organizationMembers}
       />
 
       <ProjectDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={handleCloseDetails}
         onUpdateProject={handleProjectUpdate}
-        project={selectedProject}
-        teamMembers={teamMembers}
+        project={selectedProjectFromQuery}
+        organizationMembers={organizationMembers}
       />
 
       <AnimatePresence>

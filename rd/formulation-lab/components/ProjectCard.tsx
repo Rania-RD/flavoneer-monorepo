@@ -11,7 +11,6 @@ import {
   Share2,
   Trash2,
 } from "lucide-react";
-import { DateTime } from "luxon";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,7 +31,7 @@ interface ProjectCardProps {
   onStartRun?: (projectId: Id<"projects">) => void;
   onViewDetails?: (project: EnrichedProject) => void;
   project: EnrichedProject;
-  teamMembers?: { userEmail: string; userId: string; userName: string }[];
+  organizationMembers?: { userEmail: string; userId: string; userName: string }[];
 }
 
 // Flavoneer tonal palette — deterministic, brand-safe project differentiation.
@@ -86,10 +85,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   onDelete,
   onArchive,
   onStartRun,
-  teamMembers,
+  organizationMembers,
 }) => {
   const { t } = useTranslation();
-  const { language, isRTL } = useSettings();
+  const { isRTL } = useSettings();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -266,31 +265,33 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
 
           {/* Card Body */}
-          <div className="min-w-0">
-            <h3 className="mb-1 line-clamp-2 text-start font-black text-3xl text-gray-900 leading-tight dark:text-slate-100">
-              {project.name}
-            </h3>
-            <p className="mb-2 flex items-center gap-2 text-start font-bold text-gray-600 text-sm dark:text-slate-400">
-              <span>v{project.version}</span>
-              <span>•</span>
-              <span>
-                {DateTime.fromMillis(project._creationTime).toRelative({
-                  locale: language === "ar" ? "ar" : "en",
-                })}
-              </span>
-            </p>
-
-            {/* Release Notes Preview */}
-            {project.releaseNotes && (
-              <div className="line-clamp-2 rounded-xl border border-white/20 bg-white/50 p-2 text-gray-600 text-xs dark:border-slate-700/30 dark:bg-black/10 dark:text-slate-400">
-                <span className="font-bold">{t("notes")}</span>{" "}
-                {project.releaseNotes}
-              </div>
+          <div className="flex min-w-0 items-start gap-4">
+            {project.photoUrl && (
+              <img
+                alt={t("project_photo_for", { name: project.name })}
+                className="h-20 w-20 shrink-0 rounded-[1.35rem] border border-white/50 object-cover shadow-sm dark:border-white/10"
+                height={80}
+                src={project.photoUrl}
+                width={80}
+              />
             )}
+            <div className="min-w-0 flex-1">
+              <h3 className="mb-1 line-clamp-2 text-start font-black text-3xl text-gray-900 leading-tight dark:text-slate-100">
+                {project.name}
+              </h3>
+
+              {/* Release Notes Preview */}
+              {project.releaseNotes && (
+                <div className="line-clamp-2 rounded-xl border border-white/20 bg-white/50 p-2 text-gray-600 text-xs dark:border-slate-700/30 dark:bg-black/10 dark:text-slate-400">
+                  <span className="font-bold">{t("notes")}</span>{" "}
+                  {project.releaseNotes}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer */}
-          <div className="mt-auto">
+          <div className="mt-auto flex min-w-0 items-center gap-2">
             {/* <div className="flex justify-between text-xs font-bold mb-3">
             <span className="text-gray-900 dark:text-slate-200">{t('progress')}</span>
             <span className="text-gray-900 dark:text-slate-200">{project.progress}%</span>
@@ -302,11 +303,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             />
           </div> */}
 
-            {/* Team Member Avatars */}
-            {teamMembers && teamMembers.length > 0 && (
-              <div className="mb-4 flex items-center">
+            {/* Organization Member Avatars */}
+            {organizationMembers && organizationMembers.length > 0 && (
+              <div className="flex shrink-0 items-center">
                 <div className="flex -space-x-2.5">
-                  {teamMembers.slice(0, 4).map((member) => (
+                  {organizationMembers.slice(0, 4).map((member) => (
                     <UserAvatar
                       className="h-8 w-8 rounded-full border-2 border-white object-cover shadow-sm dark:border-slate-800"
                       key={member.userId}
@@ -317,10 +318,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                       title={member.userName}
                     />
                   ))}
-                  {teamMembers.length > 4 && (
+                  {organizationMembers.length > 4 && (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gray-200 shadow-sm dark:border-slate-800 dark:bg-slate-700">
                       <span className="font-black text-[10px] text-gray-600 dark:text-slate-300">
-                        +{teamMembers.length - 4}
+                        +{organizationMembers.length - 4}
                       </span>
                     </div>
                   )}
@@ -329,8 +330,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             )}
 
             <button
-              className={`group/btn flex w-full items-center justify-center gap-2 rounded-2xl bg-white/90 py-4 font-black text-gray-900 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white dark:bg-white/10 dark:text-white dark:hover:bg-white/15 ${theme.buttonHover}`}
+              className={`group/btn ms-auto flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-white/90 px-3 py-3 font-black text-gray-900 text-xs shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white dark:bg-white/10 dark:text-white dark:hover:bg-white/15 ${theme.buttonHover}`}
               onClick={() => (onViewDetails ? onViewDetails(project) : null)}
+              type="button"
             >
               {t("viewDetails")}
               <ArrowRight

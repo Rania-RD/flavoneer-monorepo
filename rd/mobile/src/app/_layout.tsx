@@ -14,10 +14,13 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
+import type { PropsWithChildren } from 'react';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { BrandColors } from '@/constants/theme';
+import { LanguageProvider } from '@/contexts/language-context';
+import { OrganizationProvider } from '@/contexts/organization-context';
+import { ThemePreferenceProvider, useThemePreference } from '@/contexts/theme-preference-context';
 import { authClient, convex } from '@/lib/backend';
 import { withHotUpdater } from '@/lib/hot-updater';
 
@@ -48,7 +51,7 @@ const darkNavigationTheme = {
 };
 
 function AppNavigator() {
-  const colorScheme = useColorScheme();
+  const { resolvedTheme } = useThemePreference();
   const { data: session, isPending } = authClient.useSession();
   const [fontsLoaded, fontError] = useFonts({
     DMSans_400Regular,
@@ -59,32 +62,48 @@ function AppNavigator() {
     Fraunces_800ExtraBold,
     Fraunces_900Black,
   });
-  const isDark = colorScheme === 'dark';
+  const isDark = resolvedTheme === 'dark';
 
   return (
-    <ThemeProvider value={isDark ? darkNavigationTheme : lightNavigationTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={Boolean(session)}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="user-settings" />
-        </Stack.Protected>
+    <LanguageProvider key={session?.user.email ?? 'signed-out'}>
+      <OrganizationProvider enabled={Boolean(session)} key={session?.user.email ?? 'signed-out'}>
+        <ThemeProvider value={isDark ? darkNavigationTheme : lightNavigationTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Protected guard={Boolean(session)}>
+              <Stack.Screen name="(app)" />
+              <Stack.Screen name="quality/production-line/[recordId]" />
+              <Stack.Screen name="user-settings" />
+            </Stack.Protected>
 
-        <Stack.Protected guard={!session}>
-          <Stack.Screen name="sign-in" />
-        </Stack.Protected>
-      </Stack>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <AnimatedSplashOverlay ready={!isPending && (fontsLoaded || Boolean(fontError))} />
-    </ThemeProvider>
+            <Stack.Protected guard={!session}>
+              <Stack.Screen name="sign-in" />
+            </Stack.Protected>
+          </Stack>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <AnimatedSplashOverlay ready={!isPending && (fontsLoaded || Boolean(fontError))} />
+        </ThemeProvider>
+      </OrganizationProvider>
+    </LanguageProvider>
   );
 }
 
 const HotUpdatedAppNavigator = withHotUpdater(AppNavigator);
 
+function ThemePreferenceBoundary({ children }: PropsWithChildren) {
+  const { data: session } = authClient.useSession();
+  return (
+    <ThemePreferenceProvider key={session?.user.email ?? 'signed-out'}>
+      {children}
+    </ThemePreferenceProvider>
+  );
+}
+
 function RootLayout() {
   return (
     <ConvexBetterAuthProvider authClient={authClient} client={convex}>
-      <HotUpdatedAppNavigator />
+      <ThemePreferenceBoundary>
+        <HotUpdatedAppNavigator />
+      </ThemePreferenceBoundary>
     </ConvexBetterAuthProvider>
   );
 }

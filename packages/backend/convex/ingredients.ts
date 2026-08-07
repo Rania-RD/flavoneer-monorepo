@@ -18,7 +18,7 @@ export const list = query({
       throw new Error("Unauthenticated call to ingredients:list");
     }
 
-    // In a full implementation, you'd filter by teamId
+    // In a full implementation, you'd filter by organizationId
     // For now, return all ingredients sorted by newest
     const ingredients = await ctx.db
       .query("ingredients")
@@ -131,7 +131,7 @@ export const create = mutation({
         })
       )
     ),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     coverImageId: v.optional(v.id("_storage")),
     status: v.optional(v.union(v.literal("Draft"), v.literal("Approved"))),
   },
@@ -216,7 +216,7 @@ export const update = mutation({
         })
       )
     ),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     coverImageId: v.optional(v.id("_storage")),
     status: v.optional(v.union(v.literal("Draft"), v.literal("Approved"))),
   },

@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -9,9 +11,7 @@ import RunDetailView from "../components/runs/run-detail-view";
 import RunLoadingView from "../components/runs/run-loading-view";
 import RunSelectionView from "../components/runs/run-selection-view";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
+import { useOrganization } from "../context/OrganizationContext";
 import { useRunExecution } from "../hooks/useRunExecution";
 import { useToast } from "../hooks/useToast";
 import { buildRunsHistory } from "../lib/runs/history";
@@ -23,29 +23,25 @@ const Runs: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
-  const { activeTeamId } = useTeam();
+  const { activeOrganizationId } = useOrganization();
   const [isStartingRun, setIsStartingRun] = React.useState(false);
   const [isAbortModalOpen, setIsAbortModalOpen] = React.useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
-  const [signatures, setSignatures] = React.useState<Record<string, string>>(
-    {}
-  );
-
   const {
     results: projectsRaw,
     status: projectsStatus,
     loadMore: loadMoreProjects,
   } = usePaginatedQuery(
-    api.projects.listByTeam,
-    activeTeamId
-      ? { teamId: activeTeamId, status: "Released", language }
+    api.projects.listByOrganization,
+    activeOrganizationId
+      ? { organizationId: activeOrganizationId, status: "Released", language }
       : { status: "Released", language },
     { initialNumItems: 50 }
   );
 
   const { results: runsRaw } = usePaginatedQuery(
     api.runs.list,
-    activeTeamId ? { teamId: activeTeamId, language } : { language },
+    activeOrganizationId ? { organizationId: activeOrganizationId, language } : { language },
     { initialNumItems: 50 }
   );
 
@@ -157,8 +153,6 @@ const Runs: React.FC = () => {
         projects={projects}
         projectsStatus={projectsStatus}
         runsHistory={runsHistory}
-        setSignatures={setSignatures}
-        signatures={signatures}
       />
     );
   }

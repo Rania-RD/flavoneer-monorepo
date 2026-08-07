@@ -3,6 +3,7 @@ import { Eye, FileText, History, Loader2, Play } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { modalVariants, overlayVariants } from "../../lib/animations";
+import { SIGNATURE_FONT_FAMILY } from "../../lib/signature";
 import type { EnrichedProject, RunRecord } from "../../types";
 import InfiniteScrollObserver from "../InfiniteScrollObserver";
 
@@ -13,9 +14,8 @@ const MotionDiv = motion.div as React.FC<
   }
 >;
 
-interface ProfileSignature {
-  signatureData?: string | null;
-  signatureFont?: string | null;
+interface ProfileIdentity {
+  name: string;
 }
 
 interface RunSelectionViewProps {
@@ -25,12 +25,10 @@ interface RunSelectionViewProps {
   loadMoreProjects: (numItems: number) => void;
   onStartRun: (projectId: string, projectName: string) => void;
   onViewRun: (runId: string) => void;
-  profile?: ProfileSignature | null;
+  profile?: ProfileIdentity | null;
   projects: EnrichedProject[];
   projectsStatus: string;
   runsHistory: RunRecord[];
-  setSignatures: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  signatures: Record<string, string>;
 }
 
 const getLatestVersionsMap = (projects: EnrichedProject[]) => {
@@ -57,8 +55,6 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
   loadMoreProjects,
   runsHistory,
   profile,
-  signatures,
-  setSignatures,
   currentUserId,
   isAuthorized,
   isStartingRun,
@@ -120,7 +116,7 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
               !hasExecutePermission ||
               isDraft ||
               isOutdated ||
-              !(profile?.signatureData || signatures[project._id]);
+              !profile?.name.trim();
 
             let tooltipMsg = "";
             if (!isAuthorized) {
@@ -178,40 +174,18 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
 
                 <div className="mt-4 flex flex-col gap-3 border-gray-100 border-t pt-4 dark:border-slate-700">
                   <div className="flex items-center gap-2">
-                    {profile?.signatureData ? (
-                      <div className="flex flex-1 items-center justify-between rounded-xl border border-brand-primary/20 bg-brand-mint px-4 py-2 dark:border-brand-mint/20 dark:bg-brand-accent/20">
-                        <span className="font-medium text-brand-primary text-sm dark:text-brand-accent-hover">
-                          {t("auto_signed_identity")}
-                        </span>
-                        <span
-                          className="text-brand-primary text-lg dark:text-brand-accent-hover"
-                          style={{
-                            fontFamily: profile.signatureFont || "inherit",
-                          }}
-                        >
-                          {profile.signatureData}
-                        </span>
-                      </div>
-                    ) : (
-                      <input
-                        className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-focus/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
-                        data-testid="run-signature-input"
-                        disabled={!hasExecutePermission}
-                        onChange={(event) =>
-                          setSignatures((prev) => ({
-                            ...prev,
-                            [project._id]: event.target.value,
-                          }))
-                        }
-                        placeholder={
-                          hasExecutePermission
-                            ? t("sign_off_signature")
-                            : t("unauthorized")
-                        }
-                        type="text"
-                        value={signatures[project._id] || ""}
-                      />
-                    )}
+                    <div className="flex flex-1 items-center justify-between rounded-xl border border-brand-primary/20 bg-brand-mint px-4 py-2 dark:border-brand-mint/20 dark:bg-brand-accent/20">
+                      <span className="font-medium text-brand-primary text-sm dark:text-brand-accent-hover">
+                        {t("auto_signed_identity")}
+                      </span>
+                      <span
+                        className="text-brand-primary text-lg dark:text-brand-accent-hover"
+                        data-testid="run-signature-name"
+                        style={{ fontFamily: SIGNATURE_FONT_FAMILY }}
+                      >
+                        {profile?.name}
+                      </span>
+                    </div>
                   </div>
                   <div className="group/btn relative w-full">
                     <button

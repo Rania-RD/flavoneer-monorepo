@@ -61,7 +61,7 @@ export interface IngredientSavePayload {
   nutrientValues: { nutrientName: string; unit: string; value: number }[];
   subAllergenValues: Record<string, string[]>;
   subIngredients?: { ingredientId: Id<"ingredients">; percentage: number }[];
-  teamId?: Id<"teams">;
+  organizationId?: Id<"organizations">;
   yieldAmount: number;
 }
 

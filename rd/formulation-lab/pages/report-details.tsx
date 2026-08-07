@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { pdf } from "@react-pdf/renderer";
 import { useQuery } from "convex/react";
 import {
@@ -16,10 +18,9 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { ReportPDF } from "../components/ReportPDF";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants } from "../lib/animations";
+import { SIGNATURE_FONT_FAMILY } from "../lib/signature";
 
 const ReportDetails: React.FC = () => {
   const { t } = useTranslation();
@@ -277,7 +278,7 @@ const ReportDetails: React.FC = () => {
             </span>
             <span
               className="px-4 py-2 text-4xl text-brand-primary dark:text-brand-accent-hover"
-              style={{ fontFamily: report.signoffFont || "inherit" }}
+              style={{ fontFamily: SIGNATURE_FONT_FAMILY }}
             >
               {report.signoffData}
             </span>

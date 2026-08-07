@@ -1,4 +1,18 @@
 @import "tailwindcss";
+
+@layer components {
+  .production-setting-input {
+    @apply w-full rounded-[1rem] border border-[#1c4a3c]/12 bg-[#eef8eb] px-4 py-3 text-[#173e33] text-sm outline-none transition-shadow focus:ring-2 focus:ring-[#ff7738]/45 dark:border-[#d2f2d4]/10 dark:bg-[#285b4d] dark:text-[#f7f4df];
+  }
+
+  .production-primary-button {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-[1rem] bg-[#1c4a3c] px-5 font-bold text-sm text-white shadow-md transition-transform active:scale-95 disabled:opacity-50 dark:bg-[#f5a623] dark:text-[#173e33];
+  }
+
+  .production-secondary-button {
+    @apply inline-flex min-h-11 items-center justify-center rounded-[1rem] border border-[#1c4a3c]/12 bg-[#fffdf4] px-4 font-bold text-[#173e33] text-xs transition-transform active:scale-95 dark:border-[#d2f2d4]/10 dark:bg-[#173e33] dark:text-[#f7f4df];
+  }
+}
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {

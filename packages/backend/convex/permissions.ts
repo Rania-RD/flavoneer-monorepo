@@ -1,10 +1,9 @@
+import { getEffectiveSystemPermissions, systemRoleHasPermission } from "../lib/system-role-access";
 import type { Doc } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { authComponent } from "./auth";
 
 type ConvexCtx = QueryCtx | MutationCtx;
-
-const UNASSIGNED_DEFAULT_PERMISSIONS = ["execute_runs"];
 
 interface AuthenticatedUserWithRole {
   user: Doc<"users">;
@@ -12,22 +11,15 @@ interface AuthenticatedUserWithRole {
 }
 
 export function getEffectivePermissions(role: Doc<"roles"> | null | undefined) {
-  return role?.permissions ?? UNASSIGNED_DEFAULT_PERMISSIONS;
+  return getEffectiveSystemPermissions(role);
 }
 
-export function roleHasPermission(
-  role: Doc<"roles"> | null | undefined,
-  permissionKey: string
-) {
-  const permissions = getEffectivePermissions(role);
-
-  return (
-    permissions.includes("full_access") || permissions.includes(permissionKey)
-  );
+export function roleHasPermission(role: Doc<"roles"> | null | undefined, permissionKey: string) {
+  return systemRoleHasPermission(role, permissionKey);
 }
 
 export async function getAuthenticatedUserWithRole(
-  ctx: ConvexCtx
+  ctx: ConvexCtx,
 ): Promise<AuthenticatedUserWithRole> {
   const authUser = await authComponent.getAuthUser(ctx);
   if (!authUser) {
@@ -50,7 +42,7 @@ export async function getAuthenticatedUserWithRole(
 
 export async function requirePermission(
   ctx: ConvexCtx,
-  permissionKey: string
+  permissionKey: string,
 ): Promise<AuthenticatedUserWithRole> {
   const currentUser = await getAuthenticatedUserWithRole(ctx);
 

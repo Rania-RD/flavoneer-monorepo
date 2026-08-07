@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
+import { useOrganization } from "../context/OrganizationContext";
 import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
 import { normalizeInsNumber } from "@flavoneer/backend/regulatory";
@@ -55,7 +55,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isRTL, language } = useSettings();
-  const { activeTeamId } = useTeam();
+  const { activeOrganizationId } = useOrganization();
   const createIngredient = useMutation(api.ingredients.create);
   const updateIngredient = useMutation(api.ingredients.update);
   const allIngredients = useQuery(api.ingredients.list, { language }) ?? [];
@@ -413,7 +413,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
       }
 
       const payload = buildIngredientSavePayload({
-        activeTeamId: activeTeamId ?? undefined,
+        activeOrganizationId: activeOrganizationId ?? undefined,
         allergenRegion,
         allergenValues,
         allergenVerified,

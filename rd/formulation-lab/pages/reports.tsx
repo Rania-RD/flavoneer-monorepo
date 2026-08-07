@@ -1,3 +1,4 @@
+import { api } from "@flavoneer/backend/api";
 import { pdf } from "@react-pdf/renderer";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import {
@@ -16,10 +17,14 @@ import NewLabReportModal from "../components/NewLabReportModal";
 import { ReportPDF } from "../components/ReportPDF";
 import ReportsDropdown from "../components/ReportsDropdown";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
 import { buildAggregatedIngredients } from "../lib/formulation/helpers";
+import {
+  getSignatureName,
+  SIGNATURE_FONT_FAMILY,
+  SIGNATURE_TYPE,
+} from "../lib/signature";
 import type { EnrichedLabReport, EnrichedProject } from "../types";
 
 const Reports: React.FC = () => {
@@ -161,15 +166,14 @@ const Reports: React.FC = () => {
 
         const newStatus = report.status === "Approved" ? "Pending" : "Approved";
         const isApproving = newStatus === "Approved";
+        const signatureName = getSignatureName(profile.name, user?.name);
 
         await updateStatus({
           id: report._id,
           status: newStatus,
-          signoffData: isApproving ? profile?.signatureData : undefined,
-          signoffFont: isApproving ? profile?.signatureFont : undefined,
-          signoffType: isApproving
-            ? (profile?.signatureType as "upload" | "text" | undefined)
-            : undefined,
+          signoffData: isApproving ? signatureName : undefined,
+          signoffFont: isApproving ? SIGNATURE_FONT_FAMILY : undefined,
+          signoffType: isApproving ? SIGNATURE_TYPE : undefined,
         });
         break;
       }

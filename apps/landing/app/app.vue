@@ -434,7 +434,7 @@ function handleMobileNavigation(label: string, destination: string) {
               Formulate faster. Release with confidence.
             </h2>
             <p class="mt-5 max-w-[700px] text-lg leading-8 text-[#36594e]">
-              Give product developers, quality teams, and operations one shared record from first concept through commercial production.
+              Give product developers, quality organizations, and operations one shared record from first concept through commercial production.
             </p>
           </div>
           <a

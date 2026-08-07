@@ -14,6 +14,7 @@
     "./ingredient-dependencies": "./lib/ingredients/dependencies.ts",
     "./regulatory": "./convex/regulatoryHelpers.ts",
     "./system-role-access": "./lib/system-role-access.ts",
+    "./production-line": "./convex/productionLineRecordHelpers.ts",
     "./units": "./convex/units.ts"
   },
   "scripts": {

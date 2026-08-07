@@ -18,6 +18,12 @@ import {
   legacyProfileValidator,
   localizedStringValidator,
   miniSpreadsheetValidator,
+  organizationMemberRoleValidator,
+  productionHallCodeValidator,
+  productionLineMeasurementUnitValidator,
+  productionLineReadingKeyValidator,
+  productionLineRecordStatusValidator,
+  productionLineSpecificationStatusValidator,
   projectStatusValidator,
   runOutcomeValidator,
   servingSizeModeValidator,
@@ -27,7 +33,7 @@ import {
   signatureTypeValidator,
   stepTypeValidator,
   stockStatusValidator,
-  teamMemberRoleValidator,
+  themePreferenceValidator,
   unitsValidator,
   versionSnapshotDataValidator,
   versionSnapshotIngredientsValidator,
@@ -59,6 +65,7 @@ export default defineSchema({
     lead: v.string(),
     description: v.string(),
     descriptionI18n: v.optional(localizedStringValidator),
+    photoStorageId: v.optional(v.id("_storage")),
     category: v.optional(v.string()),
     categoryI18n: v.optional(localizedStringValidator),
     gsfaCategoryCode: v.optional(v.string()),
@@ -103,9 +110,9 @@ export default defineSchema({
     // Batch code configuration
     batchCodePrefix: v.optional(v.string()),
     batchCodeFormat: v.optional(batchCodeFormatValidator),
-    // Multi-user/team support
+    // Multi-user organization support.
     userId: v.optional(v.union(v.string(), v.null())),
-    teamId: v.optional(v.union(v.id("teams"), v.null())),
+    organizationId: v.optional(v.union(v.id("organizations"), v.null())),
     // Approval Workflow
     releaseNotes: v.optional(v.string()),
     releasedBy: v.optional(v.string()),
@@ -120,8 +127,8 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_userId", ["userId"])
     .index("by_userId_status", ["userId", "status"])
-    .index("by_teamId", ["teamId"])
-    .index("by_teamId_status", ["teamId", "status"]),
+    .index("by_organizationId", ["organizationId"])
+    .index("by_organizationId_and_status", ["organizationId", "status"]),
 
   // ─── RBAC (Role-Based Access Control) ─────────────
   roles: defineTable({
@@ -209,18 +216,15 @@ export default defineSchema({
           min: v.optional(v.number()),
           max: v.optional(v.number()),
           unit: v.optional(v.string()),
-        })
-      )
+        }),
+      ),
     ),
     sortOrder: v.number(),
     onFail: v.optional(
       v.object({
-        action: v.union(
-          v.literal("redirect_dispose"),
-          v.literal("report_reason")
-        ),
+        action: v.union(v.literal("redirect_dispose"), v.literal("report_reason")),
         reasonPrompt: v.optional(v.string()),
-      })
+      }),
     ),
     spreadsheet: v.optional(miniSpreadsheetValidator),
   })
@@ -279,7 +283,7 @@ export default defineSchema({
     ingredientCode: v.optional(v.string()), // Kept for indexing/legacy
     ingredientId: v.id("ingredients"), // Strict 1:N relationship with library required
     userId: v.optional(v.string()),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     usedIn: v.optional(v.array(v.string())),
   })
     .index("by_category", ["category"])
@@ -311,8 +315,8 @@ export default defineSchema({
           nutrientName: v.string(),
           value: v.number(),
           unit: v.string(),
-        })
-      )
+        }),
+      ),
     ),
     allergenValues: v.optional(v.array(v.string())),
     allergenRegion: v.optional(v.string()),
@@ -324,8 +328,8 @@ export default defineSchema({
         v.object({
           unit: v.string(),
           grams: v.number(),
-        })
-      )
+        }),
+      ),
     ),
     isComposite: v.optional(v.boolean()),
     status: v.optional(v.union(v.literal("Draft"), v.literal("Approved"))),
@@ -334,16 +338,16 @@ export default defineSchema({
         v.object({
           ingredientId: v.id("ingredients"),
           percentage: v.number(),
-        })
-      )
+        }),
+      ),
     ),
     outOfSync: v.optional(v.boolean()),
     coverImageId: v.optional(v.id("_storage")),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     userId: v.optional(v.string()),
     createdAt: v.optional(v.number()),
   })
-    .index("by_teamId", ["teamId"])
+    .index("by_organizationId", ["organizationId"])
     .index("by_normalizedInsNumber", ["normalizedInsNumber"])
     .searchIndex("search_name", { searchField: "name" }),
 
@@ -383,10 +387,7 @@ export default defineSchema({
     createdAt: v.optional(v.number()),
     updatedAt: v.optional(v.number()),
   })
-    .index("by_categoryCode_normalizedInsNumber", [
-      "categoryCode",
-      "normalizedInsNumber",
-    ])
+    .index("by_categoryCode_normalizedInsNumber", ["categoryCode", "normalizedInsNumber"])
     .index("by_normalizedInsNumber", ["normalizedInsNumber"])
     .index("by_foodCategoryId", ["foodCategoryId"]),
 
@@ -404,7 +405,7 @@ export default defineSchema({
     sampleType: v.string(),
     hash: v.string(),
     userId: v.optional(v.string()),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     signoffData: v.optional(v.string()),
     signoffFont: v.optional(v.string()),
     signoffType: v.optional(signatureTypeValidator),
@@ -419,7 +420,7 @@ export default defineSchema({
     meta: v.string(),
     user: v.optional(v.string()),
     type: equipmentTypeValidator,
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
   }),
 
   runs: defineTable({
@@ -432,11 +433,7 @@ export default defineSchema({
     durationString: v.optional(v.string()),
     data: v.record(v.string(), v.number()),
     status: v.optional(
-      v.union(
-        v.literal("completed"),
-        v.literal("failed"),
-        v.literal("In Progress")
-      )
+      v.union(v.literal("completed"), v.literal("failed"), v.literal("In Progress")),
     ),
     failureReason: v.optional(v.string()),
     currentPhaseIndex: v.optional(v.number()),
@@ -449,18 +446,15 @@ export default defineSchema({
         texture: v.number(),
         color: v.number(),
         taste: v.number(),
-      })
+      }),
     ),
     stepLogs: v.optional(
-      v.record(
-        v.string(),
-        v.object({ startTime: v.number(), observation: v.string() })
-      )
+      v.record(v.string(), v.object({ startTime: v.number(), observation: v.string() })),
     ),
     runOutcome: v.optional(runOutcomeValidator),
     image: v.optional(v.string()),
     userId: v.optional(v.string()),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     signoffData: v.optional(v.string()),
     signoffFont: v.optional(v.string()),
     signoffType: v.optional(signatureTypeValidator),
@@ -471,6 +465,9 @@ export default defineSchema({
   userSettings: defineTable({
     settingsKey: v.string(), // userId
     units: unitsValidator,
+    // Optional during rollout. Clients fall back to the legacy darkMode field.
+    themePreference: v.optional(themePreferenceValidator),
+    // @deprecated — retained for older clients that only support two modes.
     darkMode: v.boolean(),
     language: languageValidator,
     appAlerts: v.boolean(),
@@ -480,6 +477,7 @@ export default defineSchema({
     title: v.optional(v.string()),
     email: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
+    // @deprecated — retained until existing signature settings are migrated away.
     signatureType: v.optional(signatureTypeValidator),
     signatureData: v.optional(v.string()),
     signatureFont: v.optional(v.string()),
@@ -487,21 +485,120 @@ export default defineSchema({
     profile: legacyProfileValidator,
   }).index("by_settingsKey", ["settingsKey"]),
 
-  // ─── Team Management ───────────────────────────────
-  teams: defineTable({
+  // ─── Organization Management ───────────────────────
+  organizations: defineTable({
     name: v.string(),
     slug: v.string(),
     avatarUrl: v.optional(v.string()),
-    ownerId: v.string(), // auth user ID who created the team
+    ownerId: v.string(),
     createdAt: v.number(),
     autoVersioning: v.optional(v.boolean()),
-    // Better Auth organization backing this domain workspace.
-    // Optional during the widen/backfill deployment.
     authOrganizationId: v.optional(v.string()),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_slug", ["slug"])
     .index("by_authOrganizationId", ["authOrganizationId"]),
+
+  // ─── Production-line monitoring ───────────────────
+  productionLineSettings: defineTable({
+    organizationId: v.id("organizations"),
+    timezone: v.string(),
+    enabledHallCodes: v.array(productionHallCodeValidator),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_organizationId", ["organizationId"]),
+
+  productionLineSerialCounters: defineTable({
+    organizationId: v.id("organizations"),
+    hallCode: productionHallCodeValidator,
+    nextSequence: v.number(),
+    initializedAt: v.number(),
+    initializedBy: v.string(),
+    lastAllocatedAt: v.optional(v.number()),
+    lastAllocatedBy: v.optional(v.string()),
+  }).index("by_organizationId_and_hallCode", ["organizationId", "hallCode"]),
+
+  productionLineSpecifications: defineTable({
+    organizationId: v.id("organizations"),
+    productId: v.id("projects"),
+    productName: v.string(),
+    version: v.number(),
+    status: productionLineSpecificationStatusValidator,
+    createdAt: v.number(),
+    createdBy: v.string(),
+    effectiveAt: v.optional(v.number()),
+    publishedBy: v.optional(v.string()),
+  })
+    .index("by_organizationId_and_productId", ["organizationId", "productId"])
+    .index("by_organizationId_and_status", ["organizationId", "status"])
+    .index("by_organizationId_and_productId_and_status", ["organizationId", "productId", "status"]),
+
+  productionLineSpecificationLimits: defineTable({
+    specificationId: v.id("productionLineSpecifications"),
+    readingKey: productionLineReadingKeyValidator,
+    unit: productionLineMeasurementUnitValidator,
+    minimum: v.number(),
+    maximum: v.number(),
+    target: v.optional(v.number()),
+    minimumReadingCount: v.number(),
+  }).index("by_specificationId_and_readingKey", ["specificationId", "readingKey"]),
+
+  productionLineRecords: defineTable({
+    organizationId: v.id("organizations"),
+    productionHallCode: productionHallCodeValidator,
+    serialSequence: v.number(),
+    displaySerial: v.string(),
+    departmentName: v.string(),
+    productId: v.id("projects"),
+    productName: v.string(),
+    inspectionAt: v.number(),
+    inspectionHourKey: v.string(),
+    specificationId: v.id("productionLineSpecifications"),
+    specificationVersion: v.number(),
+    batchLabelPhotoStorageId: v.optional(v.id("_storage")),
+    batchLabelMimeType: v.optional(v.string()),
+    batchLabelSize: v.optional(v.number()),
+    batchLabelCapturedAt: v.optional(v.number()),
+    printedBatchCode: v.optional(v.string()),
+    labelProductionDate: v.optional(v.string()),
+    dailyBatchSequence: v.optional(v.number()),
+    batchLabelConfirmedBy: v.optional(v.string()),
+    batchLabelConfirmedAt: v.optional(v.number()),
+    status: productionLineRecordStatusValidator,
+    editableOwnerUserId: v.string(),
+    qcUserId: v.string(),
+    qcUserName: v.string(),
+    recordRevision: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organizationId", ["organizationId"])
+    .index("by_organizationId_and_status", ["organizationId", "status"])
+    .index("by_organizationId_and_qcUserId", ["organizationId", "qcUserId"])
+    .index("by_organizationId_and_productionHallCode_and_serialSequence", [
+      "organizationId",
+      "productionHallCode",
+      "serialSequence",
+    ])
+    .index("by_organizationId_departmentName_productId_inspectionHourKey", [
+      "organizationId",
+      "departmentName",
+      "productId",
+      "inspectionHourKey",
+    ]),
+
+  productionLineRecordEvents: defineTable({
+    recordId: v.id("productionLineRecords"),
+    organizationId: v.id("organizations"),
+    action: v.string(),
+    actorId: v.string(),
+    actorName: v.string(),
+    recordRevision: v.number(),
+    metadata: v.optional(v.record(v.string(), v.string())),
+    createdAt: v.number(),
+  })
+    .index("by_recordId", ["recordId"])
+    .index("by_organizationId_and_createdAt", ["organizationId", "createdAt"]),
 
   projectVersions: defineTable({
     projectId: v.id("projects"),
@@ -521,24 +618,23 @@ export default defineSchema({
     .index("by_projectId", ["projectId"])
     .index("by_projectId_version", ["projectId", "version"]),
 
-  teamMembers: defineTable({
-    teamId: v.id("teams"),
+  organizationMembers: defineTable({
+    organizationId: v.id("organizations"),
     userId: v.string(),
     userName: v.string(),
     userEmail: v.string(),
     userAvatarUrl: v.optional(v.string()),
-    role: teamMemberRoleValidator,
+    role: organizationMemberRoleValidator,
     joinedAt: v.number(),
-    // Better Auth member backing this read projection.
     authMemberId: v.optional(v.string()),
   })
-    .index("by_teamId", ["teamId"])
+    .index("by_organizationId", ["organizationId"])
     .index("by_userId", ["userId"])
-    .index("by_teamId_userId", ["teamId", "userId"])
+    .index("by_organizationId_and_userId", ["organizationId", "userId"])
     .index("by_authMemberId", ["authMemberId"]),
 
-  teamInvites: defineTable({
-    teamId: v.id("teams"),
+  organizationInvites: defineTable({
+    organizationId: v.id("organizations"),
     email: v.string(),
     role: inviteRoleValidator,
     token: v.string(),
@@ -547,16 +643,15 @@ export default defineSchema({
     invitedByName: v.string(),
     createdAt: v.number(),
     expiresAt: v.optional(v.number()),
-    // Better Auth invitation backing this read projection.
     authInvitationId: v.optional(v.string()),
   })
-    .index("by_teamId", ["teamId"])
+    .index("by_organizationId", ["organizationId"])
     .index("by_token", ["token"])
     .index("by_email", ["email"])
     .index("by_authInvitationId", ["authInvitationId"]),
 
-  teamAuditLogs: defineTable({
-    teamId: v.id("teams"),
+  organizationAuditLogs: defineTable({
+    organizationId: v.id("organizations"),
     actorId: v.string(),
     actorName: v.string(),
     action: v.string(),
@@ -565,7 +660,7 @@ export default defineSchema({
     targetLabel: v.optional(v.string()),
     meta: auditLogMetaValidator,
     createdAt: v.number(),
-  }).index("by_teamId", ["teamId"]),
+  }).index("by_organizationId", ["organizationId"]),
 
   // ─── Material Usage Logs ───────────────────────────
   materialUsageLogs: defineTable({
@@ -622,18 +717,15 @@ export default defineSchema({
           min: v.optional(v.number()),
           max: v.optional(v.number()),
           unit: v.optional(v.string()),
-        })
-      )
+        }),
+      ),
     ),
     sortOrder: v.number(),
     onFail: v.optional(
       v.object({
-        action: v.union(
-          v.literal("redirect_dispose"),
-          v.literal("report_reason")
-        ),
+        action: v.union(v.literal("redirect_dispose"), v.literal("report_reason")),
         reasonPrompt: v.optional(v.string()),
-      })
+      }),
     ),
     spreadsheet: v.optional(miniSpreadsheetValidator),
   })

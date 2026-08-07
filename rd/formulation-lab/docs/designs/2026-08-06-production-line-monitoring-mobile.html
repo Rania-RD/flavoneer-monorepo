@@ -683,7 +683,7 @@
           <h2>Replace one active paper workflow end to end</h2>
           <p>
             The first release digitizes the production-line monitoring form without building a
-            generic form builder. The QC team enters the record in the Expo mobile app during
+            generic form builder. The QC organization enters the record in the Expo mobile app during
             production. One form represents one inspection time, performed every hour across the
             factory's 24/7 operation. Each modification is saved through a connected Convex mutation.
             The production manager reviews the submitted record and adds the second signature from the
@@ -795,7 +795,7 @@
           <h2>Dedicated production-line form</h2>
           <div class="decision">
             <strong>Decision:</strong> build a typed form and workflow for one production use case.
-            Keep the storage boundaries clean enough to extract shared primitives after the team has
+            Keep the storage boundaries clean enough to extract shared primitives after the organization has
             observed real mobile usage.
           </div>
 
@@ -936,7 +936,7 @@
                   <td>Operational context</td>
                   <td><code>inspectionAt</code>, <code>inspectionHourKey</code>, <code>runId</code></td>
                   <td>Automatic hourly slot and optional run link</td>
-                  <td>One form per department or line, product, and team-local hour. Run link remains optional.</td>
+                  <td>One form per department or line, product, and organization-local hour. Run link remains optional.</td>
                 </tr>
               </tbody>
             </table>
@@ -972,7 +972,7 @@
 
           <h3>Per-product specifications in web Form Settings</h3>
           <p>
-            The web workspace is the authoritative source of business limits. An authorized team user
+            The web workspace is the authoritative source of business limits. An authorized organization user
             supplies one metric unit and acceptable range for each product and measurement key through
             Form Settings. Specifications are versioned. Activating a new version affects future hourly
             forms only; existing drafts and approved records keep their original specification snapshot.
@@ -988,7 +988,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Product</td><td><code>productId</code> and product-name snapshot</td><td>One active specification version per product and team.</td></tr>
+                <tr><td>Product</td><td><code>productId</code> and product-name snapshot</td><td>One active specification version per product and organization.</td></tr>
                 <tr><td>Measurement</td><td>One of the five fixed <code>readingKey</code> values</td><td>Every active specification contains all five keys.</td></tr>
                 <tr><td>Entry unit</td><td><code>unit</code></td><td>Selected per product from metric-only choices: <code>mg</code>, <code>g</code>, or <code>kg</code> for weights; <code>°C</code> for temperature.</td></tr>
                 <tr><td>Acceptable minimum</td><td><code>minimum</code></td><td>Required numeric lower bound.</td></tr>
@@ -1077,7 +1077,7 @@
           <ul>
             <li>Selecting <code>non_compliant</code> immediately reveals note, immediate-action, and photo controls.</li>
             <li>At least one successfully uploaded photo is required for each non-compliant check.</li>
-            <li>The pilot allows up to three photos per check, subject to confirmation with the quality team.</li>
+            <li>The pilot allows up to three photos per check, subject to confirmation with the quality organization.</li>
             <li>The app compresses images before upload and stores file metadata separately from the check.</li>
             <li>Changing a check back to compliant does not silently delete evidence. The draft asks for confirmation, then removes the attachment through an audited server mutation.</li>
           </ul>
@@ -1101,7 +1101,7 @@
               <h3>Navigation</h3>
               <ul>
                 <li>Add a Quality tab to the authenticated Expo Router tab group.</li>
-                <li>Show the current team-local hourly inspection slot when QC creates a record.</li>
+                <li>Show the current organization-local hourly inspection slot when QC creates a record.</li>
                 <li>Show “New,” “Drafts,” “Submitted,” and “Returned” filters.</li>
                 <li>Open the form as a stack screen so the tab bar does not compete with entry actions.</li>
                 <li>Display a persistent connectivity and save-state bar at the top.</li>
@@ -1218,7 +1218,7 @@
           <p>
             Add normalized child tables rather than unbounded arrays on the parent record. The form has
             a bounded set of checks, but process readings and audit events can grow over time. All
-            shared records carry <code>teamId</code> directly or inherit it through an authorized parent.
+            shared records carry <code>organizationId</code> directly or inherit it through an authorized parent.
           </p>
 
           <div class="table-wrap">
@@ -1227,18 +1227,18 @@
               <tbody>
                 <tr>
                   <td><code>productionLineSettings</code></td>
-                  <td>Team-level inspection behavior.</td>
-                  <td>Team, IANA timezone, 60-minute inspection interval, enabled hall codes A and B, and updated-by metadata. One row per team.</td>
+                  <td>Organization-level inspection behavior.</td>
+                  <td>Organization, IANA timezone, 60-minute inspection interval, enabled hall codes A and B, and updated-by metadata. One row per organization.</td>
                 </tr>
                 <tr>
                   <td><code>productionLineSerialCounters</code></td>
                   <td>Atomic non-reused form serial allocation by production hall.</td>
-                  <td>Team, hall code, next sequence, last allocated time, and actor. Unique index by team plus hall code.</td>
+                  <td>Organization, hall code, next sequence, last allocated time, and actor. Unique index by organization plus hall code.</td>
                 </tr>
                 <tr>
                   <td><code>productionLineSpecifications</code></td>
                   <td>Versioned product-specific specification header.</td>
-                  <td>Team, product, version, draft or active status, effective time, creator, publisher. Index by team plus product and status.</td>
+                  <td>Organization, product, version, draft or active status, effective time, creator, publisher. Index by organization plus product and status.</td>
                 </tr>
                 <tr>
                   <td><code>productionLineSpecificationLimits</code></td>
@@ -1249,13 +1249,13 @@
                   <td><code>productionLineRecords</code></td>
                   <td>Workflow root and searchable record summary.</td>
                   <td>
-                    Team, production hall, serial sequence and display serial, department and product
+                    Organization, production hall, serial sequence and display serial, department and product
                     snapshots, inspection time and hour key, printed batch code, parsed label date and
                     daily batch sequence, batch-label storage metadata, optional run, specification
                     ID/version snapshot, single carton count, single cleanliness percentage, notes,
-                    status, editable owner, record revision, and submit/approve times. Index by team plus
-                    status, team plus hall and serial, team plus inspection hour, team plus printed batch
-                    code, and team plus department/product/hour.
+                    status, editable owner, record revision, and submit/approve times. Index by organization plus
+                    status, organization plus hall and serial, organization plus inspection hour, organization plus printed batch
+                    code, and organization plus department/product/hour.
                   </td>
                 </tr>
                 <tr>
@@ -1298,8 +1298,8 @@
                   <td><code>productionLineRecordEvents</code></td>
                   <td>Dedicated workflow audit history.</td>
                   <td>
-                    Record ID, team, action, actor identity, record revision, reason, safe metadata,
-                    server time. Index by record ID and team plus time.
+                    Record ID, organization, action, actor identity, record revision, reason, safe metadata,
+                    server time. Index by record ID and organization plus time.
                   </td>
                 </tr>
               </tbody>
@@ -1308,7 +1308,7 @@
 
           <h3>Conceptual parent shape</h3>
           <pre><code>productionLineRecords: {
-  teamId,
+  organizationId,
   productionHallCode: "A" | "B",
   serialSequence, displaySerial,
   departmentId?, departmentName,
@@ -1352,8 +1352,8 @@
           <ul>
             <li>The draft is created in Convex before editable fields are shown.</li>
             <li>Draft creation atomically allocates the next serial for the selected production hall; the display value is the hall code, one space, and the sequence.</li>
-            <li>Serial numbers are unique within team and hall and are never reused, including after a draft is discarded.</li>
-            <li>Only one record may exist for the same team, department or line, product, and team-local hourly slot.</li>
+            <li>Serial numbers are unique within organization and hall and are never reused, including after a draft is discarded.</li>
+            <li>Only one record may exist for the same organization, department or line, product, and organization-local hourly slot.</li>
             <li>A record snapshots one active product specification version when it is created.</li>
             <li>Only <code>draft</code> and <code>returned</code> records accept autosave mutations.</li>
             <li>A record cannot enter production review until all required fields and checks are valid.</li>
@@ -1384,10 +1384,10 @@
                 <tr><td><code>specifications.createDraft</code></td><td>Web Form Settings</td><td>Creates a new specification version copied from the active version or from fixed defaults.</td></tr>
                 <tr><td><code>specifications.updateLimit</code></td><td>Web Form Settings</td><td>Saves the metric unit, minimum, maximum, target, and minimum reading count for one fixed reading key.</td></tr>
                 <tr><td><code>specifications.publish</code></td><td>Web Form Settings</td><td>Validates all five business limits and atomically makes the new immutable version active.</td></tr>
-                <tr><td><code>getMobileReferenceData</code></td><td>Mobile QC</td><td>Returns workspace, team timezone, enabled production halls, departments, active products/runs, active specification summaries, and current user capabilities.</td></tr>
+                <tr><td><code>getMobileReferenceData</code></td><td>Mobile QC</td><td>Returns workspace, organization timezone, enabled production halls, departments, active products/runs, active specification summaries, and current user capabilities.</td></tr>
                 <tr><td><code>listMine</code></td><td>Mobile QC</td><td>Returns the user's recent server records and their workflow states.</td></tr>
                 <tr><td><code>get</code></td><td>Mobile QC</td><td>Returns one authorized record, form serial, authorized carton-label image, readings, checks and photos, signatures, and current record revision.</td></tr>
-                <tr><td><code>createDraft</code></td><td>Mobile QC</td><td>Creates one authorized draft for the team-local hourly slot, rejects or returns the existing duplicate, atomically allocates the next serial for hall A or B, and snapshots the active product specification.</td></tr>
+                <tr><td><code>createDraft</code></td><td>Mobile QC</td><td>Creates one authorized draft for the organization-local hourly slot, rejects or returns the existing duplicate, atomically allocates the next serial for hall A or B, and snapshots the active product specification.</td></tr>
                 <tr><td><code>updateHeader</code></td><td>Mobile QC</td><td>Saves department, product, inspection time, run, carton count, and cleanliness percentage. Hall and serial are immutable after creation.</td></tr>
                 <tr><td><code>updateBatchLabelCode</code></td><td>Mobile QC</td><td>Normalizes the printed code, validates the <code>DDMMYY N</code> pilot format, real calendar date, and 1–9 daily sequence, stores parsed fields, and records QC confirmation.</td></tr>
                 <tr><td><code>upsertReading</code></td><td>Mobile QC</td><td>Adds or edits one typed reading, evaluates its snapshotted range, and increments the record revision.</td></tr>
@@ -1579,7 +1579,7 @@
                 <tr><td><code>packages/backend/convex/productionLineRecordHelpers.ts</code></td><td>Build hourly slot keys, allocate display serials, parse printed batch codes, snapshot active specifications, evaluate limits, create canonical snapshots, check completeness, guard transitions, and upsert children.</td></tr>
                 <tr><td><code>packages/backend/convex/files.ts</code></td><td>Reuse the authorized upload and storage flow for carton-label and non-conformity photos, adding production-record ownership and photo-purpose checks.</td></tr>
                 <tr><td><code>packages/backend/convex/roles.ts</code></td><td>Add quality-officer and production-manager roles plus new permission defaults.</td></tr>
-                <tr><td><code>packages/backend/convex/teamAuditLogs.ts</code></td><td>Reuse summary workspace events while dedicated form events keep detailed history.</td></tr>
+                <tr><td><code>packages/backend/convex/organizationAuditLogs.ts</code></td><td>Reuse summary workspace events while dedicated form events keep detailed history.</td></tr>
                 <tr><td><code>packages/backend/convex/clearAllAppTables.ts</code></td><td>Include new tables only in the intentional local-development clearing workflow.</td></tr>
               </tbody>
             </table>
@@ -1720,7 +1720,7 @@
             <article class="phase">
               <h3>Phase 1: field contract and data model</h3>
               <p>
-                Confirm field meanings and team-local timezone. Add line settings, product specification
+                Confirm field meanings and organization-local timezone. Add line settings, product specification
                 drafts and published versions, hourly slot identity, hall serial counters, carton-label
                 fields, the record schema, validators, granular autosave mutations, and permission checks.
               </p>
@@ -1806,7 +1806,7 @@
 
           <ul class="checklist">
             <li>An authenticated QC user with an active connection can create a server draft.</li>
-            <li>Each form identifies one inspection time and one team-local hourly slot; the same workspace, line, product, and slot cannot have two records.</li>
+            <li>Each form identifies one inspection time and one organization-local hourly slot; the same workspace, line, product, and slot cannot have two records.</li>
             <li>Each draft has a server-assigned read-only serial formatted as hall A or B, one space, and a non-reused counting number.</li>
             <li>Serial allocation is atomic and idempotent: concurrent creation cannot duplicate a serial, and retrying the same hourly draft does not consume another number.</li>
             <li>An authorized user can configure and publish metric weight units, Celsius temperature, minimum and maximum business limits, optional targets, and minimum reading counts per product in web Form Settings.</li>
@@ -1853,7 +1853,7 @@
                 </tr>
                 <tr>
                   <td>Retention, void, and amendment ownership is undefined</td>
-                  <td>The team has no approved in-app process for correcting or disposing of approved records.</td>
+                  <td>The organization has no approved in-app process for correcting or disposing of approved records.</td>
                   <td>Retain approved records indefinitely and expose no void, amendment, or delete action in the first release. Define the policy before adding those workflows.</td>
                 </tr>
                 <tr>
@@ -1932,7 +1932,7 @@
           <p>
             <strong>DONE_WITH_CONCERNS:</strong> Approach A is selected and this plan is ready for
             implementation. The retention/void/amendment policy, maximum reading counts, grouped versus
-            independent sampling, team timezone, active-line schedule, hall counter scope and starting
+            independent sampling, organization timezone, active-line schedule, hall counter scope and starting
             values, discarded-serial gap rule, maximum daily batch sequence, and cross-midnight label-date
             rule remain open. Serial allocation ownership and whether batch-code transcription should be
             manual or OCR-assisted must be confirmed before implementation.

@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 const INITIALS_PATTERN = /^(?:\p{L}{1,2}|\?)$/u;
+const DARK_CLASS_PATTERN = /dark/;
+const SYSTEM_LABEL_PATTERN = /System/;
 
-test("sidebar avatar opens the personal profile modal directly", async ({
+test("personal activity is available from the audit log, not profile settings", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -40,10 +42,45 @@ test("sidebar avatar opens the personal profile modal directly", async ({
   await expect(dialog.getByRole("tab", { name: "Identity" })).toBeVisible();
   await expect(
     dialog.getByRole("tab", { name: "Digital Signature" })
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(
     dialog.getByRole("tab", { name: "Language & Region" })
   ).toBeVisible();
-  await expect(dialog.getByRole("tab", { name: "Activity" })).toBeVisible();
+  const appearanceTab = dialog.getByRole("tab", { name: "Appearance" });
+  await expect(appearanceTab).toBeVisible();
+  await expect(dialog.getByRole("tab", { name: "Activity" })).toHaveCount(0);
   await expect(dialog.getByRole("button", { name: "Logout" })).toBeVisible();
+
+  await appearanceTab.click();
+  const darkOption = dialog.getByRole("button", { name: "Dark", exact: true });
+  const lightOption = dialog.getByRole("button", {
+    name: "Light",
+    exact: true,
+  });
+  const systemOption = dialog.getByRole("button", {
+    name: SYSTEM_LABEL_PATTERN,
+  });
+  await darkOption.click();
+  await expect(darkOption).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("html")).toHaveClass(DARK_CLASS_PATTERN);
+  await lightOption.click();
+  await expect(lightOption).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("html")).not.toHaveClass(DARK_CLASS_PATTERN);
+  await systemOption.click();
+  await expect(systemOption).toHaveAttribute("aria-pressed", "true");
+
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await page.goto("/settings");
+  await expect(page.getByRole("button", { name: "Appearance" })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Traceability & Identity" })
+  ).toBeVisible();
+  await page.goto("/organization");
+
+  const auditLogTab = page.getByRole("button", { name: "Audit Log" });
+  await expect(auditLogTab).toBeVisible();
+  await auditLogTab.click();
+  await expect(
+    page.getByRole("heading", { name: "Recent Activity" })
+  ).toBeVisible();
 });

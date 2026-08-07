@@ -1,19 +1,10 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import {
-  type MutationCtx,
-  mutation,
-  type QueryCtx,
-  query,
-} from "./_generated/server";
+import { type MutationCtx, mutation, type QueryCtx, query } from "./_generated/server";
 import { authComponent } from "./auth";
-import {
-  localizeArray,
-  makeLocalizedString,
-  selectLocalizedString,
-} from "./localization";
-import { logTeamAction } from "./teamAuditLogs";
+import { localizeArray, makeLocalizedString, selectLocalizedString } from "./localization";
+import { logOrganizationAction } from "./organizationAuditLogs";
 import {
   batchCodeFormatValidator,
   enrichedProjectReturnValidator,
@@ -41,6 +32,22 @@ type RecipeStepType =
   | "critical_check"
   | "conditional"
   | "spreadsheet_note";
+
+const allowedProjectPhotoMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maximumProjectPhotoBytes = 5 * 1024 * 1024;
+
+async function validateProjectPhoto(ctx: MutationCtx, storageId: Id<"_storage">) {
+  const metadata = await ctx.db.system.get("_storage", storageId);
+  if (!metadata) {
+    throw new Error("Uploaded project photo was not found");
+  }
+  if (!metadata.contentType || !allowedProjectPhotoMimeTypes.has(metadata.contentType)) {
+    throw new Error("Project photo must be a JPEG, PNG, or WebP image");
+  }
+  if (metadata.size > maximumProjectPhotoBytes) {
+    throw new Error("Project photo must be 5 MB or smaller");
+  }
+}
 
 function getNextMajorVersion(version: string) {
   const trimmed = version.trim();
@@ -72,9 +79,7 @@ function getVersionedCloneName(baseName: string, version: string) {
   return `${baseName} ${version}`.trim();
 }
 
-function withProjectLocalizedFields<T extends Record<string, unknown>>(
-  data: T
-) {
+function withProjectLocalizedFields<T extends Record<string, unknown>>(data: T) {
   const output = { ...data } as Record<string, unknown>;
   const fields = [
     "name",
@@ -94,7 +99,7 @@ function withProjectLocalizedFields<T extends Record<string, unknown>>(
     if (field in output || i18nField in output) {
       output[i18nField] = makeLocalizedString(
         output[field] as string | undefined,
-        output[i18nField] as { ar?: string; en?: string } | undefined
+        output[i18nField] as { ar?: string; en?: string } | undefined,
       );
     }
   }
@@ -102,11 +107,9 @@ function withProjectLocalizedFields<T extends Record<string, unknown>>(
   return output as T;
 }
 
-async function enrichProject(
-  ctx: QueryCtx,
-  project: Doc<"projects">,
-  language?: string
-) {
+async function enrichProject(ctx: QueryCtx, project: Doc<"projects">, language?: string) {
+  const photoUrl = project.photoStorageId ? await ctx.storage.getUrl(project.photoStorageId) : null;
+
   // Join ingredients
   const allIngredients = await ctx.db
     .query("projectIngredients")
@@ -183,96 +186,70 @@ async function enrichProject(
               spreadsheet: s.spreadsheet,
             })),
         };
-      })
+      }),
   );
 
   return {
     ...project,
+    photoUrl: photoUrl ?? undefined,
     name: selectLocalizedString(project.name, project.nameI18n, language),
     nameI18n: makeLocalizedString(project.name, project.nameI18n),
-    description: selectLocalizedString(
-      project.description,
-      project.descriptionI18n,
-      language
-    ),
-    descriptionI18n: makeLocalizedString(
-      project.description,
-      project.descriptionI18n
-    ),
-    category: selectLocalizedString(
-      project.category,
-      project.categoryI18n,
-      language
-    ),
+    description: selectLocalizedString(project.description, project.descriptionI18n, language),
+    descriptionI18n: makeLocalizedString(project.description, project.descriptionI18n),
+    category: selectLocalizedString(project.category, project.categoryI18n, language),
     categoryI18n: makeLocalizedString(project.category, project.categoryI18n),
     gsfaCategoryName: selectLocalizedString(
       project.gsfaCategoryName,
       project.gsfaCategoryNameI18n,
-      language
+      language,
     ),
     gsfaCategoryNameI18n: makeLocalizedString(
       project.gsfaCategoryName,
-      project.gsfaCategoryNameI18n
+      project.gsfaCategoryNameI18n,
     ),
     packagingItemName: selectLocalizedString(
       project.packagingItemName,
       project.packagingItemNameI18n,
-      language
+      language,
     ),
     packagingItemNameI18n: makeLocalizedString(
       project.packagingItemName,
-      project.packagingItemNameI18n
+      project.packagingItemNameI18n,
     ),
-    productType: selectLocalizedString(
-      project.productType,
-      project.productTypeI18n,
-      language
-    ),
-    productTypeI18n: makeLocalizedString(
-      project.productType,
-      project.productTypeI18n
-    ),
+    productType: selectLocalizedString(project.productType, project.productTypeI18n, language),
+    productTypeI18n: makeLocalizedString(project.productType, project.productTypeI18n),
     processingMethod: selectLocalizedString(
       project.processingMethod,
       project.processingMethodI18n,
-      language
+      language,
     ),
     processingMethodI18n: makeLocalizedString(
       project.processingMethod,
-      project.processingMethodI18n
+      project.processingMethodI18n,
     ),
     targetOutcome: selectLocalizedString(
       project.targetOutcome,
       project.targetOutcomeI18n,
-      language
+      language,
     ),
-    targetOutcomeI18n: makeLocalizedString(
-      project.targetOutcome,
-      project.targetOutcomeI18n
-    ),
+    targetOutcomeI18n: makeLocalizedString(project.targetOutcome, project.targetOutcomeI18n),
     nutritionalGoal: selectLocalizedString(
       project.nutritionalGoal,
       project.nutritionalGoalI18n,
-      language
+      language,
     ),
-    nutritionalGoalI18n: makeLocalizedString(
-      project.nutritionalGoal,
-      project.nutritionalGoalI18n
-    ),
+    nutritionalGoalI18n: makeLocalizedString(project.nutritionalGoal, project.nutritionalGoalI18n),
     testingRequirements: localizeArray(
       project.testingRequirements,
       project.testingRequirementsI18n,
-      language
+      language,
     ),
     targetTexture: selectLocalizedString(
       project.targetTexture,
       project.targetTextureI18n,
-      language
+      language,
     ),
-    targetTextureI18n: makeLocalizedString(
-      project.targetTexture,
-      project.targetTextureI18n
-    ),
+    targetTextureI18n: makeLocalizedString(project.targetTexture, project.targetTextureI18n),
     updatedAt: project.updatedAt ?? "",
     ingredients,
     phases: phases.length > 0 ? phases : undefined,
@@ -295,13 +272,13 @@ async function replaceIngredients(
     percentage?: number;
     costPerKg?: number;
   }>,
-  versionTag: "current" | "previous" = "current"
+  versionTag: "current" | "previous" = "current",
 ) {
   // Delete existing
   const existingRecords = await ctx.db
     .query("projectIngredients")
     .withIndex("by_projectId_versionTag", (q) =>
-      q.eq("projectId", projectId).eq("versionTag", versionTag)
+      q.eq("projectId", projectId).eq("versionTag", versionTag),
     )
     .collect();
 
@@ -368,7 +345,7 @@ async function replacePhases(
       };
       spreadsheet?: Doc<"recipeSteps">["spreadsheet"];
     }>;
-  }>
+  }>,
 ) {
   // Delete existing phases and steps
   const existingPhases = await ctx.db
@@ -432,7 +409,7 @@ async function replacePhases(
 async function saveProjectSnapshot(
   ctx: MutationCtx,
   projectId: Id<"projects">,
-  autosaveName?: string
+  autosaveName?: string,
 ) {
   const project = await ctx.db.get(projectId);
   if (!project) {
@@ -442,7 +419,7 @@ async function saveProjectSnapshot(
   const ingredients = await ctx.db
     .query("projectIngredients")
     .withIndex("by_projectId_versionTag", (q) =>
-      q.eq("projectId", projectId).eq("versionTag", "current")
+      q.eq("projectId", projectId).eq("versionTag", "current"),
     )
     .collect();
 
@@ -458,7 +435,7 @@ async function saveProjectSnapshot(
         .withIndex("by_phaseId", (q) => q.eq("phaseId", phase._id))
         .collect();
       return { ...phase, steps };
-    })
+    }),
   );
 
   const snapshotData = Object.fromEntries(
@@ -515,18 +492,17 @@ async function saveProjectSnapshot(
       batchCodePrefix: project.batchCodePrefix,
       batchCodeFormat: project.batchCodeFormat,
       userId: project.userId,
-      teamId: project.teamId,
+      organizationId: project.organizationId,
       releasedBy: project.releasedBy,
       releasedAt: project.releasedAt,
       formattedId: project.formattedId,
       ingredients: project.ingredients,
       progress: project.progress,
       authorizedExecutor: project.authorizedExecutor,
-    }).filter(([, value]) => value !== undefined)
+    }).filter(([, value]) => value !== undefined),
   ) as Doc<"projectVersions">["data"];
   const snapshotName =
-    autosaveName?.trim().slice(0, 160) ||
-    "Auto-Save: Updated formulation fields";
+    autosaveName?.trim().slice(0, 160) || "Auto-Save: Updated formulation fields";
 
   await ctx.db.insert("projectVersions", {
     projectId,
@@ -563,17 +539,15 @@ export const list = query({
     } else {
       result = await ctx.db.query("projects").paginate(args.paginationOpts);
     }
-    const page = await Promise.all(
-      result.page.map((p) => enrichProject(ctx, p, args.language))
-    );
+    const page = await Promise.all(result.page.map((p) => enrichProject(ctx, p, args.language)));
     return { ...result, page };
   },
 });
 
-export const listByTeam = query({
+export const listByOrganization = query({
   args: {
     paginationOpts: paginationOptsValidator,
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     status: v.optional(projectStatusValidator),
     language: v.optional(languageValidator),
   },
@@ -588,9 +562,9 @@ export const listByTeam = query({
       isDone: boolean;
       continueCursor: string;
     };
-    if (args.teamId) {
-      const teamId = args.teamId;
-      const access = await getWorkspaceAccess(ctx, teamId);
+    if (args.organizationId) {
+      const organizationId = args.organizationId;
+      const access = await getWorkspaceAccess(ctx, organizationId);
       if (!access) {
         return { page: [], isDone: true, continueCursor: "" };
       }
@@ -598,21 +572,21 @@ export const listByTeam = query({
       if (args.status) {
         result = await ctx.db
           .query("projects")
-          .withIndex("by_teamId_status", (q) =>
-            q.eq("teamId", teamId).eq("status", args.status!)
+          .withIndex("by_organizationId_and_status", (q) =>
+            q.eq("organizationId", organizationId).eq("status", args.status!),
           )
           .paginate(args.paginationOpts);
       } else {
         result = await ctx.db
           .query("projects")
-          .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
+          .withIndex("by_organizationId", (q) => q.eq("organizationId", organizationId))
           .paginate(args.paginationOpts);
       }
     } else if (args.status) {
       result = await ctx.db
         .query("projects")
         .withIndex("by_userId_status", (q) =>
-          q.eq("userId", authUser._id).eq("status", args.status!)
+          q.eq("userId", authUser._id).eq("status", args.status!),
         )
         .paginate(args.paginationOpts);
     } else {
@@ -621,9 +595,7 @@ export const listByTeam = query({
         .withIndex("by_userId", (q) => q.eq("userId", authUser._id))
         .paginate(args.paginationOpts);
     }
-    const page = await Promise.all(
-      result.page.map((p) => enrichProject(ctx, p, args.language))
-    );
+    const page = await Promise.all(result.page.map((p) => enrichProject(ctx, p, args.language)));
     return { ...result, page };
   },
 });
@@ -648,26 +620,26 @@ export const get = query({
 
     if (project.userId === authUserId) {
       // The creator always retains access, including legacy projects that were
-      // accidentally associated with a stale team selection.
-    } else if (project.teamId) {
-      const teamMember = await getWorkspaceAccess(ctx, project.teamId);
+      // accidentally associated with a stale organization selection.
+    } else if (project.organizationId) {
+      const organizationMember = await getWorkspaceAccess(ctx, project.organizationId);
 
-      if (teamMember) {
-        // User is a native team member, they get full access natively,
-        // but we can map them as 'editor' if needed, or leave undefined (team handles it natively).
+      if (organizationMember) {
+        // User is a native organization member, they get full access natively,
+        // but we can map them as 'editor' if needed, or leave undefined (organization handles it natively).
       } else {
-        // Not in team. Check if they have shared access.
+        // Not in organization. Check if they have shared access.
         const access = await ctx.db
           .query("sharedAccess")
           .withIndex("by_userId_entityId", (q) =>
-            q.eq("userId", authUserId).eq("entityId", project._id)
+            q.eq("userId", authUserId).eq("entityId", project._id),
           )
           .first();
 
         if (access) {
           sharedRole = access.role;
         } else {
-          // No team access and no shared access
+          // No organization access and no shared access
           return null;
         }
       }
@@ -675,7 +647,7 @@ export const get = query({
       const access = await ctx.db
         .query("sharedAccess")
         .withIndex("by_userId_entityId", (q) =>
-          q.eq("userId", authUserId).eq("entityId", project._id)
+          q.eq("userId", authUserId).eq("entityId", project._id),
         )
         .first();
 
@@ -700,6 +672,7 @@ export const create = mutation({
     lead: v.string(),
     description: v.string(),
     descriptionI18n: v.optional(localizedStringValidator),
+    photoStorageId: v.optional(v.id("_storage")),
     category: v.optional(v.string()),
     categoryI18n: v.optional(localizedStringValidator),
     gsfaCategoryCode: v.optional(v.string()),
@@ -746,7 +719,7 @@ export const create = mutation({
     phases: v.optional(v.array(phaseValidator)),
     batchCodePrefix: v.optional(v.string()),
     batchCodeFormat: v.optional(batchCodeFormatValidator),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     authorizedExecutor: v.optional(v.string()),
   },
   returns: v.id("projects"),
@@ -756,16 +729,15 @@ export const create = mutation({
       throw new Error("Not authenticated");
     }
 
-    const {
-      ingredients,
-      previousVersionIngredients,
-      phases,
-      authorizedExecutor,
-      ...projectData
-    } = args;
+    if (args.photoStorageId) {
+      await validateProjectPhoto(ctx, args.photoStorageId);
+    }
 
-    if (projectData.teamId) {
-      await requireWorkspaceMember(ctx, projectData.teamId);
+    const { ingredients, previousVersionIngredients, phases, authorizedExecutor, ...projectData } =
+      args;
+
+    if (projectData.organizationId) {
+      await requireWorkspaceMember(ctx, projectData.organizationId);
     }
 
     // 1. Auto-generate ID if Traceability Config is active
@@ -786,7 +758,7 @@ export const create = mutation({
       ...withProjectLocalizedFields(projectData),
       batchCodePrefix: generatedBatchCodePrefix,
       userId: authUser._id,
-      teamId: projectData.teamId ?? null,
+      organizationId: projectData.organizationId ?? null,
       authorizedExecutor,
     });
 
@@ -794,12 +766,7 @@ export const create = mutation({
     await replaceIngredients(ctx, projectId, ingredients, "current");
 
     if (previousVersionIngredients) {
-      await replaceIngredients(
-        ctx,
-        projectId,
-        previousVersionIngredients,
-        "previous"
-      );
+      await replaceIngredients(ctx, projectId, previousVersionIngredients, "previous");
     }
 
     // 3. Insert phases using helper
@@ -821,6 +788,7 @@ export const update = mutation({
     lead: v.optional(v.string()),
     description: v.optional(v.string()),
     descriptionI18n: v.optional(localizedStringValidator),
+    photoStorageId: v.optional(v.union(v.id("_storage"), v.null())),
     category: v.optional(v.string()),
     categoryI18n: v.optional(localizedStringValidator),
     gsfaCategoryCode: v.optional(v.string()),
@@ -866,7 +834,7 @@ export const update = mutation({
     phases: v.optional(v.array(phaseValidator)),
     batchCodePrefix: v.optional(v.string()),
     batchCodeFormat: v.optional(batchCodeFormatValidator),
-    teamId: v.optional(v.id("teams")),
+    organizationId: v.optional(v.id("organizations")),
     userId: v.optional(v.string()),
     releaseNotes: v.optional(v.string()),
     releasedBy: v.optional(v.string()),
@@ -881,6 +849,7 @@ export const update = mutation({
       previousVersionIngredients,
       phases,
       autosaveName,
+      photoStorageId,
       ...updates
     } = args;
 
@@ -889,11 +858,11 @@ export const update = mutation({
       throw new Error("Project not found");
     }
     await requirePersonalOrWorkspaceAccess(ctx, existingProject);
-    if (
-      updates.teamId &&
-      updates.teamId !== existingProject.teamId
-    ) {
-      await requireWorkspaceMember(ctx, updates.teamId);
+    if (photoStorageId) {
+      await validateProjectPhoto(ctx, photoStorageId);
+    }
+    if (updates.organizationId && updates.organizationId !== existingProject.organizationId) {
+      await requireWorkspaceMember(ctx, updates.organizationId);
     }
 
     // Enforce Approval Workflow logic
@@ -901,23 +870,18 @@ export const update = mutation({
     if (updates.status === "Released") {
       const unresolvedComments = await ctx.db
         .query("comments")
-        .withIndex("by_projectId_isResolved", (q) =>
-          q.eq("projectId", id).eq("isResolved", false)
-        )
+        .withIndex("by_projectId_isResolved", (q) => q.eq("projectId", id).eq("isResolved", false))
         .take(1);
 
       if (unresolvedComments.length > 0) {
-        throw new Error(
-          "Cannot release protocol while there are unresolved comments."
-        );
+        throw new Error("Cannot release protocol while there are unresolved comments.");
       }
 
       // Populate Release Metadata
       if (updates.releasedBy) {
         releaseMetadata.releasedAt = new Date().toISOString();
         // formatted ID based on current project batchCodePrefix or default fallback
-        releaseMetadata.formattedId =
-          existingProject.batchCodePrefix || "FD-000";
+        releaseMetadata.formattedId = existingProject.batchCodePrefix || "FD-000";
       }
     }
 
@@ -927,10 +891,19 @@ export const update = mutation({
       ...releaseMetadata,
     });
     const filtered = Object.fromEntries(
-      Object.entries(normalizedUpdates).filter(([_, v]) => v !== undefined)
+      Object.entries(normalizedUpdates).filter(([_, v]) => v !== undefined),
     );
     if (Object.keys(filtered).length > 0) {
       await ctx.db.patch(id, filtered);
+    }
+
+    if (photoStorageId !== undefined) {
+      await ctx.db.patch(id, {
+        photoStorageId: photoStorageId ?? undefined,
+      });
+      if (existingProject.photoStorageId && existingProject.photoStorageId !== photoStorageId) {
+        await ctx.storage.delete(existingProject.photoStorageId);
+      }
     }
 
     // Replace ingredients if provided
@@ -948,16 +921,13 @@ export const update = mutation({
     }
 
     // Real-time Notification for Release -> Audit Log
-    if (
-      updates.status === "Released" &&
-      existingProject?.status !== "Released"
-    ) {
-      const teamId = existingProject.teamId || updates.teamId;
-      if (teamId) {
+    if (updates.status === "Released" && existingProject?.status !== "Released") {
+      const organizationId = existingProject.organizationId || updates.organizationId;
+      if (organizationId) {
         const authUser = await authComponent.getAuthUser(ctx);
         if (authUser) {
-          await logTeamAction(ctx, {
-            teamId,
+          await logOrganizationAction(ctx, {
+            organizationId,
             actorId: authUser._id,
             actorName: authUser.name || authUser.email || "Unknown User",
             action: "Formulation Released",
@@ -1048,14 +1018,14 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(args.id);
+    if (project.photoStorageId) {
+      await ctx.storage.delete(project.photoStorageId);
+    }
     return null;
   },
 });
 
-async function cloneProjectAsDraftVersion(
-  ctx: MutationCtx,
-  projectId: Id<"projects">
-) {
+async function cloneProjectAsDraftVersion(ctx: MutationCtx, projectId: Id<"projects">) {
   const original = await ctx.db.get(projectId);
   if (!original) {
     throw new Error("Project not found");
@@ -1066,15 +1036,10 @@ async function cloneProjectAsDraftVersion(
   const baseName = getCloneBaseName(original.name);
   const newName = getVersionedCloneName(baseName, newVersion);
   const newNameI18n = {
-    en: getVersionedCloneName(
-      getCloneBaseName(original.nameI18n?.en || original.name),
-      newVersion
-    ),
+    en: getVersionedCloneName(getCloneBaseName(original.nameI18n?.en || original.name), newVersion),
     ar: getVersionedCloneName(
-      getCloneBaseName(
-        original.nameI18n?.ar || original.nameI18n?.en || original.name
-      ),
-      newVersion
+      getCloneBaseName(original.nameI18n?.ar || original.nameI18n?.en || original.name),
+      newVersion,
     ),
   };
 
@@ -1129,11 +1094,11 @@ async function cloneProjectAsDraftVersion(
       batchCodePrefix: original.batchCodePrefix,
       batchCodeFormat: original.batchCodeFormat,
       userId: original.userId,
-      teamId: original.teamId,
+      organizationId: original.organizationId,
       ingredients: original.ingredients,
       progress: original.progress,
       authorizedExecutor: original.authorizedExecutor,
-    }).filter(([, value]) => value !== undefined)
+    }).filter(([, value]) => value !== undefined),
   ) as Omit<Doc<"projects">, "_id" | "_creationTime">;
 
   const newProjectId = await ctx.db.insert("projects", clonedProjectData);
@@ -1164,12 +1129,7 @@ async function cloneProjectAsDraftVersion(
     .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
     .collect();
   for (const phase of phases) {
-    const {
-      _id: phaseOldId,
-      _creationTime: __,
-      projectId: _pid,
-      ...phaseData
-    } = phase;
+    const { _id: phaseOldId, _creationTime: __, projectId: _pid, ...phaseData } = phase;
     const newPhaseId = await ctx.db.insert("recipePhases", {
       ...phaseData,
       projectId: newProjectId,
@@ -1179,13 +1139,7 @@ async function cloneProjectAsDraftVersion(
       .withIndex("by_phaseId", (q) => q.eq("phaseId", phaseOldId))
       .collect();
     for (const step of steps) {
-      const {
-        _id: ___,
-        _creationTime: ____,
-        phaseId: _phid,
-        projectId: _spid,
-        ...stepData
-      } = step;
+      const { _id: ___, _creationTime: ____, phaseId: _phid, projectId: _spid, ...stepData } = step;
       await ctx.db.insert("recipeSteps", {
         ...stepData,
         phaseId: newPhaseId,
@@ -1199,12 +1153,7 @@ async function cloneProjectAsDraftVersion(
     .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
     .collect();
   for (const dependency of dependencies) {
-    const {
-      _id: _,
-      _creationTime: __,
-      projectId: _pid,
-      ...dependencyData
-    } = dependency;
+    const { _id: _, _creationTime: __, projectId: _pid, ...dependencyData } = dependency;
     await ctx.db.insert("stepDependencies", {
       ...dependencyData,
       projectId: newProjectId,

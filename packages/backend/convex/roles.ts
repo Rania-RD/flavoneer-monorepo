@@ -1,8 +1,9 @@
 import { v } from "convex/values";
+import { isConfigurableSystemRole } from "../lib/system-role-access";
 import type { Doc } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { requirePermission } from "./permissions";
+import { getEffectivePermissions, requirePermission } from "./permissions";
 import { roleReturnValidator } from "./validators";
 
 const DEFAULT_SYSTEM_ROLES = [
@@ -17,6 +18,11 @@ const DEFAULT_SYSTEM_ROLES = [
       "edit_procedures",
       "sign_off",
       "execute_runs",
+      "record_production_checks",
+      "review_production_checks",
+      "view_production_checks",
+      "manage_production_specifications",
+      "manage_production_line_settings",
     ],
   },
   {
@@ -37,15 +43,25 @@ const DEFAULT_SYSTEM_ROLES = [
     name: "Operator",
     permissions: ["execute_runs"],
   },
+  {
+    description: "Can create and submit production-line inspection records.",
+    key: "quality_officer",
+    name: "Quality Officer",
+    permissions: ["record_production_checks", "view_production_checks"],
+  },
+  {
+    description: "Can review and approve production-line inspection records.",
+    key: "production_manager",
+    name: "Production Manager",
+    permissions: ["review_production_checks", "view_production_checks"],
+  },
 ] as const;
 
 /**
  * Ensure every built-in system role exists without overwriting configured
  * permissions on roles that administrators have already customized.
  */
-export async function ensureDefaultRoles(
-  ctx: MutationCtx
-): Promise<Doc<"roles">[]> {
+export async function ensureDefaultRoles(ctx: MutationCtx): Promise<Doc<"roles">[]> {
   const existingRoles = await ctx.db.query("roles").collect();
   const existingKeys = new Set(existingRoles.map((role) => role.key));
 
@@ -107,15 +123,17 @@ export const updateRolePermissions = mutation({
       throw new Error("Role not found");
     }
 
-    if (
-      targetRole.key === "admin" &&
-      !args.permissions.includes("full_access")
-    ) {
-      throw new Error("Admin role must keep full access");
+    if (!isConfigurableSystemRole(targetRole)) {
+      throw new Error("Admin permissions are fixed and cannot be updated");
     }
 
-    await ctx.db.patch(args.roleId, {
+    const permissions = getEffectivePermissions({
+      ...targetRole,
       permissions: args.permissions,
+    });
+
+    await ctx.db.patch(args.roleId, {
+      permissions,
     });
   },
 });

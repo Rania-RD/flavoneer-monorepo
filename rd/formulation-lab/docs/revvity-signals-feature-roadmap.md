@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document translates Revvity Signals Software concepts into an implementation roadmap for Food R&D Lab Manager. It focuses on features that fit this app's current food formulation workflow: projects, formulations, runs, inventory, lab reports, sensory testing, teams, roles, signatures, audit logs, version history, and traceability configuration.
+This document translates Revvity Signals Software concepts into an implementation roadmap for Food R&D Lab Manager. It focuses on features that fit this app's current food formulation workflow: projects, formulations, runs, inventory, lab reports, sensory testing, organizations, roles, signatures, audit logs, version history, and traceability configuration.
 
 The goal is not to copy drug-discovery chemistry features such as ChemDraw, SAR, compound registration, or molecular modeling. The goal is to add the same category of R&D workflow depth for food product development: structured experiment records, stronger lot traceability, analytics, approvals, test requests, and assisted documentation.
 
@@ -38,10 +38,10 @@ The current app already has a strong base:
 - `pages/reports.tsx` and `pages/report-details.tsx` manage lab reports and report review.
 - `pages/sensory-test.tsx` and `components/SensoryBuilder.tsx` support sensory forms and public sensory submissions.
 - `components/Settings/VersionControlConfig.tsx` and `components/Settings/TraceabilityConfig.tsx` configure version and traceability behavior.
-- `packages/backend/convex/schema.ts` already defines projects, normalized ingredients, recipe phases, recipe steps, runs, run snapshots, lab reports, lab test results, inventory items, material usage logs, sensory forms, sensory evaluations, comments, project versions, roles, users, teams, audit logs, shared links, and system config.
+- `packages/backend/convex/schema.ts` already defines projects, normalized ingredients, recipe phases, recipe steps, runs, run snapshots, lab reports, lab test results, inventory items, material usage logs, sensory forms, sensory evaluations, comments, project versions, roles, users, organizations, audit logs, shared links, and system config.
 - `packages/backend/convex/runs.ts` already snapshots recipe phases and steps at run start and deducts inventory on completion.
 - `packages/backend/convex/labReports.ts` already stores lab reports separately from normalized lab test results.
-- `packages/backend/convex/teamAuditLogs.ts` already provides a team-level audit log base.
+- `packages/backend/convex/organizationAuditLogs.ts` already provides an organization-level audit log base.
 
 Important current constraint:
 
@@ -92,7 +92,7 @@ notebookEntries: defineTable({
   runId: v.optional(v.id("runs")),
   labReportId: v.optional(v.id("labReports")),
   inventoryItemId: v.optional(v.id("inventoryItems")),
-  teamId: v.optional(v.id("teams")),
+  organizationId: v.optional(v.id("organizations")),
   authorId: v.string(),
   authorName: v.string(),
   tags: v.array(v.string()),
@@ -105,7 +105,7 @@ notebookEntries: defineTable({
   .index("by_runId", ["runId"])
   .index("by_labReportId", ["labReportId"])
   .index("by_inventoryItemId", ["inventoryItemId"])
-  .index("by_teamId", ["teamId"]);
+  .index("by_organizationId", ["organizationId"]);
 ```
 
 ```ts
@@ -152,7 +152,7 @@ Backend:
 - Start with query-time aggregation. Add `analyticsSnapshots` later only if query-time aggregation becomes slow.
 - Add queries:
   - `getProjectAnalytics({ projectId })`
-  - `getDashboardAnalytics({ teamId? })`
+  - `getDashboardAnalytics({ organizationId? })`
   - `getVersionComparison({ projectId })`
   - `getBatchQualityTrend({ projectId })`
 
@@ -212,12 +212,12 @@ inventoryLots: defineTable({
   sdsFileId: v.optional(v.id("_storage")),
   coaFileId: v.optional(v.id("_storage")),
   status: v.union(v.literal("available"), v.literal("depleted"), v.literal("quarantined"), v.literal("expired")),
-  teamId: v.optional(v.id("teams")),
+  organizationId: v.optional(v.id("organizations")),
   createdAt: v.number(),
   updatedAt: v.number(),
 })
   .index("by_inventoryItemId", ["inventoryItemId"])
-  .index("by_teamId", ["teamId"])
+  .index("by_organizationId", ["organizationId"])
   .index("by_internalLot", ["internalLot"]);
 ```
 
@@ -250,7 +250,7 @@ Backend:
 
 - Add workflow transition helpers in `packages/backend/convex/projects.ts` and `packages/backend/convex/labReports.ts`.
 - Add explicit mutations such as `submitForReview`, `approve`, `reject`, `release`, and `reopen`.
-- Extend `teamAuditLogs` or add entity-specific audit log tables if before/after details become large.
+- Extend `organizationAuditLogs` or add entity-specific audit log tables if before/after details become large.
 - Add before/after metadata for project, report, inventory, and run state changes.
 - Use existing roles and permissions. Add new permissions only if existing keys cannot express review/release behavior.
 
@@ -277,7 +277,7 @@ Backend:
 
 - Add `testRequests` to `packages/backend/convex/schema.ts`.
 - Add `packages/backend/convex/testRequests.ts`.
-- Link requests to `projectId`, optional `runId`, optional `labReportId`, optional `assignedTo`, and `teamId`.
+- Link requests to `projectId`, optional `runId`, optional `labReportId`, optional `assignedTo`, and `organizationId`.
 - Add status validator: `draft`, `requested`, `in_progress`, `completed`, `cancelled`, `out_of_spec`.
 - Add mutation to convert completed request data into `labTestResults`.
 
@@ -309,7 +309,7 @@ testRequests: defineTable({
   resultValue: v.optional(v.number()),
   resultNotes: v.optional(v.string()),
   disposition: v.optional(v.string()),
-  teamId: v.optional(v.id("teams")),
+  organizationId: v.optional(v.id("organizations")),
   createdBy: v.string(),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -391,7 +391,7 @@ General Convex rules:
 - Every table column change must update `packages/backend/convex/schema.ts`.
 - Every frontend-facing shape must update `types.ts`.
 - Every caller must pass exactly the fields accepted by the Convex validator.
-- Use indexes for project, run, team, report, status, and inventory lot lookups. Avoid full scans for user-facing lists.
+- Use indexes for project, run, organization, report, status, and inventory lot lookups. Avoid full scans for user-facing lists.
 
 Module plan:
 
@@ -401,13 +401,13 @@ Module plan:
 - `packages/backend/convex/runs.ts`: update run completion and material deduction to use lot IDs.
 - `packages/backend/convex/labReports.ts`: add request-linked result insertion and approval workflow transitions.
 - `packages/backend/convex/testRequests.ts`: request lifecycle and result conversion.
-- `packages/backend/convex/teamAuditLogs.ts`: add reusable audit helper for entity changes if current helper is too team-action-specific.
+- `packages/backend/convex/organizationAuditLogs.ts`: add reusable audit helper for entity changes if current helper is too organization-action-specific.
 - `packages/backend/convex/systemConfig.ts`: add compliance toggles if signature requirements become configurable.
 
 Auth and permissions:
 
 - Notebook creation requires authenticated user.
-- Entity-linked lists should only return records the user can access through ownership, team membership, or shared access.
+- Entity-linked lists should only return records the user can access through ownership, organization membership, or shared access.
 - Approval/release requires admin, supervisor, or a dedicated permission.
 - Public sensory form submission remains public, but result analytics remain authenticated.
 
@@ -516,7 +516,7 @@ Critical scenarios:
 
 3. Structured Experiment Notebook
    - Adds the ELN layer around projects, runs, reports, and materials.
-   - Gives teams one place to capture experiment rationale and observations.
+   - Gives organizations one place to capture experiment rationale and observations.
 
 4. Formula Analytics Dashboard
    - Uses cleaner lot, test, run, report, and sensory data.

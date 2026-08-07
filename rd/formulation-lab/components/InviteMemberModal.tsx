@@ -6,7 +6,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
+import { useOrganization } from "../context/OrganizationContext";
 import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
 import { useToast } from "../hooks/useToast";
@@ -23,11 +23,11 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 }) => {
   const { isRTL } = useSettings();
   const { t } = useTranslation();
-  const { activeTeamId } = useTeam();
+  const { activeOrganizationId } = useOrganization();
 
   const { toast } = useToast();
 
-  const createInvite = useAction(api.teamInvites.create);
+  const createInvite = useAction(api.organizationInvites.create);
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member">("member");
@@ -36,7 +36,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   const [inviteToken, setInviteToken] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!(email.trim() && activeTeamId)) {
+    if (!(email.trim() && activeOrganizationId)) {
       return;
     }
     setLoading(true);
@@ -44,7 +44,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 
     try {
       const result = await createInvite({
-        teamId: activeTeamId as Id<"teams">,
+        organizationId: activeOrganizationId as Id<"organizations">,
         email: email.trim(),
         role,
       });

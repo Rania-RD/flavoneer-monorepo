@@ -174,7 +174,7 @@ export function buildFormulationSavePayload(
     project.batchCost,
     batchCost
   );
-  const { _id, _creationTime, teamId, userId, updatedAt, ...data } = {
+  const { _id, _creationTime, organizationId, userId, updatedAt, ...data } = {
     ...project,
     batchWeight,
     batchCost,

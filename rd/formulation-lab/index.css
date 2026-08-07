@@ -51,10 +51,12 @@
 }
 
 .dark :where([class~="dark:bg-brand-accent"]) {
+  background-color: var(--flavoneer-amber) !important;
   color: var(--flavoneer-ink) !important;
 }
 
 .dark :where([class~="dark:hover:bg-brand-accent-hover"]):hover {
+  background-color: #ffc760 !important;
   color: var(--flavoneer-ink) !important;
 }
 
@@ -248,6 +250,27 @@ body.flavoneer-dashboard-active
   background-color: #285b4d !important;
 }
 
+/* Brand actions override the legacy gray compatibility bridge above. */
+.dark
+  body.flavoneer-dashboard-active
+  :where([class~="dark:bg-brand-accent"]) {
+  background-color: var(--flavoneer-amber) !important;
+  color: var(--flavoneer-ink) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where([class~="dark:hover:bg-brand-accent-hover"]):hover {
+  background-color: #ffc760 !important;
+  color: var(--flavoneer-ink) !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where([class~="dark:bg-brand-accent"]):disabled {
+  opacity: 0.78 !important;
+}
+
 body.flavoneer-dashboard-active
   :where(
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
@@ -292,6 +315,13 @@ body.flavoneer-dashboard-active
   border-color: rgba(210, 242, 212, 0.14) !important;
   background-color: #173e33 !important;
   color: #f7f4df !important;
+}
+
+.dark
+  body.flavoneer-dashboard-active
+  :where(input, textarea)::placeholder {
+  color: #a9cbbb !important;
+  opacity: 1;
 }
 
 .dark

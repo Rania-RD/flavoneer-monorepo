@@ -28,10 +28,12 @@ import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import InviteMemberModal from "../components/InviteMemberModal";
+import OrganizationIconField from "../components/organization-icon-field";
 import UserActivityLog from "../components/UserActivityLog";
 import UserAvatar from "../components/user-avatar";
 import { useOrganization } from "../context/OrganizationContext";
 import { useToast } from "../hooks/useToast";
+import { uploadOrganizationIcon } from "../lib/organization-icon";
 
 // ─── Role badge component ────────────────────────────
 const RoleBadge: React.FC<{ role: string; t: (k: string) => string }> = ({
@@ -155,6 +157,7 @@ const OrganizationPage = () => {
   const [createOrganizationModalOpen, setCreateOrganizationModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingIcon, setIsUpdatingIcon] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // ── Queries ──
@@ -176,6 +179,8 @@ const OrganizationPage = () => {
   const removeMember = useMutation(api.organizationMembers.remove);
   const revokeInvite = useMutation(api.organizationInvites.revoke);
   const deleteOrganization = useMutation(api.organizations.remove);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const getFileUrl = useMutation(api.files.getFileUrl);
 
   const isAdmin = currentRole === "admin" || currentRole === "owner";
   const isOwner = currentRole === "owner";
@@ -194,6 +199,47 @@ const OrganizationPage = () => {
 
   // ─── Organization Settings Mutation ───
   const updateOrganization = useMutation(api.organizations.update);
+
+  const handleIconUpload = async (file: File) => {
+    if (!activeOrganizationId) {
+      return;
+    }
+
+    setIsUpdatingIcon(true);
+    try {
+      const storageId = await uploadOrganizationIcon(file, generateUploadUrl);
+      const avatarUrl = await getFileUrl({ storageId });
+      if (!avatarUrl) {
+        throw new Error("Organization icon URL could not be generated");
+      }
+      await updateOrganization({ id: activeOrganizationId, avatarUrl });
+      toast.success(t("settings_updated"));
+    } catch (error) {
+      console.error("Failed to update organization icon:", error);
+      toast.error(t("failed_to_update_settings"));
+      throw error;
+    } finally {
+      setIsUpdatingIcon(false);
+    }
+  };
+
+  const handleIconRemove = async () => {
+    if (!activeOrganizationId) {
+      return;
+    }
+
+    setIsUpdatingIcon(true);
+    try {
+      await updateOrganization({ id: activeOrganizationId, avatarUrl: null });
+      toast.success(t("settings_updated"));
+    } catch (error) {
+      console.error("Failed to remove organization icon:", error);
+      toast.error(t("failed_to_update_settings"));
+      throw error;
+    } finally {
+      setIsUpdatingIcon(false);
+    }
+  };
 
   // ── No organization selected / empty ──
   if (!activeOrganizationId || organizations.length === 0) {
@@ -233,13 +279,26 @@ const OrganizationPage = () => {
     <div className="mx-auto max-w-[1600px] p-6 pb-28 md:ms-32 md:pb-6">
       {/* ── Header ── */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="mb-2 font-bold text-3xl text-gray-900 md:text-4xl dark:text-white">
-            {activeOrganization?.name ?? t("organization")}
-          </h1>
-          <p className="text-gray-500 text-sm dark:text-slate-400">
-            {t("organizationSettings")} · {members?.length ?? 0} {t("members")}
-          </p>
+        <div className="flex items-center gap-4">
+          {activeOrganization?.avatarUrl && (
+            <img
+              alt={t("organization_icon_for", {
+                name: activeOrganization.name,
+              })}
+              className="h-14 w-14 rounded-2xl border border-gray-200 object-cover shadow-sm dark:border-slate-700"
+              height={56}
+              src={activeOrganization.avatarUrl}
+              width={56}
+            />
+          )}
+          <div>
+            <h1 className="mb-2 font-bold text-3xl text-gray-900 md:text-4xl dark:text-white">
+              {activeOrganization?.name ?? t("organization")}
+            </h1>
+            <p className="text-gray-500 text-sm dark:text-slate-400">
+              {t("organizationSettings")} · {members?.length ?? 0} {t("members")}
+            </p>
+          </div>
         </div>
 
         <button
@@ -280,15 +339,27 @@ const OrganizationPage = () => {
                 }`}
                 key={organization._id}
               >
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-sm ${
-                    isActive
-                      ? "bg-[#FF85A1] text-white shadow-md shadow-pink-500/20"
-                      : "bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400"
-                  }`}
-                >
-                  {initials}
-                </div>
+                {organization.avatarUrl ? (
+                  <img
+                    alt={t("organization_icon_for", {
+                      name: organization.name,
+                    })}
+                    className="h-10 w-10 rounded-xl border border-gray-200 object-cover dark:border-slate-600"
+                    height={40}
+                    src={organization.avatarUrl}
+                    width={40}
+                  />
+                ) : (
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-sm ${
+                      isActive
+                        ? "bg-[#FF85A1] text-white shadow-md shadow-pink-500/20"
+                        : "bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400"
+                    }`}
+                  >
+                    {initials}
+                  </div>
+                )}
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-slate-900 dark:text-slate-100">
@@ -653,6 +724,19 @@ const OrganizationPage = () => {
               <h3 className="mb-6 font-bold text-gray-400 text-xs uppercase tracking-wider dark:text-slate-500">
                 {t("organizationSettings")}
               </h3>
+
+              {activeOrganization && (
+                <div className="mb-6 border-gray-100 border-b pb-6 dark:border-slate-700">
+                  <OrganizationIconField
+                    disabled={!isAdmin}
+                    iconUrl={activeOrganization.avatarUrl}
+                    isUpdating={isUpdatingIcon}
+                    name={activeOrganization.name}
+                    onRemove={handleIconRemove}
+                    onUpload={handleIconUpload}
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col justify-between gap-4 rounded-[1.5rem] bg-gray-50 p-6 sm:flex-row sm:items-center dark:bg-slate-800/50">
                 <div>

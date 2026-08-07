@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { logOrganizationAction } from "./organizationAuditLogs";
+import { ensureDefaultRoles } from "./roles";
 import { organizationReturnValidator, organizationWithRoleReturnValidator } from "./validators";
 import {
   getAuthUserOrThrow,
@@ -9,7 +10,6 @@ import {
   requireWorkspaceMember,
   requireWorkspaceOwner,
 } from "./workspaceAccess";
-import { ensureDefaultRoles } from "./roles";
 
 // ─── Helpers ──────────────────────────────────────────
 function slugify(name: string): string {
@@ -51,7 +51,7 @@ export const list = query({
       memberships.map(async (m) => {
         const organization = await ctx.db.get(m.organizationId);
         return organization ? { ...organization, role: m.role } : null;
-      })
+      }),
     );
     return organizations.filter((t): t is NonNullable<typeof t> => t !== null);
   },
@@ -77,9 +77,7 @@ export const create = mutation({
       },
       headers,
     });
-    const ownerMember = organization.members.find(
-      (member) => member?.userId === authUser._id
-    );
+    const ownerMember = organization.members.find((member) => member?.userId === authUser._id);
 
     const organizationId = await ctx.db.insert("organizations", {
       name: args.name,
@@ -135,39 +133,48 @@ export const create = mutation({
   },
 });
 
-/** Update organization name (admin+ only) */
+/** Update organization settings (admin+ only) */
 export const update = mutation({
   args: {
     id: v.id("organizations"),
     name: v.optional(v.string()),
-    avatarUrl: v.optional(v.string()),
+    avatarUrl: v.optional(v.union(v.string(), v.null())),
     autoVersioning: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { authUser, organization } = await requireWorkspaceAdmin(ctx, args.id);
 
-    const { id, ...updates } = args;
+    const { avatarUrl, id, ...updates } = args;
     const filtered = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
+      Object.entries(updates).filter(([_, v]) => v !== undefined),
     );
-    if (organization.authOrganizationId && (args.name || args.avatarUrl)) {
+    if (
+      organization.authOrganizationId &&
+      (args.name !== undefined || args.avatarUrl !== undefined)
+    ) {
       const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
       await auth.api.updateOrganization({
         body: {
           organizationId: organization.authOrganizationId,
           data: {
-            ...(args.name ? { name: args.name } : {}),
-            ...(args.avatarUrl ? { logo: args.avatarUrl } : {}),
+            ...(args.name !== undefined ? { name: args.name } : {}),
+            ...(args.avatarUrl !== undefined ? { logo: args.avatarUrl ?? "" } : {}),
           },
         },
         headers,
       });
     }
-    await ctx.db.patch(id, filtered);
+    const databaseUpdates = {
+      ...filtered,
+      ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl ?? undefined } : {}),
+    };
+    await ctx.db.patch(id, databaseUpdates);
 
     const meta = Object.fromEntries(
-      Object.entries(filtered).map(([key, value]) => [key, String(value)])
+      Object.entries({ ...filtered, avatarUrl }).flatMap(([key, value]) =>
+        value === undefined ? [] : [[key, value === null ? "removed" : String(value)]],
+      ),
     );
 
     await logOrganizationAction(ctx, {
@@ -199,9 +206,7 @@ export const remove = mutation({
       .withIndex("by_organizationId", (q) => q.eq("organizationId", args.id))
       .first();
     if (project || ingredient) {
-      throw new Error(
-        "Archive or move workspace records before deleting this organization"
-      );
+      throw new Error("Archive or move workspace records before deleting this organization");
     }
 
     const members = await ctx.db

@@ -23,6 +23,7 @@ interface OrganizationContextType {
     _id: Id<"organizations">;
     autoVersioning?: boolean;
     authOrganizationId?: string;
+    avatarUrl?: string;
     name: string;
     role: string;
   }[];

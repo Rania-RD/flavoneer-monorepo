@@ -3,6 +3,8 @@ packages:
   - "packages/*"
   - "rd/*"
 
+nodeLinker: hoisted
+
 onlyBuiltDependencies:
   - "@parcel/watcher"
   - "@sentry/cli"

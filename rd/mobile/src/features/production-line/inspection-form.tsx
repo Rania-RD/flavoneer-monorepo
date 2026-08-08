@@ -116,6 +116,8 @@ const checkGroups: {
   { label: 'complianceMaintenance', keys: ['maintenance_equipment'] },
 ];
 
+const totalCheckCount = checkGroups.reduce((total, group) => total + group.keys.length, 0);
+
 export function MeasurementSection({
   disabled,
   isRTL,
@@ -273,7 +275,7 @@ function ReadingInput({
         <TextInput
           accessibilityLabel={`${t(readingLabels[limit.readingKey])}, ${t('readingNumber', { number: readingIndex })}`}
           className="min-w-0 flex-1 py-3 text-lg text-[#173E33] dark:text-[#F7F4DF]"
-          editable={!disabled}
+          editable={!disabled && inputState !== 'saving'}
           inputMode="decimal"
           keyboardType="decimal-pad"
           onBlur={saveDraft}
@@ -284,7 +286,11 @@ function ReadingInput({
           placeholder={t('readingValue')}
           placeholderTextColor="#789489"
           returnKeyType="done"
-          style={{ fontFamily: Fonts.mono, textAlign: isRTL ? 'right' : 'left' }}
+          style={{
+            fontFamily: Fonts.mono,
+            textAlign: isRTL ? 'right' : 'left',
+            writingDirection: 'ltr',
+          }}
           value={draft}
         />
         <ThemedText className="ms-3" themeColor="textSecondary" type="smallBold">
@@ -323,35 +329,60 @@ export function ComplianceSection({
   onToggleGroup: (checkKeys: ProductionLineCheckKey[], checked: boolean) => Promise<void>;
   t: Translate;
 }) {
-  const [pendingKey, setPendingKey] = useState<ProductionLineCheckKey | null>(null);
-  const [pendingGroup, setPendingGroup] = useState<ProductionLineTranslationKey | null>(null);
+  const [pendingKeys, setPendingKeys] = useState<Set<ProductionLineCheckKey>>(() => new Set());
+  const [failedKeys, setFailedKeys] = useState<Set<ProductionLineCheckKey>>(() => new Set());
   const checkedKeys = new Set(
     checks.filter((check) => check.checked).map((check) => check.checkKey),
   );
-  const hasPendingSelection = pendingKey !== null || pendingGroup !== null;
 
   const toggle = async (checkKey: ProductionLineCheckKey) => {
-    if (disabled || hasPendingSelection) {
+    if (disabled || pendingKeys.has(checkKey)) {
       return;
     }
-    setPendingKey(checkKey);
+    setPendingKeys((current) => new Set(current).add(checkKey));
+    setFailedKeys((current) => {
+      const next = new Set(current);
+      next.delete(checkKey);
+      return next;
+    });
     try {
       await onToggle(checkKey, !checkedKeys.has(checkKey));
+    } catch {
+      setFailedKeys((current) => new Set(current).add(checkKey));
     } finally {
-      setPendingKey(null);
+      setPendingKeys((current) => {
+        const next = new Set(current);
+        next.delete(checkKey);
+        return next;
+      });
     }
   };
 
   const toggleGroup = async (group: (typeof checkGroups)[number]) => {
-    if (disabled || hasPendingSelection) {
+    if (disabled || group.keys.some((checkKey) => pendingKeys.has(checkKey))) {
       return;
     }
     const allChecked = group.keys.every((checkKey) => checkedKeys.has(checkKey));
-    setPendingGroup(group.label);
+    setPendingKeys((current) => new Set([...current, ...group.keys]));
+    setFailedKeys((current) => {
+      const next = new Set(current);
+      for (const checkKey of group.keys) {
+        next.delete(checkKey);
+      }
+      return next;
+    });
     try {
       await onToggleGroup(group.keys, !allChecked);
+    } catch {
+      setFailedKeys((current) => new Set([...current, ...group.keys]));
     } finally {
-      setPendingGroup(null);
+      setPendingKeys((current) => {
+        const next = new Set(current);
+        for (const checkKey of group.keys) {
+          next.delete(checkKey);
+        }
+        return next;
+      });
     }
   };
 
@@ -364,7 +395,7 @@ export function ComplianceSection({
           </ThemedText>
           <View className="rounded-full bg-[#EEF8EB] px-3 py-2 dark:bg-[#285B4D]">
             <ThemedText themeColor="textSecondary" type="caption">
-              {t('complianceCompleted', { completed: checkedKeys.size, total: 22 })}
+              {t('complianceCompleted', { completed: checkedKeys.size, total: totalCheckCount })}
             </ThemedText>
           </View>
         </View>
@@ -377,7 +408,8 @@ export function ComplianceSection({
         const checkedCount = group.keys.filter((checkKey) => checkedKeys.has(checkKey)).length;
         const allChecked = checkedCount === group.keys.length;
         const someChecked = checkedCount > 0 && !allChecked;
-        const groupPending = pendingGroup === group.label;
+        const groupPending = group.keys.some((checkKey) => pendingKeys.has(checkKey));
+        const groupFailed = group.keys.some((checkKey) => failedKeys.has(checkKey));
         const actionLabel = allChecked ? t('clearAll') : t('selectAll');
         return (
           <View
@@ -397,10 +429,10 @@ export function ComplianceSection({
                 accessibilityRole="checkbox"
                 accessibilityState={{
                   checked: allChecked ? true : someChecked ? 'mixed' : false,
-                  disabled: disabled || hasPendingSelection,
+                  disabled: disabled || groupPending,
                 }}
                 className={`min-h-[40px] flex-row items-center gap-2 rounded-[14px] px-2 active:bg-[#EEF8EB] dark:active:bg-[#285B4D] ${disabled ? 'opacity-50' : ''}`}
-                disabled={disabled || hasPendingSelection}
+                disabled={disabled || groupPending}
                 onPress={() => toggleGroup(group)}
               >
                 <View
@@ -410,12 +442,7 @@ export function ComplianceSection({
                       : 'border-[#1C4A3C]/20 bg-transparent dark:border-[#D2F2D4]/20'
                   }`}
                 >
-                  {groupPending ? (
-                    <ActivityIndicator
-                      color={allChecked || someChecked ? 'white' : BrandColors.forest}
-                      size="small"
-                    />
-                  ) : allChecked ? (
+                  {allChecked ? (
                     <Check color="white" size={15} />
                   ) : someChecked ? (
                     <Minus color="white" size={15} />
@@ -424,21 +451,27 @@ export function ComplianceSection({
                 <ThemedText themeColor="textSecondary" type="caption">
                   {actionLabel}
                 </ThemedText>
+                {groupPending ? (
+                  <ActivityIndicator color={BrandColors.forest} size="small" />
+                ) : groupFailed ? (
+                  <AlertCircle color="#A43434" size={16} />
+                ) : null}
               </Pressable>
             </View>
             <View className="px-4 pb-4">
               {group.keys.map((checkKey) => {
                 const checked = checkedKeys.has(checkKey);
-                const pending = pendingKey === checkKey;
+                const pending = pendingKeys.has(checkKey);
+                const failed = failedKeys.has(checkKey);
                 return (
                   <Pressable
                     accessibilityRole="checkbox"
                     accessibilityState={{
                       checked,
-                      disabled: disabled || hasPendingSelection,
+                      disabled: disabled || pending,
                     }}
                     className={`min-h-[52px] flex-row items-center gap-3 rounded-[16px] px-3 active:bg-[#EEF8EB] dark:active:bg-[#285B4D] ${disabled ? 'opacity-50' : ''}`}
-                    disabled={disabled || hasPendingSelection}
+                    disabled={disabled || pending}
                     key={checkKey}
                     onPress={() => toggle(checkKey)}
                   >
@@ -449,18 +482,16 @@ export function ComplianceSection({
                           : 'border-[#1C4A3C]/20 bg-transparent dark:border-[#D2F2D4]/20'
                       }`}
                     >
-                      {pending ? (
-                        <ActivityIndicator
-                          color={checked ? 'white' : BrandColors.forest}
-                          size="small"
-                        />
-                      ) : checked ? (
-                        <Check color="white" size={17} />
-                      ) : null}
+                      {checked ? <Check color="white" size={17} /> : null}
                     </View>
                     <ThemedText className="min-w-0 flex-1" type="small">
                       {t(checkLabels[checkKey])}
                     </ThemedText>
+                    {pending ? (
+                      <ActivityIndicator color={BrandColors.forest} size="small" />
+                    ) : failed ? (
+                      <AlertCircle color="#A43434" size={18} />
+                    ) : null}
                   </Pressable>
                 );
               })}

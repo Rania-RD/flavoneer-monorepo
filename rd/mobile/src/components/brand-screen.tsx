@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WorkspaceSectionSwitcher } from '@/components/workspace-section-switcher';
+import { useProductionLineI18n } from '@/features/production-line/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
 const AnimatedView = cssInterop(Animated.View, { className: 'style' }) as typeof Animated.View;
@@ -52,27 +53,34 @@ export function BrandEntrance({
 
 export function BrandHeader({
   action,
+  actionPosition = 'end',
   className = 'mb-8',
   subtitle,
 }: {
   action?: ReactNode;
+  actionPosition?: 'end' | 'start';
   className?: string;
   subtitle?: ReactNode;
 }) {
+  const { t } = useProductionLineI18n();
+  const brand = (
+    <View className="min-w-0 flex-1 flex-row items-center gap-3">
+      <WorkspaceSectionSwitcher />
+      <View className="min-w-0 flex-1">
+        <ThemedText className="leading-6" type="section">
+          Flavoneer
+        </ThemedText>
+        <ThemedText className="mt-0.5" themeColor="textSecondary" type="overline">
+          {subtitle ?? t('researchWorkspace')}
+        </ThemedText>
+      </View>
+    </View>
+  );
+
   return (
     <View className={`${className} flex-row items-center justify-between gap-4`}>
-      <View className="min-w-0 flex-1 flex-row items-center gap-3">
-        <WorkspaceSectionSwitcher />
-        <View className="min-w-0 flex-1">
-          <ThemedText className="leading-6" type="section">
-            Flavoneer
-          </ThemedText>
-          <ThemedText className="mt-0.5" themeColor="textSecondary" type="overline">
-            {subtitle ?? 'R&D workspace'}
-          </ThemedText>
-        </View>
-      </View>
-      {action}
+      {actionPosition === 'start' ? action : brand}
+      {actionPosition === 'start' ? brand : action}
     </View>
   );
 }

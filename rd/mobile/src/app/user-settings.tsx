@@ -17,7 +17,7 @@ import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 import { BrandEntrance, BrandHeader, BrandScreen, BrandSurface } from '@/components/brand-screen';
 import { ThemedText } from '@/components/themed-text';
 import { UserAvatar } from '@/components/user-avatar';
-import { type AppLanguage, useLanguage } from '@/contexts/language-context';
+import { type AppLanguage, LanguageReloadError, useLanguage } from '@/contexts/language-context';
 import { useOrganization } from '@/contexts/organization-context';
 import { type ThemePreference, useThemePreference } from '@/contexts/theme-preference-context';
 import { useProductionLineI18n } from '@/features/production-line/i18n';
@@ -42,10 +42,10 @@ export default function UserSettingsScreen() {
     try {
       const result = await authClient.signOut();
       if (result.error) {
-        Alert.alert('Could not sign out', result.error.message ?? 'Try again.');
+        Alert.alert(t('signOutFailed'), t('tryAgain'));
       }
-    } catch (error) {
-      Alert.alert('Could not sign out', error instanceof Error ? error.message : 'Try again.');
+    } catch {
+      Alert.alert(t('signOutFailed'), t('tryAgain'));
     } finally {
       setIsSigningOut(false);
     }
@@ -60,8 +60,10 @@ export default function UserSettingsScreen() {
       await setLanguage(nextLanguage);
     } catch (error) {
       Alert.alert(
-        'Could not update language',
-        error instanceof Error ? error.message : 'Try again.',
+        error instanceof LanguageReloadError
+          ? t('languageReloadFailed')
+          : t('languageUpdateFailed'),
+        error instanceof LanguageReloadError ? t('languageReloadHelp') : t('tryAgain'),
       );
     } finally {
       setIsSavingLanguage(false);
@@ -75,11 +77,8 @@ export default function UserSettingsScreen() {
     setIsSavingTheme(true);
     try {
       await setThemePreference(nextPreference);
-    } catch (error) {
-      Alert.alert(
-        t('appearanceUpdateFailed'),
-        error instanceof Error ? error.message : t('tryAgain'),
-      );
+    } catch {
+      Alert.alert(t('appearanceUpdateFailed'), t('tryAgain'));
     } finally {
       setIsSavingTheme(false);
     }
@@ -92,23 +91,29 @@ export default function UserSettingsScreen() {
           <BrandHeader
             action={
               <Pressable
-                accessibilityLabel="Back"
+                accessibilityLabel={t('back')}
                 accessibilityRole="button"
                 className="size-11 items-center justify-center rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4]/80 active:scale-95 active:opacity-70 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]"
                 onPress={() => router.back()}
               >
-                <ChevronLeft color={theme.text} size={22} strokeWidth={2.2} />
+                <ChevronLeft
+                  color={theme.text}
+                  size={22}
+                  strokeWidth={2.2}
+                  style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}
+                />
               </Pressable>
             }
+            actionPosition="start"
           />
         </BrandEntrance>
 
         <BrandEntrance className="mb-7" delay={70}>
           <ThemedText className="max-w-[360px]" type="title">
-            Your profile.
+            {t('profileTitle')}
           </ThemedText>
           <ThemedText className="mt-3 max-w-[420px]" themeColor="textSecondary" type="small">
-            Review the account connected to this device and manage your active session.
+            {t('profileDescription')}
           </ThemedText>
         </BrandEntrance>
 
@@ -122,15 +127,16 @@ export default function UserSettingsScreen() {
               />
               <View className="min-w-0 flex-1">
                 <ThemedText numberOfLines={1} type="smallBold">
-                  {session?.user.name || 'Flavoneer member'}
+                  {session?.user.name || t('memberFallback')}
                 </ThemedText>
                 <ThemedText
                   className="mt-0.5"
                   numberOfLines={1}
                   themeColor="textSecondary"
                   type="caption"
+                  style={{ textAlign: isRTL ? 'right' : 'left', writingDirection: 'ltr' }}
                 >
-                  {session?.user.email || 'No email available'}
+                  {session?.user.email || t('noEmail')}
                 </ThemedText>
               </View>
             </View>
@@ -138,8 +144,12 @@ export default function UserSettingsScreen() {
             <View className="ms-5 h-px bg-[#1C4A3C]/10 dark:bg-[#D2F2D4]/10" />
 
             <View className="gap-5 px-5 py-5">
-              <SettingValue label="Name" value={session?.user.name || 'Not set'} />
-              <SettingValue label="Email" value={session?.user.email || 'Not set'} />
+              <SettingValue label={t('name')} value={session?.user.name || t('notSet')} />
+              <SettingValue
+                label={t('email')}
+                value={session?.user.email || t('notSet')}
+                valueDirection="ltr"
+              />
             </View>
           </BrandSurface>
         </BrandEntrance>
@@ -208,9 +218,9 @@ export default function UserSettingsScreen() {
                 <Globe2 color={theme.text} size={19} />
               </View>
               <View className="min-w-0 flex-1">
-                <ThemedText type="smallBold">Language</ThemedText>
+                <ThemedText type="smallBold">{t('language')}</ThemedText>
                 <ThemedText className="mt-0.5" themeColor="textSecondary" type="caption">
-                  Choose the language used for production screens.
+                  {isSavingLanguage ? t('switchingLanguage') : t('languageDescription')}
                 </ThemedText>
               </View>
             </View>
@@ -218,14 +228,14 @@ export default function UserSettingsScreen() {
             <View className="mx-5 mb-5 flex-row rounded-[16px] bg-[#1C4A3C]/5 p-1 dark:bg-[#D2F2D4]/5">
               <LanguageOption
                 disabled={isSavingLanguage}
-                label="English"
+                label={t('englishLanguage')}
                 language="en"
                 onPress={handleLanguageChange}
                 selected={language === 'en'}
               />
               <LanguageOption
                 disabled={isSavingLanguage}
-                label="العربية"
+                label={t('arabicLanguage')}
                 language="ar"
                 onPress={handleLanguageChange}
                 selected={language === 'ar'}
@@ -283,7 +293,7 @@ export default function UserSettingsScreen() {
 
         <BrandEntrance delay={420}>
           <Pressable
-            accessibilityLabel="Sign out"
+            accessibilityLabel={t('signOut')}
             accessibilityRole="button"
             className={`min-h-[54px] flex-row items-center justify-center gap-2 rounded-[18px] border border-[#1C4A3C]/12 bg-[#FFFDF4]/80 active:scale-[0.98] active:opacity-70 dark:border-[#D2F2D4]/10 dark:bg-[#173E33] ${isSigningOut ? 'opacity-50' : ''}`}
             disabled={isSigningOut}
@@ -292,9 +302,13 @@ export default function UserSettingsScreen() {
             {isSigningOut ? (
               <ActivityIndicator color={theme.text} size="small" />
             ) : (
-              <LogOut color={theme.text} size={18} />
+              <LogOut
+                color={theme.text}
+                size={18}
+                style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}
+              />
             )}
-            <ThemedText type="smallBold">Sign out</ThemedText>
+            <ThemedText type="smallBold">{t('signOut')}</ThemedText>
           </Pressable>
         </BrandEntrance>
       </View>
@@ -302,13 +316,27 @@ export default function UserSettingsScreen() {
   );
 }
 
-function SettingValue({ label, value }: { label: string; value: string }) {
+function SettingValue({
+  label,
+  value,
+  valueDirection = 'auto',
+}: {
+  label: string;
+  value: string;
+  valueDirection?: 'auto' | 'ltr';
+}) {
+  const { isRTL } = useProductionLineI18n();
+
   return (
     <View>
       <ThemedText themeColor="textSecondary" type="overline">
         {label}
       </ThemedText>
-      <ThemedText className="mt-1" type="small">
+      <ThemedText
+        className="mt-1"
+        style={{ textAlign: isRTL ? 'right' : 'left', writingDirection: valueDirection }}
+        type="small"
+      >
         {value}
       </ThemedText>
     </View>
@@ -329,10 +357,11 @@ function LanguageOption({
   selected: boolean;
 }) {
   const theme = useTheme();
+  const { t } = useProductionLineI18n();
 
   return (
     <Pressable
-      accessibilityLabel={`Use ${label}`}
+      accessibilityLabel={t('useLanguage', { language: label })}
       accessibilityRole="radio"
       accessibilityState={{ checked: selected, disabled }}
       className={`min-h-11 flex-1 flex-row items-center justify-center gap-2 rounded-[13px] px-3 active:opacity-70 ${

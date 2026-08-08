@@ -161,9 +161,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           {/* Header */}
           <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-              <div className="max-w-full truncate rounded-full bg-white/80 px-4 py-1.5 font-black text-gray-900 text-xs uppercase tracking-wider shadow-sm backdrop-blur-md dark:bg-white/10 dark:text-white">
-                {t(project.category || "r_and_d")}
-              </div>
               {project.status && (
                 <div
                   className={`rounded-full border px-3 py-1.5 font-black text-[10px] uppercase tracking-wider shadow-sm ${

@@ -108,6 +108,7 @@ const referenceDataValidator = v.object({
     v.object({
       productId: v.id("projects"),
       productName: v.string(),
+      productPhotoUrl: v.optional(v.string()),
       specificationId: v.id("productionLineSpecifications"),
       specificationVersion: v.number(),
     }),
@@ -242,15 +243,27 @@ export const getMobileReferenceData = query({
         q.eq("organizationId", args.organizationId).eq("status", "active"),
       )
       .take(200);
+    const products = await Promise.all(
+      specifications.map(async (specification) => {
+        const project = await ctx.db.get(specification.productId);
+        const productPhotoUrl = project?.photoStorageId
+          ? await ctx.storage.getUrl(project.photoStorageId)
+          : null;
+
+        return {
+          productId: specification.productId,
+          productName: specification.productName,
+          productPhotoUrl: productPhotoUrl ?? undefined,
+          specificationId: specification._id,
+          specificationVersion: specification.version,
+        };
+      }),
+    );
+
     return {
       timezone: settings.timezone,
       enabledHallCodes: settings.enabledHallCodes,
-      products: specifications.map((specification) => ({
-        productId: specification.productId,
-        productName: specification.productName,
-        specificationId: specification._id,
-        specificationVersion: specification.version,
-      })),
+      products,
     };
   },
 });
@@ -707,6 +720,55 @@ export const submitForReview = mutation({
       previousStatus: record.status,
       status: "pending_production_review",
     });
+    return null;
+  },
+});
+
+export const review = mutation({
+  args: {
+    recordId: v.id("productionLineRecords"),
+    decision: v.union(v.literal("approved"), v.literal("returned")),
+    note: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const record = await ctx.db.get(args.recordId);
+    if (!record) {
+      throw new Error("Production-line record not found");
+    }
+    const { authUser } = await requireWorkspaceMember(ctx, record.organizationId);
+    await requirePermission(ctx, "review_production_checks");
+    if (record.status !== "pending_production_review") {
+      throw new Error("Only pending production-line records can be reviewed");
+    }
+
+    const note = args.note?.trim();
+    if (args.decision === "returned" && !note) {
+      throw new Error("A review note is required when returning a record");
+    }
+    if (note && note.length > 1000) {
+      throw new Error("Review notes must be 1000 characters or fewer");
+    }
+
+    const nextRevision = record.recordRevision + 1;
+    const now = Date.now();
+    await ctx.db.patch(record._id, {
+      status: args.decision,
+      recordRevision: nextRevision,
+      updatedAt: now,
+    });
+    await addRecordEvent(
+      ctx,
+      record,
+      authUser,
+      args.decision === "approved" ? "record.approved" : "record.returned",
+      nextRevision,
+      {
+        previousStatus: record.status,
+        status: args.decision,
+        ...(note ? { note } : {}),
+      },
+    );
     return null;
   },
 });

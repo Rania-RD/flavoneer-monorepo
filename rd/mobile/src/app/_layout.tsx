@@ -15,10 +15,11 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import type { PropsWithChildren } from 'react';
+import { View } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { BrandColors } from '@/constants/theme';
-import { LanguageProvider } from '@/contexts/language-context';
+import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 import { OrganizationProvider } from '@/contexts/organization-context';
 import { ThemePreferenceProvider, useThemePreference } from '@/contexts/theme-preference-context';
 import { authClient, convex } from '@/lib/backend';
@@ -50,6 +51,40 @@ const darkNavigationTheme = {
   },
 };
 
+function LocalizedNavigator({
+  fontsReady,
+  hasSession,
+  isDark,
+  isPending,
+}: {
+  fontsReady: boolean;
+  hasSession: boolean;
+  isDark: boolean;
+  isPending: boolean;
+}) {
+  const { language } = useLanguage();
+
+  return (
+    <ThemeProvider value={isDark ? darkNavigationTheme : lightNavigationTheme}>
+      <View className="flex-1" style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Protected guard={hasSession}>
+            <Stack.Screen name="(app)" />
+            <Stack.Screen name="quality/production-line/[recordId]" />
+            <Stack.Screen name="user-settings" />
+          </Stack.Protected>
+
+          <Stack.Protected guard={!hasSession}>
+            <Stack.Screen name="sign-in" />
+          </Stack.Protected>
+        </Stack>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <AnimatedSplashOverlay ready={!isPending && fontsReady} />
+      </View>
+    </ThemeProvider>
+  );
+}
+
 function AppNavigator() {
   const { resolvedTheme } = useThemePreference();
   const { data: session, isPending } = authClient.useSession();
@@ -67,21 +102,12 @@ function AppNavigator() {
   return (
     <LanguageProvider key={session?.user.email ?? 'signed-out'}>
       <OrganizationProvider enabled={Boolean(session)} key={session?.user.email ?? 'signed-out'}>
-        <ThemeProvider value={isDark ? darkNavigationTheme : lightNavigationTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Protected guard={Boolean(session)}>
-              <Stack.Screen name="(app)" />
-              <Stack.Screen name="quality/production-line/[recordId]" />
-              <Stack.Screen name="user-settings" />
-            </Stack.Protected>
-
-            <Stack.Protected guard={!session}>
-              <Stack.Screen name="sign-in" />
-            </Stack.Protected>
-          </Stack>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-          <AnimatedSplashOverlay ready={!isPending && (fontsLoaded || Boolean(fontError))} />
-        </ThemeProvider>
+        <LocalizedNavigator
+          fontsReady={fontsLoaded || Boolean(fontError)}
+          hasSession={Boolean(session)}
+          isDark={isDark}
+          isPending={isPending}
+        />
       </OrganizationProvider>
     </LanguageProvider>
   );

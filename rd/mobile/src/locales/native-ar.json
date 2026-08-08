@@ -1,0 +1,10 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Flavoneer",
+    "NSCameraUsageDescription": "اسمح لتطبيق Flavoneer بتصوير بطاقات دفعات كراتين الإنتاج المطبوعة.",
+    "NSPhotoLibraryUsageDescription": "اسمح لتطبيق Flavoneer باختيار صور سجلات الإنتاج من مكتبة الصور."
+  },
+  "android": {
+    "app_name": "Flavoneer"
+  }
+}

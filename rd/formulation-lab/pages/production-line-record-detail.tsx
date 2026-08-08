@@ -1,6 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
   CalendarClock,
@@ -12,12 +12,15 @@ import {
   Loader2,
   MapPin,
   PackageCheck,
+  RotateCcw,
   ShieldCheck,
   UserRoundCheck,
 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { usePermissions } from "../hooks/usePermissions";
+import { useToast } from "../hooks/useToast";
 
 const statusClasses: Record<string, string> = {
   draft: "bg-[#eef8eb] text-[#1c4a3c] dark:bg-[#285b4d] dark:text-[#d2f2d4]",
@@ -34,6 +37,13 @@ export default function ProductionLineRecordDetail() {
   const { t, i18n } = useTranslation();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canViewProductionChecks = hasPermission("view_production_checks");
+  const canReviewProductionChecks = hasPermission("review_production_checks");
+  const reviewRecord = useMutation(api.productionLineRecords.review);
+  const { toast } = useToast();
+  const [reviewNote, setReviewNote] = useState("");
+  const [reviewingDecision, setReviewingDecision] = useState<
+    "approved" | "returned" | null
+  >(null);
   const record = useQuery(
     api.productionLineRecords.get,
     id && canViewProductionChecks
@@ -45,6 +55,39 @@ export default function ProductionLineRecordDetail() {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(value);
+
+  const handleReview = async (decision: "approved" | "returned") => {
+    if (!record) {
+      return;
+    }
+    const note = reviewNote.trim();
+    if (decision === "returned" && !note) {
+      toast.error(t("production_return_note_required"));
+      return;
+    }
+
+    setReviewingDecision(decision);
+    try {
+      await reviewRecord({
+        recordId: record._id,
+        decision,
+        note: note || undefined,
+      });
+      setReviewNote("");
+      toast.success(
+        t(
+          decision === "approved"
+            ? "production_record_approved"
+            : "production_record_returned"
+        )
+      );
+    } catch (error) {
+      console.error("Failed to review production-line record", error);
+      toast.error(t("production_review_failed"));
+    } finally {
+      setReviewingDecision(null);
+    }
+  };
 
   if (permissionsLoading || (canViewProductionChecks && record === undefined)) {
     return (
@@ -119,12 +162,69 @@ export default function ProductionLineRecordDetail() {
             >
               {t(`production_status_${record.status}`)}
             </span>
-            <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 font-bold text-[#d7eadf] text-xs">
-              {t("read_only_record")}
-            </span>
           </div>
         </div>
       </header>
+
+      {canReviewProductionChecks &&
+      record.status === "pending_production_review" ? (
+        <section
+          className="flex flex-col gap-5 rounded-[2rem] border border-[#1c4a3c]/10 bg-[#fffdf4] p-5 shadow-[0_18px_55px_rgba(16,47,39,0.07)] lg:flex-row lg:items-end dark:border-[#d2f2d4]/10 dark:bg-[#173e33]"
+          data-testid="production-review-controls"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-[#527568] text-xs uppercase tracking-[0.16em] dark:text-[#a9cbbb]">
+              {t("production_review_decision")}
+            </p>
+            <p className="mt-2 text-[#527568] text-sm dark:text-[#a9cbbb]">
+              {t("production_review_help")}
+            </p>
+            <textarea
+              className="mt-4 min-h-24 w-full resize-y rounded-[1.25rem] border border-[#1c4a3c]/10 bg-[#eef8eb] px-4 py-3 text-[#173e33] text-sm outline-none transition-colors placeholder:text-[#6f8e82] focus:border-[#1c4a3c]/35 dark:border-[#d2f2d4]/10 dark:bg-[#102f27] dark:text-[#f7f4df] dark:focus:border-[#d2f2d4]/30 dark:placeholder:text-[#7fa393]"
+              maxLength={1000}
+              onChange={(event) => setReviewNote(event.target.value)}
+              placeholder={t("production_review_note_placeholder")}
+              value={reviewNote}
+            />
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row lg:shrink-0">
+            <button
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#a43434]/20 bg-[#fff0ed] px-5 font-bold text-[#a43434] text-sm transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 dark:bg-[#a43434]/15 dark:text-[#ffb8ad]"
+              disabled={Boolean(reviewingDecision) || !reviewNote.trim()}
+              onClick={() => handleReview("returned")}
+              type="button"
+            >
+              {reviewingDecision === "returned" ? (
+                <Loader2
+                  aria-hidden="true"
+                  className="animate-spin"
+                  size={17}
+                />
+              ) : (
+                <RotateCcw aria-hidden="true" size={17} />
+              )}
+              {t("return_to_qc")}
+            </button>
+            <button
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#1c4a3c] px-5 font-bold text-sm text-white shadow-md transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 dark:bg-[#f5a623] dark:text-[#173e33]"
+              disabled={Boolean(reviewingDecision)}
+              onClick={() => handleReview("approved")}
+              type="button"
+            >
+              {reviewingDecision === "approved" ? (
+                <Loader2
+                  aria-hidden="true"
+                  className="animate-spin"
+                  size={17}
+                />
+              ) : (
+                <CheckCircle2 aria-hidden="true" size={17} />
+              )}
+              {t("approve_production_record")}
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <RecordDatum

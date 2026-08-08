@@ -5,7 +5,7 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { BrandColors } from '@/constants/theme';
-import type { ProductionLineTranslationKey } from '../i18n';
+import { type ProductionLineTranslationKey, useProductionLineI18n } from '../i18n';
 
 interface BatchLabelCameraProps {
   onCapture: (uri: string) => Promise<void>;
@@ -15,6 +15,7 @@ interface BatchLabelCameraProps {
 }
 
 export function BatchLabelCamera({ onCapture, onClose, t, visible }: BatchLabelCameraProps) {
+  const { isRTL } = useProductionLineI18n();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [isReady, setIsReady] = useState(false);
@@ -40,7 +41,7 @@ export function BatchLabelCamera({ onCapture, onClose, t, visible }: BatchLabelC
       presentationStyle="fullScreen"
       visible={visible}
     >
-      <View className="flex-1 bg-[#071B16]">
+      <View className="flex-1 bg-[#071B16]" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
         {permission?.granted ? (
           <>
             <CameraView

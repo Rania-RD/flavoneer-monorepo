@@ -11,6 +11,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.5.6
         version: 2.5.6
+      '@expo/config-plugins':
+        specifier: ~57.0.6
+        version: 57.0.6(typescript@6.0.3)
 
   apps/landing:
     dependencies:

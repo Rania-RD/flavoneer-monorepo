@@ -104,14 +104,6 @@ export default function ProductionLineRecords() {
             {t("production_monitoring_subtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-[#1c4a3c]/10 bg-[#fffdf4] px-4 py-2.5 text-[#527568] text-sm shadow-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33] dark:text-[#a9cbbb]">
-          <ShieldCheck
-            aria-hidden="true"
-            className="text-[#247a51]"
-            size={17}
-          />
-          {t("read_only_record")}
-        </div>
       </header>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -166,12 +158,12 @@ export default function ProductionLineRecords() {
                 key={record._id}
                 to={`/quality/production-line-records/${record._id}`}
               >
-                <div className="flex items-center justify-between gap-3 lg:block">
-                  <span className="font-bold font-mono text-[#173e33] dark:text-[#f7f4df]">
+                <div className="flex min-w-0 items-center justify-between gap-3 lg:flex-col lg:items-start lg:justify-center lg:gap-2">
+                  <span className="min-w-0 truncate font-bold font-mono text-[#173e33] dark:text-[#f7f4df]">
                     {record.displaySerial}
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-1 font-bold text-[10px] lg:mt-2 lg:inline-block ${statusClasses[record.status as RecordStatus]}`}
+                    className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-[10px] ${statusClasses[record.status as RecordStatus]}`}
                   >
                     {t(`production_status_${record.status}`)}
                   </span>

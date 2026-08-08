@@ -13,6 +13,7 @@ interface UserAvatarProps {
 
 export function UserAvatar({ accessibilityLabel, name, seed, size, style }: UserAvatarProps) {
   const identity = getAvatarIdentity(name, seed);
+  const hasArabicInitials = /[\u0600-\u06ff]/u.test(identity.initials);
 
   return (
     <View
@@ -36,8 +37,9 @@ export function UserAvatar({ accessibilityLabel, name, seed, size, style }: User
         allowFontScaling={false}
         style={{
           color: identity.color,
-          fontFamily: Fonts.sansExtraBold,
+          fontFamily: hasArabicInitials ? undefined : Fonts.sansExtraBold,
           fontSize: Math.max(10, Math.round(size * 0.34)),
+          fontWeight: hasArabicInitials ? '800' : undefined,
           lineHeight: Math.max(12, Math.round(size * 0.4)),
         }}
       >

@@ -19,6 +19,7 @@ import {
   StatusPill,
 } from '@/components/brand-screen';
 import { ThemedText } from '@/components/themed-text';
+import { Image } from '@/components/ui/image';
 import { UserAvatar } from '@/components/user-avatar';
 import { BrandColors, Fonts } from '@/constants/theme';
 import { useOrganization } from '@/contexts/organization-context';
@@ -179,7 +180,10 @@ export default function ProductionLineScreen() {
           <BrandEntrance delay={20}>
             <BrandSurface className="mb-8 gap-6">
               {!activeOrganizationId ? (
-                <SetupMessage icon={<ShieldCheck color="#8A5811" size={22} />} text={t('noOrganization')} />
+                <SetupMessage
+                  icon={<ShieldCheck color="#8A5811" size={22} />}
+                  text={t('noOrganization')}
+                />
               ) : referenceData === undefined ? (
                 <ActivityIndicator color={BrandColors.forest} />
               ) : referenceData === null ? (
@@ -228,7 +232,11 @@ export default function ProductionLineScreen() {
                       onChangeText={setDepartmentName}
                       placeholder={t('departmentPlaceholder')}
                       placeholderTextColor="#789489"
-                      style={{ fontFamily: Fonts.sans, textAlign: isRTL ? 'right' : 'left' }}
+                      style={{
+                        fontFamily: Fonts.sans,
+                        textAlign: isRTL ? 'right' : 'left',
+                        writingDirection: isRTL ? 'rtl' : 'ltr',
+                      }}
                       value={departmentName}
                     />
                   </View>
@@ -241,7 +249,7 @@ export default function ProductionLineScreen() {
                       {referenceData.products.map((product) => (
                         <Pressable
                           accessibilityRole="button"
-                          className={`min-h-[54px] flex-row items-center justify-between rounded-[18px] border px-4 ${
+                          className={`min-h-[64px] flex-row items-center gap-3 rounded-[18px] border p-2 ${
                             product.productId === productId
                               ? 'border-[#1C4A3C] bg-[#D2F2D4] dark:border-[#F5A623] dark:bg-[#F5A623]'
                               : 'border-[#1C4A3C]/10 bg-[#EEF8EB] dark:border-[#D2F2D4]/10 dark:bg-[#285B4D]'
@@ -249,7 +257,17 @@ export default function ProductionLineScreen() {
                           key={product.productId}
                           onPress={() => setSelectedProductId(product.productId)}
                         >
-                          <ThemedText type="smallBold">{product.productName}</ThemedText>
+                          {product.productPhotoUrl ? (
+                            <Image
+                              className="size-12 rounded-[14px] bg-[#DDEBE0] dark:bg-[#173E33]"
+                              contentFit="cover"
+                              source={{ uri: product.productPhotoUrl }}
+                              transition={150}
+                            />
+                          ) : null}
+                          <ThemedText className="min-w-0 flex-1" numberOfLines={2} type="smallBold">
+                            {product.productName}
+                          </ThemedText>
                           <ThemedText themeColor="textSecondary" type="caption">
                             {t('version', { version: product.specificationVersion })}
                           </ThemedText>
@@ -275,7 +293,11 @@ export default function ProductionLineScreen() {
                     {isCreating ? (
                       <ActivityIndicator color="white" />
                     ) : (
-                      <ArrowUpRight color="white" size={19} />
+                      <ArrowUpRight
+                        color="white"
+                        size={19}
+                        style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}
+                      />
                     )}
                     <ThemedText className="!text-white dark:!text-[#173E33]" type="smallBold">
                       {isCreating ? t('creatingDraft') : t('createDraft')}
@@ -350,7 +372,11 @@ export default function ProductionLineScreen() {
                         }).format(record.inspectionAt)}
                       </ThemedText>
                     </View>
-                    <ChevronRight color={BrandColors.copy} size={19} />
+                    <ChevronRight
+                      color={BrandColors.copy}
+                      size={19}
+                      style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}
+                    />
                   </Pressable>
                   {index < records.length - 1 ? (
                     <View className="ms-[84px] h-px bg-[#1C4A3C]/10 dark:bg-[#D2F2D4]/10" />

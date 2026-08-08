@@ -1,5 +1,5 @@
 import { Eye, EyeOff, LockKeyhole } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -17,28 +17,33 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Image } from '@/components/ui/image';
 import { BrandColors, Fonts } from '@/constants/theme';
+import { useProductionLineI18n } from '@/features/production-line/i18n';
 import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/backend';
 
-const signInSchema = z.object({
-  email: z.string().trim().email('Enter a valid email address.'),
-  password: z.string().min(8, 'Password must be at least 8 characters.'),
-});
-
 export default function SignInScreen() {
   const theme = useTheme();
+  const { isRTL, t } = useProductionLineI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const signInSchema = useMemo(
+    () =>
+      z.object({
+        email: z.string().trim().email(t('invalidEmail')),
+        password: z.string().min(8, t('passwordMinLength')),
+      }),
+    [t],
+  );
 
   const handleSignIn = async () => {
     setErrorMessage(null);
 
     const parsed = signInSchema.safeParse({ email, password });
     if (!parsed.success) {
-      setErrorMessage(parsed.error.issues[0]?.message ?? 'Check your email and password.');
+      setErrorMessage(parsed.error.issues[0]?.message ?? t('checkCredentials'));
       return;
     }
 
@@ -50,17 +55,17 @@ export default function SignInScreen() {
       });
 
       if (result.error) {
-        setErrorMessage(result.error.message ?? 'The email or password is incorrect.');
+        setErrorMessage(t('incorrectCredentials'));
       }
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Sign in failed. Try again.');
+    } catch {
+      setErrorMessage(t('signInFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <ThemedView className="flex-1 overflow-hidden">
+    <ThemedView className="flex-1 overflow-hidden" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <View className="pointer-events-none absolute -start-32 -top-24 size-80 rounded-full bg-[#D2F2D4] dark:bg-[#285B4D]/45" />
       <View className="pointer-events-none absolute -end-24 top-[38%] size-60 rounded-full bg-[#F5A623]/15 dark:bg-[#F5A623]/8" />
       <SafeAreaView className="flex-1">
@@ -94,7 +99,7 @@ export default function SignInScreen() {
                   </View>
                   <ThemedText type="section">Flavoneer</ThemedText>
                   <ThemedText className="mt-1" themeColor="textSecondary" type="overline">
-                    R&amp;D workspace
+                    {t('researchWorkspace')}
                   </ThemedText>
                 </View>
               </Animated.View>
@@ -115,17 +120,17 @@ export default function SignInScreen() {
                     <View className="mb-4 size-11 items-center justify-center rounded-[16px] bg-[#D2F2D4] dark:bg-[#285B4D]">
                       <LockKeyhole color={theme.text} size={20} />
                     </View>
-                    <ThemedText type="display">Welcome back.</ThemedText>
+                    <ThemedText type="display">{t('welcomeBack')}</ThemedText>
                     <ThemedText className="mt-2" themeColor="textSecondary" type="small">
-                      Sign in to open your shared lab workspace.
+                      {t('signInDescription')}
                     </ThemedText>
                   </View>
 
                   <View className="gap-4">
                     <View className="gap-2">
-                      <ThemedText type="smallBold">Email</ThemedText>
+                      <ThemedText type="smallBold">{t('email')}</ThemedText>
                       <TextInput
-                        accessibilityLabel="Email"
+                        accessibilityLabel={t('email')}
                         autoCapitalize="none"
                         autoComplete="email"
                         autoCorrect={false}
@@ -133,40 +138,49 @@ export default function SignInScreen() {
                         inputMode="email"
                         keyboardType="email-address"
                         onChangeText={setEmail}
-                        placeholder="you@example.com"
+                        placeholder={t('emailPlaceholder')}
                         placeholderTextColor={theme.textSecondary}
                         returnKeyType="next"
                         className="min-h-[56px] rounded-[18px] border bg-[#EEF8EB] px-4 text-base text-[#173E33] dark:bg-[#285B4D] dark:text-[#F7F4DF]"
-                        style={{ borderColor: theme.border, fontFamily: Fonts.sans }}
+                        style={{
+                          borderColor: theme.border,
+                          fontFamily: Fonts.sans,
+                          textAlign: isRTL ? 'right' : 'left',
+                          writingDirection: 'ltr',
+                        }}
                         textContentType="username"
                         value={email}
                       />
                     </View>
 
                     <View className="gap-2">
-                      <ThemedText type="smallBold">Password</ThemedText>
+                      <ThemedText type="smallBold">{t('password')}</ThemedText>
                       <View
                         className="min-h-[56px] flex-row items-center rounded-[18px] border bg-[#EEF8EB] dark:bg-[#285B4D]"
                         style={{ borderColor: theme.border }}
                       >
                         <TextInput
-                          accessibilityLabel="Password"
+                          accessibilityLabel={t('password')}
                           autoCapitalize="none"
                           autoComplete="current-password"
                           editable={!isSubmitting}
                           onChangeText={setPassword}
                           onSubmitEditing={handleSignIn}
-                          placeholder="Enter your password"
+                          placeholder={t('passwordPlaceholder')}
                           placeholderTextColor={theme.textSecondary}
                           returnKeyType="go"
                           secureTextEntry={!showPassword}
                           className="min-h-[54px] flex-1 ps-4 text-base text-[#173E33] dark:text-[#F7F4DF]"
-                          style={{ fontFamily: Fonts.sans }}
+                          style={{
+                            fontFamily: Fonts.sans,
+                            textAlign: isRTL ? 'right' : 'left',
+                            writingDirection: isRTL ? 'rtl' : 'ltr',
+                          }}
                           textContentType="password"
                           value={password}
                         />
                         <Pressable
-                          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                          accessibilityLabel={showPassword ? t('hidePassword') : t('showPassword')}
                           accessibilityRole="button"
                           className="min-h-[54px] w-[54px] items-center justify-center active:opacity-60"
                           hitSlop={10}
@@ -211,7 +225,7 @@ export default function SignInScreen() {
                           className="!text-[#FFFDF4] dark:!text-[#173E33]"
                           type="smallBold"
                         >
-                          Sign in
+                          {t('signIn')}
                         </ThemedText>
                       )}
                     </Pressable>
@@ -221,7 +235,7 @@ export default function SignInScreen() {
 
               <Animated.View entering={FadeInDown.delay(180).duration(480)}>
                 <ThemedText className="mt-6 text-center" themeColor="textSecondary" type="caption">
-                  Your mobile session uses the same account as formulation-rd.
+                  {t('sessionDescription')}
                 </ThemedText>
               </Animated.View>
             </View>

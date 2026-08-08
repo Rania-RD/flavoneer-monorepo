@@ -18,7 +18,7 @@ export function WorkspaceSectionSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
   const theme = useTheme();
-  const { t } = useProductionLineI18n();
+  const { isRTL, t } = useProductionLineI18n();
   const triggerRef = useRef<View>(null);
   const { width: screenWidth } = useWindowDimensions();
   const [isOpen, setIsOpen] = useState(false);
@@ -96,7 +96,7 @@ export function WorkspaceSectionSwitcher() {
         transparent
         visible={isOpen}
       >
-        <View className="flex-1">
+        <View className="flex-1" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
           <Pressable
             accessibilityLabel={t('closeSectionSelector')}
             className="absolute inset-0 bg-[#102F27]/10"

@@ -20,7 +20,7 @@ import {
   Save,
   Send,
 } from 'lucide-react-native';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandEntrance, BrandHeader, BrandSurface } from '@/components/brand-screen';
@@ -42,6 +42,7 @@ import { api } from '@/lib/backend';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 type SaveAction = 'check' | 'code' | 'photo' | 'reading' | 'submit';
+type BlockingSaveAction = Extract<SaveAction, 'code' | 'photo' | 'submit'>;
 
 export default function ProductionLineRecordScreen() {
   const router = useRouter();
@@ -55,24 +56,111 @@ export default function ProductionLineRecordScreen() {
   const attachBatchLabelPhoto = useMutation(api.productionLineRecords.attachBatchLabelPhoto);
   const updateBatchLabelCode = useMutation(api.productionLineRecords.updateBatchLabelCode);
   const saveReading = useMutation(api.productionLineRecords.saveReading);
-  const updateComplianceCheck = useMutation(api.productionLineRecords.updateComplianceCheck);
-  const updateComplianceChecks = useMutation(api.productionLineRecords.updateComplianceChecks);
+  const updateComplianceCheck = useMutation(
+    api.productionLineRecords.updateComplianceCheck,
+  ).withOptimisticUpdate((localStore, args) => {
+    const queryArgs = { recordId: args.recordId };
+    const currentRecord = localStore.getQuery(api.productionLineRecords.get, queryArgs);
+    if (!currentRecord) {
+      return;
+    }
+    const currentCheck = currentRecord.checks.find((check) => check.checkKey === args.checkKey);
+    localStore.setQuery(api.productionLineRecords.get, queryArgs, {
+      ...currentRecord,
+      checks: currentCheck
+        ? currentRecord.checks.map((check) =>
+            check.checkKey === args.checkKey ? { ...check, checked: args.checked } : check,
+          )
+        : [...currentRecord.checks, { checkKey: args.checkKey, checked: args.checked }],
+    });
+  });
+  const updateComplianceChecks = useMutation(
+    api.productionLineRecords.updateComplianceChecks,
+  ).withOptimisticUpdate((localStore, args) => {
+    const queryArgs = { recordId: args.recordId };
+    const currentRecord = localStore.getQuery(api.productionLineRecords.get, queryArgs);
+    if (!currentRecord) {
+      return;
+    }
+    const optimisticChecks = new Map(
+      currentRecord.checks.map((check) => [check.checkKey, check.checked]),
+    );
+    for (const checkKey of args.checkKeys) {
+      optimisticChecks.set(checkKey, args.checked);
+    }
+    localStore.setQuery(api.productionLineRecords.get, queryArgs, {
+      ...currentRecord,
+      checks: Array.from(optimisticChecks, ([checkKey, checked]) => ({ checkKey, checked })),
+    });
+  });
   const submitRecordForReview = useMutation(api.productionLineRecords.submitForReview);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [batchCodeDraft, setBatchCodeDraft] = useState<string | null>(null);
   const [matchesPhotoDraft, setMatchesPhotoDraft] = useState<boolean | null>(null);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [blockingSaveState, setBlockingSaveState] = useState<SaveState>('idle');
   const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
-  const [lastAction, setLastAction] = useState<SaveAction | null>(null);
-  const retryFormAction = useRef<(() => void) | null>(null);
+  const [blockingSaveAction, setBlockingSaveAction] = useState<BlockingSaveAction | null>(null);
+  const [pendingBackgroundSaves, setPendingBackgroundSaves] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [failedBackgroundSaves, setFailedBackgroundSaves] = useState<Set<string>>(() => new Set());
+  const [hasCompletedBackgroundSave, setHasCompletedBackgroundSave] = useState(false);
 
   const batchCode = batchCodeDraft ?? record?.printedBatchCode ?? '';
   const matchesPhoto = matchesPhotoDraft ?? Boolean(record?.batchLabelConfirmedAt);
   const isEditable = Boolean(record && ['draft', 'returned'].includes(record.status));
-  const displayedSaveState =
-    saveState === 'idle' && batchCodeDraft === null && record?.batchLabelConfirmedAt
-      ? 'saved'
-      : saveState;
+  const displayedSaveState: SaveState =
+    blockingSaveState === 'saving' || blockingSaveState === 'failed'
+      ? blockingSaveState
+      : pendingBackgroundSaves.size > 0
+        ? 'saving'
+        : failedBackgroundSaves.size > 0
+          ? 'failed'
+          : blockingSaveState === 'saved' ||
+              hasCompletedBackgroundSave ||
+              (batchCodeDraft === null && Boolean(record?.batchLabelConfirmedAt))
+            ? 'saved'
+            : 'idle';
+
+  const runBackgroundSave = async ({
+    action,
+    failureKeys,
+    operationKey,
+    phase,
+    save,
+  }: {
+    action: Extract<SaveAction, 'check' | 'reading'>;
+    failureKeys: string[];
+    operationKey: string;
+    phase: string;
+    save: () => Promise<unknown>;
+  }) => {
+    if (!recordId) {
+      return;
+    }
+    setPendingBackgroundSaves((current) => new Set(current).add(operationKey));
+    setFailedBackgroundSaves((current) => {
+      const next = new Set(current);
+      for (const failureKey of failureKeys) {
+        next.delete(failureKey);
+      }
+      return next;
+    });
+    try {
+      await save();
+      setHasCompletedBackgroundSave(true);
+    } catch (error) {
+      setFailedBackgroundSaves((current) => new Set([...current, ...failureKeys]));
+      reportSaveFailure({ action, error, phase, recordId });
+      throw error;
+    } finally {
+      setPendingBackgroundSaves((current) => {
+        const next = new Set(current);
+        next.delete(operationKey);
+        return next;
+      });
+    }
+  };
 
   const formattedInspection = useMemo(
     () =>
@@ -90,8 +178,8 @@ export default function ProductionLineRecordScreen() {
       return;
     }
     setPendingPhotoUri(uri);
-    setLastAction('photo');
-    setSaveState('saving');
+    setBlockingSaveAction('photo');
+    setBlockingSaveState('saving');
     try {
       const storageId = await uploadBatchLabelPhoto(uri, () =>
         generatePhotoUploadUrl({ recordId }),
@@ -103,8 +191,7 @@ export default function ProductionLineRecordScreen() {
       });
       setMatchesPhotoDraft(false);
       setPendingPhotoUri(null);
-      retryFormAction.current = null;
-      setSaveState('saved');
+      setBlockingSaveState('saved');
       setCameraVisible(false);
     } catch (error) {
       reportSaveFailure({
@@ -113,7 +200,7 @@ export default function ProductionLineRecordScreen() {
         phase: error instanceof BatchLabelPhotoUploadError ? error.phase : 'attach-photo-to-record',
         recordId,
       });
-      setSaveState('failed');
+      setBlockingSaveState('failed');
       setCameraVisible(false);
     }
   };
@@ -122,29 +209,18 @@ export default function ProductionLineRecordScreen() {
     if (!(recordId && batchCode.trim() && matchesPhoto && isConnected && isEditable)) {
       return;
     }
-    setLastAction('code');
-    setSaveState('saving');
+    setBlockingSaveAction('code');
+    setBlockingSaveState('saving');
     try {
       await updateBatchLabelCode({
         recordId,
         printedBatchCode: batchCode,
         confirmed: true,
       });
-      retryFormAction.current = null;
-      setSaveState('saved');
+      setBlockingSaveState('saved');
     } catch (error) {
       reportSaveFailure({ action: 'code', error, phase: 'confirm-batch-code', recordId });
-      setSaveState('failed');
-    }
-  };
-
-  const retry = () => {
-    if (lastAction === 'photo' && pendingPhotoUri) {
-      uploadPhoto(pendingPhotoUri);
-    } else if (lastAction === 'code') {
-      confirmCode();
-    } else {
-      retryFormAction.current?.();
+      setBlockingSaveState('failed');
     }
   };
 
@@ -156,44 +232,29 @@ export default function ProductionLineRecordScreen() {
     if (!(recordId && isConnected && isEditable)) {
       return;
     }
-    retryFormAction.current = () => {
-      void saveMeasurement(readingKey, readingIndex, value);
-    };
-    setLastAction('reading');
-    setSaveState('saving');
-    try {
-      await saveReading({ recordId, readingKey, readingIndex, value });
-      retryFormAction.current = null;
-      setSaveState('saved');
-    } catch (error) {
-      reportSaveFailure({ action: 'reading', error, phase: 'save-reading', recordId });
-      setSaveState('failed');
-      throw error;
-    }
+    await runBackgroundSave({
+      action: 'reading',
+      failureKeys: [`reading:${readingKey}:${readingIndex}`],
+      operationKey: `reading:${readingKey}:${readingIndex}`,
+      phase: 'save-reading',
+      save: () => saveReading({ recordId, readingKey, readingIndex, value }),
+    });
   };
 
   const setComplianceChecks = async (checkKeys: ProductionLineCheckKey[], checked: boolean) => {
     if (!(recordId && isConnected && isEditable)) {
       return;
     }
-    retryFormAction.current = () => {
-      void setComplianceChecks(checkKeys, checked);
-    };
-    setLastAction('check');
-    setSaveState('saving');
-    try {
-      if (checkKeys.length === 1) {
-        await updateComplianceCheck({ recordId, checkKey: checkKeys[0], checked });
-      } else {
-        await updateComplianceChecks({ recordId, checkKeys, checked });
-      }
-      retryFormAction.current = null;
-      setSaveState('saved');
-    } catch (error) {
-      reportSaveFailure({ action: 'check', error, phase: 'save-compliance-check', recordId });
-      setSaveState('failed');
-      throw error;
-    }
+    await runBackgroundSave({
+      action: 'check',
+      failureKeys: checkKeys.map((checkKey) => `check:${checkKey}`),
+      operationKey: `check:${[...checkKeys].sort().join(',')}`,
+      phase: 'save-compliance-check',
+      save: () =>
+        checkKeys.length === 1
+          ? updateComplianceCheck({ recordId, checkKey: checkKeys[0], checked })
+          : updateComplianceChecks({ recordId, checkKeys, checked }),
+    });
   };
 
   if (record === undefined) {
@@ -233,23 +294,33 @@ export default function ProductionLineRecordScreen() {
     limits: record.specificationLimits,
     readings: record.readings,
   });
+  const canSubmitForReview =
+    submissionReadiness.isReady &&
+    pendingBackgroundSaves.size === 0 &&
+    failedBackgroundSaves.size === 0;
 
   const submitForReview = async () => {
-    if (!(recordId && isConnected && isEditable && submissionReadiness.isReady)) {
+    if (!(recordId && isConnected && isEditable && canSubmitForReview)) {
       return;
     }
-    retryFormAction.current = () => {
-      void submitForReview();
-    };
-    setLastAction('submit');
-    setSaveState('saving');
+    setBlockingSaveAction('submit');
+    setBlockingSaveState('saving');
     try {
       await submitRecordForReview({ recordId });
-      retryFormAction.current = null;
-      setSaveState('saved');
+      setBlockingSaveState('saved');
     } catch (error) {
       reportSaveFailure({ action: 'submit', error, phase: 'submit-for-review', recordId });
-      setSaveState('failed');
+      setBlockingSaveState('failed');
+    }
+  };
+
+  const retryBlockingSave = () => {
+    if (blockingSaveAction === 'photo' && pendingPhotoUri) {
+      void uploadPhoto(pendingPhotoUri);
+    } else if (blockingSaveAction === 'code') {
+      void confirmCode();
+    } else if (blockingSaveAction === 'submit') {
+      void submitForReview();
     }
   };
 
@@ -278,6 +349,7 @@ export default function ProductionLineRecordScreen() {
                   />
                 </Pressable>
               }
+              actionPosition="start"
               className="mb-3"
               subtitle={t('qualityControl')}
             />
@@ -290,7 +362,7 @@ export default function ProductionLineRecordScreen() {
           </View>
           <SaveStatusBar
             connected={isConnected}
-            onRetry={retry}
+            onRetry={blockingSaveState === 'failed' ? retryBlockingSave : undefined}
             saveState={displayedSaveState}
             t={t}
           />
@@ -355,9 +427,11 @@ export default function ProductionLineRecordScreen() {
                 <Pressable
                   accessibilityRole="button"
                   className={`min-h-[54px] flex-row items-center justify-center gap-2 rounded-[18px] border border-[#1C4A3C]/12 bg-[#EEF8EB] active:scale-[0.98] dark:border-[#D2F2D4]/10 dark:bg-[#285B4D] ${
-                    !isConnected || !isEditable || saveState === 'saving' ? 'opacity-50' : ''
+                    !isConnected || !isEditable || blockingSaveState === 'saving'
+                      ? 'opacity-50'
+                      : ''
                   }`}
-                  disabled={!isConnected || !isEditable || saveState === 'saving'}
+                  disabled={!isConnected || !isEditable || blockingSaveState === 'saving'}
                   onPress={() => setCameraVisible(true)}
                 >
                   <Camera color={BrandColors.forest} size={19} />
@@ -376,18 +450,19 @@ export default function ProductionLineRecordScreen() {
                         accessibilityLabel={t('printedBatchCode')}
                         autoCapitalize="characters"
                         className="mt-3 min-h-[58px] rounded-[18px] border border-[#1C4A3C]/12 bg-[#EEF8EB] px-4 text-lg text-[#173E33] dark:border-[#D2F2D4]/10 dark:bg-[#285B4D] dark:text-[#F7F4DF]"
-                        editable={isEditable && saveState !== 'saving'}
+                        editable={isEditable && blockingSaveState !== 'saving'}
                         keyboardType="numbers-and-punctuation"
                         onChangeText={(value) => {
                           setBatchCodeDraft(value);
                           setMatchesPhotoDraft(false);
-                          setSaveState('idle');
+                          setBlockingSaveState('idle');
                         }}
                         placeholder={t('batchCodePlaceholder')}
                         placeholderTextColor="#789489"
                         style={{
                           fontFamily: Fonts.mono,
                           textAlign: isRTL ? 'right' : 'left',
+                          writingDirection: 'ltr',
                         }}
                         value={batchCode}
                       />
@@ -403,7 +478,7 @@ export default function ProductionLineRecordScreen() {
                       disabled={!isEditable}
                       onPress={() => {
                         setMatchesPhotoDraft(!matchesPhoto);
-                        setSaveState('idle');
+                        setBlockingSaveState('idle');
                       }}
                     >
                       <View
@@ -424,23 +499,23 @@ export default function ProductionLineRecordScreen() {
                       accessibilityRole="button"
                       className={`min-h-[56px] flex-row items-center justify-center gap-2 rounded-[19px] bg-[#1C4A3C] active:scale-[0.98] dark:bg-[#F5A623] ${
                         !(batchCode.trim() && matchesPhoto && isConnected && isEditable) ||
-                        saveState === 'saving'
+                        blockingSaveState === 'saving'
                           ? 'opacity-50'
                           : ''
                       }`}
                       disabled={
                         !(batchCode.trim() && matchesPhoto && isConnected && isEditable) ||
-                        saveState === 'saving'
+                        blockingSaveState === 'saving'
                       }
                       onPress={confirmCode}
                     >
-                      {saveState === 'saving' && lastAction === 'code' ? (
+                      {blockingSaveState === 'saving' && blockingSaveAction === 'code' ? (
                         <ActivityIndicator color="white" />
                       ) : (
                         <CheckCircle2 color="white" size={19} />
                       )}
                       <ThemedText className="!text-white dark:!text-[#173E33]" type="smallBold">
-                        {saveState === 'saving' && lastAction === 'code'
+                        {blockingSaveState === 'saving' && blockingSaveAction === 'code'
                           ? t('confirmingCode')
                           : t('confirmCode')}
                       </ThemedText>
@@ -508,41 +583,39 @@ export default function ProductionLineRecordScreen() {
                   <>
                     <View
                       className={`rounded-[18px] p-4 ${
-                        submissionReadiness.isReady
+                        canSubmitForReview
                           ? 'bg-[#E8F7ED] dark:bg-[#247A51]/15'
                           : 'bg-[#FFF0C7] dark:bg-[#8A5811]/20'
                       }`}
                     >
                       <ThemedText type="caption">
-                        {submissionReadiness.isReady
-                          ? t('readyForReview')
-                          : t('submissionIncomplete')}
+                        {canSubmitForReview ? t('readyForReview') : t('submissionIncomplete')}
                       </ThemedText>
                     </View>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityState={{
                         disabled:
-                          !isConnected || !submissionReadiness.isReady || saveState === 'saving',
+                          !isConnected || !canSubmitForReview || blockingSaveState === 'saving',
                       }}
                       className={`min-h-[58px] flex-row items-center justify-center gap-2 rounded-[19px] bg-[#1C4A3C] active:scale-[0.98] dark:bg-[#F5A623] ${
-                        !isConnected || !submissionReadiness.isReady || saveState === 'saving'
+                        !isConnected || !canSubmitForReview || blockingSaveState === 'saving'
                           ? 'opacity-50'
                           : ''
                       }`}
                       disabled={
-                        !isConnected || !submissionReadiness.isReady || saveState === 'saving'
+                        !isConnected || !canSubmitForReview || blockingSaveState === 'saving'
                       }
                       onPress={submitForReview}
                       testID="submit-production-record-button"
                     >
-                      {saveState === 'saving' && lastAction === 'submit' ? (
+                      {blockingSaveState === 'saving' && blockingSaveAction === 'submit' ? (
                         <ActivityIndicator color="white" />
                       ) : (
                         <Send color="white" size={19} />
                       )}
                       <ThemedText className="!text-white dark:!text-[#173E33]" type="smallBold">
-                        {saveState === 'saving' && lastAction === 'submit'
+                        {blockingSaveState === 'saving' && blockingSaveAction === 'submit'
                           ? t('submittingForReview')
                           : t('submitForReview')}
                       </ThemedText>
@@ -624,7 +697,7 @@ function SaveStatusBar({
   t,
 }: {
   connected: boolean;
-  onRetry: () => void;
+  onRetry?: () => void;
   saveState: SaveState;
   t: (key: ProductionLineTranslationKey) => string;
 }) {
@@ -644,7 +717,7 @@ function SaveStatusBar({
       <ThemedText style={{ color: content.tone }} type="caption">
         {content.label}
       </ThemedText>
-      {state === 'failed' ? (
+      {state === 'failed' && onRetry ? (
         <Pressable accessibilityRole="button" className="ms-2" onPress={onRetry}>
           <ThemedText className="!text-[#A43434]" type="smallBold">
             {t('retry')}

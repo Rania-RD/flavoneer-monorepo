@@ -3,6 +3,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  getOrganizationInitials,
   isSupportedOrganizationIcon,
   ORGANIZATION_ICON_ACCEPT,
 } from "../lib/organization-icon";
@@ -27,13 +28,7 @@ const OrganizationIconField: React.FC<OrganizationIconFieldProps> = ({
   const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string>();
-  const initials = name
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = getOrganizationInitials(name);
 
   useEffect(
     () => () => {
@@ -68,7 +63,7 @@ const OrganizationIconField: React.FC<OrganizationIconFieldProps> = ({
       ) : (
         <div
           aria-label={t("organization_icon_placeholder", { name })}
-          className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-[#FF85A1] font-bold text-2xl text-white shadow-md shadow-pink-500/20"
+          className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-[#f5a623] font-bold text-[#173e33] text-2xl shadow-md shadow-amber-500/20"
           data-testid="organization-icon-placeholder"
           role="img"
         >

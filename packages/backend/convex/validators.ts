@@ -100,6 +100,31 @@ export const productionLineMeasurementUnitValidator = v.union(
   v.literal("°C"),
 );
 
+export const productionLineCheckKeyValidator = v.union(
+  v.literal("sealing_machine"),
+  v.literal("production_date"),
+  v.literal("batch_number"),
+  v.literal("weight_or_volume"),
+  v.literal("chocolate_weight"),
+  v.literal("packaging"),
+  v.literal("product_shape"),
+  v.literal("raw_materials"),
+  v.literal("count"),
+  v.literal("taste"),
+  v.literal("floors"),
+  v.literal("orderliness"),
+  v.literal("personal_hygiene"),
+  v.literal("work_clothes"),
+  v.literal("waste"),
+  v.literal("occupational_safety"),
+  v.literal("washbasins"),
+  v.literal("cleaning_materials"),
+  v.literal("walls_and_ceilings"),
+  v.literal("gloves"),
+  v.literal("machinery_and_equipment"),
+  v.literal("maintenance_equipment"),
+);
+
 export const productionLineRecordStatusValidator = v.union(
   v.literal("draft"),
   v.literal("pending_production_review"),

@@ -261,8 +261,9 @@ All content cards share:
   R&D / Quality Control selector. The mobile header exposes the same control.
   Selection persists in `localStorage`, updates the workspace header, and swaps
   the rail destinations. Workspace Settings stays available in both sections.
-- **Workspace Settings**: a dedicated gear in the rail footer routes to
-  `/settings`; the mobile navigation exposes the same destination.
+- **Settings**: a dedicated gear in the rail footer routes to the Workspace tab
+  at `/settings?scope=workspace`; the mobile navigation exposes the same
+  destination. User, Workspace, and Organization settings share this page.
 - **Nav Items**: `w-12 h-12 rounded-[1.2rem]`
   - **Active**: amber surface, forest icon, inset amber shadow, `scale-105`
   - **Inactive**: mint-muted icon with translucent mint hover
@@ -383,28 +384,30 @@ Animated with Framer Motion `AnimatePresence`:
 ### 7.13 Sidebar Profile Trigger
 
 - **Trigger**: authenticated avatar at the desktop rail footer; avatar + profile
-  label in the mobile bottom navigation. Clicking either opens
-  `ProfileSettingsModal` directly; never insert an intermediate popover.
-- **Modal content**: Identity, Digital Signature, Language & Region, and
-  Activity remain personal-only tabs. Logout is a dedicated, visually separated
-  action in the modal footer.
-- **Accessibility**: the avatar exposes `aria-haspopup="dialog"` and
-  `aria-expanded`; the portal-rendered modal owns its dialog label, tablist,
-  tabpanel, backdrop dismissal, and close control.
-- **Direction**: the modal inherits the active LTR/RTL context. Mirror only the
+  label in the mobile bottom navigation. Clicking either routes directly to the
+  User tab at `/settings?scope=user`; never insert an intermediate popover.
+- **Organization badge**: the active organization's logo overlaps the avatar's
+  lower inline-end edge. Use organization initials when no logo is configured;
+  use amber with forest text for that fallback, and omit the badge when no
+  organization is active.
+- **User settings**: Identity, Language & Region, and Appearance remain nested
+  personal-only options. Logout is a dedicated, visually separated action below
+  that nested navigation.
+- **Accessibility**: the shared page exposes the three setting scopes as a
+  tablist and each scope exposes its options through labeled nested navigation.
+- **Direction**: settings inherit the active LTR/RTL context. Mirror only the
   directional Logout icon.
-- **Layering**: use the modal portal hierarchy at `z-[999]` / `z-[1000]`.
 - **Avatar treatment**: render up to two initials on a deterministic
   Flavoneer palette color. Seed the color with the normalized account email on
   every platform, then fall back to the user ID or name when no email is
   available. Do not load profile images or generated avatars from external
   services.
-- **Workspace administration boundary**: never expose Roles & Permissions or
-  other workspace settings from the avatar menu or personal profile modal.
-  Workspace Settings contains Appearance and Traceability & Identity for all
+- **Workspace administration boundary**: Roles & Permissions and other
+  workspace controls stay under the Workspace scope. Workspace Settings contains
+  Traceability & Identity for all
   users, Roles & Permissions only for `admin`, and Version Control only for
   users with `manage_version_control`. Unauthorized query-string tab requests
-  fall back to Appearance.
+  fall back to the first visible Workspace option.
 
 ## 8. Animations & Transitions
 

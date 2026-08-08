@@ -7,7 +7,6 @@ import {
   type LucideIcon,
   PlayCircle,
   Settings,
-  UsersRound,
 } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
@@ -81,7 +80,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             },
             { name: t("materials"), icon: Boxes, path: "/materials" },
             { name: t("reports"), icon: FileText, path: "/reports" },
-            { name: t("organization"), icon: UsersRound, path: "/organization" },
           ],
     [activeSection, t]
   );
@@ -122,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             active={isActivePath("/settings")}
             icon={Settings}
             label={t("workspace_settings")}
-            to="/settings"
+            to="/settings?scope=workspace"
           />
           <div aria-hidden="true" className="h-px w-8 bg-[#d2f2d4]/15" />
           <SidebarProfileMenu placement="desktop" />
@@ -159,7 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               ? "bg-[#d2f2d4] text-[#173e33] dark:bg-[#f5a623] dark:text-[#173e33]"
               : "text-[#6f8e82] hover:bg-[#d2f2d4]/45 hover:text-[#1c4a3c] dark:text-[#9abcae] dark:hover:bg-[#d2f2d4]/10 dark:hover:text-[#f7f4df]"
           }`}
-          to="/settings"
+          to="/settings?scope=workspace"
         >
           <Settings
             aria-hidden="true"

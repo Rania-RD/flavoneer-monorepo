@@ -70,7 +70,10 @@ export const getDraftForProduct = query({
     const specification = await ctx.db
       .query("productionLineSpecifications")
       .withIndex("by_organizationId_and_productId_and_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("productId", args.productId).eq("status", "draft"),
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("productId", args.productId)
+          .eq("status", "draft"),
       )
       .unique();
     if (!specification) {
@@ -114,7 +117,10 @@ export const createDraft = mutation({
     const existingDraft = await ctx.db
       .query("productionLineSpecifications")
       .withIndex("by_organizationId_and_productId_and_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("productId", args.productId).eq("status", "draft"),
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("productId", args.productId)
+          .eq("status", "draft"),
       )
       .unique();
     if (existingDraft) {
@@ -145,7 +151,10 @@ export const createDraft = mutation({
     const active = await ctx.db
       .query("productionLineSpecifications")
       .withIndex("by_organizationId_and_productId_and_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("productId", args.productId).eq("status", "active"),
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("productId", args.productId)
+          .eq("status", "active"),
       )
       .unique();
     if (active) {
@@ -196,8 +205,12 @@ export const updateLimit = mutation({
     if (args.target !== undefined && (args.target < args.minimum || args.target > args.maximum)) {
       throw new Error("Target must be inside the acceptable range");
     }
-    if (!Number.isSafeInteger(args.minimumReadingCount) || args.minimumReadingCount < 1) {
-      throw new Error("Minimum reading count must be a positive integer");
+    if (
+      !Number.isSafeInteger(args.minimumReadingCount) ||
+      args.minimumReadingCount < 1 ||
+      args.minimumReadingCount > 100
+    ) {
+      throw new Error("Minimum reading count must be an integer between 1 and 100");
     }
     const isTemperature = args.readingKey === "chocolate_temperature";
     if ((isTemperature && args.unit !== "°C") || (!isTemperature && args.unit === "°C")) {

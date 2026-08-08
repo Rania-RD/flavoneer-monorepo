@@ -3,8 +3,9 @@ import { expect, test } from "@playwright/test";
 const INITIALS_PATTERN = /^(?:\p{L}{1,2}|\?)$/u;
 const DARK_CLASS_PATTERN = /dark/;
 const SYSTEM_LABEL_PATTERN = /System/;
+const USER_SETTINGS_URL_PATTERN = /\/settings\?scope=user/u;
 
-test("personal activity is available from the audit log, not profile settings", async ({
+test("profile opens unified settings with nested user, workspace, and organization tabs", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -27,37 +28,44 @@ test("personal activity is available from the audit log, not profile settings", 
   await expect(profileTrigger).toBeVisible({ timeout: 15_000 });
   const sidebarAvatar = page.getByTestId("desktop-profile-avatar");
   await expect(sidebarAvatar).toHaveText(INITIALS_PATTERN);
-  await expect(profileTrigger.locator("img")).toHaveCount(0);
+  await expect(sidebarAvatar).not.toHaveAttribute("src");
+  await expect(page.getByTestId("desktop-organization-badge")).toBeVisible();
   await profileTrigger.click();
 
-  const dialog = page.getByRole("dialog", { name: "Profile & Identity" });
-  await expect(dialog).toBeVisible();
+  await expect(page).toHaveURL(USER_SETTINGS_URL_PATTERN);
+  await expect(
+    page.getByRole("tab", { name: "User Settings" })
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByRole("tab", { name: "Workspace Settings" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("tab", { name: "Organization Settings" })
+  ).toBeVisible();
   await expect(page.getByTestId("identity-profile-avatar")).toHaveText(
     INITIALS_PATTERN
   );
   await expect(
-    dialog.locator('input[type="file"][accept="image/*"]')
+    page.locator('input[type="file"][accept="image/*"]')
   ).toHaveCount(0);
   await expect(page.getByRole("menu")).toHaveCount(0);
-  await expect(dialog.getByRole("tab", { name: "Identity" })).toBeVisible();
   await expect(
-    dialog.getByRole("tab", { name: "Digital Signature" })
-  ).toHaveCount(0);
-  await expect(
-    dialog.getByRole("tab", { name: "Language & Region" })
+    page.getByRole("button", { name: "Identity", exact: true })
   ).toBeVisible();
-  const appearanceTab = dialog.getByRole("tab", { name: "Appearance" });
+  await expect(
+    page.getByRole("button", { name: "Language & Region" })
+  ).toBeVisible();
+  const appearanceTab = page.getByRole("button", { name: "Appearance" });
   await expect(appearanceTab).toBeVisible();
-  await expect(dialog.getByRole("tab", { name: "Activity" })).toHaveCount(0);
-  await expect(dialog.getByRole("button", { name: "Logout" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
 
   await appearanceTab.click();
-  const darkOption = dialog.getByRole("button", { name: "Dark", exact: true });
-  const lightOption = dialog.getByRole("button", {
+  const darkOption = page.getByRole("button", { name: "Dark", exact: true });
+  const lightOption = page.getByRole("button", {
     name: "Light",
     exact: true,
   });
-  const systemOption = dialog.getByRole("button", {
+  const systemOption = page.getByRole("button", {
     name: SYSTEM_LABEL_PATTERN,
   });
   await darkOption.click();
@@ -69,13 +77,11 @@ test("personal activity is available from the audit log, not profile settings", 
   await systemOption.click();
   await expect(systemOption).toHaveAttribute("aria-pressed", "true");
 
-  await dialog.getByRole("button", { name: "Close" }).click();
-  await page.goto("/settings");
-  await expect(page.getByRole("button", { name: "Appearance" })).toHaveCount(0);
+  await page.getByRole("tab", { name: "Workspace Settings" }).click();
   await expect(
     page.getByRole("button", { name: "Traceability & Identity" })
   ).toBeVisible();
-  await page.goto("/organization");
+  await page.getByRole("tab", { name: "Organization Settings" }).click();
 
   const auditLogTab = page.getByRole("button", { name: "Audit Log" });
   await expect(auditLogTab).toBeVisible();

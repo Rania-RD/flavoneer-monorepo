@@ -7,10 +7,13 @@ import { requirePermission } from "./permissions";
 import {
   buildDisplaySerial,
   buildInspectionHourKey,
+  getProductionLineSubmissionReadiness,
+  PRODUCTION_LINE_CHECK_KEYS,
   parsePrintedBatchCode,
 } from "./productionLineRecordHelpers";
 import {
   productionHallCodeValidator,
+  productionLineCheckKeyValidator,
   productionLineMeasurementUnitValidator,
   productionLineReadingKeyValidator,
   productionLineRecordStatusValidator,
@@ -54,6 +57,22 @@ const specificationLimitReturnValidator = v.object({
   minimumReadingCount: v.number(),
 });
 
+const readingReturnValidator = v.object({
+  readingKey: productionLineReadingKeyValidator,
+  readingIndex: v.number(),
+  value: v.number(),
+  unit: productionLineMeasurementUnitValidator,
+  minimum: v.number(),
+  maximum: v.number(),
+  target: v.optional(v.number()),
+  withinLimit: v.boolean(),
+});
+
+const checkReturnValidator = v.object({
+  checkKey: productionLineCheckKeyValidator,
+  checked: v.boolean(),
+});
+
 const recordDetailValidator = v.object({
   _id: v.id("productionLineRecords"),
   batchLabelCapturedAt: v.optional(v.number()),
@@ -73,7 +92,9 @@ const recordDetailValidator = v.object({
   productName: v.string(),
   productionHallCode: productionHallCodeValidator,
   qcUserName: v.string(),
+  readings: v.array(readingReturnValidator),
   recordRevision: v.number(),
+  checks: v.array(checkReturnValidator),
   specificationLimits: v.array(specificationLimitReturnValidator),
   specificationVersion: v.number(),
   status: v.string(),
@@ -134,12 +155,22 @@ async function addRecordEvent(
 }
 
 async function buildRecordDetail(ctx: QueryCtx, record: Doc<"productionLineRecords">) {
-  const specificationLimits = await ctx.db
-    .query("productionLineSpecificationLimits")
-    .withIndex("by_specificationId_and_readingKey", (q) =>
-      q.eq("specificationId", record.specificationId),
-    )
-    .take(5);
+  const [specificationLimits, readings, checks] = await Promise.all([
+    ctx.db
+      .query("productionLineSpecificationLimits")
+      .withIndex("by_specificationId_and_readingKey", (q) =>
+        q.eq("specificationId", record.specificationId),
+      )
+      .take(5),
+    ctx.db
+      .query("productionLineReadings")
+      .withIndex("by_recordId", (q) => q.eq("recordId", record._id))
+      .take(500),
+    ctx.db
+      .query("productionLineChecks")
+      .withIndex("by_recordId", (q) => q.eq("recordId", record._id))
+      .take(22),
+  ]);
   const batchLabelPhotoUrl = record.batchLabelPhotoStorageId
     ? await ctx.storage.getUrl(record.batchLabelPhotoStorageId)
     : null;
@@ -161,6 +192,20 @@ async function buildRecordDetail(ctx: QueryCtx, record: Doc<"productionLineRecor
       maximum: limit.maximum,
       target: limit.target,
       minimumReadingCount: limit.minimumReadingCount,
+    })),
+    readings: readings.map((reading) => ({
+      readingKey: reading.readingKey,
+      readingIndex: reading.readingIndex,
+      value: reading.value,
+      unit: reading.unit,
+      minimum: reading.minimum,
+      maximum: reading.maximum,
+      target: reading.target,
+      withinLimit: reading.withinLimit,
+    })),
+    checks: checks.map((check) => ({
+      checkKey: check.checkKey,
+      checked: check.checked,
     })),
     batchLabelPhotoUrl: batchLabelPhotoUrl ?? undefined,
     batchLabelMimeType: record.batchLabelMimeType,
@@ -193,7 +238,9 @@ export const getMobileReferenceData = query({
     }
     const specifications = await ctx.db
       .query("productionLineSpecifications")
-      .withIndex("by_organizationId_and_status", (q) => q.eq("organizationId", args.organizationId).eq("status", "active"))
+      .withIndex("by_organizationId_and_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "active"),
+      )
       .take(200);
     return {
       timezone: settings.timezone,
@@ -325,7 +372,10 @@ export const createDraft = mutation({
     const specification = await ctx.db
       .query("productionLineSpecifications")
       .withIndex("by_organizationId_and_productId_and_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("productId", args.productId).eq("status", "active"),
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("productId", args.productId)
+          .eq("status", "active"),
       )
       .unique();
     if (!specification) {
@@ -479,6 +529,237 @@ export const updateBatchLabelCode = mutation({
       normalizedCode: parsed.normalizedCode,
       labelProductionDate: parsed.labelProductionDate,
       dailyBatchSequence: String(parsed.dailyBatchSequence),
+    });
+    return null;
+  },
+});
+
+export const saveReading = mutation({
+  args: {
+    recordId: v.id("productionLineRecords"),
+    readingKey: productionLineReadingKeyValidator,
+    readingIndex: v.number(),
+    value: v.union(v.number(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { authUser, record } = await requireEditableRecord(ctx, args.recordId);
+    if (
+      !Number.isSafeInteger(args.readingIndex) ||
+      args.readingIndex < 1 ||
+      args.readingIndex > 100
+    ) {
+      throw new Error("Reading index must be an integer between 1 and 100");
+    }
+    if (args.value !== null && !Number.isFinite(args.value)) {
+      throw new Error("Reading value must be a finite number");
+    }
+
+    const existing = await ctx.db
+      .query("productionLineReadings")
+      .withIndex("by_recordId_and_readingKey_and_readingIndex", (q) =>
+        q
+          .eq("recordId", record._id)
+          .eq("readingKey", args.readingKey)
+          .eq("readingIndex", args.readingIndex),
+      )
+      .unique();
+    const nextRevision = record.recordRevision + 1;
+    const now = Date.now();
+    if (args.value === null) {
+      if (!existing) {
+        return null;
+      }
+      await ctx.db.delete(existing._id);
+    } else {
+      const limit = await ctx.db
+        .query("productionLineSpecificationLimits")
+        .withIndex("by_specificationId_and_readingKey", (q) =>
+          q.eq("specificationId", record.specificationId).eq("readingKey", args.readingKey),
+        )
+        .unique();
+      if (!limit) {
+        throw new Error("The record specification does not contain this measurement");
+      }
+      const reading = {
+        value: args.value,
+        unit: limit.unit,
+        minimum: limit.minimum,
+        maximum: limit.maximum,
+        target: limit.target,
+        withinLimit: args.value >= limit.minimum && args.value <= limit.maximum,
+        observedAt: now,
+        observedBy: authUser._id,
+        updatedAt: now,
+      };
+      if (existing) {
+        await ctx.db.patch(existing._id, reading);
+      } else {
+        await ctx.db.insert("productionLineReadings", {
+          recordId: record._id,
+          readingKey: args.readingKey,
+          readingIndex: args.readingIndex,
+          ...reading,
+        });
+      }
+    }
+
+    await ctx.db.patch(record._id, { recordRevision: nextRevision, updatedAt: now });
+    await addRecordEvent(
+      ctx,
+      record,
+      authUser,
+      args.value === null ? "reading.removed" : existing ? "reading.updated" : "reading.created",
+      nextRevision,
+      {
+        readingKey: args.readingKey,
+        readingIndex: String(args.readingIndex),
+        ...(args.value === null ? {} : { value: String(args.value) }),
+      },
+    );
+    return null;
+  },
+});
+
+export const updateComplianceCheck = mutation({
+  args: {
+    recordId: v.id("productionLineRecords"),
+    checkKey: productionLineCheckKeyValidator,
+    checked: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { authUser, record } = await requireEditableRecord(ctx, args.recordId);
+    const existing = await ctx.db
+      .query("productionLineChecks")
+      .withIndex("by_recordId_and_checkKey", (q) =>
+        q.eq("recordId", record._id).eq("checkKey", args.checkKey),
+      )
+      .unique();
+    if (existing?.checked === args.checked) {
+      return null;
+    }
+
+    const now = Date.now();
+    const check = { checked: args.checked, updatedAt: now, updatedBy: authUser._id };
+    if (existing) {
+      await ctx.db.patch(existing._id, check);
+    } else {
+      await ctx.db.insert("productionLineChecks", {
+        recordId: record._id,
+        checkKey: args.checkKey,
+        ...check,
+      });
+    }
+
+    const nextRevision = record.recordRevision + 1;
+    await ctx.db.patch(record._id, { recordRevision: nextRevision, updatedAt: now });
+    await addRecordEvent(ctx, record, authUser, "compliance_check.updated", nextRevision, {
+      checkKey: args.checkKey,
+      checked: String(args.checked),
+    });
+    return null;
+  },
+});
+
+export const submitForReview = mutation({
+  args: { recordId: v.id("productionLineRecords") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { authUser, record } = await requireEditableRecord(ctx, args.recordId);
+    const [limits, readings, checks] = await Promise.all([
+      ctx.db
+        .query("productionLineSpecificationLimits")
+        .withIndex("by_specificationId_and_readingKey", (q) =>
+          q.eq("specificationId", record.specificationId),
+        )
+        .take(5),
+      ctx.db
+        .query("productionLineReadings")
+        .withIndex("by_recordId", (q) => q.eq("recordId", record._id))
+        .take(500),
+      ctx.db
+        .query("productionLineChecks")
+        .withIndex("by_recordId", (q) => q.eq("recordId", record._id))
+        .take(PRODUCTION_LINE_CHECK_KEYS.length),
+    ]);
+    const readiness = getProductionLineSubmissionReadiness({
+      checks,
+      hasBatchLabelPhoto: Boolean(record.batchLabelPhotoStorageId),
+      hasConfirmedBatchCode: Boolean(record.printedBatchCode && record.batchLabelConfirmedAt),
+      limits,
+      readings,
+    });
+    if (!readiness.isReady) {
+      throw new Error(
+        `Inspection cannot be submitted. Missing: ${readiness.missingRequirements.join(", ")}`,
+      );
+    }
+
+    const nextRevision = record.recordRevision + 1;
+    const now = Date.now();
+    await ctx.db.patch(record._id, {
+      status: "pending_production_review",
+      recordRevision: nextRevision,
+      updatedAt: now,
+    });
+    await addRecordEvent(ctx, record, authUser, "record.submitted_for_review", nextRevision, {
+      previousStatus: record.status,
+      status: "pending_production_review",
+    });
+    return null;
+  },
+});
+
+export const updateComplianceChecks = mutation({
+  args: {
+    recordId: v.id("productionLineRecords"),
+    checkKeys: v.array(productionLineCheckKeyValidator),
+    checked: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { authUser, record } = await requireEditableRecord(ctx, args.recordId);
+    const checkKeys = [...new Set(args.checkKeys)];
+    if (checkKeys.length === 0 || checkKeys.length > PRODUCTION_LINE_CHECK_KEYS.length) {
+      throw new Error(
+        `Select between 1 and ${PRODUCTION_LINE_CHECK_KEYS.length} compliance checks`,
+      );
+    }
+
+    const existingChecks = await ctx.db
+      .query("productionLineChecks")
+      .withIndex("by_recordId", (q) => q.eq("recordId", record._id))
+      .take(PRODUCTION_LINE_CHECK_KEYS.length);
+    const existingByKey = new Map(existingChecks.map((check) => [check.checkKey, check]));
+    const changedKeys = checkKeys.filter(
+      (checkKey) => (existingByKey.get(checkKey)?.checked ?? false) !== args.checked,
+    );
+    if (changedKeys.length === 0) {
+      return null;
+    }
+
+    const now = Date.now();
+    const check = { checked: args.checked, updatedAt: now, updatedBy: authUser._id };
+    for (const checkKey of changedKeys) {
+      const existing = existingByKey.get(checkKey);
+      if (existing) {
+        await ctx.db.patch(existing._id, check);
+      } else {
+        await ctx.db.insert("productionLineChecks", {
+          recordId: record._id,
+          checkKey,
+          ...check,
+        });
+      }
+    }
+
+    const nextRevision = record.recordRevision + 1;
+    await ctx.db.patch(record._id, { recordRevision: nextRevision, updatedAt: now });
+    await addRecordEvent(ctx, record, authUser, "compliance_checks.updated", nextRevision, {
+      checkKeys: changedKeys.join(","),
+      checked: String(args.checked),
+      count: String(changedKeys.length),
     });
     return null;
   },

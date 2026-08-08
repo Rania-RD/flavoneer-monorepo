@@ -33,7 +33,10 @@ import UserActivityLog from "../components/UserActivityLog";
 import UserAvatar from "../components/user-avatar";
 import { useOrganization } from "../context/OrganizationContext";
 import { useToast } from "../hooks/useToast";
-import { uploadOrganizationIcon } from "../lib/organization-icon";
+import {
+  getOrganizationInitials,
+  uploadOrganizationIcon,
+} from "../lib/organization-icon";
 
 // ─── Role badge component ────────────────────────────
 const RoleBadge: React.FC<{ role: string; t: (k: string) => string }> = ({
@@ -143,16 +146,31 @@ import CreateOrganizationModal from "../components/CreateOrganizationModal";
 import DeleteOrganizationModal from "../components/DeleteOrganizationModal";
 import { Switch } from "../components/ui/Switch";
 
+export type OrganizationSettingsTab =
+  | "members"
+  | "invites"
+  | "auditLog"
+  | "settings";
+
+interface OrganizationPageProps {
+  activeTab?: OrganizationSettingsTab;
+  embedded?: boolean;
+  onActiveTabChange?: (tab: OrganizationSettingsTab) => void;
+}
+
 // ─── Main Organization Page ──────────────────────────────────
-const OrganizationPage = () => {
+const OrganizationPage: React.FC<OrganizationPageProps> = ({
+  activeTab: controlledActiveTab,
+  embedded = false,
+  onActiveTabChange,
+}) => {
   const { t } = useTranslation();
   const { activeOrganizationId, organizations, currentRole, setActiveOrganizationId } = useOrganization();
 
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<
-    "members" | "invites" | "auditLog" | "settings"
-  >("members");
+  const [internalActiveTab, setInternalActiveTab] =
+    useState<OrganizationSettingsTab>("members");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [createOrganizationModalOpen, setCreateOrganizationModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -185,6 +203,11 @@ const OrganizationPage = () => {
   const isAdmin = currentRole === "admin" || currentRole === "owner";
   const isOwner = currentRole === "owner";
   const activeOrganization = organizations.find((t) => t._id === activeOrganizationId);
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+  const setActiveTab = (tab: OrganizationSettingsTab) => {
+    setInternalActiveTab(tab);
+    onActiveTabChange?.(tab);
+  };
 
   const tabs = [
     { key: "members" as const, label: t("members"), icon: UsersRound },
@@ -244,7 +267,7 @@ const OrganizationPage = () => {
   // ── No organization selected / empty ──
   if (!activeOrganizationId || organizations.length === 0) {
     return (
-      <div className="mx-auto max-w-[1600px] p-6 md:ms-32">
+      <div className={embedded ? "w-full" : "mx-auto max-w-[1600px] p-6 md:ms-32"}>
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/20">
@@ -276,7 +299,13 @@ const OrganizationPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-[1600px] p-6 pb-28 md:ms-32 md:pb-6">
+    <div
+      className={
+        embedded
+          ? "w-full"
+          : "mx-auto max-w-[1600px] p-6 pb-28 md:ms-32 md:pb-6"
+      }
+    >
       {/* ── Header ── */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
@@ -292,9 +321,9 @@ const OrganizationPage = () => {
             />
           )}
           <div>
-            <h1 className="mb-2 font-bold text-3xl text-gray-900 md:text-4xl dark:text-white">
+            <h2 className="mb-2 font-bold text-2xl text-gray-900 md:text-3xl dark:text-white">
               {activeOrganization?.name ?? t("organization")}
-            </h1>
+            </h2>
             <p className="text-gray-500 text-sm dark:text-slate-400">
               {t("organizationSettings")} · {members?.length ?? 0} {t("members")}
             </p>
@@ -323,18 +352,13 @@ const OrganizationPage = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {organizations.map((organization) => {
             const isActive = organization._id === activeOrganizationId;
-            const initials = organization.name
-              .split(" ")
-              .map((w: string) => w[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase();
+            const initials = getOrganizationInitials(organization.name);
 
             return (
               <div
                 className={`flex items-center gap-4 rounded-2xl border p-4 transition-all ${
                   isActive
-                    ? "border-pink-200 bg-white shadow-sm ring-1 ring-pink-100 dark:border-brand-mint/20 dark:bg-slate-800 dark:ring-brand-accent/50"
+                    ? "border-[#f5a623]/50 bg-white shadow-sm ring-1 ring-[#f5a623]/25 dark:border-brand-accent/50 dark:bg-slate-800 dark:ring-brand-accent/30"
                     : "border-gray-100 bg-white/50 hover:border-pink-100 hover:bg-white dark:border-slate-700 dark:bg-slate-800/30 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                 }`}
                 key={organization._id}
@@ -353,7 +377,7 @@ const OrganizationPage = () => {
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-sm ${
                       isActive
-                        ? "bg-[#FF85A1] text-white shadow-md shadow-pink-500/20"
+                        ? "bg-[#f5a623] text-[#173e33] shadow-amber-500/20 shadow-md"
                         : "bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400"
                     }`}
                   >
@@ -390,22 +414,24 @@ const OrganizationPage = () => {
       </div>
 
       {/* ── Tab bar ── */}
-      <div className="mb-8 flex max-w-md rounded-[1.5rem] bg-gray-50 p-1.5 dark:bg-[#1e293b]">
-        {tabs.map((tab) => (
-          <button
-            className={`flex flex-1 items-center justify-center gap-2 rounded-[1.2rem] px-4 py-3 font-semibold text-sm transition-all duration-200 ${
-              activeTab === tab.key
-                ? "bg-white text-gray-900 shadow-md dark:bg-slate-700 dark:text-white"
-                : "text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-300"
-            }`}
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            <tab.icon size={16} />
-            <span className="hidden sm:inline">{tab.label}</span>
-          </button>
-        ))}
-      </div>
+      {!embedded && (
+        <div className="mb-8 flex max-w-md rounded-[1.5rem] bg-gray-50 p-1.5 dark:bg-[#1e293b]">
+          {tabs.map((tab) => (
+            <button
+              className={`flex flex-1 items-center justify-center gap-2 rounded-[1.2rem] px-4 py-3 font-semibold text-sm transition-all duration-200 ${
+                activeTab === tab.key
+                  ? "bg-white text-gray-900 shadow-md dark:bg-slate-700 dark:text-white"
+                  : "text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-300"
+              }`}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <tab.icon size={16} />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Tab content ── */}
       <AnimatePresence mode="wait">
@@ -776,7 +802,7 @@ const OrganizationPage = () => {
       </AnimatePresence>
 
       {/* ── Danger zone (owner only) ── */}
-      {isOwner && (
+      {isOwner && activeTab === "settings" && (
         <div className="mt-8 rounded-[2.5rem] border border-red-200/50 bg-white p-8 shadow-sm dark:border-red-900/30 dark:bg-[#1e293b]">
           <h3 className="mb-4 font-bold text-red-400 text-xs uppercase tracking-wider dark:text-red-500">
             {t("danger_zone")}

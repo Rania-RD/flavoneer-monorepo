@@ -1,14 +1,18 @@
 import type React from "react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import type { WorkspaceSection } from "./WorkspaceSectionSwitcher";
+import WorkspaceSectionSwitcher, {
+  type WorkspaceSection,
+} from "./WorkspaceSectionSwitcher";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<WorkspaceSection>(() => {
@@ -76,6 +80,35 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
         />
+      )}
+
+      {!isFullScreenWorkspace && (
+        <header
+          className="relative z-20 flex items-center gap-3 px-4 pt-4 md:hidden"
+          data-testid="mobile-workspace-header"
+        >
+          <WorkspaceSectionSwitcher
+            activeSection={activeSection}
+            onSectionChange={handleSectionChange}
+            placement="header"
+          />
+          <div className="min-w-0 text-start">
+            <p className="truncate font-bold text-[#173e33] text-sm dark:text-[#f5f4e8]">
+              {t(
+                activeSection === "quality"
+                  ? "quality_control_workspace"
+                  : "workspace_label"
+              )}
+            </p>
+            <p className="truncate font-medium text-[#6f8e82] text-[11px] dark:text-[#a9cbbb]">
+              {t(
+                activeSection === "quality"
+                  ? "quality_workspace_status"
+                  : "brand_workspace_status"
+              )}
+            </p>
+          </div>
+        </header>
       )}
 
       <main

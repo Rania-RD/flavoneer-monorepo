@@ -18,7 +18,6 @@ import Formulation from "./pages/formulation";
 import Invite from "./pages/invite";
 import Login from "./pages/login";
 import Materials from "./pages/materials";
-import Organization from "./pages/organization";
 import ProductionLineRecordDetail from "./pages/production-line-record-detail";
 import ProductionLineRecords from "./pages/production-line-records";
 import ReportDetails from "./pages/report-details";
@@ -95,7 +94,10 @@ const App: React.FC = () => {
               path="/quality/production-line-records/:id"
             />
             <Route element={<Navigate replace to="/" />} path="/schedule" />
-            <Route element={<Organization />} path="/organization" />
+            <Route
+              element={<Navigate replace to="/settings?scope=organization" />}
+              path="/organization"
+            />
             <Route element={<Settings />} path="/settings" />
             <Route element={<Navigate replace to="/" />} path="*" />
           </Routes>

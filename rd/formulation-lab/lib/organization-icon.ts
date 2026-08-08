@@ -4,6 +4,17 @@ import { compressImage } from "./imageUtils";
 export const ORGANIZATION_ICON_ACCEPT = "image/jpeg,image/png,image/webp";
 export const ORGANIZATION_ICON_MAX_BYTES = 5 * 1024 * 1024;
 
+export function getOrganizationInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => Array.from(word)[0] ?? "")
+    .join("")
+    .toUpperCase();
+}
+
 export function isSupportedOrganizationIcon(file: File) {
   return (
     ["image/jpeg", "image/png", "image/webp"].includes(file.type) &&

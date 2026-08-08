@@ -8,6 +8,114 @@ export const PRODUCTION_LINE_READING_KEYS = [
 
 export type ProductionLineReadingKey = (typeof PRODUCTION_LINE_READING_KEYS)[number];
 
+export const PRODUCTION_LINE_CHECK_KEYS = [
+  "sealing_machine",
+  "production_date",
+  "batch_number",
+  "weight_or_volume",
+  "chocolate_weight",
+  "packaging",
+  "product_shape",
+  "raw_materials",
+  "count",
+  "taste",
+  "floors",
+  "orderliness",
+  "personal_hygiene",
+  "work_clothes",
+  "waste",
+  "occupational_safety",
+  "washbasins",
+  "cleaning_materials",
+  "walls_and_ceilings",
+  "gloves",
+  "machinery_and_equipment",
+  "maintenance_equipment",
+] as const;
+
+export type ProductionLineCheckKey = (typeof PRODUCTION_LINE_CHECK_KEYS)[number];
+
+export type ProductionLineSubmissionRequirement =
+  | "batch_label_photo"
+  | "batch_code_confirmation"
+  | "required_measurements"
+  | "compliance_checks";
+
+interface ProductionLineSubmissionSnapshot {
+  checks: ReadonlyArray<{
+    checkKey: ProductionLineCheckKey;
+    checked: boolean;
+  }>;
+  hasBatchLabelPhoto: boolean;
+  hasConfirmedBatchCode: boolean;
+  limits: ReadonlyArray<{
+    minimumReadingCount: number;
+    readingKey: ProductionLineReadingKey;
+  }>;
+  readings: ReadonlyArray<{
+    readingIndex: number;
+    readingKey: ProductionLineReadingKey;
+    value: number;
+  }>;
+}
+
+export interface ProductionLineSubmissionReadiness {
+  isReady: boolean;
+  missingRequirements: ProductionLineSubmissionRequirement[];
+}
+
+export function getProductionLineSubmissionReadiness(
+  snapshot: ProductionLineSubmissionSnapshot,
+): ProductionLineSubmissionReadiness {
+  const missingRequirements: ProductionLineSubmissionRequirement[] = [];
+
+  if (!snapshot.hasBatchLabelPhoto) {
+    missingRequirements.push("batch_label_photo");
+  }
+  if (!snapshot.hasConfirmedBatchCode) {
+    missingRequirements.push("batch_code_confirmation");
+  }
+
+  const readingsByKey = new Map<ProductionLineReadingKey, Set<number>>();
+  for (const reading of snapshot.readings) {
+    if (!Number.isFinite(reading.value)) {
+      continue;
+    }
+    const indexes = readingsByKey.get(reading.readingKey) ?? new Set<number>();
+    indexes.add(reading.readingIndex);
+    readingsByKey.set(reading.readingKey, indexes);
+  }
+  const limitsByKey = new Map(snapshot.limits.map((limit) => [limit.readingKey, limit]));
+  const hasAllRequiredMeasurements = PRODUCTION_LINE_READING_KEYS.every((readingKey) => {
+    const limit = limitsByKey.get(readingKey);
+    const indexes = readingsByKey.get(readingKey);
+    if (!limit) {
+      return false;
+    }
+    for (let readingIndex = 1; readingIndex <= limit.minimumReadingCount; readingIndex += 1) {
+      if (!indexes?.has(readingIndex)) {
+        return false;
+      }
+    }
+    return true;
+  });
+  if (!hasAllRequiredMeasurements) {
+    missingRequirements.push("required_measurements");
+  }
+
+  const completedChecks = new Set(
+    snapshot.checks.filter((check) => check.checked).map((check) => check.checkKey),
+  );
+  if (PRODUCTION_LINE_CHECK_KEYS.some((checkKey) => !completedChecks.has(checkKey))) {
+    missingRequirements.push("compliance_checks");
+  }
+
+  return {
+    isReady: missingRequirements.length === 0,
+    missingRequirements,
+  };
+}
+
 export interface ParsedPrintedBatchCode {
   dailyBatchSequence: number;
   labelProductionDate: string;

@@ -1,4 +1,10 @@
 import type { Id } from '@flavoneer/backend/data-model';
+import {
+  getProductionLineSubmissionReadiness,
+  type ProductionLineCheckKey,
+  type ProductionLineReadingKey,
+} from '@flavoneer/backend/production-line';
+import * as Sentry from '@sentry/react-native';
 import { useMutation, useQuery } from 'convex/react';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -12,8 +18,9 @@ import {
   Factory,
   RefreshCw,
   Save,
+  Send,
 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandEntrance, BrandHeader, BrandSurface } from '@/components/brand-screen';
@@ -26,18 +33,15 @@ import {
   type ProductionLineTranslationKey,
   useProductionLineI18n,
 } from '@/features/production-line/i18n';
-import { uploadBatchLabelPhoto } from '@/features/production-line/photo-upload';
+import { ComplianceSection, MeasurementSection } from '@/features/production-line/inspection-form';
+import {
+  BatchLabelPhotoUploadError,
+  uploadBatchLabelPhoto,
+} from '@/features/production-line/photo-upload';
 import { api } from '@/lib/backend';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
-
-const readingLabels = {
-  additive_weight: 'additiveWeight',
-  carton_weight: 'cartonWeight',
-  chocolate_temperature: 'chocolateTemperature',
-  coated_piece_weight: 'coatedPieceWeight',
-  pour_weight: 'pourWeight',
-} as const satisfies Record<string, ProductionLineTranslationKey>;
+type SaveAction = 'check' | 'code' | 'photo' | 'reading' | 'submit';
 
 export default function ProductionLineRecordScreen() {
   const router = useRouter();
@@ -50,15 +54,21 @@ export default function ProductionLineRecordScreen() {
   const generatePhotoUploadUrl = useMutation(api.productionLineRecords.generatePhotoUploadUrl);
   const attachBatchLabelPhoto = useMutation(api.productionLineRecords.attachBatchLabelPhoto);
   const updateBatchLabelCode = useMutation(api.productionLineRecords.updateBatchLabelCode);
+  const saveReading = useMutation(api.productionLineRecords.saveReading);
+  const updateComplianceCheck = useMutation(api.productionLineRecords.updateComplianceCheck);
+  const updateComplianceChecks = useMutation(api.productionLineRecords.updateComplianceChecks);
+  const submitRecordForReview = useMutation(api.productionLineRecords.submitForReview);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [batchCodeDraft, setBatchCodeDraft] = useState<string | null>(null);
   const [matchesPhotoDraft, setMatchesPhotoDraft] = useState<boolean | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
-  const [lastAction, setLastAction] = useState<'photo' | 'code' | null>(null);
+  const [lastAction, setLastAction] = useState<SaveAction | null>(null);
+  const retryFormAction = useRef<(() => void) | null>(null);
 
   const batchCode = batchCodeDraft ?? record?.printedBatchCode ?? '';
   const matchesPhoto = matchesPhotoDraft ?? Boolean(record?.batchLabelConfirmedAt);
+  const isEditable = Boolean(record && ['draft', 'returned'].includes(record.status));
   const displayedSaveState =
     saveState === 'idle' && batchCodeDraft === null && record?.batchLabelConfirmedAt
       ? 'saved'
@@ -76,7 +86,7 @@ export default function ProductionLineRecordScreen() {
   );
 
   const uploadPhoto = async (uri: string) => {
-    if (!(recordId && isConnected)) {
+    if (!(recordId && isConnected && isEditable)) {
       return;
     }
     setPendingPhotoUri(uri);
@@ -93,16 +103,23 @@ export default function ProductionLineRecordScreen() {
       });
       setMatchesPhotoDraft(false);
       setPendingPhotoUri(null);
+      retryFormAction.current = null;
       setSaveState('saved');
       setCameraVisible(false);
-    } catch {
+    } catch (error) {
+      reportSaveFailure({
+        action: 'photo',
+        error,
+        phase: error instanceof BatchLabelPhotoUploadError ? error.phase : 'attach-photo-to-record',
+        recordId,
+      });
       setSaveState('failed');
       setCameraVisible(false);
     }
   };
 
   const confirmCode = async () => {
-    if (!(recordId && batchCode.trim() && matchesPhoto && isConnected)) {
+    if (!(recordId && batchCode.trim() && matchesPhoto && isConnected && isEditable)) {
       return;
     }
     setLastAction('code');
@@ -113,8 +130,10 @@ export default function ProductionLineRecordScreen() {
         printedBatchCode: batchCode,
         confirmed: true,
       });
+      retryFormAction.current = null;
       setSaveState('saved');
-    } catch {
+    } catch (error) {
+      reportSaveFailure({ action: 'code', error, phase: 'confirm-batch-code', recordId });
       setSaveState('failed');
     }
   };
@@ -124,6 +143,56 @@ export default function ProductionLineRecordScreen() {
       uploadPhoto(pendingPhotoUri);
     } else if (lastAction === 'code') {
       confirmCode();
+    } else {
+      retryFormAction.current?.();
+    }
+  };
+
+  const saveMeasurement = async (
+    readingKey: ProductionLineReadingKey,
+    readingIndex: number,
+    value: number | null,
+  ) => {
+    if (!(recordId && isConnected && isEditable)) {
+      return;
+    }
+    retryFormAction.current = () => {
+      void saveMeasurement(readingKey, readingIndex, value);
+    };
+    setLastAction('reading');
+    setSaveState('saving');
+    try {
+      await saveReading({ recordId, readingKey, readingIndex, value });
+      retryFormAction.current = null;
+      setSaveState('saved');
+    } catch (error) {
+      reportSaveFailure({ action: 'reading', error, phase: 'save-reading', recordId });
+      setSaveState('failed');
+      throw error;
+    }
+  };
+
+  const setComplianceChecks = async (checkKeys: ProductionLineCheckKey[], checked: boolean) => {
+    if (!(recordId && isConnected && isEditable)) {
+      return;
+    }
+    retryFormAction.current = () => {
+      void setComplianceChecks(checkKeys, checked);
+    };
+    setLastAction('check');
+    setSaveState('saving');
+    try {
+      if (checkKeys.length === 1) {
+        await updateComplianceCheck({ recordId, checkKey: checkKeys[0], checked });
+      } else {
+        await updateComplianceChecks({ recordId, checkKeys, checked });
+      }
+      retryFormAction.current = null;
+      setSaveState('saved');
+    } catch (error) {
+      reportSaveFailure({ action: 'check', error, phase: 'save-compliance-check', recordId });
+      setSaveState('failed');
+      throw error;
     }
   };
 
@@ -157,6 +226,32 @@ export default function ProductionLineRecordScreen() {
   }
 
   const confirmed = Boolean(record.batchLabelConfirmedAt);
+  const submissionReadiness = getProductionLineSubmissionReadiness({
+    checks: record.checks,
+    hasBatchLabelPhoto: Boolean(record.batchLabelPhotoUrl),
+    hasConfirmedBatchCode: Boolean(record.printedBatchCode && record.batchLabelConfirmedAt),
+    limits: record.specificationLimits,
+    readings: record.readings,
+  });
+
+  const submitForReview = async () => {
+    if (!(recordId && isConnected && isEditable && submissionReadiness.isReady)) {
+      return;
+    }
+    retryFormAction.current = () => {
+      void submitForReview();
+    };
+    setLastAction('submit');
+    setSaveState('saving');
+    try {
+      await submitRecordForReview({ recordId });
+      retryFormAction.current = null;
+      setSaveState('saved');
+    } catch (error) {
+      reportSaveFailure({ action: 'submit', error, phase: 'submit-for-review', recordId });
+      setSaveState('failed');
+    }
+  };
 
   return (
     <ThemedView className="flex-1 overflow-hidden">
@@ -260,9 +355,9 @@ export default function ProductionLineRecordScreen() {
                 <Pressable
                   accessibilityRole="button"
                   className={`min-h-[54px] flex-row items-center justify-center gap-2 rounded-[18px] border border-[#1C4A3C]/12 bg-[#EEF8EB] active:scale-[0.98] dark:border-[#D2F2D4]/10 dark:bg-[#285B4D] ${
-                    !isConnected || saveState === 'saving' ? 'opacity-50' : ''
+                    !isConnected || !isEditable || saveState === 'saving' ? 'opacity-50' : ''
                   }`}
-                  disabled={!isConnected || saveState === 'saving'}
+                  disabled={!isConnected || !isEditable || saveState === 'saving'}
                   onPress={() => setCameraVisible(true)}
                 >
                   <Camera color={BrandColors.forest} size={19} />
@@ -281,7 +376,7 @@ export default function ProductionLineRecordScreen() {
                         accessibilityLabel={t('printedBatchCode')}
                         autoCapitalize="characters"
                         className="mt-3 min-h-[58px] rounded-[18px] border border-[#1C4A3C]/12 bg-[#EEF8EB] px-4 text-lg text-[#173E33] dark:border-[#D2F2D4]/10 dark:bg-[#285B4D] dark:text-[#F7F4DF]"
-                        editable={saveState !== 'saving'}
+                        editable={isEditable && saveState !== 'saving'}
                         keyboardType="numbers-and-punctuation"
                         onChangeText={(value) => {
                           setBatchCodeDraft(value);
@@ -303,8 +398,9 @@ export default function ProductionLineRecordScreen() {
 
                     <Pressable
                       accessibilityRole="checkbox"
-                      accessibilityState={{ checked: matchesPhoto }}
-                      className="flex-row items-center gap-3 py-1"
+                      accessibilityState={{ checked: matchesPhoto, disabled: !isEditable }}
+                      className={`flex-row items-center gap-3 py-1 ${isEditable ? '' : 'opacity-50'}`}
+                      disabled={!isEditable}
                       onPress={() => {
                         setMatchesPhotoDraft(!matchesPhoto);
                         setSaveState('idle');
@@ -327,12 +423,14 @@ export default function ProductionLineRecordScreen() {
                     <Pressable
                       accessibilityRole="button"
                       className={`min-h-[56px] flex-row items-center justify-center gap-2 rounded-[19px] bg-[#1C4A3C] active:scale-[0.98] dark:bg-[#F5A623] ${
-                        !(batchCode.trim() && matchesPhoto && isConnected) || saveState === 'saving'
+                        !(batchCode.trim() && matchesPhoto && isConnected && isEditable) ||
+                        saveState === 'saving'
                           ? 'opacity-50'
                           : ''
                       }`}
                       disabled={
-                        !(batchCode.trim() && matchesPhoto && isConnected) || saveState === 'saving'
+                        !(batchCode.trim() && matchesPhoto && isConnected && isEditable) ||
+                        saveState === 'saving'
                       }
                       onPress={confirmCode}
                     >
@@ -372,42 +470,94 @@ export default function ProductionLineRecordScreen() {
             </BrandEntrance>
 
             <BrandEntrance delay={150}>
-              <BrandSurface className="mb-7 !p-0">
-                <View className="px-6 pb-4 pt-6">
+              <MeasurementSection
+                disabled={!isConnected || !isEditable}
+                isRTL={isRTL}
+                limits={record.specificationLimits}
+                onSave={saveMeasurement}
+                readings={record.readings}
+                t={t}
+              />
+            </BrandEntrance>
+
+            <BrandEntrance delay={210}>
+              <ComplianceSection
+                checks={record.checks}
+                disabled={!isConnected || !isEditable}
+                onToggle={(checkKey, checked) => setComplianceChecks([checkKey], checked)}
+                onToggleGroup={setComplianceChecks}
+                t={t}
+              />
+            </BrandEntrance>
+
+            <BrandEntrance delay={270}>
+              <BrandSurface className="mb-7 gap-5">
+                <View>
                   <ThemedText themeColor="textSecondary" type="overline">
-                    {t('specification')}
+                    {t('reviewSubmission')}
                   </ThemedText>
-                  <ThemedText className="mt-1" type="section">
-                    {t('version', { version: record.specificationVersion })}
+                  <ThemedText className="mt-2" type="section">
+                    {isEditable ? t('submitForReview') : t('formLocked')}
+                  </ThemedText>
+                  <ThemedText className="mt-2" themeColor="textSecondary" type="small">
+                    {isEditable ? t('submitForReviewHelp') : t('formLockedHelp')}
                   </ThemedText>
                 </View>
-                {record.specificationLimits.map((limit, index) => (
-                  <View key={limit.readingKey}>
-                    <View className="flex-row items-center gap-4 px-6 py-4">
-                      <View className="size-10 items-center justify-center rounded-[14px] bg-[#D2F2D4]">
-                        <Save color={BrandColors.forest} size={18} />
-                      </View>
-                      <View className="min-w-0 flex-1">
-                        <ThemedText type="smallBold">
-                          {t(readingLabels[limit.readingKey])}
-                        </ThemedText>
-                        <ThemedText className="mt-0.5" themeColor="textSecondary" type="caption">
-                          {t('acceptableRange', {
-                            maximum: limit.maximum,
-                            minimum: limit.minimum,
-                            unit: limit.unit,
-                          })}
-                        </ThemedText>
-                      </View>
-                      <ThemedText themeColor="textSecondary" type="caption">
-                        {t('requiredReadings', { count: limit.minimumReadingCount })}
+
+                {isEditable ? (
+                  <>
+                    <View
+                      className={`rounded-[18px] p-4 ${
+                        submissionReadiness.isReady
+                          ? 'bg-[#E8F7ED] dark:bg-[#247A51]/15'
+                          : 'bg-[#FFF0C7] dark:bg-[#8A5811]/20'
+                      }`}
+                    >
+                      <ThemedText type="caption">
+                        {submissionReadiness.isReady
+                          ? t('readyForReview')
+                          : t('submissionIncomplete')}
                       </ThemedText>
                     </View>
-                    {index < record.specificationLimits.length - 1 ? (
-                      <View className="ms-[80px] h-px bg-[#1C4A3C]/10 dark:bg-[#D2F2D4]/10" />
-                    ) : null}
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{
+                        disabled:
+                          !isConnected || !submissionReadiness.isReady || saveState === 'saving',
+                      }}
+                      className={`min-h-[58px] flex-row items-center justify-center gap-2 rounded-[19px] bg-[#1C4A3C] active:scale-[0.98] dark:bg-[#F5A623] ${
+                        !isConnected || !submissionReadiness.isReady || saveState === 'saving'
+                          ? 'opacity-50'
+                          : ''
+                      }`}
+                      disabled={
+                        !isConnected || !submissionReadiness.isReady || saveState === 'saving'
+                      }
+                      onPress={submitForReview}
+                      testID="submit-production-record-button"
+                    >
+                      {saveState === 'saving' && lastAction === 'submit' ? (
+                        <ActivityIndicator color="white" />
+                      ) : (
+                        <Send color="white" size={19} />
+                      )}
+                      <ThemedText className="!text-white dark:!text-[#173E33]" type="smallBold">
+                        {saveState === 'saving' && lastAction === 'submit'
+                          ? t('submittingForReview')
+                          : t('submitForReview')}
+                      </ThemedText>
+                    </Pressable>
+                  </>
+                ) : (
+                  <View className="flex-row items-center gap-3 rounded-[18px] bg-[#E8F7ED] p-4 dark:bg-[#247A51]/15">
+                    <CheckCircle2 color="#247A51" size={20} />
+                    <ThemedText className="min-w-0 flex-1" type="smallBold">
+                      {record.status === 'pending_production_review'
+                        ? t('submittedForReview')
+                        : t('formLocked')}
+                    </ThemedText>
                   </View>
-                ))}
+                )}
               </BrandSurface>
             </BrandEntrance>
           </View>
@@ -422,6 +572,29 @@ export default function ProductionLineRecordScreen() {
       />
     </ThemedView>
   );
+}
+
+function reportSaveFailure({
+  action,
+  error,
+  phase,
+  recordId,
+}: {
+  action: SaveAction;
+  error: unknown;
+  phase: string;
+  recordId: Id<'productionLineRecords'>;
+}) {
+  const exception = error instanceof Error ? error : new Error(String(error));
+  console.error(`[production-line] ${action} failed during ${phase}`, exception);
+  Sentry.captureException(exception, {
+    extra: { recordId },
+    tags: {
+      feature: 'production-line',
+      operation: action,
+      phase,
+    },
+  });
 }
 
 function ContextPill({ text }: { text: string }) {

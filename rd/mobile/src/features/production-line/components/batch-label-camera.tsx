@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Camera, Check, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { BrandColors } from '@/constants/theme';
@@ -42,14 +42,19 @@ export function BatchLabelCamera({ onCapture, onClose, t, visible }: BatchLabelC
     >
       <View className="flex-1 bg-[#071B16]">
         {permission?.granted ? (
-          <CameraView
-            facing="back"
-            mode="picture"
-            onCameraReady={() => setIsReady(true)}
-            ref={cameraRef}
-            style={{ flex: 1 }}
-          >
-            <SafeAreaView className="flex-1 justify-between px-5 pb-8 pt-3">
+          <>
+            <CameraView
+              facing="back"
+              mode="picture"
+              onCameraReady={() => setIsReady(true)}
+              ref={cameraRef}
+              style={StyleSheet.absoluteFill}
+            />
+            <SafeAreaView
+              className="justify-between px-5 pb-8 pt-3"
+              pointerEvents="box-none"
+              style={[StyleSheet.absoluteFill, styles.controls]}
+            >
               <View className="flex-row items-center justify-between">
                 <Pressable
                   accessibilityLabel={t('close')}
@@ -89,7 +94,7 @@ export function BatchLabelCamera({ onCapture, onClose, t, visible }: BatchLabelC
                 </Pressable>
               </View>
             </SafeAreaView>
-          </CameraView>
+          </>
         ) : (
           <SafeAreaView className="flex-1 items-center justify-center gap-5 px-8">
             <View className="size-20 items-center justify-center rounded-[28px] bg-[#F5A623]">
@@ -132,3 +137,10 @@ export function BatchLabelCamera({ onCapture, onClose, t, visible }: BatchLabelC
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  controls: {
+    elevation: 1,
+    zIndex: 1,
+  },
+});

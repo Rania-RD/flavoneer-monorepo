@@ -45,8 +45,11 @@ test("workspace settings does not expose personal appearance or measurement syst
   await page.goto("/settings");
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Workspace Settings" })
+    page.getByRole("heading", { level: 1, name: "Settings" })
   ).toBeVisible({ timeout: 15_000 });
+  await expect(
+    page.getByRole("tab", { name: "Workspace Settings" })
+  ).toHaveAttribute("aria-selected", "true");
   await expect(
     page.getByRole("heading", { level: 4, name: "Dark Mode" })
   ).toHaveCount(0);

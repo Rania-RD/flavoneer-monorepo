@@ -20,6 +20,7 @@ import {
   miniSpreadsheetValidator,
   organizationMemberRoleValidator,
   productionHallCodeValidator,
+  productionLineCheckKeyValidator,
   productionLineMeasurementUnitValidator,
   productionLineReadingKeyValidator,
   productionLineRecordStatusValidator,
@@ -542,6 +543,37 @@ export default defineSchema({
     target: v.optional(v.number()),
     minimumReadingCount: v.number(),
   }).index("by_specificationId_and_readingKey", ["specificationId", "readingKey"]),
+
+  productionLineReadings: defineTable({
+    recordId: v.id("productionLineRecords"),
+    readingKey: productionLineReadingKeyValidator,
+    readingIndex: v.number(),
+    value: v.number(),
+    unit: productionLineMeasurementUnitValidator,
+    minimum: v.number(),
+    maximum: v.number(),
+    target: v.optional(v.number()),
+    withinLimit: v.boolean(),
+    observedAt: v.number(),
+    observedBy: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_recordId", ["recordId"])
+    .index("by_recordId_and_readingKey_and_readingIndex", [
+      "recordId",
+      "readingKey",
+      "readingIndex",
+    ]),
+
+  productionLineChecks: defineTable({
+    recordId: v.id("productionLineRecords"),
+    checkKey: productionLineCheckKeyValidator,
+    checked: v.boolean(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  })
+    .index("by_recordId", ["recordId"])
+    .index("by_recordId_and_checkKey", ["recordId", "checkKey"]),
 
   productionLineRecords: defineTable({
     organizationId: v.id("organizations"),

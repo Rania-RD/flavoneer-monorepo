@@ -261,9 +261,9 @@ All content cards share:
   R&D / Quality Control selector. The mobile header exposes the same control.
   Selection persists in `localStorage`, updates the workspace header, and swaps
   the rail destinations. Workspace Settings stays available in both sections.
-- **Settings**: a dedicated gear in the rail footer routes to the Workspace tab
-  at `/settings?scope=workspace`; the mobile navigation exposes the same
-  destination. User, Workspace, and Organization settings share this page.
+- **Settings**: the profile avatar menu links to User, Workspace, and
+  Organization settings. The rail and mobile navigation do not use a dedicated
+  settings item.
 - **Nav Items**: `w-12 h-12 rounded-[1.2rem]`
   - **Active**: amber surface, forest icon, inset amber shadow, `scale-105`
   - **Inactive**: mint-muted icon with translucent mint hover
@@ -384,8 +384,11 @@ Animated with Framer Motion `AnimatePresence`:
 ### 7.13 Sidebar Profile Trigger
 
 - **Trigger**: authenticated avatar at the desktop rail footer; avatar + profile
-  label in the mobile bottom navigation. Clicking either routes directly to the
-  User tab at `/settings?scope=user`; never insert an intermediate popover.
+  label in the mobile bottom navigation. Clicking either opens the shared
+  organization and account menu.
+- **Menu**: list every available organization as a radio-style selection, then
+  link to Organization Settings, Workspace Settings, the user's identity, and
+  logout. Close after selection, navigation, outside click, or Escape.
 - **Organization badge**: the active organization's logo overlaps the avatar's
   lower inline-end edge. Use organization initials when no logo is configured;
   use amber with forest text for that fallback, and omit the badge when no
@@ -830,7 +833,7 @@ Food-R-D-Lab-/
 ├── components/
 │   ├── DashboardLayout.tsx    ← Branded shell: header, sidebar, route surface
 │   ├── Sidebar.tsx            ← Desktop sidebar + mobile bottom nav
-│   ├── SidebarProfileMenu.tsx ← Rail avatar and direct profile-modal trigger
+│   ├── SidebarProfileMenu.tsx ← Organization switcher and account menu
 │   ├── user-avatar.tsx        ← Web initials avatar using shared identity rules
 │   ├── ProfileSettingsModal.tsx
 │   ├── SettingsModal.tsx      ← Dark mode, units, notifications toggles

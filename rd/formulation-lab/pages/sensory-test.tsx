@@ -71,7 +71,7 @@ const SensoryTest: React.FC = () => {
     setIsSubmitting(true);
     try {
       await submitEvaluation({
-        formId: form._id,
+        token: form.token,
         testerName,
         resultsJSON: JSON.stringify(answers),
       });

@@ -1,3 +1,6 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
+import { normalizeInsNumber } from "@flavoneer/backend/regulatory";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { AnimatePresence, useAnimation } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
@@ -5,11 +8,8 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useSettings } from "../context/SettingsContext";
 import { useOrganization } from "../context/OrganizationContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
-import { normalizeInsNumber } from "@flavoneer/backend/regulatory";
+import { useSettings } from "../context/SettingsContext";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { compressImage } from "../lib/imageUtils";
@@ -58,7 +58,11 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
   const { activeOrganizationId } = useOrganization();
   const createIngredient = useMutation(api.ingredients.create);
   const updateIngredient = useMutation(api.ingredients.update);
-  const allIngredients = useQuery(api.ingredients.list, { language }) ?? [];
+  const allIngredients =
+    useQuery(api.ingredients.list, {
+      language,
+      organizationId: activeOrganizationId ?? undefined,
+    }) ?? [];
 
   const [activeTab, setActiveTab] = useState<"info" | "nutrients">("info");
   const [legislation, setLegislation] = useState<NutritionLegislation>("FDA");

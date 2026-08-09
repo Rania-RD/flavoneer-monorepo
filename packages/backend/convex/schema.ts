@@ -157,6 +157,7 @@ export default defineSchema({
     createdAt: v.number(),
     isResolved: v.boolean(),
     resolvedBy: v.optional(v.string()),
+    resolvedById: v.optional(v.string()),
     resolvedAt: v.optional(v.number()),
   })
     .index("by_projectId", ["projectId"])
@@ -289,6 +290,8 @@ export default defineSchema({
   })
     .index("by_category", ["category"])
     .index("by_stockStatus", ["stockStatus"])
+    .index("by_organizationId", { fields: ["organizationId"], staged: true })
+    .index("by_userId", { fields: ["userId"], staged: true })
     .searchIndex("search_name", { searchField: "name" }),
 
   // ─── Food Tech: Ingredient Library (Schema Phase 2) ────────
@@ -349,6 +352,7 @@ export default defineSchema({
     createdAt: v.optional(v.number()),
   })
     .index("by_organizationId", ["organizationId"])
+    .index("by_userId", { fields: ["userId"], staged: true })
     .index("by_normalizedInsNumber", ["normalizedInsNumber"])
     .searchIndex("search_name", { searchField: "name" }),
 
@@ -410,19 +414,28 @@ export default defineSchema({
     signoffData: v.optional(v.string()),
     signoffFont: v.optional(v.string()),
     signoffType: v.optional(signatureTypeValidator),
+    signedBy: v.optional(v.string()),
+    signedAt: v.optional(v.number()),
   })
     .index("by_runId", ["runId"])
     .index("by_projectId", ["projectId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_organizationId", { fields: ["organizationId"], staged: true })
+    .index("by_userId", { fields: ["userId"], staged: true }),
 
   equipment: defineTable({
     name: v.string(),
     status: equipmentStatusValidator,
     meta: v.string(),
     user: v.optional(v.string()),
+    userId: v.optional(v.string()),
+    statusUpdatedBy: v.optional(v.string()),
+    statusUpdatedAt: v.optional(v.number()),
     type: equipmentTypeValidator,
     organizationId: v.optional(v.id("organizations")),
-  }),
+  })
+    .index("by_organizationId", { fields: ["organizationId"], staged: true })
+    .index("by_userId", { fields: ["userId"], staged: true }),
 
   runs: defineTable({
     projectId: v.id("projects"),
@@ -813,6 +826,9 @@ export default defineSchema({
     createdAt: v.number(),
     expiresAt: v.optional(v.number()),
     isActive: v.boolean(),
+    revokedAt: v.optional(v.number()),
+    revokedBy: v.optional(v.string()),
+    expiredAt: v.optional(v.number()),
   })
     .index("by_token", ["token"])
     .index("by_entityId", ["entityId"]),
@@ -823,6 +839,8 @@ export default defineSchema({
     entityType: sharedEntityTypeValidator,
     role: sharedRoleValidator,
     grantedAt: v.number(),
+    sourceLinkId: v.optional(v.id("sharedLinks")),
+    expiresAt: v.optional(v.number()),
   })
     .index("by_userId_entityId", ["userId", "entityId"])
     .index("by_entityId", ["entityId"]),

@@ -1,3 +1,4 @@
+import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
 import {
   AlertCircle,
@@ -13,8 +14,8 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import { useOrganization } from "../../context/OrganizationContext";
 import { useSettings } from "../../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
 import type { RunRecipePhase, RunRecipeStep } from "../../types";
 import { MiniSpreadsheetEditor } from "../spreadsheet/MiniSpreadsheetEditor";
 import TimerDisplay from "./TimerDisplay";
@@ -64,7 +65,11 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const inventoryItems = useQuery(api.inventory.list, { language });
+  const { activeOrganizationId } = useOrganization();
+  const inventoryItems = useQuery(api.inventory.list, {
+    language,
+    organizationId: activeOrganizationId ?? undefined,
+  });
 
   if (!(activePhase && activeStep)) {
     return (

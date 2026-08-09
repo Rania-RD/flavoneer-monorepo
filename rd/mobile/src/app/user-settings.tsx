@@ -134,7 +134,6 @@ export default function UserSettingsScreen() {
                   numberOfLines={1}
                   themeColor="textSecondary"
                   type="caption"
-                  style={{ textAlign: isRTL ? 'right' : 'left', writingDirection: 'ltr' }}
                 >
                   {session?.user.email || t('noEmail')}
                 </ThemedText>

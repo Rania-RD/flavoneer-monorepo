@@ -43,6 +43,13 @@ export function getUserTimezone(): string {
   }
 }
 
+export function getPreferredTimezone(
+  savedTimezone: string | null | undefined,
+  userTimezone = getUserTimezone()
+): string {
+  return savedTimezone?.trim() ? savedTimezone : userTimezone;
+}
+
 export function formatTimezoneOffset(
   timezone: string,
   date = new Date()

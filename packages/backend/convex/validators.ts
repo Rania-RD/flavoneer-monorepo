@@ -473,6 +473,8 @@ export const enrichedLabReportReturnValidator = v.object({
   signoffData: v.optional(v.string()),
   signoffFont: v.optional(v.string()),
   signoffType: v.optional(v.string()),
+  signedBy: v.optional(v.string()),
+  signedAt: v.optional(v.number()),
 });
 
 /** Recent lab result — returned by labReports.getRecentResults */
@@ -490,6 +492,9 @@ export const equipmentReturnValidator = v.object({
   status: equipmentStatusValidator,
   meta: v.string(),
   user: v.optional(v.string()),
+  userId: v.optional(v.string()),
+  statusUpdatedBy: v.optional(v.string()),
+  statusUpdatedAt: v.optional(v.number()),
   type: equipmentTypeValidator,
   organizationId: v.optional(v.id("organizations")),
 });

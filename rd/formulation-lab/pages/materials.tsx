@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import type React from "react";
@@ -15,9 +17,8 @@ import { MaterialsTabs } from "../components/materials/MaterialsTabs";
 import PrintLabelModal from "../components/PrintLabelModal";
 import StockUsageHistoryModal from "../components/StockUsageHistoryModal";
 import ViewIngredientModal from "../components/ViewIngredientModal";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { useMaterialSelection } from "../hooks/materials/useMaterialSelection";
 import { useToast } from "../hooks/useToast";
 import { exportInventoryCsv } from "../lib/materials/exportInventoryCsv";
@@ -33,6 +34,7 @@ const getErrorMessage = (error: unknown) =>
 const Materials: React.FC = () => {
   const { t } = useTranslation();
   const { language } = useSettings();
+  const { activeOrganizationId } = useOrganization();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"current" | "library">("current");
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,8 +60,15 @@ const Materials: React.FC = () => {
   );
   const [isDeletingIng, setIsDeletingIng] = useState(false);
 
-  const inventoryRaw = useQuery(api.inventory.list, { language });
-  const ingredientsRaw = useQuery(api.ingredients.list, { language }) ?? [];
+  const inventoryRaw = useQuery(api.inventory.list, {
+    language,
+    organizationId: activeOrganizationId ?? undefined,
+  });
+  const ingredientsRaw =
+    useQuery(api.ingredients.list, {
+      language,
+      organizationId: activeOrganizationId ?? undefined,
+    }) ?? [];
   const bulkRemove = useMutation(api.inventory.bulkRemove);
   const bulkUpdateStatus = useMutation(api.inventory.bulkUpdateStatus);
   const removeIngredient = useMutation(api.ingredients.remove);

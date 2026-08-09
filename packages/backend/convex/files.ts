@@ -28,6 +28,10 @@ export const getFileUrl = mutation({
   args: { storageId: v.id("_storage") },
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
+    const authUser = await authComponent.getAuthUser(ctx);
+    if (!authUser) {
+      throw new Error("Not authenticated");
+    }
     return await ctx.storage.getUrl(args.storageId);
   },
 });

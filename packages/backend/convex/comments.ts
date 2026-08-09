@@ -1,5 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requirePersonalOrWorkspaceAccess } from "./workspaceAccess";
+
+function getDisplayName(user: { name?: string | null; email?: string | null }) {
+  return user.name?.trim() || user.email?.trim() || "Unknown user";
+}
 
 // ─── List Comments for a Project (Optionally filtered by phase) ───
 export const list = query({
@@ -19,10 +24,17 @@ export const list = query({
       createdAt: v.number(),
       isResolved: v.boolean(),
       resolvedBy: v.optional(v.string()),
+      resolvedById: v.optional(v.string()),
       resolvedAt: v.optional(v.number()),
-    })
+    }),
   ),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
+
     const q = ctx.db
       .query("comments")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId));
@@ -43,17 +55,20 @@ export const add = mutation({
     projectId: v.id("projects"),
     phaseId: v.optional(v.string()),
     text: v.string(),
-    authorName: v.string(),
-    authorId: v.optional(v.string()),
   },
   returns: v.id("comments"),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, project);
     return await ctx.db.insert("comments", {
       projectId: args.projectId,
       phaseId: args.phaseId,
       text: args.text,
-      authorName: args.authorName,
-      authorId: args.authorId,
+      authorName: getDisplayName(authUser),
+      authorId: authUser._id,
       createdAt: Date.now(),
       isResolved: false,
     });
@@ -64,13 +79,22 @@ export const add = mutation({
 export const resolve = mutation({
   args: {
     commentId: v.id("comments"),
-    resolvedBy: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) {
+      throw new Error("Comment not found");
+    }
+    const project = await ctx.db.get(comment.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, project);
     await ctx.db.patch(args.commentId, {
       isResolved: true,
-      resolvedBy: args.resolvedBy,
+      resolvedBy: getDisplayName(authUser),
+      resolvedById: authUser._id,
       resolvedAt: Date.now(),
     });
     return null;

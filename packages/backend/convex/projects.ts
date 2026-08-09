@@ -5,6 +5,7 @@ import { type MutationCtx, mutation, type QueryCtx, query } from "./_generated/s
 import { authComponent } from "./auth";
 import { localizeArray, makeLocalizedString, selectLocalizedString } from "./localization";
 import { logOrganizationAction } from "./organizationAuditLogs";
+import { getActiveSharedAccess } from "./sharedAccess";
 import {
   batchCodeFormatValidator,
   enrichedProjectReturnValidator,
@@ -20,6 +21,7 @@ import {
 import {
   getWorkspaceAccess,
   requirePersonalOrWorkspaceAccess,
+  requirePersonalOrWorkspaceScope,
   requireWorkspaceMember,
 } from "./workspaceAccess";
 
@@ -524,21 +526,29 @@ export const list = query({
     paginationOpts: paginationOptsValidator,
     status: v.optional(projectStatusValidator),
     language: v.optional(languageValidator),
+    organizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args) => {
-    let result: {
+    const scope = await requirePersonalOrWorkspaceScope(ctx, args.organizationId);
+    const result: {
       page: Doc<"projects">[];
       isDone: boolean;
       continueCursor: string;
-    };
-    if (args.status) {
-      result = await ctx.db
-        .query("projects")
-        .withIndex("by_status", (q) => q.eq("status", args.status!))
-        .paginate(args.paginationOpts);
-    } else {
-      result = await ctx.db.query("projects").paginate(args.paginationOpts);
-    }
+    } = await ctx.db
+      .query("projects")
+      .filter((q) => {
+        const scopeFilter = scope.organizationId
+          ? q.eq(q.field("organizationId"), scope.organizationId)
+          : q.and(
+              q.or(
+                q.eq(q.field("organizationId"), undefined),
+                q.eq(q.field("organizationId"), null),
+              ),
+              q.eq(q.field("userId"), scope.userId),
+            );
+        return args.status ? q.and(scopeFilter, q.eq(q.field("status"), args.status)) : scopeFilter;
+      })
+      .paginate(args.paginationOpts);
     const page = await Promise.all(result.page.map((p) => enrichProject(ctx, p, args.language)));
     return { ...result, page };
   },
@@ -629,12 +639,7 @@ export const get = query({
         // but we can map them as 'editor' if needed, or leave undefined (organization handles it natively).
       } else {
         // Not in organization. Check if they have shared access.
-        const access = await ctx.db
-          .query("sharedAccess")
-          .withIndex("by_userId_entityId", (q) =>
-            q.eq("userId", authUserId).eq("entityId", project._id),
-          )
-          .first();
+        const access = await getActiveSharedAccess(ctx, authUserId, project._id);
 
         if (access) {
           sharedRole = access.role;
@@ -644,12 +649,7 @@ export const get = query({
         }
       }
     } else {
-      const access = await ctx.db
-        .query("sharedAccess")
-        .withIndex("by_userId_entityId", (q) =>
-          q.eq("userId", authUserId).eq("entityId", project._id),
-        )
-        .first();
+      const access = await getActiveSharedAccess(ctx, authUserId, project._id);
 
       if (access) {
         sharedRole = access.role;

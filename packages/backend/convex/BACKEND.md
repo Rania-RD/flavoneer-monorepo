@@ -86,6 +86,10 @@ This separation preserves history.
 - Workspace deletion is owner-only and is blocked while projects or shared
   ingredients still reference the workspace. Audit and regulated record
   retention must be decided before enabling production deletion.
+- Domain resources use `requirePersonalOrWorkspaceAccess` after loading their
+  parent or target document. List and create functions use
+  `requirePersonalOrWorkspaceScope`; neither helper grants access to legacy
+  rows that have no `organizationId` or `userId`.
 - The synchronization transaction ensures the built-in Admin, Supervisor,
   Editor, and Operator roles exist before assigning a role. Existing role
   permissions are never overwritten by this seed step.
@@ -107,3 +111,22 @@ This separation preserves history.
   Workspace Settings version-control behavior. The Admin role receives it by
   default through `full_access`; administrators may grant it explicitly to
   other roles through the permissions matrix.
+
+## 6. Domain tenancy migration
+
+Deploy the widened schema and guarded writers before backfilling legacy data.
+Run both migrations as dry runs first, then run them without `dryRun`:
+
+```bash
+pnpm --filter @flavoneer/backend exec convex run migrations:backfillInventoryTenancy '{"dryRun":true}'
+pnpm --filter @flavoneer/backend exec convex run migrations:backfillLabReportTenancy '{"dryRun":true}'
+pnpm --filter @flavoneer/backend exec convex run migrations:backfillInventoryTenancy
+pnpm --filter @flavoneer/backend exec convex run migrations:backfillLabReportTenancy
+pnpm --filter @flavoneer/backend exec convex run migrations:verifyDomainTenancy
+```
+
+The backfills only copy ownership from matching parent resources. Rows that
+cannot be mapped without guessing remain locked. Assign those bounded ID lists
+with the internal `migrations:assignLegacyResourcesToOrganization` function,
+then rerun `migrations:verifyDomainTenancy`. Add `--prod` only when operating on
+the production deployment.

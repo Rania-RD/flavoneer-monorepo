@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { type LocalizedString, isCorruptedLocalizedText } from "./localization";
 
 function cleanText(value?: string | null) {
@@ -88,7 +88,7 @@ function addArrayRepair(
   return 0;
 }
 
-export const repairCorruptedArabicFields = mutation({
+export const repairCorruptedArabicFields = internalMutation({
   args: {},
   handler: async (ctx) => {
     let recordsRepaired = 0;

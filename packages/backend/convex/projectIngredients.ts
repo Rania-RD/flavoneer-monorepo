@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { versionTagValidator } from "./validators";
+import { requirePersonalOrWorkspaceAccess } from "./workspaceAccess";
 
 // ── Queries ─────────────────────────────────────────
 
@@ -21,6 +22,11 @@ export const create = mutation({
   },
   returns: v.id("projectIngredients"),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     return await ctx.db.insert("projectIngredients", args);
   },
 });
@@ -36,9 +42,18 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const ingredient = await ctx.db.get(args.id);
+    if (!ingredient) {
+      throw new Error("Project ingredient not found");
+    }
+    const project = await ctx.db.get(ingredient.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     const { id, ...updates } = args;
     const filtered = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
+      Object.entries(updates).filter(([_, v]) => v !== undefined),
     );
     await ctx.db.patch(id, filtered);
     return null;
@@ -49,6 +64,15 @@ export const remove = mutation({
   args: { id: v.id("projectIngredients") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const ingredient = await ctx.db.get(args.id);
+    if (!ingredient) {
+      throw new Error("Project ingredient not found");
+    }
+    const project = await ctx.db.get(ingredient.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     await ctx.db.delete(args.id);
     return null;
   },

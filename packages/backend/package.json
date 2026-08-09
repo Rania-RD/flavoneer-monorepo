@@ -21,6 +21,7 @@
     "dev": "convex dev",
     "deploy": "convex deploy",
     "codegen": "convex codegen",
+    "test": "vitest run",
     "typecheck": "tsc -p convex/tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -33,7 +34,10 @@
     "convex": "^1.41.0"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
     "@types/node": "^22.14.0",
-    "typescript": "~5.8.2"
+    "convex-test": "^0.0.54",
+    "typescript": "~5.8.2",
+    "vitest": "^4.1.10"
   }
 }

@@ -1,15 +1,11 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import {
-  type MutationCtx,
-  mutation,
-  type QueryCtx,
-  query,
-} from "./_generated/server";
+import { type MutationCtx, mutation, type QueryCtx, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { makeLocalizedString, selectLocalizedString } from "./localization";
 import { logOrganizationAction } from "./organizationAuditLogs";
+import { getActiveSharedAccess } from "./sharedAccess";
 import { convertUnits } from "./units";
 import {
   enrichedRunReturnValidator,
@@ -18,18 +14,11 @@ import {
   runIngredientUsageValidator,
   signatureTypeValidator,
 } from "./validators";
-import {
-  getWorkspaceAccess,
-  requirePersonalOrWorkspaceAccess,
-} from "./workspaceAccess";
+import { getWorkspaceAccess, requirePersonalOrWorkspaceAccess } from "./workspaceAccess";
 
 // ── Helpers ──────────────────────────────────────────
 
-function formatDuration(
-  startTime: number,
-  endTime: number,
-  language?: string
-): string {
+function formatDuration(startTime: number, endTime: number, language?: string): string {
   const totalSec = Math.round((endTime - startTime) / 1000);
   const minutes = Math.floor(totalSec / 60);
   const seconds = totalSec % 60;
@@ -41,31 +30,16 @@ function formatDuration(
 
 async function enrichRun(ctx: QueryCtx, run: Doc<"runs">, language?: string) {
   // Look up project name from projectId
-  let projectName = selectLocalizedString(
-    run.projectName,
-    run.projectNameI18n,
-    language
-  );
-  let projectNameI18n = makeLocalizedString(
-    run.projectName,
-    run.projectNameI18n
-  );
+  let projectName = selectLocalizedString(run.projectName, run.projectNameI18n, language);
+  let projectNameI18n = makeLocalizedString(run.projectName, run.projectNameI18n);
   try {
     const project = await ctx.db.get(run.projectId);
     if (project) {
-      projectName = selectLocalizedString(
-        project.name,
-        project.nameI18n,
-        language
-      );
+      projectName = selectLocalizedString(project.name, project.nameI18n, language);
       projectNameI18n = makeLocalizedString(project.name, project.nameI18n);
     }
   } catch {
-    projectName = selectLocalizedString(
-      run.projectName,
-      run.projectNameI18n,
-      language
-    );
+    projectName = selectLocalizedString(run.projectName, run.projectNameI18n, language);
   }
 
   // Join run-scoped phases + steps
@@ -112,7 +86,7 @@ async function enrichRun(ctx: QueryCtx, run: Doc<"runs">, language?: string) {
               spreadsheet: s.spreadsheet,
             })),
         };
-      })
+      }),
   );
 
   return {
@@ -138,7 +112,8 @@ async function deductInventory(
   projectId: Id<"projects">,
   projectName: string,
   batchCode: string,
-  ingredients: Array<{ name: string; actualWeight: number; unit?: string }>
+  ingredients: Array<{ name: string; actualWeight: number; unit?: string }>,
+  tenant: { organizationId?: Id<"organizations">; userId?: string },
 ) {
   if (!ingredients || ingredients.length === 0) {
     return;
@@ -147,11 +122,19 @@ async function deductInventory(
   for (const ing of ingredients) {
     const nameLower = ing.name.toLowerCase().trim();
 
-    // Use search index instead of full table scan
+    // Scope the lookup before selecting a stock record so identical material
+    // names in another workspace can never be decremented.
     const matches = await ctx.db
       .query("inventoryItems")
-      .withSearchIndex("search_name", (q) => q.search("name", nameLower))
-      .take(5);
+      .filter((q) =>
+        tenant.organizationId
+          ? q.eq(q.field("organizationId"), tenant.organizationId)
+          : q.and(
+              q.eq(q.field("organizationId"), undefined),
+              q.eq(q.field("userId"), tenant.userId),
+            ),
+      )
+      .collect();
 
     // Find exact (case-insensitive) match from search results
     const item = matches.find((i) => i.name.toLowerCase().trim() === nameLower);
@@ -167,8 +150,7 @@ async function deductInventory(
 
     const newStock = Math.max(0, item.stock - converted);
     const threshold = item.lowStockThreshold ?? item.stock * 0.2;
-    const newStatus =
-      newStock <= threshold ? ("low" as const) : ("ok" as const);
+    const newStatus = newStock <= threshold ? ("low" as const) : ("ok" as const);
 
     await ctx.db.patch(item._id, {
       stock: newStock,
@@ -208,7 +190,7 @@ export const getLabUtilization = query({
     return activeRuns.filter((run) =>
       args.organizationId
         ? run.organizationId === args.organizationId
-        : run.userId === authUser._id && run.organizationId === undefined
+        : run.userId === authUser._id && run.organizationId === undefined,
     ).length;
   },
 });
@@ -239,29 +221,25 @@ export const list = query({
       // If organizationId is specified, fetch specifically for that organization (needs index by_organizationId though... or fallback to JS filter if no index. Assuming schema has it or we can just filter JS)
       // Since schema.ts defines index("by_organizationId", ["organizationId"]) but wait, no, runs doesn't have by_organizationId!
       // runs has by_projectId and by_status... Wait, we can just use the base pagination.
-      result = await ctx.db
-        .query("runs")
-        .order("desc")
-        .paginate(args.paginationOpts);
+      result = await ctx.db.query("runs").order("desc").paginate(args.paginationOpts);
     } else {
-      result = await ctx.db
-        .query("runs")
-        .order("desc")
-        .paginate(args.paginationOpts);
+      result = await ctx.db.query("runs").order("desc").paginate(args.paginationOpts);
     }
 
     const pageOrganizationIds = Array.from(
       new Set(
         result.page
           .map((run) => run.organizationId)
-          .filter((organizationId): organizationId is Id<"organizations"> => organizationId !== undefined)
-      )
+          .filter(
+            (organizationId): organizationId is Id<"organizations"> => organizationId !== undefined,
+          ),
+      ),
     );
     const organizationAccessEntries = await Promise.all(
-      pageOrganizationIds.map(async (organizationId) => [
-        organizationId,
-        Boolean(await getWorkspaceAccess(ctx, organizationId)),
-      ] as const)
+      pageOrganizationIds.map(
+        async (organizationId) =>
+          [organizationId, Boolean(await getWorkspaceAccess(ctx, organizationId))] as const,
+      ),
     );
     const organizationAccess = new Map(organizationAccessEntries);
 
@@ -271,10 +249,17 @@ export const list = query({
       .withIndex("by_userId_entityId", (q) => q.eq("userId", authUserId))
       .take(200);
 
-    const sharedRunMap = new Map();
+    const sharedRunMap = new Map<string, "viewer" | "editor">();
     for (const acc of sharedAccess) {
       if (acc.entityType === "run") {
-        sharedRunMap.set(acc.entityId, acc.role);
+        const runId = ctx.db.normalizeId("runs", acc.entityId);
+        if (!runId) {
+          continue;
+        }
+        const activeAccess = await getActiveSharedAccess(ctx, authUserId, runId);
+        if (activeAccess) {
+          sharedRunMap.set(runId, activeAccess.role);
+        }
       }
     }
 
@@ -296,7 +281,7 @@ export const list = query({
           ...enriched,
           sharedRole: sharedRunMap.get(r._id) || undefined,
         };
-      })
+      }),
     );
 
     return { ...result, page };
@@ -325,12 +310,7 @@ export const get = query({
       const organizationMember = await getWorkspaceAccess(ctx, run.organizationId);
 
       if (!organizationMember) {
-        const access = await ctx.db
-          .query("sharedAccess")
-          .withIndex("by_userId_entityId", (q) =>
-            q.eq("userId", authUserId).eq("entityId", run._id)
-          )
-          .first();
+        const access = await getActiveSharedAccess(ctx, authUserId, run._id);
 
         if (access) {
           sharedRole = access.role;
@@ -339,12 +319,7 @@ export const get = query({
         }
       }
     } else if (run.userId !== authUserId) {
-      const access = await ctx.db
-        .query("sharedAccess")
-        .withIndex("by_userId_entityId", (q) =>
-          q.eq("userId", authUserId).eq("entityId", run._id)
-        )
-        .first();
+      const access = await getActiveSharedAccess(ctx, authUserId, run._id);
 
       if (access) {
         sharedRole = access.role;
@@ -467,9 +442,7 @@ export const createNewRun = mutation({
     const authUser = await requirePersonalOrWorkspaceAccess(ctx, project);
 
     if (project.status !== "Released") {
-      throw new Error(
-        "Unauthorized: Cannot start a run for a non-released formulation"
-      );
+      throw new Error("Unauthorized: Cannot start a run for a non-released formulation");
     }
 
     const existingRuns = await ctx.db
@@ -478,9 +451,7 @@ export const createNewRun = mutation({
       .collect();
     const seq = existingRuns.length + 1;
 
-    const prefix =
-      project.batchCodePrefix ||
-      project.name.split(" ")[0].toUpperCase().slice(0, 4);
+    const prefix = project.batchCodePrefix || project.name.split(" ")[0].toUpperCase().slice(0, 4);
     const batchCode = `${prefix}-${String(seq).padStart(3, "0")}`;
 
     // 1. Insert the run record
@@ -654,14 +625,10 @@ export const finishRun = mutation({
 
     // 3. Deduct inventory for each ingredient
     if (ingredients && ingredients.length > 0) {
-      await deductInventory(
-        ctx,
-        runId,
-        run.projectId,
-        projectName,
-        run.batchCode,
-        ingredients
-      );
+      await deductInventory(ctx, runId, run.projectId, projectName, run.batchCode, ingredients, {
+        organizationId: run.organizationId,
+        userId: run.userId,
+      });
     }
 
     return runId;
@@ -730,14 +697,10 @@ export const create = mutation({
     }
 
     if (ingredients && ingredients.length > 0) {
-      await deductInventory(
-        ctx,
-        runId,
-        args.projectId,
-        projectName,
-        args.batchCode,
-        ingredients
-      );
+      await deductInventory(ctx, runId, args.projectId, projectName, args.batchCode, ingredients, {
+        organizationId: project.organizationId || undefined,
+        userId: authUser._id,
+      });
     }
 
     return runId;

@@ -7,6 +7,10 @@ import {
   parentCategoryCodes,
   plainInsNumber,
 } from "./regulatoryHelpers";
+import {
+  getAuthUserOrThrow,
+  requirePersonalOrWorkspaceAccess,
+} from "./workspaceAccess";
 
 const regulatoryEnv = createBackendRegulatoryEnv({
   REGULATORY_IMPORT_TOKEN: env.REGULATORY_IMPORT_TOKEN,
@@ -38,6 +42,7 @@ export const searchFoodCategories = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await getAuthUserOrThrow(ctx);
     const limit = Math.min(args.limit ?? 50, 100);
     const search = args.search?.trim().toLowerCase();
     const categories = await ctx.db.query("foodCategories").collect();
@@ -62,6 +67,7 @@ export const getAdditiveMatch = query({
     insNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await getAuthUserOrThrow(ctx);
     const normalizedInsNumber = normalizeInsNumber(args.insNumber);
     if (!normalizedInsNumber) {
       return null;
@@ -82,6 +88,7 @@ export const getProjectAdditiveLimits = query({
     ingredientIds: v.array(v.id("ingredients")),
   },
   handler: async (ctx, args) => {
+    await getAuthUserOrThrow(ctx);
     const result: Record<
       string,
       | {
@@ -99,6 +106,9 @@ export const getProjectAdditiveLimits = query({
 
     for (const ingredientId of args.ingredientIds) {
       const ingredient = await ctx.db.get(ingredientId);
+      if (ingredient) {
+        await requirePersonalOrWorkspaceAccess(ctx, ingredient);
+      }
       if (!(ingredient?.isAdditive && ingredient.normalizedInsNumber)) {
         result[ingredientId] = { status: "not_additive" };
         continue;
@@ -166,7 +176,10 @@ export const importCatalogBatch = mutation({
   },
   handler: async (ctx, args) => {
     const requiredToken = regulatoryEnv.importToken;
-    if (requiredToken && args.token !== requiredToken) {
+    if (!requiredToken) {
+      throw new Error("Regulatory import is not configured");
+    }
+    if (args.token !== requiredToken) {
       throw new Error("Invalid regulatory import token");
     }
 

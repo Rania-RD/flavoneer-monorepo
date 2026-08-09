@@ -12,6 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
+  getPreferredTimezone,
   getSupportedTimezones,
   getUserTimezone,
   matchesTimezone,
@@ -51,13 +52,18 @@ export function TimezoneSelect({ onChange, value }: TimezoneSelectProps) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [position, setPosition] = useState<PopoverPosition | null>(null);
   const detectedTimezone = useMemo(getUserTimezone, []);
-  const timezones = useMemo(() => getSupportedTimezones(value), [value]);
+  const selectedTimezoneId = getPreferredTimezone(value, detectedTimezone);
+  const timezones = useMemo(
+    () => getSupportedTimezones(selectedTimezoneId),
+    [selectedTimezoneId]
+  );
   const filteredTimezones = useMemo(
     () => timezones.filter((timezone) => matchesTimezone(timezone, query)),
     [query, timezones]
   );
   const selectedTimezone =
-    timezones.find((timezone) => timezone.id === value) ?? timezones[0];
+    timezones.find((timezone) => timezone.id === selectedTimezoneId) ??
+    timezones[0];
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
@@ -137,14 +143,14 @@ export function TimezoneSelect({ onChange, value }: TimezoneSelectProps) {
       return;
     }
     const selectedIndex = filteredTimezones.findIndex(
-      (timezone) => timezone.id === value
+      (timezone) => timezone.id === selectedTimezoneId
     );
     if (selectedIndex >= 0) {
       setActiveIndex(selectedIndex);
       return;
     }
     setActiveIndex(filteredTimezones.length ? 0 : -1);
-  }, [filteredTimezones, isOpen, value]);
+  }, [filteredTimezones, isOpen, selectedTimezoneId]);
 
   useEffect(() => {
     if (!(isOpen && activeIndex >= 0)) {
@@ -287,7 +293,7 @@ export function TimezoneSelect({ onChange, value }: TimezoneSelectProps) {
             >
               {filteredTimezones.map((timezone, index) => {
                 const isActive = index === activeIndex;
-                const isSelected = timezone.id === value;
+                const isSelected = timezone.id === selectedTimezoneId;
                 const isDetected = timezone.id === detectedTimezone;
 
                 return (

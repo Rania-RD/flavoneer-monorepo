@@ -1,11 +1,20 @@
 import { expect, test } from "@playwright/test";
 import {
   buildTimezoneOption,
+  getPreferredTimezone,
   getSupportedTimezones,
   matchesTimezone,
 } from "../lib/timezones";
 
 test.describe("timezone selection helpers", () => {
+  test("prefers saved timezone and falls back to the user's timezone", () => {
+    expect(getPreferredTimezone("Europe/Paris", "Asia/Gaza")).toBe(
+      "Europe/Paris"
+    );
+    expect(getPreferredTimezone(undefined, "Asia/Gaza")).toBe("Asia/Gaza");
+    expect(getPreferredTimezone("", "Asia/Gaza")).toBe("Asia/Gaza");
+  });
+
   test("includes the detected or saved timezone in the available options", () => {
     const options = getSupportedTimezones(
       "Antarctica/Troll",

@@ -46,6 +46,7 @@ import type * as roles from "../roles.js";
 import type * as runs from "../runs.js";
 import type * as sensory from "../sensory.js";
 import type * as settings from "../settings.js";
+import type * as sharedAccess from "../sharedAccess.js";
 import type * as sharedLinks from "../sharedLinks.js";
 import type * as spreadsheetSteps from "../spreadsheetSteps.js";
 import type * as stepDependencies from "../stepDependencies.js";
@@ -100,6 +101,7 @@ declare const fullApi: ApiFromModules<{
   runs: typeof runs;
   sensory: typeof sensory;
   settings: typeof settings;
+  sharedAccess: typeof sharedAccess;
   sharedLinks: typeof sharedLinks;
   spreadsheetSteps: typeof spreadsheetSteps;
   stepDependencies: typeof stepDependencies;

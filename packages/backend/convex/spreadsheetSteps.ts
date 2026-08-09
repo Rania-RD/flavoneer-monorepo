@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, type QueryCtx, query } from "./_generated/server";
 import { miniSpreadsheetValidator, spreadsheetCellValidator } from "./validators";
+import { requirePersonalOrWorkspaceAccess } from "./workspaceAccess";
 
 const DEFAULT_ROWS = 8;
 const DEFAULT_COLS = 6;
@@ -38,11 +39,7 @@ function defaultMiniSpreadsheet(stepKey: string): MiniSpreadsheet {
   };
 }
 
-async function findStep(
-  ctx: QueryCtx | MutationCtx,
-  projectId: Id<"projects">,
-  stepKey: string
-) {
+async function findStep(ctx: QueryCtx | MutationCtx, projectId: Id<"projects">, stepKey: string) {
   const steps = await ctx.db
     .query("recipeSteps")
     .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
@@ -81,15 +78,12 @@ function normalizeSpreadsheet(step: Doc<"recipeSteps">): MiniSpreadsheet {
   return step.spreadsheet ?? defaultMiniSpreadsheet(step.stepKey);
 }
 
-async function loadEditableStep(
-  ctx: MutationCtx,
-  projectId: Id<"projects">,
-  stepKey: string
-) {
+async function loadEditableStep(ctx: MutationCtx, projectId: Id<"projects">, stepKey: string) {
   const project = await ctx.db.get(projectId);
   if (!project) {
     throw new Error("Project not found");
   }
+  const authUser = await requirePersonalOrWorkspaceAccess(ctx, project);
   if (project.status === "Released") {
     throw new Error("Released formulations are read-only");
   }
@@ -101,7 +95,7 @@ async function loadEditableStep(
   if (step.type !== "spreadsheet_note") {
     throw new Error("Step is not a spreadsheet note");
   }
-  return step;
+  return { authUser, step };
 }
 
 export const getByStep = query({
@@ -111,6 +105,11 @@ export const getByStep = query({
   },
   returns: miniSpreadsheetValidator,
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     const step = await findStep(ctx, args.projectId, args.stepKey);
     if (!step) {
       return defaultMiniSpreadsheet(args.stepKey);
@@ -129,8 +128,8 @@ export const updateCell = mutation({
   },
   returns: miniSpreadsheetValidator,
   handler: async (ctx, args) => {
-    const step = await loadEditableStep(ctx, args.projectId, args.stepKey);
-    const userId = (await ctx.auth.getUserIdentity())?.subject ?? "system";
+    const { authUser, step } = await loadEditableStep(ctx, args.projectId, args.stepKey);
+    const userId = authUser._id;
     const now = Date.now();
     const spreadsheet = normalizeSpreadsheet(step);
     const cellKey = args.cellKey.toUpperCase();
@@ -165,8 +164,8 @@ export const resize = mutation({
   },
   returns: miniSpreadsheetValidator,
   handler: async (ctx, args) => {
-    const step = await loadEditableStep(ctx, args.projectId, args.stepKey);
-    const userId = (await ctx.auth.getUserIdentity())?.subject ?? "system";
+    const { authUser, step } = await loadEditableStep(ctx, args.projectId, args.stepKey);
+    const userId = authUser._id;
     const now = Date.now();
     const spreadsheet = normalizeSpreadsheet(step);
     const rows = clamp(args.rows, 1, MAX_ROWS);
@@ -175,7 +174,7 @@ export const resize = mutation({
       Object.entries(spreadsheet.cells).filter(([key]) => {
         const coords = cellKeyToCoords(key);
         return coords.row < rows && coords.col < cols;
-      })
+      }),
     ) as Record<string, SpreadsheetCell>;
     const next = {
       ...spreadsheet,
@@ -200,8 +199,8 @@ export const clearRange = mutation({
   },
   returns: miniSpreadsheetValidator,
   handler: async (ctx, args) => {
-    const step = await loadEditableStep(ctx, args.projectId, args.stepKey);
-    const userId = (await ctx.auth.getUserIdentity())?.subject ?? "system";
+    const { authUser, step } = await loadEditableStep(ctx, args.projectId, args.stepKey);
+    const userId = authUser._id;
     const now = Date.now();
     const spreadsheet = normalizeSpreadsheet(step);
     const start = cellKeyToCoords(args.startCell);

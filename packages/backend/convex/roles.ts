@@ -5,6 +5,7 @@ import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getEffectivePermissions, requirePermission } from "./permissions";
 import { roleReturnValidator } from "./validators";
+import { getAuthUserOrThrow } from "./workspaceAccess";
 
 const DEFAULT_SYSTEM_ROLES = [
   {
@@ -85,6 +86,7 @@ export const initializeDefaultRoles = mutation({
   args: {},
   returns: v.array(roleReturnValidator),
   handler: async (ctx) => {
+    await getAuthUserOrThrow(ctx);
     const existingRole = await ctx.db.query("roles").first();
     if (existingRole) {
       await requirePermission(ctx, "manage_roles");

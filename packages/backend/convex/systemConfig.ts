@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
 import { requirePermission } from "./permissions";
+import { getAuthUserOrThrow } from "./workspaceAccess";
 
 /**
  * Get the traceability configuration.
@@ -10,6 +10,7 @@ import { requirePermission } from "./permissions";
 export const getTraceabilityConfig = query({
   args: {},
   handler: async (ctx) => {
+    await getAuthUserOrThrow(ctx);
     const config = await ctx.db
       .query("systemConfig")
       .withIndex("by_configKey", (q) => q.eq("configKey", "traceability"))
@@ -38,10 +39,7 @@ export const updateTraceabilityConfig = mutation({
     currentIdNumber: v.number(),
   },
   handler: async (ctx, args) => {
-    const authUser = await authComponent.getAuthUser(ctx);
-    if (!authUser) {
-      throw new Error("Not authenticated");
-    }
+    await requirePermission(ctx, "manage_roles");
 
     const config = await ctx.db
       .query("systemConfig")
@@ -71,6 +69,7 @@ export const updateTraceabilityConfig = mutation({
 export const getVersionControlConfig = query({
   args: {},
   handler: async (ctx) => {
+    await requirePermission(ctx, "manage_version_control");
     const config = await ctx.db
       .query("systemConfig")
       .withIndex("by_configKey", (q) => q.eq("configKey", "versionControl"))

@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import {
@@ -18,10 +20,8 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useSettings } from "../context/SettingsContext";
 import { useOrganization } from "../context/OrganizationContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
+import { useSettings } from "../context/SettingsContext";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface AddMaterialModalProps {
@@ -52,7 +52,11 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   const { organizations, activeOrganizationId } = useOrganization();
   const createItem = useMutation(api.inventory.create);
   const logActivity = useMutation(api.activities.log);
-  const ingredientsRaw = useQuery(api.ingredients.list, { language }) ?? [];
+  const ingredientsRaw =
+    useQuery(api.ingredients.list, {
+      language,
+      organizationId: activeOrganizationId ?? undefined,
+    }) ?? [];
 
   const [activeTab, setActiveTab] = useState<"info" | "stock">("info");
   const [batchIdTouched, setBatchIdTouched] = useState(false);
@@ -86,8 +90,12 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   );
 
   const generateBatchId = useCallback((): string => {
-    const activeOrganization = organizations.find((tm) => tm._id === activeOrganizationId);
-    const organizationInitials = activeOrganization ? getInitials(activeOrganization.name) : "";
+    const activeOrganization = organizations.find(
+      (tm) => tm._id === activeOrganizationId
+    );
+    const organizationInitials = activeOrganization
+      ? getInitials(activeOrganization.name)
+      : "";
     const productInitials = formData.name.trim()
       ? getInitials(formData.name)
       : "";
@@ -196,6 +204,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
         storageConditions: formData.storageConditions,
         ingredientCode: formData.ingredientCode,
         ingredientId: formData.ingredientId as Id<"ingredients">,
+        organizationId: activeOrganizationId ?? undefined,
       });
       logActivity({
         action: "Added Inventory Item",

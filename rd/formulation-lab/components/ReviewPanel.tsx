@@ -1,14 +1,13 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import { Check, CheckCircle, MessageSquare, Send, X } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 
 interface ReviewPanelProps {
-  currentUser?: { name: string; id: string };
   isOpen: boolean;
   onClose: () => void;
   projectId: Id<"projects">;
@@ -18,7 +17,6 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   projectId,
   isOpen,
   onClose,
-  currentUser = { name: "Current User", id: "user-id" },
 }) => {
   const { t } = useTranslation();
   const [newComment, setNewComment] = useState("");
@@ -39,8 +37,6 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       await addComment({
         projectId,
         text: newComment.trim(),
-        authorName: currentUser.name,
-        authorId: currentUser.id,
       });
       setNewComment("");
     } catch (error) {
@@ -52,10 +48,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
 
   const handleResolve = async (commentId: Id<"comments">) => {
     try {
-      await resolveComment({
-        commentId,
-        resolvedBy: currentUser.name,
-      });
+      await resolveComment({ commentId });
     } catch (error) {
       console.error("Failed to resolve comment", error);
     }

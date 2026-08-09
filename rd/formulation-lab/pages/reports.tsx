@@ -16,15 +16,11 @@ import InfiniteScrollObserver from "../components/InfiniteScrollObserver";
 import NewLabReportModal from "../components/NewLabReportModal";
 import { ReportPDF } from "../components/ReportPDF";
 import ReportsDropdown from "../components/ReportsDropdown";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
 import { buildAggregatedIngredients } from "../lib/formulation/helpers";
-import {
-  getSignatureName,
-  SIGNATURE_FONT_FAMILY,
-  SIGNATURE_TYPE,
-} from "../lib/signature";
 import type { EnrichedLabReport, EnrichedProject } from "../types";
 
 const Reports: React.FC = () => {
@@ -32,7 +28,8 @@ const Reports: React.FC = () => {
   const [filter, setFilter] = useState("All");
   const [showNewModal, setShowNewModal] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string>();
-  const { language, profile } = useSettings();
+  const { language } = useSettings();
+  const { activeOrganizationId } = useOrganization();
   const { user, role } = usePermissions();
   const { toast } = useToast();
 
@@ -43,20 +40,23 @@ const Reports: React.FC = () => {
     loadMore: loadMoreReports,
   } = usePaginatedQuery(
     api.labReports.list,
-    { language },
+    { language, organizationId: activeOrganizationId ?? undefined },
     { initialNumItems: 50 }
   );
 
   const { results: runsRaw } = usePaginatedQuery(
     api.runs.list,
-    {},
+    activeOrganizationId ? { organizationId: activeOrganizationId } : {},
     { initialNumItems: 50 }
   );
   const formulationIngredientOptions = useQuery(
     api.ingredients.listFormulationOptions,
-    { language }
+    { language, organizationId: activeOrganizationId ?? undefined }
   );
-  const inventoryItems = useQuery(api.inventory.list, { language });
+  const inventoryItems = useQuery(api.inventory.list, {
+    language,
+    organizationId: activeOrganizationId ?? undefined,
+  });
 
   const updateStatus = useMutation(api.labReports.updateStatus);
 
@@ -165,15 +165,9 @@ const Reports: React.FC = () => {
         }
 
         const newStatus = report.status === "Approved" ? "Pending" : "Approved";
-        const isApproving = newStatus === "Approved";
-        const signatureName = getSignatureName(profile.name, user?.name);
-
         await updateStatus({
           id: report._id,
           status: newStatus,
-          signoffData: isApproving ? signatureName : undefined,
-          signoffFont: isApproving ? SIGNATURE_FONT_FAMILY : undefined,
-          signoffType: isApproving ? SIGNATURE_TYPE : undefined,
         });
         break;
       }

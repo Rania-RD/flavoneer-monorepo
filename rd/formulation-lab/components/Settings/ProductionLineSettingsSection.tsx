@@ -5,7 +5,7 @@ import { CheckCircle2, Factory, Loader2, Save, Settings2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useOrganization } from "../../context/OrganizationContext";
-import { getUserTimezone } from "../../lib/timezones";
+import { getPreferredTimezone, getUserTimezone } from "../../lib/timezones";
 import {
   emptyLimits,
   type HallCode,
@@ -31,7 +31,10 @@ export default function ProductionLineSettingsSection() {
   const { results: products } = usePaginatedQuery(
     api.projects.listByOrganization,
     activeOrganizationId
-      ? { organizationId: activeOrganizationId, language: i18n.language === "ar" ? "ar" : "en" }
+      ? {
+          organizationId: activeOrganizationId,
+          language: i18n.language === "ar" ? "ar" : "en",
+        }
       : "skip",
     { initialNumItems: 100 }
   );
@@ -58,11 +61,15 @@ export default function ProductionLineSettingsSection() {
   >(null);
 
   useEffect(() => {
+    setTimezone(
+      getPreferredTimezone(
+        activeOrganizationId ? settings?.timezone : undefined
+      )
+    );
     if (settings) {
-      setTimezone(settings.timezone);
       setEnabledHalls(settings.enabledHallCodes);
     }
-  }, [settings]);
+  }, [activeOrganizationId, settings]);
 
   useEffect(() => {
     if (!productId && products[0]) {
@@ -72,11 +79,15 @@ export default function ProductionLineSettingsSection() {
 
   const specifications = useQuery(
     api.productionLineSpecifications.listByProduct,
-    activeOrganizationId && productId ? { organizationId: activeOrganizationId, productId } : "skip"
+    activeOrganizationId && productId
+      ? { organizationId: activeOrganizationId, productId }
+      : "skip"
   );
   const draftSpecification = useQuery(
     api.productionLineSpecifications.getDraftForProduct,
-    activeOrganizationId && productId ? { organizationId: activeOrganizationId, productId } : "skip"
+    activeOrganizationId && productId
+      ? { organizationId: activeOrganizationId, productId }
+      : "skip"
   );
   const activeVersion = specifications?.find(
     (item) => item.status === "active"
@@ -149,7 +160,10 @@ export default function ProductionLineSettingsSection() {
     }
     setMessage(null);
     try {
-      await createSpecificationDraft({ organizationId: activeOrganizationId, productId });
+      await createSpecificationDraft({
+        organizationId: activeOrganizationId,
+        productId,
+      });
     } catch {
       setMessage("error");
     }

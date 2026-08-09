@@ -5,7 +5,7 @@ const DARK_CLASS_PATTERN = /dark/;
 const SYSTEM_LABEL_PATTERN = /System/;
 const USER_SETTINGS_URL_PATTERN = /\/settings\?scope=user/u;
 
-test("profile opens unified settings with nested user, workspace, and organization tabs", async ({
+test("profile menu exposes organization switching and unified settings", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -32,6 +32,26 @@ test("profile opens unified settings with nested user, workspace, and organizati
   await expect(page.getByTestId("desktop-organization-badge")).toBeVisible();
   await profileTrigger.click();
 
+  const profileMenu = page.getByTestId("desktop-organization-menu");
+  await expect(profileMenu).toBeVisible();
+  await expect(profileMenu.getByRole("menuitemradio").first()).toHaveAttribute(
+    "aria-checked",
+    "true"
+  );
+  await expect(
+    profileMenu.getByRole("menuitem", { name: "Organization Settings" })
+  ).toBeVisible();
+  await expect(
+    profileMenu.getByRole("menuitem", { name: "Workspace Settings" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Workspace Settings" })
+  ).toHaveCount(0);
+  await profileMenu
+    .getByRole("menuitem")
+    .filter({ hasText: "test@example.com" })
+    .click();
+
   await expect(page).toHaveURL(USER_SETTINGS_URL_PATTERN);
   await expect(
     page.getByRole("tab", { name: "User Settings" })
@@ -48,7 +68,7 @@ test("profile opens unified settings with nested user, workspace, and organizati
   await expect(
     page.locator('input[type="file"][accept="image/*"]')
   ).toHaveCount(0);
-  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(profileMenu).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Identity", exact: true })
   ).toBeVisible();
@@ -89,4 +109,18 @@ test("profile opens unified settings with nested user, workspace, and organizati
   await expect(
     page.getByRole("heading", { name: "Recent Activity" })
   ).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileProfileTrigger = page.getByTestId("mobile-profile-trigger");
+  await expect(mobileProfileTrigger).toBeVisible();
+  await mobileProfileTrigger.click();
+  const mobileProfileMenu = page.getByTestId("mobile-organization-menu");
+  await expect(mobileProfileMenu).toBeVisible();
+  const mobileMenuBox = await mobileProfileMenu.boundingBox();
+  expect(mobileMenuBox).not.toBeNull();
+  expect(mobileMenuBox?.x).toBeGreaterThanOrEqual(0);
+  expect(
+    (mobileMenuBox?.x ?? 0) + (mobileMenuBox?.width ?? 0)
+  ).toBeLessThanOrEqual(390);
+  expect(mobileMenuBox?.y).toBeGreaterThanOrEqual(0);
 });

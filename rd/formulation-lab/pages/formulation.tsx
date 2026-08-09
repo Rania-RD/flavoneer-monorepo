@@ -12,6 +12,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import {
   CheckCircle2,
@@ -39,9 +41,8 @@ import type { AllergenRegion } from "../components/add-ingredient/types";
 import { SortablePhaseItem } from "../components/formulation/sortable-phase-item";
 import { ReviewPanel } from "../components/ReviewPanel";
 import VersionHistoryModal from "../components/VersionHistoryModal";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { usePermissions } from "../hooks/usePermissions";
 import {
   addPhaseToPhases,
@@ -119,8 +120,7 @@ const WEIGHT_UNIT_TO_GRAMS: Record<string, number> = {
   milliliter: 1,
   milliliters: 1,
 };
-const MULTIPLE_AUTOSAVE_NAME =
-  "Auto-Save: Updated multiple formulation fields";
+const MULTIPLE_AUTOSAVE_NAME = "Auto-Save: Updated multiple formulation fields";
 const DEFAULT_AUTOSAVE_NAME = "Auto-Save: Updated formulation fields";
 
 function formatAutosaveValue(value: string | number | undefined) {
@@ -139,6 +139,7 @@ function convertWeightValue(value: number, fromUnit?: string, toUnit?: string) {
 const Formulation: React.FC = () => {
   const { t } = useTranslation();
   const { language } = useSettings();
+  const { activeOrganizationId } = useOrganization();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const projectId = id as Id<"projects"> | undefined;
@@ -150,11 +151,15 @@ const Formulation: React.FC = () => {
   const updateProjectMutation = useMutation(api.projects.update);
   const createNewVersionMutation = useMutation(api.projects.createNewVersion);
   const logActivity = useMutation(api.activities.log);
-  const inventoryItems = useQuery(api.inventory.list, { language }) as
-    | InventoryListItem[]
-    | undefined;
+  const inventoryItems = useQuery(api.inventory.list, {
+    language,
+    organizationId: activeOrganizationId ?? undefined,
+  }) as InventoryListItem[] | undefined;
   const formulationIngredientOptions =
-    useQuery(api.ingredients.listFormulationOptions, { language }) ?? [];
+    useQuery(api.ingredients.listFormulationOptions, {
+      language,
+      organizationId: activeOrganizationId ?? undefined,
+    }) ?? [];
 
   const aggregatedIngredients = useMemo(
     () =>
@@ -203,9 +208,12 @@ const Formulation: React.FC = () => {
   const autosaveRunRef = useRef(0);
   const pendingAutosaveChangesRef = useRef<Map<string, string>>(new Map());
 
-  const queueAutosaveChange = useCallback((key: string, description: string) => {
-    pendingAutosaveChangesRef.current.set(key, description);
-  }, []);
+  const queueAutosaveChange = useCallback(
+    (key: string, description: string) => {
+      pendingAutosaveChangesRef.current.set(key, description);
+    },
+    []
+  );
 
   const getPendingAutosaveName = useCallback(() => {
     const descriptions = [...pendingAutosaveChangesRef.current.values()];
@@ -357,9 +365,7 @@ const Formulation: React.FC = () => {
     queueAutosaveChange(
       "measures.servingSizeMode",
       `Auto-Save: Switched serving size mode to ${
-        servingSizeMode === "recipeMakes"
-          ? "A Recipe makes"
-          : "A Serving is"
+        servingSizeMode === "recipeMakes" ? "A Recipe makes" : "A Serving is"
       }`
     );
     setProject({
@@ -1255,119 +1261,117 @@ const Formulation: React.FC = () => {
           </button>
           <div className="min-w-0 flex-1">
             <div className="min-w-0 space-y-1">
-                <div className="flex min-w-0 items-center gap-2">
-                  <h1 className="min-w-0 flex-1 font-bold text-2xl text-gray-900 sm:text-3xl dark:text-white">
-                    <span className="truncate">
-                      {project?.name || t("formulation_builder")}
-                    </span>
-                  </h1>
-                  <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1 font-medium text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                    v{project.version}
+              <div className="flex min-w-0 items-center gap-2">
+                <h1 className="min-w-0 flex-1 font-bold text-2xl text-gray-900 sm:text-3xl dark:text-white">
+                  <span className="truncate">
+                    {project?.name || t("formulation_builder")}
                   </span>
-                </div>
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  {canEdit && (
-                    <span
-                      aria-live="polite"
-                      className={`pt-1 font-medium text-[11px] leading-none ${
-                        autosaveStatus === "error"
-                          ? "text-red-600 dark:text-red-400"
-                          : autosaveStatus === "saving"
-                            ? "text-slate-500 dark:text-slate-400"
-                            : "text-slate-400 dark:text-slate-500"
-                      }`}
-                      data-testid="autosave-status"
-                      role={autosaveStatus === "error" ? "alert" : "status"}
-                    >
-                      {autosaveStatus === "error"
-                        ? t("autosave_error")
+                </h1>
+                <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1 font-medium text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                  v{project.version}
+                </span>
+              </div>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                {canEdit && (
+                  <span
+                    aria-live="polite"
+                    className={`pt-1 font-medium text-[11px] leading-none ${
+                      autosaveStatus === "error"
+                        ? "text-red-600 dark:text-red-400"
                         : autosaveStatus === "saving"
-                          ? t("autosave_saving")
-                          : t("autosave_saved")}
-                    </span>
-                  )}
-                  {project && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        className={`cursor-pointer appearance-none rounded-full border px-3 py-1.5 font-bold text-xs outline-none transition-colors ${
-                          (
-                            {
-                              Released:
-                                "cursor-not-allowed border-emerald-200 bg-emerald-100 text-emerald-800 opacity-90 dark:border-emerald-800/60 dark:bg-emerald-900/40 dark:text-emerald-300",
-                              "Under Review":
-                                "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/30 dark:text-amber-400",
-                              Draft:
-                                "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
-                            } as Record<string, string>
-                          )[lifecycleStatus] ||
-                          "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        }`}
-                        data-testid="formulation-status-select"
-                        disabled={isReleased}
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        value={lifecycleStatus}
+                          ? "text-slate-500 dark:text-slate-400"
+                          : "text-slate-400 dark:text-slate-500"
+                    }`}
+                    data-testid="autosave-status"
+                    role={autosaveStatus === "error" ? "alert" : "status"}
+                  >
+                    {autosaveStatus === "error"
+                      ? t("autosave_error")
+                      : autosaveStatus === "saving"
+                        ? t("autosave_saving")
+                        : t("autosave_saved")}
+                  </span>
+                )}
+                {project && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      className={`cursor-pointer appearance-none rounded-full border px-3 py-1.5 font-bold text-xs outline-none transition-colors ${
+                        (
+                          {
+                            Released:
+                              "cursor-not-allowed border-emerald-200 bg-emerald-100 text-emerald-800 opacity-90 dark:border-emerald-800/60 dark:bg-emerald-900/40 dark:text-emerald-300",
+                            "Under Review":
+                              "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/30 dark:text-amber-400",
+                            Draft:
+                              "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+                          } as Record<string, string>
+                        )[lifecycleStatus] ||
+                        "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      }`}
+                      data-testid="formulation-status-select"
+                      disabled={isReleased}
+                      onChange={(e) => handleStatusChange(e.target.value)}
+                      value={lifecycleStatus}
+                    >
+                      <option value="Draft">{t("draft")}</option>
+                      <option value="Under Review">{t("under_review")}</option>
+                      <option
+                        disabled={
+                          lifecycleStatus === "Draft" || hasRegulationBreaches
+                        }
+                        value="Released"
                       >
-                        <option value="Draft">{t("draft")}</option>
-                        <option value="Under Review">
-                          {t("under_review")}
-                        </option>
-                        <option
-                          disabled={
-                            lifecycleStatus === "Draft" || hasRegulationBreaches
-                          }
-                          value="Released"
+                        {t("released")}
+                      </option>
+                    </select>
+                    {isReleased && (
+                      <>
+                        <span
+                          className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                          data-testid="latest-read-only-badge"
                         >
-                          {t("released")}
-                        </option>
-                      </select>
-                      {isReleased && (
-                        <>
-                          <span
-                            className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
-                            data-testid="latest-read-only-badge"
-                          >
-                            {t("latest_read_only")}
-                          </span>
-                          <button
-                            className="rounded-full border border-brand-primary/20 bg-white px-3 py-1.5 font-bold text-brand-primary text-xs transition-colors hover:bg-brand-mint disabled:cursor-wait disabled:opacity-70 dark:border-brand-mint/20 dark:bg-slate-900 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/40"
-                            data-testid="create-new-version-button"
-                            disabled={isCreatingNewVersion}
-                            onClick={handleCreateNewVersion}
-                            type="button"
-                          >
-                            {isCreatingNewVersion
-                              ? t("creating")
-                              : t("create_new_version")}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <p className="flex items-center gap-2 font-medium text-gray-500 text-sm dark:text-slate-400">
-                  <Folder size={14} />
-
-                  {t("sequence_editor")}
-                </p>
-                {hasRegulationBreaches && (
-                  <div className="mt-3 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200">
-                    <ShieldAlert className="mt-0.5 shrink-0" size={18} />
-                    <div>
-                      <p className="font-black text-sm">
-                        {t("regulation_limit_release_blocked")}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        {regulationBreaches
-                          .slice(0, 2)
-                          .map(
-                            (breach) =>
-                              `${breach.ingredientName}: ${breach.actualPercent.toFixed(3)}% / max ${(breach.maxLimitPercent ?? 0).toFixed(3)}%`
-                          )
-                          .join(" • ")}
-                      </p>
-                    </div>
+                          {t("latest_read_only")}
+                        </span>
+                        <button
+                          className="rounded-full border border-brand-primary/20 bg-white px-3 py-1.5 font-bold text-brand-primary text-xs transition-colors hover:bg-brand-mint disabled:cursor-wait disabled:opacity-70 dark:border-brand-mint/20 dark:bg-slate-900 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/40"
+                          data-testid="create-new-version-button"
+                          disabled={isCreatingNewVersion}
+                          onClick={handleCreateNewVersion}
+                          type="button"
+                        >
+                          {isCreatingNewVersion
+                            ? t("creating")
+                            : t("create_new_version")}
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
+              </div>
+              <p className="flex items-center gap-2 font-medium text-gray-500 text-sm dark:text-slate-400">
+                <Folder size={14} />
+
+                {t("sequence_editor")}
+              </p>
+              {hasRegulationBreaches && (
+                <div className="mt-3 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200">
+                  <ShieldAlert className="mt-0.5 shrink-0" size={18} />
+                  <div>
+                    <p className="font-black text-sm">
+                      {t("regulation_limit_release_blocked")}
+                    </p>
+                    <p className="mt-1 text-xs">
+                      {regulationBreaches
+                        .slice(0, 2)
+                        .map(
+                          (breach) =>
+                            `${breach.ingredientName}: ${breach.actualPercent.toFixed(3)}% / max ${(breach.maxLimitPercent ?? 0).toFixed(3)}%`
+                        )
+                        .join(" • ")}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -8,40 +8,77 @@ import { mutation, query } from "./_generated/server";
 import { makeLocalizedString, selectLocalizedString } from "./localization";
 import { normalizeInsNumber } from "./regulatoryHelpers";
 import { languageValidator, localizedStringValidator } from "./validators";
+import {
+  requirePersonalOrWorkspaceAccess,
+  requirePersonalOrWorkspaceScope,
+} from "./workspaceAccess";
+
+type TenantResource = {
+  organizationId?: Doc<"ingredients">["organizationId"] | null;
+  userId?: string | null;
+};
+
+function isInTenant(
+  resource: TenantResource,
+  organizationId: TenantResource["organizationId"],
+  userId: string,
+) {
+  return organizationId
+    ? resource.organizationId === organizationId
+    : !resource.organizationId && resource.userId === userId;
+}
+
+async function requireSubIngredientsInTenant(
+  ctx: Parameters<typeof requirePersonalOrWorkspaceAccess>[0],
+  subIngredients: Array<{ ingredientId: Doc<"ingredients">["_id"] }> | undefined,
+  tenant: TenantResource,
+  userId: string,
+) {
+  for (const subIngredient of subIngredients ?? []) {
+    const ingredient = await ctx.db.get(subIngredient.ingredientId);
+    if (!ingredient) {
+      throw new Error("Sub-ingredient not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, ingredient);
+    if (!isInTenant(ingredient, tenant.organizationId, userId)) {
+      throw new Error("Sub-ingredient belongs to a different workspace");
+    }
+  }
+}
 
 export const list = query({
-  args: { language: v.optional(languageValidator) },
+  args: {
+    language: v.optional(languageValidator),
+    organizationId: v.optional(v.id("organizations")),
+  },
   handler: async (ctx, args) => {
-    // Basic validation to ensure the user is logged in
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthenticated call to ingredients:list");
-    }
-
-    // In a full implementation, you'd filter by organizationId
-    // For now, return all ingredients sorted by newest
+    const scope = await requirePersonalOrWorkspaceScope(ctx, args.organizationId);
     const ingredients = await ctx.db
       .query("ingredients")
+      .filter((q) =>
+        scope.organizationId
+          ? q.eq(q.field("organizationId"), scope.organizationId)
+          : q.and(
+              q.eq(q.field("organizationId"), undefined),
+              q.eq(q.field("userId"), scope.userId),
+            ),
+      )
       .order("desc")
       .collect();
 
     const ingredientsWithUrls = await Promise.all(
       ingredients.map(async (ing) => {
-        let coverImageUrl;
+        let coverImageUrl: string | null | undefined;
         if (ing.coverImageId) {
           coverImageUrl = await ctx.storage.getUrl(ing.coverImageId);
         }
         return {
           ...ing,
           name: selectLocalizedString(ing.name, ing.nameI18n, args.language),
-          commonName: selectLocalizedString(
-            ing.commonName,
-            ing.commonNameI18n,
-            args.language
-          ),
+          commonName: selectLocalizedString(ing.commonName, ing.commonNameI18n, args.language),
           coverImageUrl,
         };
-      })
+      }),
     );
 
     return ingredientsWithUrls;
@@ -49,27 +86,28 @@ export const list = query({
 });
 
 export const listFormulationOptions = query({
-  args: { language: v.optional(languageValidator) },
+  args: {
+    language: v.optional(languageValidator),
+    organizationId: v.optional(v.id("organizations")),
+  },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error(
-        "Unauthenticated call to ingredients:listFormulationOptions"
-      );
-    }
-
+    const scope = await requirePersonalOrWorkspaceScope(ctx, args.organizationId);
     const ingredients = await ctx.db
       .query("ingredients")
+      .filter((q) =>
+        scope.organizationId
+          ? q.eq(q.field("organizationId"), scope.organizationId)
+          : q.and(
+              q.eq(q.field("organizationId"), undefined),
+              q.eq(q.field("userId"), scope.userId),
+            ),
+      )
       .order("desc")
       .collect();
 
     return ingredients.map((ingredient) => ({
       _id: ingredient._id,
-      name: selectLocalizedString(
-        ingredient.name,
-        ingredient.nameI18n,
-        args.language
-      ),
+      name: selectLocalizedString(ingredient.name, ingredient.nameI18n, args.language),
       nameI18n: makeLocalizedString(ingredient.name, ingredient.nameI18n),
       code: ingredient.code,
       status: ingredient.status,
@@ -106,8 +144,8 @@ export const create = mutation({
           nutrientName: v.string(),
           value: v.number(),
           unit: v.string(),
-        })
-      )
+        }),
+      ),
     ),
     allergenValues: v.optional(v.array(v.string())),
     allergenRegion: v.optional(v.string()),
@@ -119,8 +157,8 @@ export const create = mutation({
         v.object({
           unit: v.string(),
           grams: v.number(),
-        })
-      )
+        }),
+      ),
     ),
     isComposite: v.optional(v.boolean()),
     subIngredients: v.optional(
@@ -128,27 +166,23 @@ export const create = mutation({
         v.object({
           ingredientId: v.id("ingredients"),
           percentage: v.number(),
-        })
-      )
+        }),
+      ),
     ),
     organizationId: v.optional(v.id("organizations")),
     coverImageId: v.optional(v.id("_storage")),
     status: v.optional(v.union(v.literal("Draft"), v.literal("Approved"))),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthenticated call to ingredients:create");
-    }
+    const scope = await requirePersonalOrWorkspaceScope(ctx, args.organizationId);
+    await requireSubIngredientsInTenant(ctx, args.subIngredients, scope, scope.userId);
 
-    const normalizedInsNumber = args.isAdditive
-      ? normalizeInsNumber(args.insNumber)
-      : "";
+    const normalizedInsNumber = args.isAdditive ? normalizeInsNumber(args.insNumber) : "";
     const matchedAdditive = normalizedInsNumber
       ? await ctx.db
           .query("foodAdditives")
           .withIndex("by_normalizedInsNumber", (q) =>
-            q.eq("normalizedInsNumber", normalizedInsNumber)
+            q.eq("normalizedInsNumber", normalizedInsNumber),
           )
           .first()
       : null;
@@ -161,7 +195,8 @@ export const create = mutation({
       normalizedInsNumber: normalizedInsNumber || undefined,
       foodAdditiveId: matchedAdditive?._id,
       status: args.status ?? "Draft",
-      userId: identity.subject,
+      userId: scope.userId,
+      organizationId: scope.organizationId,
       createdAt: Date.now(),
     });
 
@@ -191,8 +226,8 @@ export const update = mutation({
           nutrientName: v.string(),
           value: v.number(),
           unit: v.string(),
-        })
-      )
+        }),
+      ),
     ),
     allergenValues: v.optional(v.array(v.string())),
     allergenRegion: v.optional(v.string()),
@@ -204,8 +239,8 @@ export const update = mutation({
         v.object({
           unit: v.string(),
           grams: v.number(),
-        })
-      )
+        }),
+      ),
     ),
     isComposite: v.optional(v.boolean()),
     subIngredients: v.optional(
@@ -213,28 +248,37 @@ export const update = mutation({
         v.object({
           ingredientId: v.id("ingredients"),
           percentage: v.number(),
-        })
-      )
+        }),
+      ),
     ),
     organizationId: v.optional(v.id("organizations")),
     coverImageId: v.optional(v.id("_storage")),
     status: v.optional(v.union(v.literal("Draft"), v.literal("Approved"))),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthenticated call to ingredients:update");
+    const existingIngredient = await ctx.db.get(args.id);
+    if (!existingIngredient) {
+      throw new Error("Ingredient not found");
     }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, existingIngredient);
+    const nextOrganizationId = args.organizationId ?? existingIngredient.organizationId;
+    if (nextOrganizationId !== existingIngredient.organizationId) {
+      await requirePersonalOrWorkspaceScope(ctx, nextOrganizationId);
+    }
+    await requireSubIngredientsInTenant(
+      ctx,
+      args.subIngredients,
+      { organizationId: nextOrganizationId },
+      authUser._id,
+    );
 
-    const { id, ...rest } = args;
-    const normalizedInsNumber = args.isAdditive
-      ? normalizeInsNumber(args.insNumber)
-      : "";
+    const { id, organizationId: _organizationId, ...rest } = args;
+    const normalizedInsNumber = args.isAdditive ? normalizeInsNumber(args.insNumber) : "";
     const matchedAdditive = normalizedInsNumber
       ? await ctx.db
           .query("foodAdditives")
           .withIndex("by_normalizedInsNumber", (q) =>
-            q.eq("normalizedInsNumber", normalizedInsNumber)
+            q.eq("normalizedInsNumber", normalizedInsNumber),
           )
           .first()
       : null;
@@ -246,6 +290,7 @@ export const update = mutation({
       insNumber: normalizedInsNumber || undefined,
       normalizedInsNumber: normalizedInsNumber || undefined,
       foodAdditiveId: matchedAdditive?._id,
+      organizationId: nextOrganizationId,
     });
   },
 });
@@ -253,7 +298,14 @@ export const update = mutation({
 export const getDependencies = query({
   args: { id: v.id("ingredients"), code: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const allIngredients = await ctx.db.query("ingredients").collect();
+    const ingredient = await ctx.db.get(args.id);
+    if (!ingredient) {
+      throw new Error("Ingredient not found");
+    }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, ingredient);
+    const allIngredients = (await ctx.db.query("ingredients").collect()).filter((candidate) =>
+      isInTenant(candidate, ingredient.organizationId, authUser._id),
+    );
 
     const composites = findCompositeDependencies(allIngredients, args.id);
 
@@ -263,19 +315,25 @@ export const getDependencies = query({
         .query("inventoryItems")
         .filter((q) => q.eq(q.field("ingredientCode"), args.code))
         .collect();
+      const scopedInventory = linkedInventory.filter((item) =>
+        isInTenant(item, ingredient.organizationId, authUser._id),
+      );
 
-      if (linkedInventory.length > 0) {
+      if (scopedInventory.length > 0) {
         const allSteps = await ctx.db.query("recipeSteps").collect();
         const uniqueProjectIds = findProjectIdsUsingIngredientCode({
           ingredientCode: args.code,
-          inventoryItems: linkedInventory,
+          inventoryItems: scopedInventory,
           recipeSteps: allSteps,
         });
 
         const loadedFormulas = await Promise.all(
-          uniqueProjectIds.map(async (pid) => await ctx.db.get(pid))
+          uniqueProjectIds.map(async (pid) => await ctx.db.get(pid)),
         );
-        formulas = loadedFormulas.filter((f) => f !== null);
+        formulas = loadedFormulas.filter(
+          (formula): formula is Doc<"projects"> =>
+            formula !== null && isInTenant(formula, ingredient.organizationId, authUser._id),
+        );
       }
     }
 
@@ -289,7 +347,14 @@ export const getDependencies = query({
 export const markDependenciesOutOfSync = mutation({
   args: { id: v.id("ingredients") },
   handler: async (ctx, args) => {
-    const allIngredients = await ctx.db.query("ingredients").collect();
+    const ingredient = await ctx.db.get(args.id);
+    if (!ingredient) {
+      throw new Error("Ingredient not found");
+    }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, ingredient);
+    const allIngredients = (await ctx.db.query("ingredients").collect()).filter((candidate) =>
+      isInTenant(candidate, ingredient.organizationId, authUser._id),
+    );
 
     const composites = findCompositeDependencies(allIngredients, args.id);
 
@@ -303,7 +368,14 @@ export const markDependenciesOutOfSync = mutation({
 export const propagateUpdates = mutation({
   args: { id: v.id("ingredients") },
   handler: async (ctx, args) => {
-    const allIngredients = await ctx.db.query("ingredients").collect();
+    const ingredient = await ctx.db.get(args.id);
+    if (!ingredient) {
+      throw new Error("Ingredient not found");
+    }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, ingredient);
+    const allIngredients = (await ctx.db.query("ingredients").collect()).filter((candidate) =>
+      isInTenant(candidate, ingredient.organizationId, authUser._id),
+    );
 
     // Find composites depending directly on the modified ingredient
     const composites = findCompositeDependencies(allIngredients, args.id);
@@ -336,13 +408,11 @@ export const propagateUpdates = mutation({
         }
       }
 
-      const updatedNutrientValues = Array.from(newNutrientMap.entries()).map(
-        ([name, data]) => ({
-          nutrientName: name,
-          value: Number(data.value.toFixed(2)),
-          unit: data.unit,
-        })
-      );
+      const updatedNutrientValues = Array.from(newNutrientMap.entries()).map(([name, data]) => ({
+        nutrientName: name,
+        value: Number(data.value.toFixed(2)),
+        unit: data.unit,
+      }));
 
       await ctx.db.patch(comp._id, {
         nutrientValues: updatedNutrientValues,
@@ -364,17 +434,15 @@ export const propagateUpdates = mutation({
 export const remove = mutation({
   args: { id: v.id("ingredients") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthenticated call to ingredients:remove");
-    }
-
     const ingredient = await ctx.db.get(args.id);
     if (!ingredient) {
       throw new Error("Ingredient not found");
     }
+    const authUser = await requirePersonalOrWorkspaceAccess(ctx, ingredient);
 
-    const allIngredients = await ctx.db.query("ingredients").collect();
+    const allIngredients = (await ctx.db.query("ingredients").collect()).filter((candidate) =>
+      isInTenant(candidate, ingredient.organizationId, authUser._id),
+    );
     const composites = findCompositeDependencies(allIngredients, args.id);
 
     let formulas: Doc<"projects">[] = [];
@@ -383,25 +451,29 @@ export const remove = mutation({
         .query("inventoryItems")
         .filter((q) => q.eq(q.field("ingredientCode"), ingredient.code))
         .collect();
+      const scopedInventory = linkedInventory.filter((item) =>
+        isInTenant(item, ingredient.organizationId, authUser._id),
+      );
 
-      if (linkedInventory.length > 0) {
+      if (scopedInventory.length > 0) {
         const allSteps = await ctx.db.query("recipeSteps").collect();
         const uniqueProjectIds = findProjectIdsUsingIngredientCode({
           ingredientCode: ingredient.code,
-          inventoryItems: linkedInventory,
+          inventoryItems: scopedInventory,
           recipeSteps: allSteps,
         });
         const loadedFormulas = await Promise.all(
-          uniqueProjectIds.map(async (pid) => await ctx.db.get(pid))
+          uniqueProjectIds.map(async (pid) => await ctx.db.get(pid)),
         );
-        formulas = loadedFormulas.filter((f) => f !== null);
+        formulas = loadedFormulas.filter(
+          (formula): formula is Doc<"projects"> =>
+            formula !== null && isInTenant(formula, ingredient.organizationId, authUser._id),
+        );
       }
     }
 
     if (composites.length > 0 || formulas.length > 0) {
-      throw new Error(
-        "عذراً، لا يمكنك حذف هذا المكون لأنه مستخدم في تركيبات أو مشاريع أخرى."
-      );
+      throw new Error("عذراً، لا يمكنك حذف هذا المكون لأنه مستخدم في تركيبات أو مشاريع أخرى.");
     }
 
     await ctx.db.delete(args.id);
@@ -414,10 +486,11 @@ export const updateStatus = mutation({
     status: v.union(v.literal("Draft"), v.literal("Approved")),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthenticated call to update ingredient status");
+    const ingredient = await ctx.db.get(args.id);
+    if (!ingredient) {
+      throw new Error("Ingredient not found");
     }
+    await requirePersonalOrWorkspaceAccess(ctx, ingredient);
     return await ctx.db.patch(args.id, { status: args.status });
   },
 });

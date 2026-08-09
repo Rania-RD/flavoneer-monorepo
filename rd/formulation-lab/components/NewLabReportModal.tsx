@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { FlaskConical, Plus, Save, Trash2, X } from "lucide-react";
@@ -7,8 +9,6 @@ import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface Run {
@@ -47,14 +47,7 @@ const METHOD_SUGGESTIONS = [
   "Refractometry",
 ] as const;
 
-const UNIT_SUGGESTIONS = [
-  "%",
-  "mg/g",
-  "cP",
-  "g/cm³",
-  "mg/kg",
-  "ppm",
-] as const;
+const UNIT_SUGGESTIONS = ["%", "mg/g", "cP", "g/cm³", "mg/kg", "ppm"] as const;
 
 interface AutocompleteInputProps {
   onChange: (value: string) => void;
@@ -206,7 +199,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
   runs,
 }) => {
   const { t } = useTranslation();
-  const { isRTL, profile } = useSettings();
+  const { isRTL } = useSettings();
   const createLabReport = useMutation(api.labReports.create);
 
   const [saving, setSaving] = useState(false);
@@ -292,8 +285,6 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
         version: version || "1.0",
         lotNumber: selectedRun.batchCode,
         date: DateTime.now().toLocaleString(DateTime.DATE_MED),
-        status: "Pending",
-        leadChemist: profile.name || t("unknown"),
         sampleType,
         hash:
           Math.random().toString(36).slice(2, 10) +
@@ -409,7 +400,10 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                       value={sampleType}
                     >
                       {SAMPLE_TYPES.map((sampleTypeOption) => (
-                        <option key={sampleTypeOption.value} value={sampleTypeOption.value}>
+                        <option
+                          key={sampleTypeOption.value}
+                          value={sampleTypeOption.value}
+                        >
                           {t(sampleTypeOption.key)}
                         </option>
                       ))}

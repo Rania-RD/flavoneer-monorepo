@@ -4,20 +4,17 @@ import { FlaskConical } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
-import {
-  getSignatureName,
-  SIGNATURE_FONT_FAMILY,
-  SIGNATURE_TYPE,
-} from "../lib/signature";
 import type { EnrichedLabReport } from "../types";
 import ReportsDropdown from "./ReportsDropdown";
 
 const RecentReports: React.FC = () => {
   const { t } = useTranslation();
-  const { language, profile } = useSettings();
+  const { language } = useSettings();
+  const { activeOrganizationId } = useOrganization();
   const { user, role } = usePermissions();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -26,12 +23,14 @@ const RecentReports: React.FC = () => {
   const reportsResponse = useQuery(api.labReports.list, {
     paginationOpts: { numItems: 50, cursor: null },
     language,
+    organizationId: activeOrganizationId ?? undefined,
   });
   const reportsRaw = reportsResponse?.page;
 
   const runsResponse = useQuery(api.runs.list, {
     paginationOpts: { numItems: 50, cursor: null },
     language,
+    organizationId: activeOrganizationId ?? undefined,
   });
   const runsRaw = runsResponse?.page;
   const updateStatus = useMutation(api.labReports.updateStatus);
@@ -67,15 +66,9 @@ const RecentReports: React.FC = () => {
 
         // Toggle status logic
         const newStatus = report.status === "Approved" ? "Pending" : "Approved";
-        const isApproving = newStatus === "Approved";
-        const signatureName = getSignatureName(profile.name, user?.name);
-
         await updateStatus({
           id: report._id,
           status: newStatus,
-          signoffData: isApproving ? signatureName : undefined,
-          signoffFont: isApproving ? SIGNATURE_FONT_FAMILY : undefined,
-          signoffType: isApproving ? SIGNATURE_TYPE : undefined,
         });
         break;
       }

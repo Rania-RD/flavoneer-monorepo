@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requirePersonalOrWorkspaceAccess } from "./workspaceAccess";
 
 // Get all dependencies for a project
 export const getByProject = query({
@@ -12,9 +13,14 @@ export const getByProject = query({
       stepKey: v.string(),
       dependsOnStepKeys: v.array(v.string()),
       condition: v.union(v.literal("AND"), v.literal("OR")),
-    })
+    }),
   ),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     return await ctx.db
       .query("stepDependencies")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
@@ -32,13 +38,18 @@ export const saveDependency = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    await requirePersonalOrWorkspaceAccess(ctx, project);
     // Check if dependency already exists for this step
     const sameStepDependencies = await ctx.db
       .query("stepDependencies")
       .withIndex("by_stepKey", (q) => q.eq("stepKey", args.stepKey))
       .collect();
     const existing = sameStepDependencies.find(
-      (dependency) => dependency.projectId === args.projectId
+      (dependency) => dependency.projectId === args.projectId,
     );
 
     if (existing) {

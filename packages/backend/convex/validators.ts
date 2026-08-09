@@ -62,6 +62,8 @@ export const organizationMemberRoleValidator = v.union(
   v.literal("member"),
 );
 
+export const organizationStatusValidator = v.union(v.literal("active"), v.literal("suspended"));
+
 export const stepTypeValidator = v.union(
   v.literal("weighing"),
   v.literal("timer"),
@@ -534,6 +536,7 @@ export const organizationWithRoleReturnValidator = v.object({
   createdAt: v.number(),
   autoVersioning: v.optional(v.boolean()),
   authOrganizationId: v.optional(v.string()),
+  status: v.optional(organizationStatusValidator),
   role: organizationMemberRoleValidator,
 });
 
@@ -548,6 +551,7 @@ export const organizationReturnValidator = v.object({
   createdAt: v.number(),
   autoVersioning: v.optional(v.boolean()),
   authOrganizationId: v.optional(v.string()),
+  status: v.optional(organizationStatusValidator),
 });
 
 /** Organization member document — returned by organizationMembers queries */

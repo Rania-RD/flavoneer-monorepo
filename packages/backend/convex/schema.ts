@@ -19,6 +19,7 @@ import {
   localizedStringValidator,
   miniSpreadsheetValidator,
   organizationMemberRoleValidator,
+  organizationStatusValidator,
   productionHallCodeValidator,
   productionLineCheckKeyValidator,
   productionLineMeasurementUnitValidator,
@@ -508,6 +509,7 @@ export default defineSchema({
     createdAt: v.number(),
     autoVersioning: v.optional(v.boolean()),
     authOrganizationId: v.optional(v.string()),
+    status: v.optional(organizationStatusValidator),
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_slug", ["slug"])
@@ -677,6 +679,41 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_organizationId_and_userId", ["organizationId", "userId"])
     .index("by_authMemberId", ["authMemberId"]),
+
+  // ─── Platform Feature Management ─────────────────
+  featureFlags: defineTable({
+    key: v.string(),
+    name: v.string(),
+    description: v.string(),
+    category: v.string(),
+    enabledByDefault: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+    archivedAt: v.optional(v.number()),
+  }).index("by_key", ["key"]),
+
+  featureFlagOverrides: defineTable({
+    featureFlagId: v.id("featureFlags"),
+    organizationId: v.id("organizations"),
+    enabled: v.boolean(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  })
+    .index("by_featureFlagId", ["featureFlagId"])
+    .index("by_organizationId", ["organizationId"])
+    .index("by_featureFlagId_and_organizationId", ["featureFlagId", "organizationId"]),
+
+  platformAuditLogs: defineTable({
+    actorId: v.string(),
+    actorName: v.string(),
+    action: v.string(),
+    targetType: v.string(),
+    targetId: v.string(),
+    targetLabel: v.string(),
+    summary: v.string(),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
 
   organizationInvites: defineTable({
     organizationId: v.id("organizations"),

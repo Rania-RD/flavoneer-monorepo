@@ -1,4 +1,5 @@
 import { api } from "@flavoneer/backend/api";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { usePaginatedQuery } from "convex/react";
 import {
   ArrowUpRight,
@@ -7,9 +8,10 @@ import {
   Loader2,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { LabDataGrid } from "../components/ui/LabDataGrid";
 import { useOrganization } from "../context/OrganizationContext";
 import { usePermissions } from "../hooks/usePermissions";
 
@@ -39,6 +41,7 @@ const statusClasses: Record<RecordStatus, string> = {
 
 export default function ProductionLineRecords() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { activeOrganizationId } = useOrganization();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canViewProductionChecks = hasPermission("view_production_checks");
@@ -60,11 +63,97 @@ export default function ProductionLineRecords() {
     { initialNumItems: 20 }
   );
 
-  const formatDate = (value: number) =>
-    new Intl.DateTimeFormat(i18n.language === "ar" ? "ar-PS" : "en", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(value);
+  type ProductionRecord = (typeof results)[number];
+  const columnDefs = useMemo<ColDef<ProductionRecord>[]>(
+    () => [
+      {
+        cellRenderer: ({ data }: ICellRendererParams<ProductionRecord>) =>
+          data ? (
+            <div className="flex min-w-0 flex-col items-start gap-1.5 py-2">
+              <span className="truncate font-bold font-mono">
+                {data.displaySerial}
+              </span>
+              <span
+                className={`rounded-full px-2.5 py-1 font-bold text-[10px] ${statusClasses[data.status as RecordStatus]}`}
+              >
+                {t(`production_status_${data.status}`)}
+              </span>
+            </div>
+          ) : null,
+        field: "displaySerial",
+        flex: 0.8,
+        headerName: t("form_serial"),
+        minWidth: 175,
+      },
+      {
+        cellRenderer: ({ data }: ICellRendererParams<ProductionRecord>) =>
+          data ? (
+            <div className="min-w-0 py-2">
+              <p className="truncate font-bold">{data.productName}</p>
+              <p className="mt-1 flex items-center gap-1.5 truncate text-[#527568] text-xs dark:text-[#a9cbbb]">
+                <Camera aria-hidden="true" className="shrink-0" size={13} />
+                {data.printedBatchCode ?? t("evidence_not_captured")}
+              </p>
+            </div>
+          ) : null,
+        field: "productName",
+        flex: 1.4,
+        headerName: t("product_label"),
+        minWidth: 220,
+      },
+      {
+        cellClass: "lab-grid-muted",
+        field: "departmentName",
+        flex: 1,
+        headerName: t("department_or_line"),
+        minWidth: 170,
+      },
+      {
+        cellClass: "lab-grid-muted",
+        field: "qcUserName",
+        flex: 1,
+        headerName: t("qc_inspector"),
+        minWidth: 160,
+      },
+      {
+        cellClass: "lab-grid-muted",
+        field: "inspectionAt",
+        filter: "agNumberColumnFilter",
+        flex: 1.1,
+        headerName: t("inspection_time"),
+        minWidth: 190,
+        valueFormatter: ({ value }) =>
+          typeof value === "number"
+            ? new Intl.DateTimeFormat(
+                i18n.language === "ar" ? "ar-PS" : "en",
+                { dateStyle: "medium", timeStyle: "short" }
+              ).format(value)
+            : "",
+      },
+      {
+        cellRenderer: ({ data }: ICellRendererParams<ProductionRecord>) =>
+          data ? (
+            <Link
+              aria-label={t("view_record")}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#d2f2d4] text-[#173e33] transition-transform hover:-translate-y-0.5 dark:bg-[#f5a623]"
+              onClick={(event) => event.stopPropagation()}
+              to={`/quality/production-line-records/${data._id}`}
+            >
+              <ArrowUpRight aria-hidden="true" size={17} />
+            </Link>
+          ) : null,
+        colId: "actions",
+        cellClass: "lab-grid-align-center",
+        filter: false,
+        headerName: "",
+        headerClass: "lab-grid-align-center",
+        maxWidth: 76,
+        minWidth: 76,
+        sortable: false,
+      },
+    ],
+    [i18n.language, t]
+  );
 
   if (permissionsLoading) {
     return (
@@ -124,15 +213,6 @@ export default function ProductionLineRecords() {
       </div>
 
       <section className="overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-[0_18px_55px_rgba(16,47,39,0.08)] dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
-        <div className="hidden grid-cols-[0.65fr_1.4fr_1fr_1fr_1.1fr_auto] gap-4 border-[#1c4a3c]/10 border-b px-8 py-4 font-bold text-[#527568] text-xs uppercase tracking-wider lg:grid dark:border-[#d2f2d4]/10 dark:text-[#a9cbbb]">
-          <span>{t("form_serial")}</span>
-          <span>{t("product_label")}</span>
-          <span>{t("department_or_line")}</span>
-          <span>{t("qc_inspector")}</span>
-          <span>{t("inspection_time")}</span>
-          <span className="sr-only">{t("view_record")}</span>
-        </div>
-
         {paginationStatus === "LoadingFirstPage" ? (
           <div className="flex min-h-64 items-center justify-center">
             <Loader2 className="animate-spin text-[#f5a623]" size={28} />
@@ -151,47 +231,19 @@ export default function ProductionLineRecords() {
         ) : null}
 
         {paginationStatus !== "LoadingFirstPage" && results.length > 0 ? (
-          <div className="divide-y divide-[#1c4a3c]/10 dark:divide-[#d2f2d4]/10">
-            {results.map((record) => (
-              <Link
-                className="group grid gap-4 px-6 py-5 transition-colors hover:bg-[#eef8eb]/70 lg:grid-cols-[0.65fr_1.4fr_1fr_1fr_1.1fr_auto] lg:items-center lg:px-8 dark:hover:bg-[#285b4d]/45"
-                key={record._id}
-                to={`/quality/production-line-records/${record._id}`}
-              >
-                <div className="flex min-w-0 items-center justify-between gap-3 lg:flex-col lg:items-start lg:justify-center lg:gap-2">
-                  <span className="min-w-0 truncate font-bold font-mono text-[#173e33] dark:text-[#f7f4df]">
-                    {record.displaySerial}
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-[10px] ${statusClasses[record.status as RecordStatus]}`}
-                  >
-                    {t(`production_status_${record.status}`)}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-bold text-[#173e33] dark:text-[#f7f4df]">
-                    {record.productName}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1.5 text-[#527568] text-xs dark:text-[#a9cbbb]">
-                    <Camera aria-hidden="true" size={13} />
-                    {record.printedBatchCode ?? t("evidence_not_captured")}
-                  </p>
-                </div>
-                <p className="text-[#527568] text-sm dark:text-[#a9cbbb]">
-                  {record.departmentName}
-                </p>
-                <p className="text-[#527568] text-sm dark:text-[#a9cbbb]">
-                  {record.qcUserName}
-                </p>
-                <p className="text-[#527568] text-sm dark:text-[#a9cbbb]">
-                  {formatDate(record.inspectionAt)}
-                </p>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d2f2d4] text-[#173e33] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 dark:bg-[#f5a623]">
-                  <ArrowUpRight aria-hidden="true" size={18} />
-                </span>
-              </Link>
-            ))}
-          </div>
+          <LabDataGrid<ProductionRecord>
+            className="lab-data-grid--production"
+            columnDefs={columnDefs}
+            getRowId={({ data }) => data._id}
+            onRowClicked={({ data }) => {
+              if (data) {
+                navigate(`/quality/production-line-records/${data._id}`);
+              }
+            }}
+            rowClass="lab-data-grid__clickable-row"
+            rowData={results}
+            rowHeight={74}
+          />
         ) : null}
 
         {paginationStatus === "CanLoadMore" ? (

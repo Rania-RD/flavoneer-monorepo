@@ -1,5 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
+import type { ColDef } from "ag-grid-community";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
@@ -16,9 +17,10 @@ import {
   ShieldCheck,
   UserRoundCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
+import { LabDataGrid } from "../components/ui/LabDataGrid";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
 
@@ -30,6 +32,73 @@ const statusClasses: Record<string, string> = {
     "bg-[#fff0ed] text-[#a43434] dark:bg-[#a43434]/20 dark:text-[#ffb8ad]",
   approved:
     "bg-[#e8f7ed] text-[#247a51] dark:bg-[#247a51]/20 dark:text-[#9be0b8]",
+};
+
+interface SpecificationLimit {
+  maximum: number;
+  minimum: number;
+  minimumReadingCount: number;
+  readingKey: string;
+  unit: string;
+}
+
+const SpecificationLimitsGrid = ({
+  limits,
+}: {
+  limits: SpecificationLimit[];
+}) => {
+  const { t } = useTranslation();
+  const columnDefs = useMemo<ColDef<SpecificationLimit>[]>(
+    () => [
+      {
+        cellClass: "font-bold",
+        flex: 1.4,
+        headerName: t("configured_range"),
+        minWidth: 190,
+        valueGetter: ({ data }) =>
+          data ? t(`production_reading_${data.readingKey}`) : "",
+      },
+      {
+        cellClass: "lab-grid-muted",
+        field: "minimum",
+        filter: "agNumberColumnFilter",
+        headerName: t("acceptable_minimum"),
+        minWidth: 160,
+      },
+      {
+        cellClass: "lab-grid-muted",
+        field: "maximum",
+        filter: "agNumberColumnFilter",
+        headerName: t("acceptable_maximum"),
+        minWidth: 160,
+      },
+      {
+        cellClass: "font-mono",
+        field: "unit",
+        headerName: t("entry_unit"),
+        minWidth: 130,
+      },
+      {
+        cellClass: "lab-grid-muted",
+        field: "minimumReadingCount",
+        filter: "agNumberColumnFilter",
+        headerName: t("required_count"),
+        minWidth: 150,
+      },
+    ],
+    [t]
+  );
+
+  return (
+    <LabDataGrid<SpecificationLimit>
+      className="lab-data-grid--production lab-data-grid--production-spec"
+      columnDefs={columnDefs}
+      getRowId={({ data }) => data.readingKey}
+      headerHeight={48}
+      rowData={limits}
+      rowHeight={60}
+    />
+  );
 };
 
 export default function ProductionLineRecordDetail() {
@@ -330,48 +399,7 @@ export default function ProductionLineRecordDetail() {
             {record.productName}
           </h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-start text-sm">
-            <thead>
-              <tr className="bg-[#eef8eb]/70 text-[#527568] text-xs uppercase tracking-wider dark:bg-[#285b4d]/55 dark:text-[#a9cbbb]">
-                <th className="px-6 py-4 text-start sm:px-8">
-                  {t("configured_range")}
-                </th>
-                <th className="px-6 py-4 text-start">
-                  {t("acceptable_minimum")}
-                </th>
-                <th className="px-6 py-4 text-start">
-                  {t("acceptable_maximum")}
-                </th>
-                <th className="px-6 py-4 text-start">{t("entry_unit")}</th>
-                <th className="px-6 py-4 text-start sm:px-8">
-                  {t("required_count")}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1c4a3c]/10 dark:divide-[#d2f2d4]/10">
-              {record.specificationLimits.map((limit) => (
-                <tr key={limit.readingKey}>
-                  <td className="px-6 py-5 font-bold text-[#173e33] sm:px-8 dark:text-[#f7f4df]">
-                    {t(`production_reading_${limit.readingKey}`)}
-                  </td>
-                  <td className="px-6 py-5 text-[#527568] dark:text-[#a9cbbb]">
-                    {limit.minimum}
-                  </td>
-                  <td className="px-6 py-5 text-[#527568] dark:text-[#a9cbbb]">
-                    {limit.maximum}
-                  </td>
-                  <td className="px-6 py-5 font-mono text-[#173e33] dark:text-[#f7f4df]">
-                    {limit.unit}
-                  </td>
-                  <td className="px-6 py-5 text-[#527568] sm:px-8 dark:text-[#a9cbbb]">
-                    {limit.minimumReadingCount}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <SpecificationLimitsGrid limits={record.specificationLimits} />
       </section>
 
       <footer className="flex flex-wrap gap-4 px-2 pb-2 text-[#527568] text-xs dark:text-[#a9cbbb]">

@@ -1,9 +1,15 @@
-import { Check, ChevronDown, FlaskConical, ShieldCheck } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  FlaskConical,
+  Microscope,
+  ShieldCheck,
+} from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-export type WorkspaceSection = "quality" | "research";
+export type WorkspaceSection = "lab" | "quality" | "research";
 
 interface WorkspaceSectionSwitcherProps {
   activeSection: WorkspaceSection;
@@ -60,9 +66,16 @@ const WorkspaceSectionSwitcher: React.FC<
       description: t("quality_control_description"),
       icon: ShieldCheck,
     },
+    {
+      id: "lab",
+      label: t("lab"),
+      description: t("lab_description"),
+      icon: Microscope,
+    },
   ];
-  const ActiveSectionIcon =
-    activeSection === "quality" ? ShieldCheck : FlaskConical;
+  const ActiveSectionIcon = sections.find(
+    (section) => section.id === activeSection
+  )?.icon ?? FlaskConical;
 
   return (
     <div

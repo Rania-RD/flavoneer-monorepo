@@ -78,6 +78,139 @@
   font-family: "Fraunces", Georgia, serif;
 }
 
+.lab-data-grid {
+  --ag-cell-horizontal-padding: 24px;
+  min-height: 96px;
+  overflow: hidden;
+}
+
+.lab-data-grid .ag-root-wrapper {
+  min-height: 96px;
+}
+
+.lab-data-grid .ag-header-cell-label {
+  gap: 0.4rem;
+}
+
+.lab-data-grid .ag-header {
+  border-block-end-color: rgba(28, 74, 60, 0.1);
+}
+
+.dark .lab-data-grid .ag-header {
+  border-block-end-color: rgba(210, 242, 212, 0.1);
+}
+
+.lab-data-grid .ag-header-cell-menu-button,
+.lab-data-grid .ag-header-cell-filter-button {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.lab-data-grid .ag-header-cell:hover .ag-header-cell-menu-button,
+.lab-data-grid .ag-header-cell:hover .ag-header-cell-filter-button,
+.lab-data-grid .ag-header-cell:focus-within .ag-header-cell-menu-button,
+.lab-data-grid .ag-header-cell:focus-within .ag-header-cell-filter-button {
+  opacity: 0.78;
+}
+
+.lab-data-grid .ag-header-cell-resize::after {
+  height: 18px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.lab-data-grid .ag-header-cell:hover .ag-header-cell-resize::after {
+  opacity: 0.22;
+}
+
+@media (hover: none) {
+  .lab-data-grid .ag-header-cell-menu-button,
+  .lab-data-grid .ag-header-cell-filter-button {
+    opacity: 0.45;
+  }
+}
+
+.lab-data-grid .ag-row-hover::before {
+  background-color: rgba(210, 242, 212, 0.32);
+}
+
+.dark .lab-data-grid .ag-row-hover::before {
+  background-color: rgba(40, 91, 77, 0.5);
+}
+
+.lab-data-grid .ag-cell {
+  display: flex;
+  align-items: center;
+}
+
+.lab-data-grid .ag-cell-value {
+  min-width: 0;
+}
+
+.lab-data-grid--production .ag-header-cell-label,
+.lab-data-grid--stock .ag-header-cell-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lab-data-grid--production .ag-header-cell,
+.lab-data-grid--production-spec .ag-header-cell {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.lab-data-grid--production-spec .ag-header {
+  background-color: rgba(238, 248, 235, 0.7);
+}
+
+.dark .lab-data-grid--production-spec .ag-header {
+  background-color: rgba(40, 91, 77, 0.55);
+}
+
+.lab-data-grid--stock,
+.lab-data-grid--settings {
+  --ag-cell-horizontal-padding: 16px;
+}
+
+.lab-data-grid--stock .ag-header-cell {
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.lab-data-grid--settings .ag-header {
+  background-color: rgba(238, 248, 235, 0.58);
+}
+
+.dark .lab-data-grid--settings .ag-header {
+  background-color: rgba(40, 91, 77, 0.42);
+}
+
+.lab-grid-muted {
+  color: var(--flavoneer-copy);
+}
+
+.lab-grid-align-center {
+  justify-content: center;
+  text-align: center;
+}
+
+.lab-grid-align-end {
+  justify-content: flex-end;
+  text-align: end;
+}
+
+.ag-header-cell.lab-grid-align-center .ag-header-cell-label {
+  justify-content: center;
+}
+
+.ag-header-cell.lab-grid-align-end .ag-header-cell-label {
+  justify-content: flex-end;
+}
+
+.lab-data-grid__clickable-row {
+  cursor: pointer;
+}
+
 body.flavoneer-dashboard-active {
   min-height: 100vh;
   background: var(--flavoneer-mint-soft);

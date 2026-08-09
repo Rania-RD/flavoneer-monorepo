@@ -257,10 +257,11 @@ All content cards share:
 ### 7.4 Sidebar Navigation
 
 - **Desktop**: Fixed left (or right in RTL via `start-6`), `w-20`, `rounded-[2.5rem]`
-- **Section selector**: The amber flask at the top of the desktop rail opens the
-  R&D / Quality Control selector. The mobile header exposes the same control.
+- **Section selector**: The amber workspace icon at the top of the desktop rail
+  opens the R&D / Quality Control / Lab selector. The mobile header exposes the
+  same control.
   Selection persists in `localStorage`, updates the workspace header, and swaps
-  the rail destinations. Workspace Settings stays available in both sections.
+  the rail destinations. Workspace Settings stays available in every section.
 - **Settings**: the profile avatar menu links to User, Workspace, and
   Organization settings. The rail and mobile navigation do not use a dedicated
   settings item.

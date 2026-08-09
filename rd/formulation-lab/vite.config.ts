@@ -8,7 +8,7 @@ export default defineConfig({
     allowedHosts: ["lab.flavoneer.com"],
   },
   server: {
-    port: 3000,
+    port: 3001,
     host: "0.0.0.0",
   },
   plugins: [react(), tailwindcss()],

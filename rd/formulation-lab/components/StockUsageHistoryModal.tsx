@@ -1,14 +1,17 @@
+import { api } from "@flavoneer/backend/api";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { FlaskConical, History, Package, TrendingDown, X } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
+import { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import type { EnrichedInventoryItem } from "../types";
+import { LabDataGrid } from "./ui/LabDataGrid";
 
 interface StockUsageHistoryModalProps {
   item: EnrichedInventoryItem | null;
@@ -24,6 +27,59 @@ const StockUsageHistoryModal: React.FC<StockUsageHistoryModalProps> = ({
   const usageHistory = useQuery(
     api.inventory.getUsageHistory,
     item ? { inventoryItemId: item._id } : "skip"
+  );
+  type UsageHistoryEntry = NonNullable<typeof usageHistory>[number];
+  const columnDefs = useMemo<ColDef<UsageHistoryEntry>[]>(
+    () => [
+      {
+        cellClass: "lab-grid-muted",
+        field: "createdAt",
+        filter: "agNumberColumnFilter",
+        headerName: t("date"),
+        minWidth: 145,
+        valueFormatter: ({ value }) =>
+          typeof value === "number"
+            ? DateTime.fromMillis(value).toLocaleString(DateTime.DATE_MED)
+            : "",
+      },
+      {
+        cellRenderer: ({ data }: ICellRendererParams<UsageHistoryEntry>) =>
+          data ? (
+            <span className="flex min-w-0 items-center gap-2 font-bold">
+              <FlaskConical
+                className="shrink-0 text-brand-primary dark:text-brand-accent-hover"
+                size={14}
+              />
+              <span className="truncate">{data.projectName}</span>
+            </span>
+          ) : null,
+        field: "projectName",
+        flex: 1,
+        headerName: t("project"),
+        minWidth: 170,
+      },
+      {
+        cellClass: "font-mono lab-grid-muted",
+        field: "batchCode",
+        headerName: t("batch_code"),
+        minWidth: 135,
+      },
+      {
+        cellClass: "lab-grid-align-end",
+        cellRenderer: ({ data }: ICellRendererParams<UsageHistoryEntry>) =>
+          data ? (
+            <span className="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400">
+              <TrendingDown size={12} />-{data.quantityUsed.toFixed(2)} {data.unit}
+            </span>
+          ) : null,
+        field: "quantityUsed",
+        filter: "agNumberColumnFilter",
+        headerName: t("qty_used"),
+        headerClass: "lab-grid-align-end",
+        minWidth: 145,
+      },
+    ],
+    [t]
   );
 
   if (!item) {
@@ -145,60 +201,14 @@ const StockUsageHistoryModal: React.FC<StockUsageHistoryModalProps> = ({
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 dark:border-slate-700 dark:bg-slate-900/50">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-gray-100 border-b dark:border-slate-700">
-                        <th className="px-4 py-3 text-start font-bold text-[10px] text-gray-400 uppercase tracking-wider dark:text-slate-500">
-                          {t("date")}
-                        </th>
-                        <th className="px-4 py-3 text-start font-bold text-[10px] text-gray-400 uppercase tracking-wider dark:text-slate-500">
-                          {t("project")}
-                        </th>
-                        <th className="px-4 py-3 text-start font-bold text-[10px] text-gray-400 uppercase tracking-wider dark:text-slate-500">
-                          {t("batch_code")}
-                        </th>
-                        <th className="px-4 py-3 text-end font-bold text-[10px] text-gray-400 uppercase tracking-wider dark:text-slate-500">
-                          {t("qty_used")}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedHistory.map((entry) => (
-                        <tr
-                          className="border-gray-50 border-b transition-colors last:border-0 hover:bg-white dark:border-slate-800 dark:hover:bg-slate-800/50"
-                          key={entry._id}
-                        >
-                          <td className="px-4 py-3 font-medium text-gray-600 dark:text-slate-300">
-                            {DateTime.fromMillis(
-                              entry.createdAt
-                            ).toLocaleString(DateTime.DATE_MED)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <FlaskConical
-                                className="flex-shrink-0 text-brand-primary dark:text-brand-accent-hover"
-                                size={14}
-                              />
-                              <span className="max-w-[160px] truncate font-bold text-gray-900 dark:text-white">
-                                {entry.projectName}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-md border border-gray-200 bg-white px-2 py-0.5 font-bold font-mono text-gray-500 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                              {entry.batchCode}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-end">
-                            <span className="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400">
-                              <TrendingDown size={12} />-
-                              {entry.quantityUsed.toFixed(2)} {entry.unit}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <LabDataGrid<UsageHistoryEntry>
+                    className="lab-data-grid--stock"
+                    columnDefs={columnDefs}
+                    getRowId={({ data }) => data._id}
+                    headerHeight={42}
+                    rowData={sortedHistory}
+                    rowHeight={48}
+                  />
                 </div>
               )}
             </div>

@@ -209,7 +209,7 @@ export default function ProductionLineSettingsSection() {
   };
 
   return (
-    <section className="mt-6 overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
+    <section className="overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
       <div className="border-[#1c4a3c]/10 border-b p-8 dark:border-[#d2f2d4]/10">
         <div className="mb-2 flex items-center gap-3">
           <div className="rounded-xl bg-[#d2f2d4] p-2 dark:bg-[#285b4d]">

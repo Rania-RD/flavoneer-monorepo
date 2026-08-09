@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-- **Web UI**: http://localhost:3001
+- **Web UI**: http://localhost:3001. Use this exact URL because it has the existing signed-in browser session; do not substitute `127.0.0.1`. Port `3000` is used by the landing page.
 - **Test login**: `test@example.com` / `test1234`
 - **Dev servers**: `pnpm dev:lab` (frontend) + `pnpm dev:backend` (backend)
 

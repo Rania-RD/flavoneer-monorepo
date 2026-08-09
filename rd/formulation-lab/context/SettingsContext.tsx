@@ -259,6 +259,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
     } else {
       root.classList.remove("dark");
     }
+    root.dataset.agThemeMode = darkMode ? "dark" : "light";
   }, [darkMode]);
 
   // ─── Language/RTL Side Effect ───

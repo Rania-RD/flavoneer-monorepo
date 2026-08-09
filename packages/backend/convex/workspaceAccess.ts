@@ -48,6 +48,9 @@ export async function getWorkspaceAccess(
   if (!organization) {
     return null;
   }
+  if (organization.status === "suspended") {
+    throw new Error("This organization is suspended");
+  }
 
   if (organization.authOrganizationId) {
     const member = await ctx.runQuery(components.betterAuth.adapter.findOne, {

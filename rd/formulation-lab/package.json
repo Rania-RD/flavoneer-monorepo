@@ -17,6 +17,7 @@
     "fix": "ultracite fix"
   },
   "dependencies": {
+    "@ag-grid-community/locale": "36.1.0",
     "@convex-dev/better-auth": "^0.11.5",
     "@flavoneer/backend": "workspace:*",
     "@flavoneer/config": "workspace:*",
@@ -30,6 +31,8 @@
     "@react-pdf/renderer": "^4.3.2",
     "@tailwindcss/vite": "^4.1.18",
     "@types/luxon": "^3.7.1",
+    "ag-grid-community": "36.1.0",
+    "ag-grid-react": "36.1.0",
     "better-auth": "1.5.6",
     "clsx": "^2.1.1",
     "convex": "^1.41.0",

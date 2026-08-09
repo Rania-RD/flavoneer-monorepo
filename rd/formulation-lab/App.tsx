@@ -27,6 +27,7 @@ import SensoryTest from "./pages/sensory-test";
 import Settings from "./pages/settings";
 import ShareTarget from "./pages/share-target";
 import Signup from "./pages/signup";
+import SuperAdmin from "./pages/super-admin";
 
 // Component to handle user syncing
 const UserSync: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -99,6 +100,7 @@ const App: React.FC = () => {
               path="/organization"
             />
             <Route element={<Settings />} path="/settings" />
+            <Route element={<SuperAdmin />} path="/super-admin" />
             <Route element={<Navigate replace to="/" />} path="*" />
           </Routes>
         </DashboardLayout>

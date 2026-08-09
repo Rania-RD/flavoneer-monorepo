@@ -55,11 +55,13 @@ export function BrandHeader({
   action,
   actionPosition = 'end',
   className = 'mb-8',
+  secondaryAction,
   subtitle,
 }: {
   action?: ReactNode;
   actionPosition?: 'end' | 'start';
   className?: string;
+  secondaryAction?: ReactNode;
   subtitle?: ReactNode;
 }) {
   const { t } = useProductionLineI18n();
@@ -79,8 +81,9 @@ export function BrandHeader({
 
   return (
     <View className={`${className} flex-row items-center justify-between gap-4`}>
-      {actionPosition === 'start' ? action : brand}
-      {actionPosition === 'start' ? brand : action}
+      {actionPosition === 'start' ? action : secondaryAction}
+      {brand}
+      {actionPosition === 'start' ? secondaryAction : action}
     </View>
   );
 }

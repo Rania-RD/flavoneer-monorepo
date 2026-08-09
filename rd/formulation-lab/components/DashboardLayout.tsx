@@ -19,9 +19,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     if (typeof window === "undefined") {
       return "research";
     }
-    return window.localStorage.getItem("flavoneer.workspace-section") ===
-      "quality"
-      ? "quality"
+    const savedSection = window.localStorage.getItem(
+      "flavoneer.workspace-section"
+    );
+    return savedSection === "quality" || savedSection === "lab"
+      ? savedSection
       : "research";
   });
   const isFullScreenWorkspace =
@@ -56,7 +58,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
     setActiveSection(section);
     window.localStorage.setItem("flavoneer.workspace-section", section);
-    navigate(section === "quality" ? "/reports" : "/");
+    navigate(section === "research" ? "/" : "/reports");
   };
 
   return (
@@ -97,14 +99,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               {t(
                 activeSection === "quality"
                   ? "quality_control_workspace"
-                  : "workspace_label"
+                  : activeSection === "lab"
+                    ? "lab_workspace"
+                    : "workspace_label"
               )}
             </p>
             <p className="truncate font-medium text-[#6f8e82] text-[11px] dark:text-[#a9cbbb]">
               {t(
                 activeSection === "quality"
                   ? "quality_workspace_status"
-                  : "brand_workspace_status"
+                  : activeSection === "lab"
+                    ? "lab_workspace_status"
+                    : "brand_workspace_status"
               )}
             </p>
           </div>

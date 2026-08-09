@@ -1,6 +1,7 @@
 import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
 import { pdf } from "@react-pdf/renderer";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { useQuery } from "convex/react";
 import {
   ArrowLeft,
@@ -14,13 +15,96 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { ReportPDF } from "../components/ReportPDF";
+import { LabDataGrid } from "../components/ui/LabDataGrid";
 import { useSettings } from "../context/SettingsContext";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants } from "../lib/animations";
 import { SIGNATURE_FONT_FAMILY } from "../lib/signature";
+import type { TestResult } from "../types";
+
+const isPassingResult = (result: TestResult) =>
+  result.actualValue >= result.min && result.actualValue <= result.max;
+
+const AnalyticalResultsGrid = ({ results }: { results: TestResult[] }) => {
+  const { t } = useTranslation();
+  const columnDefs = useMemo<ColDef<TestResult>[]>(
+    () => [
+      {
+        cellClass: "font-bold",
+        field: "parameter",
+        flex: 1.2,
+        headerName: t("parameter"),
+        minWidth: 180,
+      },
+      {
+        cellClass: "lab-grid-muted",
+        field: "method",
+        flex: 1,
+        headerName: t("method"),
+        minWidth: 160,
+      },
+      {
+        cellClass: "lab-grid-align-center",
+        cellRenderer: ({ data }: ICellRendererParams<TestResult>) =>
+          data ? (
+            <span className="font-bold text-base">
+              {data.actualValue}
+              <span className="ms-1 font-medium text-[#527568] text-xs dark:text-[#a9cbbb]">
+                {data.unit}
+              </span>
+            </span>
+          ) : null,
+        field: "actualValue",
+        filter: "agNumberColumnFilter",
+        headerName: t("result_value"),
+        headerClass: "lab-grid-align-center",
+        minWidth: 150,
+      },
+      {
+        cellRenderer: ({ data }: ICellRendererParams<TestResult>) => {
+          if (!data) {
+            return null;
+          }
+          const isPass = isPassingResult(data);
+          return (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-bold text-xs ${
+                isPass
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              }`}
+            >
+              {isPass ? <CheckCircle size={12} /> : <XCircle size={12} />}
+              {isPass ? t("pass_upper") : t("fail_upper")}
+            </span>
+          );
+        },
+        colId: "evaluation",
+        cellClass: "lab-grid-align-end",
+        filter: false,
+        headerName: t("evaluation"),
+        headerClass: "lab-grid-align-end",
+        minWidth: 150,
+        sortable: false,
+      },
+    ],
+    [t]
+  );
+
+  return (
+    <LabDataGrid<TestResult>
+      className="lab-data-grid--report"
+      columnDefs={columnDefs}
+      getRowId={({ data }) => data.parameter}
+      headerHeight={49}
+      rowData={results}
+    />
+  );
+};
 
 const ReportDetails: React.FC = () => {
   const { t } = useTranslation();
@@ -205,67 +289,7 @@ const ReportDetails: React.FC = () => {
             {t("no_test_results_recorded_for_this_report")}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-start text-sm">
-              <thead className="border-gray-100 border-b bg-white text-gray-500 dark:border-slate-800 dark:bg-[#1e293b] dark:text-slate-400">
-                <tr>
-                  <th className="px-6 py-4 font-semibold">{t("parameter")}</th>
-                  <th className="whitespace-nowrap px-6 py-4 font-semibold">
-                    {t("method")}
-                  </th>
-                  <th className="whitespace-nowrap px-6 py-4 text-center font-semibold">
-                    {t("result_value")}
-                  </th>
-                  <th className="px-6 py-4 text-end font-semibold">
-                    {t("evaluation")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
-                {report.results.map((res) => {
-                  const isPass =
-                    res.actualValue >= res.min && res.actualValue <= res.max;
-                  return (
-                    <tr
-                      className="transition-colors hover:bg-gray-50/50 dark:hover:bg-slate-800/30"
-                      key={res.parameter}
-                    >
-                      <td className="whitespace-nowrap px-6 py-4 font-bold text-gray-900 dark:text-white">
-                        {res.parameter}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-gray-500 dark:text-slate-400">
-                        {res.method}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="font-bold text-base text-gray-900 dark:text-white">
-                          {res.actualValue}
-                        </span>
-                        <span className="ms-1 font-medium text-gray-400 text-xs dark:text-slate-500">
-                          {res.unit}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-end">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-bold text-xs ${
-                            isPass
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          }`}
-                        >
-                          {isPass ? (
-                            <CheckCircle size={12} />
-                          ) : (
-                            <XCircle size={12} />
-                          )}
-                          {isPass ? t("pass_upper") : t("fail_upper")}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <AnalyticalResultsGrid results={report.results} />
         )}
       </div>
 

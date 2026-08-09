@@ -22,13 +22,17 @@ import { useSearchParams } from "react-router-dom";
 import AppearanceTab from "../components/profile/AppearanceTab";
 import IdentityTab from "../components/profile/IdentityTab";
 import LocalizationTab from "../components/profile/LocalizationTab";
-import ProductionLineSettingsSection from "../components/Settings/ProductionLineSettingsSection";
 import RoleManagementSection from "../components/Settings/RoleManagementSection";
 import TraceabilityConfig from "../components/Settings/TraceabilityConfig";
 import VersionControlConfig from "../components/Settings/VersionControlConfig";
-import UserAvatar from "../components/user-avatar";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
 import { usePermissions } from "../hooks/usePermissions";
+import {
+  getVisibleOrganizationSettingsTabs,
+  type OrganizationSettingsTab,
+  resolveOrganizationSettingsTab,
+} from "../lib/organization-settings-access";
 import { isAdminRole } from "../lib/role-access";
 import {
   getVisibleWorkspaceSettingsTabs,
@@ -36,7 +40,7 @@ import {
   resolveWorkspaceSettingsTab,
   type WorkspaceSettingsTab,
 } from "../lib/workspace-settings-access";
-import OrganizationPage, { type OrganizationSettingsTab } from "./organization";
+import OrganizationPage from "./organization";
 
 type SettingsScope = "user" | "workspace" | "organization";
 type UserSettingsTab = "identity" | "localization" | "appearance";
@@ -57,13 +61,6 @@ const USER_TABS = new Set<UserSettingsTab>([
   "localization",
   "appearance",
 ]);
-const ORGANIZATION_TABS = new Set<OrganizationSettingsTab>([
-  "members",
-  "invites",
-  "auditLog",
-  "settings",
-]);
-
 function NestedNavigation<T extends string>({
   activeId,
   ariaLabel,
@@ -116,6 +113,11 @@ const Settings: React.FC = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasPermission, isLoading, role } = usePermissions();
+  const {
+    currentRole: organizationRole,
+    organizations,
+    organizationsLoading,
+  } = useOrganization();
   const { language, profile, setLanguage, signOut, updateProfile } =
     useSettings();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
@@ -126,6 +128,11 @@ const Settings: React.FC = () => {
     : "workspace";
   const requestedTab = searchParams.get("tab");
   const isAdmin = isAdminRole(role);
+  const canManageProductionLine =
+    isAdmin && (organizationRole === "admin" || organizationRole === "owner");
+  const isOrganizationAccessLoading =
+    organizationsLoading ||
+    (organizations.length > 0 && organizationRole === null);
   const access = {
     canManageVersionControl: hasPermission(MANAGE_VERSION_CONTROL_PERMISSION),
     isAdmin,
@@ -135,14 +142,12 @@ const Settings: React.FC = () => {
     ? (requestedTab as UserSettingsTab)
     : "identity";
   const workspaceActiveTab = resolveWorkspaceSettingsTab(requestedTab, access);
-  const organizationActiveTab = ORGANIZATION_TABS.has(
-    requestedTab as OrganizationSettingsTab
-  )
-    ? (requestedTab as OrganizationSettingsTab)
-    : "members";
+  const organizationActiveTab = resolveOrganizationSettingsTab(requestedTab, {
+    canManageProductionLine,
+  });
 
   React.useEffect(() => {
-    if (isLoading) {
+    if (isLoading || isOrganizationAccessLoading) {
       return;
     }
     let activeTab: string = workspaceActiveTab;
@@ -162,6 +167,7 @@ const Settings: React.FC = () => {
     }
   }, [
     activeScope,
+    isOrganizationAccessLoading,
     isLoading,
     organizationActiveTab,
     requestedScope,
@@ -189,7 +195,6 @@ const Settings: React.FC = () => {
     WorkspaceSettingsTab,
     Omit<NavigationItem<WorkspaceSettingsTab>, "id">
   > = {
-    productionLine: { label: t("production_line_settings"), icon: Factory },
     traceability: { label: t("traceability_id"), icon: Fingerprint },
     roles: { label: t("roles_permissions"), icon: Shield },
     versionControl: { label: t("version_control"), icon: GitBranch },
@@ -198,12 +203,22 @@ const Settings: React.FC = () => {
     id,
     ...workspaceDefinitions[id],
   }));
-  const organizationItems: NavigationItem<OrganizationSettingsTab>[] = [
-    { id: "members", label: t("members"), icon: UsersRound },
-    { id: "invites", label: t("invites"), icon: Mail },
-    { id: "auditLog", label: t("auditLog"), icon: History },
-    { id: "settings", label: t("settings"), icon: Shield },
-  ];
+  const organizationDefinitions: Record<
+    OrganizationSettingsTab,
+    Omit<NavigationItem<OrganizationSettingsTab>, "id">
+  > = {
+    members: { label: t("members"), icon: UsersRound },
+    invites: { label: t("invites"), icon: Mail },
+    auditLog: { label: t("auditLog"), icon: History },
+    productionLine: {
+      label: t("production_line_settings"),
+      icon: Factory,
+    },
+    settings: { label: t("settings"), icon: Shield },
+  };
+  const organizationItems = getVisibleOrganizationSettingsTabs({
+    canManageProductionLine,
+  }).map((id) => ({ id, ...organizationDefinitions[id] }));
 
   const selectScope = (scope: SettingsScope) => {
     setSearchParams(scope === "workspace" ? {} : { scope });
@@ -226,9 +241,6 @@ const Settings: React.FC = () => {
   };
 
   const renderWorkspaceContent = () => {
-    if (workspaceActiveTab === "productionLine") {
-      return isAdmin ? <ProductionLineSettingsSection /> : null;
-    }
     if (workspaceActiveTab === "traceability") {
       return <TraceabilityConfig />;
     }
@@ -312,7 +324,7 @@ const Settings: React.FC = () => {
 
   return (
     <div className="fade-in mx-auto max-w-7xl animate-in px-2 pb-4 duration-500 sm:px-4 sm:pb-8">
-      <header className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-7">
         <div>
           <h1 className="font-bold text-3xl text-[#173e33] dark:text-[#f7f4df]">
             {t("settings")}
@@ -320,17 +332,6 @@ const Settings: React.FC = () => {
           <p className="mt-2 max-w-2xl text-[#527568] dark:text-[#a9cbbb]">
             {t("settings_overview_description")}
           </p>
-        </div>
-        <div className="flex items-center gap-3 rounded-2xl bg-[#fffdf4]/70 px-4 py-3 dark:bg-[#173e33]/70">
-          <UserAvatar name={profile.name} seed={profile.email} size={40} />
-          <div className="min-w-0">
-            <p className="truncate font-bold text-[#173e33] text-sm dark:text-[#f7f4df]">
-              {profile.name}
-            </p>
-            <p className="truncate text-[#527568] text-xs dark:text-[#a9cbbb]">
-              {profile.email}
-            </p>
-          </div>
         </div>
       </header>
 

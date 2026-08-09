@@ -26,6 +26,9 @@ test("flask selector switches the workspace navigation to quality control", asyn
   const selector = page.getByTestId("rail-section-selector");
   await expect(selector).toBeVisible({ timeout: 15_000 });
   await selector.click();
+  await expect(
+    page.getByRole("menuitemradio", { name: /^Lab/ })
+  ).toBeVisible();
   await page.getByRole("menuitemradio", { name: /Quality Control/ }).click();
 
   await expect(page).toHaveURL(/\/reports$/);
@@ -53,6 +56,24 @@ test("flask selector switches the workspace navigation to quality control", asyn
       )
     )
     .toBe("quality");
+
+  await selector.click();
+  await page.getByRole("menuitemradio", { name: /^Lab/ }).click();
+  await expect(selector.locator('[data-mode-icon="lab"]')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.localStorage.getItem("flavoneer.workspace-section")
+      )
+    )
+    .toBe("lab");
+
+  await page.reload();
+  await expect(
+    page
+      .getByTestId("rail-section-selector")
+      .locator('[data-mode-icon="lab"]')
+  ).toBeVisible();
 });
 
 test("section selector is accessible in the mobile workspace header", async ({

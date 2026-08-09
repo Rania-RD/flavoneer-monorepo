@@ -9,7 +9,6 @@ import { useMutation, useQuery } from 'convex/react';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  ArrowLeft,
   Camera,
   Check,
   CheckCircle2,
@@ -344,22 +343,22 @@ export default function ProductionLineRecordScreen() {
                   onPress={() => router.back()}
                 >
                   {!isRTL ? (
-                    <ChevronLeft
-                      color={BrandColors.cream}
-                      size={20}
-                      strokeWidth={2.2}
-                    />
-                  ): (
-                    <ChevronRight
-                      color={BrandColors.cream}
-                      size={20}
-                      strokeWidth={2.2}
-                    />
+                    <ChevronLeft color={BrandColors.cream} size={20} strokeWidth={2.2} />
+                  ) : (
+                    <ChevronRight color={BrandColors.cream} size={20} strokeWidth={2.2} />
                   )}
                 </Pressable>
               }
               actionPosition="start"
               className="mb-3"
+              secondaryAction={
+                <SaveStatusBar
+                  connected={isConnected}
+                  onRetry={blockingSaveState === 'failed' ? retryBlockingSave : undefined}
+                  saveState={displayedSaveState}
+                  t={t}
+                />
+              }
               subtitle={t('qualityControl')}
             />
           </BrandEntrance>
@@ -369,12 +368,6 @@ export default function ProductionLineRecordScreen() {
             </ThemedText>
             <ThemedText type="smallBold">{record.displaySerial}</ThemedText>
           </View>
-          <SaveStatusBar
-            connected={isConnected}
-            onRetry={blockingSaveState === 'failed' ? retryBlockingSave : undefined}
-            saveState={displayedSaveState}
-            t={t}
-          />
         </View>
 
         <ScrollView
@@ -721,9 +714,14 @@ function SaveStatusBar({
   const Icon = content.icon;
 
   return (
-    <View className="mt-3 flex-row items-center justify-center gap-2 rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4]/90 px-4 py-2.5 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]">
+    <View className="max-w-[140px] shrink-0 flex-row items-center justify-center gap-2 rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4]/90 px-3 py-2 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]">
       <Icon color={content.tone} size={16} />
-      <ThemedText style={{ color: content.tone }} type="caption">
+      <ThemedText
+        className="min-w-0 shrink"
+        numberOfLines={1}
+        style={{ color: content.tone }}
+        type="caption"
+      >
         {content.label}
       </ThemedText>
       {state === 'failed' && onRetry ? (

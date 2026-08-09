@@ -85,6 +85,7 @@ export const create = mutation({
       ownerId: authUser._id,
       createdAt: Date.now(),
       authOrganizationId: organization.id,
+      status: "active",
     });
 
     await ctx.db.insert("organizationMembers", {

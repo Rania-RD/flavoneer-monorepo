@@ -15,6 +15,7 @@ import type * as betterAuthOrganizationMigration from "../betterAuthOrganization
 import type * as clearAllAppTables from "../clearAllAppTables.js";
 import type * as comments from "../comments.js";
 import type * as equipment from "../equipment.js";
+import type * as featureFlags from "../featureFlags.js";
 import type * as files from "../files.js";
 import type * as hotUpdater from "../hotUpdater.js";
 import type * as hotUpdaterHttp from "../hotUpdaterHttp.js";
@@ -50,6 +51,8 @@ import type * as sharedAccess from "../sharedAccess.js";
 import type * as sharedLinks from "../sharedLinks.js";
 import type * as spreadsheetSteps from "../spreadsheetSteps.js";
 import type * as stepDependencies from "../stepDependencies.js";
+import type * as superAdmin from "../superAdmin.js";
+import type * as superAdminAccess from "../superAdminAccess.js";
 import type * as systemConfig from "../systemConfig.js";
 import type * as units from "../units.js";
 import type * as users from "../users.js";
@@ -70,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   clearAllAppTables: typeof clearAllAppTables;
   comments: typeof comments;
   equipment: typeof equipment;
+  featureFlags: typeof featureFlags;
   files: typeof files;
   hotUpdater: typeof hotUpdater;
   hotUpdaterHttp: typeof hotUpdaterHttp;
@@ -105,6 +109,8 @@ declare const fullApi: ApiFromModules<{
   sharedLinks: typeof sharedLinks;
   spreadsheetSteps: typeof spreadsheetSteps;
   stepDependencies: typeof stepDependencies;
+  superAdmin: typeof superAdmin;
+  superAdminAccess: typeof superAdminAccess;
   systemConfig: typeof systemConfig;
   units: typeof units;
   users: typeof users;

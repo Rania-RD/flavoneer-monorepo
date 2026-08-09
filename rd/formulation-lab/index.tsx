@@ -1,4 +1,6 @@
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { AllCommunityModule } from "ag-grid-community";
+import { AgGridProvider } from "ag-grid-react";
 import { ConvexReactClient } from "convex/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -29,7 +31,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ConvexBetterAuthProvider authClient={authClient} client={convex}>
-      <App />
+      <AgGridProvider modules={[AllCommunityModule]}>
+        <App />
+      </AgGridProvider>
     </ConvexBetterAuthProvider>
   </React.StrictMode>
 );

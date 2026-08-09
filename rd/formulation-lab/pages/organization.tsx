@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   Crown,
+  Factory,
   History,
   LogOut,
   type LucideIcon,
@@ -29,13 +30,18 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import InviteMemberModal from "../components/InviteMemberModal";
 import OrganizationIconField from "../components/organization-icon-field";
+import ProductionLineSettingsSection from "../components/Settings/ProductionLineSettingsSection";
 import UserActivityLog from "../components/UserActivityLog";
 import UserAvatar from "../components/user-avatar";
 import { useOrganization } from "../context/OrganizationContext";
+import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
+import { uploadOrganizationIcon } from "../lib/organization-icon";
 import {
-  uploadOrganizationIcon,
-} from "../lib/organization-icon";
+  getVisibleOrganizationSettingsTabs,
+  type OrganizationSettingsTab,
+} from "../lib/organization-settings-access";
+import { isAdminRole } from "../lib/role-access";
 
 // ─── Role badge component ────────────────────────────
 const RoleBadge: React.FC<{ role: string; t: (k: string) => string }> = ({
@@ -145,12 +151,6 @@ import CreateOrganizationModal from "../components/CreateOrganizationModal";
 import DeleteOrganizationModal from "../components/DeleteOrganizationModal";
 import { Switch } from "../components/ui/Switch";
 
-export type OrganizationSettingsTab =
-  | "members"
-  | "invites"
-  | "auditLog"
-  | "settings";
-
 interface OrganizationPageProps {
   activeTab?: OrganizationSettingsTab;
   embedded?: boolean;
@@ -165,6 +165,7 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const { activeOrganizationId, organizations, currentRole, setActiveOrganizationId } = useOrganization();
+  const { role } = usePermissions();
 
   const { toast } = useToast();
 
@@ -200,6 +201,7 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
   const getFileUrl = useMutation(api.files.getFileUrl);
 
   const isAdmin = currentRole === "admin" || currentRole === "owner";
+  const canManageProductionLine = isAdmin && isAdminRole(role);
   const isOwner = currentRole === "owner";
   const activeOrganization = organizations.find((t) => t._id === activeOrganizationId);
   const activeTab = controlledActiveTab ?? internalActiveTab;
@@ -208,16 +210,22 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
     onActiveTabChange?.(tab);
   };
 
-  const tabs = [
-    { key: "members" as const, label: t("members"), icon: UsersRound },
-    { key: "invites" as const, label: t("invites"), icon: Mail },
-    { key: "auditLog" as const, label: t("auditLog"), icon: History },
-    {
-      key: "settings" as const,
-      label: t("settings"),
-      icon: Shield,
-    }, // Reuse Shield or use Settings icon
-  ];
+  const tabDefinitions = {
+    members: { label: t("members"), icon: UsersRound },
+    invites: { label: t("invites"), icon: Mail },
+    auditLog: { label: t("auditLog"), icon: History },
+    productionLine: {
+      label: t("production_line_settings"),
+      icon: Factory,
+    },
+    settings: { label: t("settings"), icon: Shield },
+  } satisfies Record<
+    OrganizationSettingsTab,
+    { label: string; icon: LucideIcon }
+  >;
+  const tabs = getVisibleOrganizationSettingsTabs({
+    canManageProductionLine,
+  }).map((key) => ({ key, ...tabDefinitions[key] }));
 
   // ─── Organization Settings Mutation ───
   const updateOrganization = useMutation(api.organizations.update);
@@ -345,7 +353,7 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
 
       {/* ── Tab bar ── */}
       {!embedded && (
-        <div className="mb-8 flex max-w-md rounded-[1.5rem] bg-gray-50 p-1.5 dark:bg-[#1e293b]">
+        <div className="mb-8 flex max-w-2xl rounded-[1.5rem] bg-gray-50 p-1.5 dark:bg-[#1e293b]">
           {tabs.map((tab) => (
             <button
               className={`flex flex-1 items-center justify-center gap-2 rounded-[1.2rem] px-4 py-3 font-semibold text-sm transition-all duration-200 ${
@@ -663,6 +671,18 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
                 <UserActivityLog />
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {activeTab === "productionLine" && canManageProductionLine && (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 10 }}
+            key="productionLine"
+            transition={{ duration: 0.2 }}
+          >
+            <ProductionLineSettingsSection />
           </motion.div>
         )}
 

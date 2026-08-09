@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import { useQuery } from "convex/react";
 import {
   Boxes,
   ClipboardCheck,
@@ -6,6 +8,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
   PlayCircle,
+  ShieldCheck,
 } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
@@ -27,6 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSectionChange,
 }) => {
   const { t } = useTranslation();
+  const superAdminAccess = useQuery(api.superAdmin.getAccess);
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -42,26 +46,30 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = useMemo<
     {
+      mobileName?: string;
       name: string;
       icon: LucideIcon;
       mirrorInRTL?: boolean;
       path: string;
     }[]
-  >(
-    () =>
+  >(() => {
+    const workspaceItems =
       activeSection === "quality"
         ? [
             {
+              mobileName: t("monitor"),
               name: t("production_monitoring"),
               icon: Factory,
               path: "/quality/production-line-records",
             },
             {
+              mobileName: t("reports"),
               name: t("lab_reports"),
               icon: ClipboardCheck,
               path: "/reports",
             },
             {
+              mobileName: t("review"),
               name: t("run_review"),
               icon: PlayCircle,
               mirrorInRTL: true,
@@ -79,9 +87,17 @@ const Sidebar: React.FC<SidebarProps> = ({
             },
             { name: t("materials"), icon: Boxes, path: "/materials" },
             { name: t("reports"), icon: FileText, path: "/reports" },
-          ],
-    [activeSection, t]
-  );
+          ];
+    if (superAdminAccess?.isSuperAdmin) {
+      workspaceItems.push({
+        mobileName: t("super_admin_mobile"),
+        name: t("super_admin_badge"),
+        icon: ShieldCheck,
+        path: "/super-admin",
+      });
+    }
+    return workspaceItems;
+  }, [activeSection, superAdminAccess?.isSuperAdmin, t]);
 
   return (
     <>
@@ -138,7 +154,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 size={24}
                 strokeWidth={active ? 2.5 : 2}
               />
-              <span className="font-medium text-[10px]">{item.name}</span>
+              <span className="font-medium text-[10px]">
+                {item.mobileName ?? item.name}
+              </span>
             </Link>
           );
         })}

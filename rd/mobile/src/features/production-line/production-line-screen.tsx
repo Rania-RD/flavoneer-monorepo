@@ -107,7 +107,7 @@ export default function ProductionLineScreen() {
                 />
               </Pressable>
             }
-            hideSubtitle
+            subtitle={t('qualityControl')}
           />
         </BrandEntrance>
 

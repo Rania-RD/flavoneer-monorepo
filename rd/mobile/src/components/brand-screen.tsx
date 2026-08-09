@@ -55,13 +55,11 @@ export function BrandHeader({
   action,
   actionPosition = 'end',
   className = 'mb-8',
-  hideSubtitle = false,
   subtitle,
 }: {
   action?: ReactNode;
   actionPosition?: 'end' | 'start';
   className?: string;
-  hideSubtitle?: boolean;
   subtitle?: ReactNode;
 }) {
   const { t } = useProductionLineI18n();
@@ -72,11 +70,9 @@ export function BrandHeader({
         <ThemedText className="leading-6" type="section">
           Flavoneer
         </ThemedText>
-        {hideSubtitle ? null : (
-          <ThemedText className="mt-0.5" themeColor="textSecondary" type="overline">
-            {subtitle ?? t('researchWorkspace')}
-          </ThemedText>
-        )}
+        <ThemedText className="mt-0.5" themeColor="textSecondary" type="overline">
+          {subtitle ?? t('researchWorkspace')}
+        </ThemedText>
       </View>
     </View>
   );

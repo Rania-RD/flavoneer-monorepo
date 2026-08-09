@@ -13,6 +13,7 @@ import {
   Camera,
   Check,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   CloudOff,
   Factory,
@@ -342,11 +343,19 @@ export default function ProductionLineRecordScreen() {
                   className="size-11 items-center justify-center rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4] active:scale-95 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]"
                   onPress={() => router.back()}
                 >
-                  <ArrowLeft
-                    color={BrandColors.forest}
-                    size={20}
-                    style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}
-                  />
+                  {!isRTL ? (
+                    <ChevronLeft
+                      color={BrandColors.cream}
+                      size={20}
+                      strokeWidth={2.2}
+                    />
+                  ): (
+                    <ChevronRight
+                      color={BrandColors.cream}
+                      size={20}
+                      strokeWidth={2.2}
+                    />
+                  )}
                 </Pressable>
               }
               actionPosition="start"

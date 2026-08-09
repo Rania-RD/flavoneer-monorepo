@@ -3,6 +3,7 @@ import {
   Building2,
   Check,
   ChevronLeft,
+  ChevronRight,
   Globe2,
   LogOut,
   type LucideIcon,
@@ -96,12 +97,19 @@ export default function UserSettingsScreen() {
                 className="size-11 items-center justify-center rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4]/80 active:scale-95 active:opacity-70 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]"
                 onPress={() => router.back()}
               >
-                <ChevronLeft
-                  color={theme.text}
-                  size={22}
-                  strokeWidth={2.2}
-                  style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}
-                />
+                {!isRTL ? (
+                  <ChevronLeft
+                    color={theme.text}
+                    size={22}
+                    strokeWidth={2.2}
+                  />
+                ): (
+                  <ChevronRight
+                    color={theme.text}
+                    size={22}
+                    strokeWidth={2.2}
+                  />
+                )}
               </Pressable>
             }
             actionPosition="start"

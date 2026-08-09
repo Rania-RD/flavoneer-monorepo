@@ -98,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation (Scrollable) */}
         <nav
-          className="flex min-h-0 w-full flex-1 flex-col items-center gap-y-4 overflow-y-auto overflow-x-hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] [&::-webkit-scrollbar]:hidden"
+          className="flex min-h-0 w-full flex-1 flex-col items-center gap-y-4 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:'none'] [scrollbar-width:'none'] [&::-webkit-scrollbar]:hidden"
           data-testid="desktop-workspace-navigation"
         >
           {navItems.map((item) => (

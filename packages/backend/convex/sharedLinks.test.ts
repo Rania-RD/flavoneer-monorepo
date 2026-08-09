@@ -71,12 +71,29 @@ async function createProject(
   );
 }
 
+async function createRun(
+  t: ReturnType<typeof createTestBackend>,
+  projectId: Id<"projects">,
+  userId: string,
+): Promise<Id<"runs">> {
+  return await t.run((ctx) =>
+    ctx.db.insert("runs", {
+      projectId,
+      batchCode: "BATCH-001",
+      startTime: Date.now(),
+      data: {},
+      userId,
+    }),
+  );
+}
+
 describe("shared links", () => {
   test("only an owner can create a typed link and creator identity is canonical", async () => {
     const t = createTestBackend();
     const owner = await createAuthenticatedUser(t, "owner");
     const attacker = await createAuthenticatedUser(t, "attacker");
     const projectId = await createProject(t, owner.userId);
+    const runId = await createRun(t, projectId, owner.userId);
 
     await expect(
       attacker.client.mutation(api.sharedLinks.createLink, {
@@ -108,6 +125,14 @@ describe("shared links", () => {
 
     expect(link?.createdBy).toBe(owner.userId);
     expect(link?.expiresAt).toBeGreaterThan(link?.createdAt ?? Number.POSITIVE_INFINITY);
+
+    await expect(
+      owner.client.mutation(api.sharedLinks.createLink, {
+        entityId: runId,
+        entityType: "run",
+        role: "editor",
+      }),
+    ).resolves.toBeTypeOf("string");
   });
 
   test("viewer is read-only, editor can write, and revocation removes editor access", async () => {
@@ -164,12 +189,17 @@ describe("shared links", () => {
     const t = createTestBackend();
     const owner = await createAuthenticatedUser(t, "owner");
     const recipient = await createAuthenticatedUser(t, "recipient");
+    const secondRecipient = await createAuthenticatedUser(t, "second-recipient");
     const projectId = await createProject(t, owner.userId);
     const token = await owner.client.mutation(api.sharedLinks.createLink, {
       entityId: projectId,
       entityType: "project",
-      role: "viewer",
+      role: "editor",
     });
+    await recipient.client.mutation(api.sharedLinks.redeemLink, { token });
+    await expect(
+      recipient.client.mutation(api.comments.add, { projectId, text: "before expiry" }),
+    ).resolves.toBeDefined();
 
     await t.run(async (ctx) => {
       const link = await ctx.db
@@ -181,9 +211,12 @@ describe("shared links", () => {
       }
       await ctx.db.patch(link._id, { expiresAt: Date.now() - 1 });
     });
-    await expect(recipient.client.mutation(api.sharedLinks.redeemLink, { token })).rejects.toThrow(
-      "Invalid or expired link",
-    );
+    await expect(
+      recipient.client.mutation(api.comments.add, { projectId, text: "after expiry" }),
+    ).rejects.toThrow("Resource belongs to another user or workspace");
+    await expect(
+      secondRecipient.client.mutation(api.sharedLinks.redeemLink, { token }),
+    ).rejects.toThrow("Invalid or expired link");
 
     const legacyToken = "legacy-link-without-expiry";
     await t.run(async (ctx) => {
@@ -198,7 +231,7 @@ describe("shared links", () => {
       });
     });
     await expect(
-      recipient.client.mutation(api.sharedLinks.redeemLink, { token: legacyToken }),
+      secondRecipient.client.mutation(api.sharedLinks.redeemLink, { token: legacyToken }),
     ).rejects.toThrow("Invalid or expired link");
   });
 });

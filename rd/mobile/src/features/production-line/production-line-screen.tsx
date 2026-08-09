@@ -9,15 +9,9 @@ import {
   Plus,
   ShieldCheck,
 } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
-import {
-  BrandEntrance,
-  BrandHeader,
-  BrandScreen,
-  BrandSurface,
-  StatusPill,
-} from '@/components/brand-screen';
+import { BrandEntrance, BrandHeader, BrandScreen, BrandSurface } from '@/components/brand-screen';
 import { ThemedText } from '@/components/themed-text';
 import { Image } from '@/components/ui/image';
 import { UserAvatar } from '@/components/user-avatar';
@@ -72,15 +66,6 @@ export default function ProductionLineScreen() {
       ? selectedProductId
       : (referenceData?.products[0]?.productId ?? null);
 
-  const currentHour = useMemo(
-    () =>
-      new Intl.DateTimeFormat(language === 'ar' ? 'ar-PS' : 'en', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }).format(new Date()),
-    [language],
-  );
-
   const handleCreate = async () => {
     if (!(activeOrganizationId && productId && departmentName.trim())) {
       return;
@@ -122,37 +107,23 @@ export default function ProductionLineScreen() {
                 />
               </Pressable>
             }
-            subtitle={t('qualityControl')}
+            hideSubtitle
           />
         </BrandEntrance>
 
         <BrandEntrance className="mb-7" delay={70}>
-          <ThemedText themeColor="textSecondary" type="overline">
-            {t('hourlyInspections')}
-          </ThemedText>
-          <ThemedText className="mt-2 max-w-[390px]" type="title">
+          <ThemedText className="max-w-[390px]" type="title">
             {t('productionMonitoring')}
           </ThemedText>
-          <View className="mt-4 flex-row flex-wrap items-center gap-2">
-            <StatusPill>{t('workspaceOnline')}</StatusPill>
-            <View className="rounded-full border border-[#1C4A3C]/10 bg-[#FFFDF4]/80 px-3.5 py-2 dark:border-[#D2F2D4]/10 dark:bg-[#173E33]">
-              <ThemedText themeColor="textSecondary" type="caption">
-                {currentHour}
-              </ThemedText>
-            </View>
-          </View>
         </BrandEntrance>
 
         <BrandEntrance delay={140}>
           <View className="relative mb-8 overflow-hidden rounded-[40px] bg-[#1C4A3C] p-7 dark:bg-[#102F27]">
             <View className="absolute -end-16 -top-20 size-52 rounded-full border-[36px] border-[#F5A623]/15" />
-            <View className="mb-10 size-14 items-center justify-center rounded-[19px] bg-[#F5A623]">
+            <View className="mb-8 size-14 items-center justify-center rounded-[19px] bg-[#F5A623]">
               <Factory color={BrandColors.ink} size={27} />
             </View>
-            <ThemedText className="!text-[#B9D8C8]" type="overline">
-              {t('currentHour')}
-            </ThemedText>
-            <ThemedText className="mt-2 max-w-[280px] !text-[#FFFDF4]" type="display">
+            <ThemedText className="max-w-[280px] !text-[#FFFDF4]" type="display">
               {t('newInspection')}
             </ThemedText>
             <Pressable
@@ -310,14 +281,7 @@ export default function ProductionLineScreen() {
         ) : null}
 
         <BrandEntrance className="mb-3 flex-row items-end justify-between px-1" delay={220}>
-          <View>
-            <ThemedText themeColor="textSecondary" type="overline">
-              {t('qualityControl')}
-            </ThemedText>
-            <ThemedText className="mt-1" type="section">
-              {t('recentRecords')}
-            </ThemedText>
-          </View>
+          <ThemedText type="section">{t('recentRecords')}</ThemedText>
           <ThemedText themeColor="textSecondary" type="caption">
             {records?.length ?? 0}
           </ThemedText>

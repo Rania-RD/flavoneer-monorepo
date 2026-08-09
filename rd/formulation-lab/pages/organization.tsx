@@ -34,7 +34,6 @@ import UserAvatar from "../components/user-avatar";
 import { useOrganization } from "../context/OrganizationContext";
 import { useToast } from "../hooks/useToast";
 import {
-  getOrganizationInitials,
   uploadOrganizationIcon,
 } from "../lib/organization-icon";
 
@@ -343,75 +342,6 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
         isOpen={createOrganizationModalOpen}
         onClose={() => setCreateOrganizationModalOpen(false)}
       />
-
-      {/* ── Your Organizations List ── */}
-      <div className="mb-8">
-        <h3 className="mb-4 font-bold text-gray-400 text-xs uppercase tracking-wider dark:text-slate-500">
-          {t("yourOrganizations")}
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {organizations.map((organization) => {
-            const isActive = organization._id === activeOrganizationId;
-            const initials = getOrganizationInitials(organization.name);
-
-            return (
-              <div
-                className={`flex items-center gap-4 rounded-2xl border p-4 transition-all ${
-                  isActive
-                    ? "border-[#f5a623]/50 bg-white shadow-sm ring-1 ring-[#f5a623]/25 dark:border-brand-accent/50 dark:bg-slate-800 dark:ring-brand-accent/30"
-                    : "border-gray-100 bg-white/50 hover:border-pink-100 hover:bg-white dark:border-slate-700 dark:bg-slate-800/30 dark:hover:border-slate-600 dark:hover:bg-slate-800"
-                }`}
-                key={organization._id}
-              >
-                {organization.avatarUrl ? (
-                  <img
-                    alt={t("organization_icon_for", {
-                      name: organization.name,
-                    })}
-                    className="h-10 w-10 rounded-xl border border-gray-200 object-cover dark:border-slate-600"
-                    height={40}
-                    src={organization.avatarUrl}
-                    width={40}
-                  />
-                ) : (
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-sm ${
-                      isActive
-                        ? "bg-[#f5a623] text-[#173e33] shadow-amber-500/20 shadow-md"
-                        : "bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400"
-                    }`}
-                  >
-                    {initials}
-                  </div>
-                )}
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-slate-900 dark:text-slate-100">
-                    {organization.name}
-                  </p>
-                  <p className="text-gray-500 text-xs capitalize dark:text-slate-500">
-                    {t(organization.role)}
-                  </p>
-                </div>
-
-                {!isActive && (
-                  <button
-                    className="rounded-lg bg-pink-50 px-3 py-1.5 font-bold text-[#FF85A1] text-xs transition-colors hover:bg-[#FF85A1] hover:text-white dark:bg-brand-accent/20 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover dark:hover:text-white"
-                    onClick={() => setActiveOrganizationId(organization._id)}
-                  >
-                    {t("switch")}
-                  </button>
-                )}
-                {isActive && (
-                  <div className="rounded-lg bg-green-50 px-3 py-1.5 font-bold text-green-600 text-xs dark:bg-green-900/20 dark:text-green-400">
-                    {t("active")}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* ── Tab bar ── */}
       {!embedded && (

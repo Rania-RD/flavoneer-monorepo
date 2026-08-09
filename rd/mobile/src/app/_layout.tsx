@@ -12,6 +12,7 @@ import { Fraunces_900Black } from '@expo-google-fonts/fraunces/900Black';
 import * as Sentry from '@sentry/react-native';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { LocaleDirContext } from 'expo-router/react-navigation';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import type { PropsWithChildren } from 'react';
@@ -63,24 +64,27 @@ function LocalizedNavigator({
   isPending: boolean;
 }) {
   const { language } = useLanguage();
+  const direction = language === 'ar' ? 'rtl' : 'ltr';
 
   return (
     <ThemeProvider value={isDark ? darkNavigationTheme : lightNavigationTheme}>
-      <View className="flex-1" style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Protected guard={hasSession}>
-            <Stack.Screen name="(app)" />
-            <Stack.Screen name="quality/production-line/[recordId]" />
-            <Stack.Screen name="user-settings" />
-          </Stack.Protected>
+      <LocaleDirContext.Provider value={direction}>
+        <View className="flex-1" style={{ direction }}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Protected guard={hasSession}>
+              <Stack.Screen name="(app)" />
+              <Stack.Screen name="quality/production-line/[recordId]" />
+              <Stack.Screen name="user-settings" />
+            </Stack.Protected>
 
-          <Stack.Protected guard={!hasSession}>
-            <Stack.Screen name="sign-in" />
-          </Stack.Protected>
-        </Stack>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <AnimatedSplashOverlay ready={!isPending && fontsReady} />
-      </View>
+            <Stack.Protected guard={!hasSession}>
+              <Stack.Screen name="sign-in" />
+            </Stack.Protected>
+          </Stack>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <AnimatedSplashOverlay ready={!isPending && fontsReady} />
+        </View>
+      </LocaleDirContext.Provider>
     </ThemeProvider>
   );
 }

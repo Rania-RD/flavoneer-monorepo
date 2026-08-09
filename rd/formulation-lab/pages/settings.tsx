@@ -311,7 +311,7 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <div className="fade-in mx-auto max-w-7xl animate-in px-2 py-4 duration-500 sm:px-4 sm:py-8">
+    <div className="fade-in mx-auto max-w-7xl animate-in px-2 pb-4 duration-500 sm:px-4 sm:pb-8">
       <header className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-bold text-3xl text-[#173e33] dark:text-[#f7f4df]">
@@ -408,7 +408,6 @@ const Settings: React.FC = () => {
           <motion.div
             animate={{ opacity: 1, y: 0 }}
             initial={{ opacity: 0, y: 8 }}
-            key={`${activeScope}-${requestedTab ?? "default"}`}
             transition={{ duration: 0.2 }}
           >
             {activeScope === "user" && renderUserContent()}

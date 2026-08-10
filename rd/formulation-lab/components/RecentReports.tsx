@@ -1,10 +1,11 @@
+import { api } from "@flavoneer/backend/api";
 import { useMutation, useQuery } from "convex/react";
 import { FlaskConical } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
 import type { EnrichedLabReport } from "../types";
@@ -12,7 +13,8 @@ import ReportsDropdown from "./ReportsDropdown";
 
 const RecentReports: React.FC = () => {
   const { t } = useTranslation();
-  const { language, profile } = useSettings();
+  const { language } = useSettings();
+  const { activeOrganizationId } = useOrganization();
   const { user, role } = usePermissions();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -21,12 +23,14 @@ const RecentReports: React.FC = () => {
   const reportsResponse = useQuery(api.labReports.list, {
     paginationOpts: { numItems: 50, cursor: null },
     language,
+    organizationId: activeOrganizationId ?? undefined,
   });
   const reportsRaw = reportsResponse?.page;
 
   const runsResponse = useQuery(api.runs.list, {
     paginationOpts: { numItems: 50, cursor: null },
     language,
+    organizationId: activeOrganizationId ?? undefined,
   });
   const runsRaw = runsResponse?.page;
   const updateStatus = useMutation(api.labReports.updateStatus);
@@ -62,16 +66,9 @@ const RecentReports: React.FC = () => {
 
         // Toggle status logic
         const newStatus = report.status === "Approved" ? "Pending" : "Approved";
-        const isApproving = newStatus === "Approved";
-
         await updateStatus({
           id: report._id,
           status: newStatus,
-          signoffData: isApproving ? profile?.signatureData : undefined,
-          signoffFont: isApproving ? profile?.signatureFont : undefined,
-          signoffType: isApproving
-            ? (profile?.signatureType as "upload" | "text" | undefined)
-            : undefined,
         });
         break;
       }
@@ -93,7 +90,7 @@ const RecentReports: React.FC = () => {
   }
 
   return (
-    <div className="rounded-[2.5rem] border border-black/5 bg-vivid-blue p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
+    <div className="rounded-[2.5rem] border border-black/5 bg-brand-mint p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
       <div className="mb-6">
         <h3 className="font-bold text-charcoal dark:text-slate-100">
           {t("recentReports")}
@@ -120,7 +117,7 @@ const RecentReports: React.FC = () => {
               className="min-w-0 flex-1 text-start"
               onClick={() => navigate(`/reports/${report._id}`)}
             >
-              <h4 className="truncate font-bold text-charcoal text-sm transition-colors group-hover:text-action-pink dark:text-slate-100 dark:group-hover:text-blue-400">
+              <h4 className="truncate font-bold text-charcoal text-sm transition-colors group-hover:text-action-pink dark:text-slate-100 dark:group-hover:text-brand-accent-hover">
                 {report.projectName}
               </h4>
               <div className="mt-0.5 flex items-center gap-2">

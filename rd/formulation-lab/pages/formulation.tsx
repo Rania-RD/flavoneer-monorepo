@@ -12,6 +12,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import {
   CheckCircle2,
@@ -39,9 +41,8 @@ import type { AllergenRegion } from "../components/add-ingredient/types";
 import { SortablePhaseItem } from "../components/formulation/sortable-phase-item";
 import { ReviewPanel } from "../components/ReviewPanel";
 import VersionHistoryModal from "../components/VersionHistoryModal";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
 import { usePermissions } from "../hooks/usePermissions";
 import {
   addPhaseToPhases,
@@ -119,8 +120,7 @@ const WEIGHT_UNIT_TO_GRAMS: Record<string, number> = {
   milliliter: 1,
   milliliters: 1,
 };
-const MULTIPLE_AUTOSAVE_NAME =
-  "Auto-Save: Updated multiple formulation fields";
+const MULTIPLE_AUTOSAVE_NAME = "Auto-Save: Updated multiple formulation fields";
 const DEFAULT_AUTOSAVE_NAME = "Auto-Save: Updated formulation fields";
 
 function formatAutosaveValue(value: string | number | undefined) {
@@ -139,6 +139,7 @@ function convertWeightValue(value: number, fromUnit?: string, toUnit?: string) {
 const Formulation: React.FC = () => {
   const { t } = useTranslation();
   const { language } = useSettings();
+  const { activeOrganizationId } = useOrganization();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const projectId = id as Id<"projects"> | undefined;
@@ -150,11 +151,15 @@ const Formulation: React.FC = () => {
   const updateProjectMutation = useMutation(api.projects.update);
   const createNewVersionMutation = useMutation(api.projects.createNewVersion);
   const logActivity = useMutation(api.activities.log);
-  const inventoryItems = useQuery(api.inventory.list, { language }) as
-    | InventoryListItem[]
-    | undefined;
+  const inventoryItems = useQuery(api.inventory.list, {
+    language,
+    organizationId: activeOrganizationId ?? undefined,
+  }) as InventoryListItem[] | undefined;
   const formulationIngredientOptions =
-    useQuery(api.ingredients.listFormulationOptions, { language }) ?? [];
+    useQuery(api.ingredients.listFormulationOptions, {
+      language,
+      organizationId: activeOrganizationId ?? undefined,
+    }) ?? [];
 
   const aggregatedIngredients = useMemo(
     () =>
@@ -203,9 +208,12 @@ const Formulation: React.FC = () => {
   const autosaveRunRef = useRef(0);
   const pendingAutosaveChangesRef = useRef<Map<string, string>>(new Map());
 
-  const queueAutosaveChange = useCallback((key: string, description: string) => {
-    pendingAutosaveChangesRef.current.set(key, description);
-  }, []);
+  const queueAutosaveChange = useCallback(
+    (key: string, description: string) => {
+      pendingAutosaveChangesRef.current.set(key, description);
+    },
+    []
+  );
 
   const getPendingAutosaveName = useCallback(() => {
     const descriptions = [...pendingAutosaveChangesRef.current.values()];
@@ -357,9 +365,7 @@ const Formulation: React.FC = () => {
     queueAutosaveChange(
       "measures.servingSizeMode",
       `Auto-Save: Switched serving size mode to ${
-        servingSizeMode === "recipeMakes"
-          ? "A Recipe makes"
-          : "A Serving is"
+        servingSizeMode === "recipeMakes" ? "A Recipe makes" : "A Serving is"
       }`
     );
     setProject({
@@ -938,14 +944,14 @@ const Formulation: React.FC = () => {
       // Add a temporary highlight effect
       element.classList.add(
         "ring-4",
-        "ring-indigo-500/50",
+        "ring-brand-focus/50",
         "ring-offset-4",
         "dark:ring-offset-[#0f172a]"
       );
       setTimeout(() => {
         element.classList.remove(
           "ring-4",
-          "ring-indigo-500/50",
+          "ring-brand-focus/50",
           "ring-offset-4",
           "dark:ring-offset-[#0f172a]"
         );
@@ -1218,7 +1224,7 @@ const Formulation: React.FC = () => {
           </p>
           {!isProjectLoading && (
             <button
-              className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-brand-primary-hover dark:bg-brand-accent dark:hover:bg-brand-accent-hover"
               onClick={handleExitEditor}
               type="button"
             >
@@ -1255,119 +1261,117 @@ const Formulation: React.FC = () => {
           </button>
           <div className="min-w-0 flex-1">
             <div className="min-w-0 space-y-1">
-                <div className="flex min-w-0 items-center gap-2">
-                  <h1 className="min-w-0 flex-1 font-bold text-2xl text-gray-900 sm:text-3xl dark:text-white">
-                    <span className="truncate">
-                      {project?.name || t("formulation_builder")}
-                    </span>
-                  </h1>
-                  <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1 font-medium text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                    v{project.version}
+              <div className="flex min-w-0 items-center gap-2">
+                <h1 className="min-w-0 flex-1 font-bold text-2xl text-gray-900 sm:text-3xl dark:text-white">
+                  <span className="truncate">
+                    {project?.name || t("formulation_builder")}
                   </span>
-                </div>
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  {canEdit && (
-                    <span
-                      aria-live="polite"
-                      className={`pt-1 font-medium text-[11px] leading-none ${
-                        autosaveStatus === "error"
-                          ? "text-red-600 dark:text-red-400"
-                          : autosaveStatus === "saving"
-                            ? "text-slate-500 dark:text-slate-400"
-                            : "text-slate-400 dark:text-slate-500"
-                      }`}
-                      data-testid="autosave-status"
-                      role={autosaveStatus === "error" ? "alert" : "status"}
-                    >
-                      {autosaveStatus === "error"
-                        ? t("autosave_error")
+                </h1>
+                <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1 font-medium text-gray-600 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                  v{project.version}
+                </span>
+              </div>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                {canEdit && (
+                  <span
+                    aria-live="polite"
+                    className={`pt-1 font-medium text-[11px] leading-none ${
+                      autosaveStatus === "error"
+                        ? "text-red-600 dark:text-red-400"
                         : autosaveStatus === "saving"
-                          ? t("autosave_saving")
-                          : t("autosave_saved")}
-                    </span>
-                  )}
-                  {project && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        className={`cursor-pointer appearance-none rounded-full border px-3 py-1.5 font-bold text-xs outline-none transition-colors ${
-                          (
-                            {
-                              Released:
-                                "cursor-not-allowed border-emerald-200 bg-emerald-100 text-emerald-800 opacity-90 dark:border-emerald-800/60 dark:bg-emerald-900/40 dark:text-emerald-300",
-                              "Under Review":
-                                "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/30 dark:text-amber-400",
-                              Draft:
-                                "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
-                            } as Record<string, string>
-                          )[lifecycleStatus] ||
-                          "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        }`}
-                        data-testid="formulation-status-select"
-                        disabled={isReleased}
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        value={lifecycleStatus}
+                          ? "text-slate-500 dark:text-slate-400"
+                          : "text-slate-400 dark:text-slate-500"
+                    }`}
+                    data-testid="autosave-status"
+                    role={autosaveStatus === "error" ? "alert" : "status"}
+                  >
+                    {autosaveStatus === "error"
+                      ? t("autosave_error")
+                      : autosaveStatus === "saving"
+                        ? t("autosave_saving")
+                        : t("autosave_saved")}
+                  </span>
+                )}
+                {project && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      className={`cursor-pointer appearance-none rounded-full border px-3 py-1.5 font-bold text-xs outline-none transition-colors ${
+                        (
+                          {
+                            Released:
+                              "cursor-not-allowed border-emerald-200 bg-emerald-100 text-emerald-800 opacity-90 dark:border-emerald-800/60 dark:bg-emerald-900/40 dark:text-emerald-300",
+                            "Under Review":
+                              "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/30 dark:text-amber-400",
+                            Draft:
+                              "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+                          } as Record<string, string>
+                        )[lifecycleStatus] ||
+                        "border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      }`}
+                      data-testid="formulation-status-select"
+                      disabled={isReleased}
+                      onChange={(e) => handleStatusChange(e.target.value)}
+                      value={lifecycleStatus}
+                    >
+                      <option value="Draft">{t("draft")}</option>
+                      <option value="Under Review">{t("under_review")}</option>
+                      <option
+                        disabled={
+                          lifecycleStatus === "Draft" || hasRegulationBreaches
+                        }
+                        value="Released"
                       >
-                        <option value="Draft">{t("draft")}</option>
-                        <option value="Under Review">
-                          {t("under_review")}
-                        </option>
-                        <option
-                          disabled={
-                            lifecycleStatus === "Draft" || hasRegulationBreaches
-                          }
-                          value="Released"
+                        {t("released")}
+                      </option>
+                    </select>
+                    {isReleased && (
+                      <>
+                        <span
+                          className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                          data-testid="latest-read-only-badge"
                         >
-                          {t("released")}
-                        </option>
-                      </select>
-                      {isReleased && (
-                        <>
-                          <span
-                            className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1.5 font-black text-[11px] text-emerald-900 uppercase tracking-wide dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
-                            data-testid="latest-read-only-badge"
-                          >
-                            {t("latest_read_only")}
-                          </span>
-                          <button
-                            className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-700 text-xs transition-colors hover:bg-indigo-50 disabled:cursor-wait disabled:opacity-70 dark:border-indigo-800/50 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
-                            data-testid="create-new-version-button"
-                            disabled={isCreatingNewVersion}
-                            onClick={handleCreateNewVersion}
-                            type="button"
-                          >
-                            {isCreatingNewVersion
-                              ? t("creating")
-                              : t("create_new_version")}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <p className="flex items-center gap-2 font-medium text-gray-500 text-sm dark:text-slate-400">
-                  <Folder size={14} />
-
-                  {t("sequence_editor")}
-                </p>
-                {hasRegulationBreaches && (
-                  <div className="mt-3 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200">
-                    <ShieldAlert className="mt-0.5 shrink-0" size={18} />
-                    <div>
-                      <p className="font-black text-sm">
-                        {t("regulation_limit_release_blocked")}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        {regulationBreaches
-                          .slice(0, 2)
-                          .map(
-                            (breach) =>
-                              `${breach.ingredientName}: ${breach.actualPercent.toFixed(3)}% / max ${(breach.maxLimitPercent ?? 0).toFixed(3)}%`
-                          )
-                          .join(" • ")}
-                      </p>
-                    </div>
+                          {t("latest_read_only")}
+                        </span>
+                        <button
+                          className="rounded-full border border-brand-primary/20 bg-white px-3 py-1.5 font-bold text-brand-primary text-xs transition-colors hover:bg-brand-mint disabled:cursor-wait disabled:opacity-70 dark:border-brand-mint/20 dark:bg-slate-900 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/40"
+                          data-testid="create-new-version-button"
+                          disabled={isCreatingNewVersion}
+                          onClick={handleCreateNewVersion}
+                          type="button"
+                        >
+                          {isCreatingNewVersion
+                            ? t("creating")
+                            : t("create_new_version")}
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
+              </div>
+              <p className="flex items-center gap-2 font-medium text-gray-500 text-sm dark:text-slate-400">
+                <Folder size={14} />
+
+                {t("sequence_editor")}
+              </p>
+              {hasRegulationBreaches && (
+                <div className="mt-3 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200">
+                  <ShieldAlert className="mt-0.5 shrink-0" size={18} />
+                  <div>
+                    <p className="font-black text-sm">
+                      {t("regulation_limit_release_blocked")}
+                    </p>
+                    <p className="mt-1 text-xs">
+                      {regulationBreaches
+                        .slice(0, 2)
+                        .map(
+                          (breach) =>
+                            `${breach.ingredientName}: ${breach.actualPercent.toFixed(3)}% / max ${(breach.maxLimitPercent ?? 0).toFixed(3)}%`
+                        )
+                        .join(" • ")}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1375,7 +1379,7 @@ const Formulation: React.FC = () => {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
           <button
-            className="flex items-center gap-2 rounded-3xl border border-indigo-200 bg-white px-4 py-2.5 font-bold text-indigo-600 transition-all hover:scale-[1.02] hover:bg-indigo-50 active:scale-[0.98] sm:px-5 dark:border-indigo-800/50 dark:bg-[#1e293b] dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+            className="flex items-center gap-2 rounded-3xl border border-brand-primary/20 bg-white px-4 py-2.5 font-bold text-brand-primary transition-all hover:scale-[1.02] hover:bg-brand-mint active:scale-[0.98] sm:px-5 dark:border-brand-mint/20 dark:bg-[#1e293b] dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/30"
             onClick={() => setIsReviewPanelOpen(true)}
             type="button"
           >
@@ -1424,7 +1428,7 @@ const Formulation: React.FC = () => {
               </h2>
               {canEdit && (
                 <button
-                  className="flex items-center gap-1 rounded border border-indigo-100 bg-indigo-50 px-2 py-1 font-bold text-indigo-600 text-xs transition-colors hover:text-indigo-700 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400"
+                  className="flex items-center gap-1 rounded border border-brand-primary/20 bg-brand-mint px-2 py-1 font-bold text-brand-primary text-xs transition-colors hover:text-brand-primary dark:border-brand-mint/20 dark:bg-brand-accent/30 dark:text-brand-accent-hover"
                   onClick={addPhase}
                   type="button"
                 >
@@ -1486,7 +1490,7 @@ const Formulation: React.FC = () => {
                                 <div className="relative z-10 flex w-[30px] shrink-0 justify-center">
                                   {hasDependency ? (
                                     <div
-                                      className="h-2.5 w-2.5 rounded-full bg-indigo-500 ring-4 ring-gray-50/50 transition-colors group-hover:ring-gray-100/80 dark:ring-[#1e293b]/50 dark:group-hover:ring-slate-800/80"
+                                      className="h-2.5 w-2.5 rounded-full bg-brand-primary ring-4 ring-gray-50/50 transition-colors group-hover:ring-gray-100/80 dark:ring-[#1e293b]/50 dark:group-hover:ring-slate-800/80"
                                       title={t("has_dependency")}
                                     />
                                   ) : (
@@ -1496,7 +1500,7 @@ const Formulation: React.FC = () => {
 
                                 <div className="flex min-w-0 flex-1 items-center gap-2 pe-2">
                                   <span
-                                    className={`w-6 shrink-0 font-bold text-xs ${hasDependency ? "text-indigo-600 dark:text-indigo-400" : "opacity-70"}`}
+                                    className={`w-6 shrink-0 font-bold text-xs ${hasDependency ? "text-brand-primary dark:text-brand-accent-hover" : "opacity-70"}`}
                                   >
                                     {stepIdStr}
                                   </span>
@@ -1505,7 +1509,7 @@ const Formulation: React.FC = () => {
                                   </span>
                                   {isConditional && (
                                     <CheckSquare
-                                      className="ms-auto shrink-0 text-indigo-500 opacity-60"
+                                      className="ms-auto shrink-0 text-brand-primary opacity-60"
                                       size={14}
                                     />
                                   )}
@@ -1562,7 +1566,7 @@ const Formulation: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="mx-[5px] h-2 w-2 shrink-0 rounded-full bg-indigo-500" />
+                    <div className="mx-[5px] h-2 w-2 shrink-0 rounded-full bg-brand-primary" />
                     <span className="font-medium text-gray-600 text-xs dark:text-slate-400">
                       {t("has_dependency")}
                     </span>
@@ -1832,12 +1836,12 @@ const Formulation: React.FC = () => {
             {project.status === "Under Review" && (
               <div className="space-y-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-[#1e293b]">
                 <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm dark:text-white">
-                  <FileSignature className="text-indigo-500" size={16} />
+                  <FileSignature className="text-brand-primary" size={16} />
 
                   {t("release_notes")}
                 </h3>
                 <textarea
-                  className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   onChange={(e) => {
                     queueAutosaveChange(
                       "metadata.releaseNotes",
@@ -1860,14 +1864,14 @@ const Formulation: React.FC = () => {
                   <p className="font-black text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
                     {t("measures")}
                   </p>
-                  <div className="mt-3 flex rounded-full border border-cyan-200 bg-cyan-50 p-1 dark:border-cyan-800/50 dark:bg-cyan-950/40">
+                  <div className="mt-3 flex rounded-full border border-brand-primary/20 bg-brand-mint p-1 dark:border-brand-mint/20 dark:bg-brand-accent/40">
                     {(["Liquid", "Solid"] as FormulationState[]).map(
                       (state) => (
                         <button
                           className={`rounded-full px-4 py-2 font-bold text-sm transition-colors ${
                             (project.formulationState || "Liquid") === state
-                              ? "bg-cyan-600 text-white shadow-sm"
-                              : "text-cyan-800 hover:bg-cyan-100 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
+                              ? "bg-brand-primary text-white shadow-sm"
+                              : "text-brand-primary hover:bg-brand-mint dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/50"
                           }`}
                           data-testid={`formulation-state-${state.toLowerCase()}-button`}
                           disabled={!canEdit}
@@ -1987,7 +1991,7 @@ const Formulation: React.FC = () => {
                     {servingSizeMode === "servingIs" ? (
                       <select
                         aria-label={t("serving_size_unit")}
-                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-black text-slate-700 text-xs uppercase outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900/40"
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-black text-slate-700 text-xs uppercase outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-focus/50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-brand-accent/50"
                         data-testid="serving-size-unit-select"
                         disabled={!canEdit}
                         onChange={(e) =>
@@ -2011,12 +2015,12 @@ const Formulation: React.FC = () => {
                   </div>
                 </label>
 
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-800/50 dark:bg-indigo-950/40">
-                  <p className="font-bold text-indigo-700 text-xs dark:text-indigo-300">
+                <div className="rounded-xl border border-brand-primary/20 bg-brand-mint px-4 py-3 dark:border-brand-mint/20 dark:bg-brand-accent/40">
+                  <p className="font-bold text-brand-primary text-xs dark:text-brand-accent-hover">
                     {t("serving_size_weight")}
                   </p>
                   <p
-                    className="mt-1 font-black text-2xl text-indigo-950 dark:text-indigo-100"
+                    className="mt-1 font-black text-2xl text-brand-primary dark:text-brand-accent-hover"
                     data-testid="serving-size-weight-display"
                   >
                     {calculatedMeasures.servingSizeWeight} g
@@ -2171,7 +2175,7 @@ const Formulation: React.FC = () => {
                 </p>
                 {canEdit && (
                   <button
-                    className="rounded-xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-sm transition-colors hover:bg-indigo-700"
+                    className="rounded-xl bg-brand-primary px-6 py-3 font-bold text-white shadow-sm transition-colors hover:bg-brand-primary-hover"
                     onClick={addPhase}
                     type="button"
                   >

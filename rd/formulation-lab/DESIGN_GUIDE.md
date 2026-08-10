@@ -61,18 +61,18 @@ Cards use a **deterministic** pastel theme derived from the item's ID. Each them
 |-------|----------|---------|-----------|
 | Rose | `bg-rose-100` | `bg-rose-900/20` | `bg-rose-500` |
 | Violet | `bg-violet-100` | `bg-violet-900/20` | `bg-violet-500` |
-| Blue | `bg-blue-100` | `bg-blue-900/20` | `bg-blue-600` / `blue-500` |
+| Sage | `bg-[#D2F2D4]` | `bg-[#285B4D]` | `bg-[#1C4A3C]` / `#F5A623` |
 | Orange | `bg-orange-100` | `bg-orange-900/20` | `bg-orange-500` |
 | Emerald | `bg-emerald-100` | `bg-emerald-900/20` | `bg-emerald-600` / `green-500` |
 **Assignment logic** (from `ProjectCard.tsx`) — uses the char-code sum of the project ID modulo 5.
-Inventory cards add two more: **Sky** (`#F0F9FF`), **Pink** (`#FDF2F8`), **Amber** (`#FFFBEB`).
+Inventory cards add two more: **Mint** (`#EEF8EB`), **Pink** (`#FDF2F8`), and **Amber** (`#FFFBEB`).
 
 ### 2.4 Status Colors
 
 ```tsx
 STATUS_COLORS = {
   Testing:   'bg-yellow-100 text-yellow-800 border-yellow-200',
-  Prototype: 'bg-blue-100   text-blue-800   border-blue-200',
+  Prototype: 'bg-amber-100  text-amber-800  border-amber-200',
   Approved:  'bg-green-100  text-green-800  border-green-200',
   Review:    'bg-purple-100 text-purple-800 border-purple-200',
   On Hold:   'bg-gray-100   text-gray-800   border-gray-200',
@@ -200,7 +200,7 @@ Card Shadow:        shadow-sm
 Card Hover:         shadow-lg  (dark: shadow-none)
 Modal Backdrop:     bg-gray-900/20 dark:bg-black/60 + backdrop-blur-sm
 Modal Card:         shadow-2xl
-Run Card:           shadow-2xl shadow-blue-900/5
+Run Card:           shadow-2xl shadow-[#1C4A3C]/5
 Dropdown Menu:      shadow-xl
 CTA Button:         shadow-lg shadow-gray-900/20
 Profile Avatar:     shadow-md
@@ -223,6 +223,8 @@ All content cards share:
 - Hover: `hover:-translate-y-1 hover:shadow-lg`
 - Progress bar at bottom: `h-2.5 rounded-full` with theme-colored fill
 - Footer CTA button: `rounded-2xl py-3.5 font-bold active:scale-95`
+- Optional project photos use a compact `object-cover` crop beside the project
+  title. Projects without photos keep the existing pastel card treatment.
 
 ### 7.2 Placeholder "Add" Cards
 
@@ -255,8 +257,14 @@ All content cards share:
 ### 7.4 Sidebar Navigation
 
 - **Desktop**: Fixed left (or right in RTL via `start-6`), `w-20`, `rounded-[2.5rem]`
-- **Workspace Settings**: a dedicated gear in the rail footer routes to
-  `/settings`; the mobile navigation exposes the same destination.
+- **Section selector**: The amber workspace icon at the top of the desktop rail
+  opens the R&D / Quality Control / Lab selector. The mobile header exposes the
+  same control.
+  Selection persists in `localStorage`, updates the workspace header, and swaps
+  the rail destinations. Workspace Settings stays available in every section.
+- **Settings**: the profile avatar menu links to User, Workspace, and
+  Organization settings. The rail and mobile navigation do not use a dedicated
+  settings item.
 - **Nav Items**: `w-12 h-12 rounded-[1.2rem]`
   - **Active**: amber surface, forest icon, inset amber shadow, `scale-105`
   - **Inactive**: mint-muted icon with translucent mint hover
@@ -356,8 +364,8 @@ Animated with Framer Motion `AnimatePresence`:
 
 - Positioned with `start-0 mt-2 w-80 sm:w-96`
 - Unread indicator: `w-3 h-3 bg-red-500 rounded-full animate-pulse`
-- Unread items highlighted: `bg-blue-50/30 dark:bg-blue-900/10`
-- Notification icons differ by type: success → green, error → red, warning → orange, info → blue
+- Unread items highlighted: `bg-[#D2F2D4]/30 dark:bg-[#F5A623]/10`
+- Notification icons differ by type: success → green, error → red, warning → orange, info → forest/amber
 
 ### 7.12 Searchable Comboboxes
 
@@ -377,23 +385,33 @@ Animated with Framer Motion `AnimatePresence`:
 ### 7.13 Sidebar Profile Trigger
 
 - **Trigger**: authenticated avatar at the desktop rail footer; avatar + profile
-  label in the mobile bottom navigation. Clicking either opens
-  `ProfileSettingsModal` directly; never insert an intermediate popover.
-- **Modal content**: Identity, Digital Signature, Language & Region, and
-  Activity remain personal-only tabs. Logout is a dedicated, visually separated
-  action in the modal footer.
-- **Accessibility**: the avatar exposes `aria-haspopup="dialog"` and
-  `aria-expanded`; the portal-rendered modal owns its dialog label, tablist,
-  tabpanel, backdrop dismissal, and close control.
-- **Direction**: the modal inherits the active LTR/RTL context. Mirror only the
+  label in the mobile bottom navigation. Clicking either opens the shared
+  organization and account menu.
+- **Menu**: list every available organization as a radio-style selection, then
+  link to Organization Settings, Workspace Settings, the user's identity, and
+  logout. Close after selection, navigation, outside click, or Escape.
+- **Organization badge**: the active organization's logo overlaps the avatar's
+  lower inline-end edge. Use organization initials when no logo is configured;
+  use amber with forest text for that fallback, and omit the badge when no
+  organization is active.
+- **User settings**: Identity, Language & Region, and Appearance remain nested
+  personal-only options. Logout is a dedicated, visually separated action below
+  that nested navigation.
+- **Accessibility**: the shared page exposes the three setting scopes as a
+  tablist and each scope exposes its options through labeled nested navigation.
+- **Direction**: settings inherit the active LTR/RTL context. Mirror only the
   directional Logout icon.
-- **Layering**: use the modal portal hierarchy at `z-[999]` / `z-[1000]`.
-- **Workspace administration boundary**: never expose Roles & Permissions or
-  other workspace settings from the avatar menu or personal profile modal.
-  Workspace Settings contains Appearance and Traceability & Identity for all
+- **Avatar treatment**: render up to two initials on a deterministic
+  Flavoneer palette color. Seed the color with the normalized account email on
+  every platform, then fall back to the user ID or name when no email is
+  available. Do not load profile images or generated avatars from external
+  services.
+- **Workspace administration boundary**: Roles & Permissions and other
+  workspace controls stay under the Workspace scope. Workspace Settings contains
+  Traceability & Identity for all
   users, Roles & Permissions only for `admin`, and Version Control only for
   users with `manage_version_control`. Unauthorized query-string tab requests
-  fall back to Appearance.
+  fall back to the first visible Workspace option.
 
 ## 8. Animations & Transitions
 
@@ -444,9 +462,9 @@ slide-in-from-right-4 /* Form tab transitions */
 
 ## 9. Dark Mode
 
-### 9.1 Toggle Mechanism
+### 9.1 Theme Preference
 
-Dark mode is controlled via `SettingsContext` → `toggleDarkMode()`, which adds/removes the `dark` class on `document.documentElement`. TailwindCSS is configured with `darkMode: 'class'`.
+Appearance is a per-user preference managed from the profile settings modal. `SettingsContext` exposes `themePreference` and `setThemePreference()` for `light`, `dark`, and `system`; it resolves System with `prefers-color-scheme` and adds or removes the `dark` class on `document.documentElement`. TailwindCSS is configured with `darkMode: 'class'`.
 
 ### 9.2 Color Mapping
 
@@ -619,7 +637,7 @@ Per TailwindCSS defaults:
 ```tsx
 const inputClasses = `w-full px-4 py-2.5 bg-white border border-gray-300
   rounded-lg text-sm text-gray-900 placeholder-gray-400
-  focus:outline-none focus:ring-2 focus:ring-blue-500
+  focus:outline-none focus:ring-2 focus:ring-[#FF7738]/50
   focus:border-transparent transition-all`
 ```
 
@@ -627,9 +645,9 @@ const inputClasses = `w-full px-4 py-2.5 bg-white border border-gray-300
 
 The `NewProjectModal` uses a **tabbed wizard** pattern:
 
-1. Tabs with active indicator: `border-b-2 border-blue-600 text-blue-600`
+1. Tabs with active indicator: `border-b-2 border-[#1C4A3C] text-[#1C4A3C]`
 2. Tab transitions: `animate-in fade-in slide-in-from-right-4 duration-300`
-3. Footer: "Back" (text-only) ← → "Next Step" (filled) or "Create Project" (blue CTA)
+3. Footer: "Back" (text-only) ← → "Next Step" (filled) or "Create Project" (forest CTA)
 4. Back button disabled on first tab: `disabled:opacity-30 disabled:cursor-not-allowed`
 
 ### 14.3 Localized Text Fields
@@ -655,7 +673,7 @@ visible string and apply direction to the modal root, including portaled UI.
 <div
   className={`w-5 h-5 rounded border flex items-center justify-center
   transition-colors ${
-    checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'
+    checked ? 'bg-[#1C4A3C] border-[#1C4A3C]' : 'bg-white border-gray-300'
   }`}
 >
   {checked && <CheckCircle2 size={14} className="text-white" />}
@@ -672,7 +690,7 @@ visible string and apply direction to the modal root, including portaled UI.
       active ? 'bg-white shadow-md text-gray-900' : 'text-gray-400'
     }`}
   >
-    Metric (g, °C)
+    Active option
   </button>
 </div>
 ```
@@ -685,7 +703,7 @@ visible string and apply direction to the modal root, including portaled UI.
 
 ```
 App
-└── SettingsProvider        ← units, dark mode, profile, language, RTL
+└── SettingsProvider        ← theme preference, profile, language, RTL
     └── NotificationProvider  ← notification state, add/read/clear
         └── Router → Layout → Pages
 ```
@@ -693,15 +711,15 @@ App
 ### 15.2 Custom Hooks
 
 ```tsx
-useSettings() // Returns: units, darkMode, profile, language, isRTL, t(), formatMass(), formatTemp()
+useSettings() // Returns: themePreference, setThemePreference(), darkMode, profile, language, isRTL
 useNotifications() // Returns: notifications, unreadCount, addNotification(), markAllAsRead(), markAsRead(), clearNotifications()
 ```
 
 ### 15.3 Unit Formatting
 
 ```tsx
-formatMass(kgValue) // → "500g" or "1.10lbs"
-formatTemp(celsiusValue) // → "135°C" or "275.0°F"
+formatMass(kgValue) // → "500g" or "1.10kg"
+formatTemp(celsiusValue) // → "135°C"
 ```
 
 ---
@@ -816,7 +834,8 @@ Food-R-D-Lab-/
 ├── components/
 │   ├── DashboardLayout.tsx    ← Branded shell: header, sidebar, route surface
 │   ├── Sidebar.tsx            ← Desktop sidebar + mobile bottom nav
-│   ├── SidebarProfileMenu.tsx ← Rail avatar and direct profile-modal trigger
+│   ├── SidebarProfileMenu.tsx ← Organization switcher and account menu
+│   ├── user-avatar.tsx        ← Web initials avatar using shared identity rules
 │   ├── ProfileSettingsModal.tsx
 │   ├── SettingsModal.tsx      ← Dark mode, units, notifications toggles
 │   ├── ProjectCard.tsx        ← Pastel project cards with context menu
@@ -840,10 +859,10 @@ Food-R-D-Lab-/
 │   └── Schedule.tsx           ← Calendar timeline + agenda
 │
 ├── context/
-│   ├── SettingsContext.tsx     ← Theme, units, profile, i18n
+│   ├── SettingsContext.tsx     ← Theme, profile, i18n
 │   └── NotificationContext.tsx ← In-app notification management
 │
-└── convex/                    ← Backend (Convex functions + schema)
+└── ../../packages/backend/convex/ ← Shared backend (Convex functions + schema)
 ```
 
 ---

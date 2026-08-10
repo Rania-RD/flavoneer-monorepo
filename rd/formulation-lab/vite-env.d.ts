@@ -1,13 +1,11 @@
 /// <reference types="vite/client" />
 
-interface ImportMetaEnv {
-  readonly VITE_CONVEX_SITE_URL?: string;
-  readonly VITE_CONVEX_URL?: string;
-  readonly VITE_PUBLIC_POSTHOG_HOST?: string;
-  readonly VITE_PUBLIC_POSTHOG_KEY?: string;
-  readonly VITE_SITE_URL?: string;
-}
+import type { FormulationLabEnvSource } from "@flavoneer/config/env/formulation-lab";
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+declare global {
+  interface ImportMetaEnv extends Readonly<FormulationLabEnvSource> {}
+
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
 }

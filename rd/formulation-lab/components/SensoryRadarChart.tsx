@@ -11,8 +11,8 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 
 interface SensoryRadarChartProps {
   formId: Id<"sensoryForms">;
@@ -87,7 +87,7 @@ export const SensoryRadarChart: React.FC<SensoryRadarChartProps> = ({
         <h3 className="font-bold text-gray-900 text-lg dark:text-white">
           {t("sensory_profile")}
         </h3>
-        <span className="rounded-full bg-indigo-50 px-3 py-1 font-bold text-indigo-700 text-xs dark:bg-indigo-900/30 dark:text-indigo-400">
+        <span className="rounded-full bg-brand-mint px-3 py-1 font-bold text-brand-primary text-xs dark:bg-brand-accent/30 dark:text-brand-accent-hover">
           {evaluations.length} {t("testers")}
         </span>
       </div>
@@ -110,10 +110,10 @@ export const SensoryRadarChart: React.FC<SensoryRadarChartProps> = ({
             />
             <Radar
               dataKey="score"
-              fill="#818cf8"
+              fill="#1C4A3C"
               fillOpacity={0.5}
               name="Avg Score"
-              stroke="#6366f1"
+              stroke="#1C4A3C"
               strokeWidth={2}
             />
             <Tooltip

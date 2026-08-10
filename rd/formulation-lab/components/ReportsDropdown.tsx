@@ -51,7 +51,7 @@ const ReportsDropdown: React.FC<ReportsDropdownProps> = ({
       <button
         className={`rounded-full p-2 transition-colors ${
           isOpen
-            ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+            ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover"
             : "text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-white"
         }`}
         onClick={(e) => {
@@ -69,10 +69,10 @@ const ReportsDropdown: React.FC<ReportsDropdownProps> = ({
         >
           <div className="flex flex-col gap-1">
             <button
-              className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-start font-medium text-gray-700 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+              className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-start font-medium text-gray-700 text-sm transition-colors hover:bg-brand-mint hover:text-brand-primary dark:text-slate-200 dark:hover:bg-brand-accent-hover/20 dark:hover:text-brand-cream"
               onClick={() => handleAction("view")}
             >
-              <div className="rounded-lg bg-blue-50 p-1.5 text-blue-500 transition-colors group-hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:group-hover:bg-blue-500/20">
+              <div className="rounded-lg bg-brand-mint p-1.5 text-brand-primary transition-colors group-hover:bg-brand-mint dark:bg-brand-accent/10 dark:text-brand-accent-hover dark:group-hover:bg-brand-accent-hover/20">
                 <Eye size={16} />
               </div>
               <span>{t("view_full_report")}</span>

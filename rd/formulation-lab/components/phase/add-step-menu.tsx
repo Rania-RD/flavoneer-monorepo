@@ -28,7 +28,7 @@ export const AddStepMenu = ({
   return (
     <div className="relative z-0 pt-2">
       <button
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 border-dashed bg-white/50 px-5 py-4 font-bold text-gray-600 text-sm shadow-sm transition-all hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-600 dark:border-slate-700 dark:bg-[#1e293b]/50 dark:text-slate-400 dark:hover:border-indigo-800/50 dark:hover:bg-indigo-900/10 dark:hover:text-indigo-400"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 border-dashed bg-white/50 px-5 py-4 font-bold text-gray-600 text-sm shadow-sm transition-all hover:border-brand-primary/20 hover:bg-brand-mint/50 hover:text-brand-primary dark:border-slate-700 dark:bg-[#1e293b]/50 dark:text-slate-400 dark:hover:border-brand-mint/30 dark:hover:bg-brand-accent-hover/10 dark:hover:text-brand-accent-hover"
         data-testid="add-content-button"
         onClick={onToggle}
         type="button"
@@ -55,7 +55,7 @@ export const AddStepMenu = ({
                 onClick={() => onAddStep("weighing")}
                 type="button"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover">
                   <Scale size={16} />
                 </div>
                 <div>
@@ -119,18 +119,18 @@ export const AddStepMenu = ({
                 </div>
               </button>
               <button
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start transition-colors hover:bg-brand-mint dark:hover:bg-brand-accent-hover/30"
                 onClick={() => onAddStep("conditional")}
                 type="button"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-primary/20 bg-brand-mint text-brand-primary shadow-sm dark:border-brand-mint/20 dark:bg-brand-accent/30 dark:text-brand-accent-hover">
                   <CheckSquare size={16} />
                 </div>
                 <div>
-                  <div className="font-bold text-indigo-700 text-sm dark:text-indigo-300">
+                  <div className="font-bold text-brand-primary text-sm dark:text-brand-accent-hover">
                     {t("conditional_pass_fail")}
                   </div>
-                  <div className="text-indigo-500/80 text-xs dark:text-indigo-400/80">
+                  <div className="text-brand-primary/80 text-xs dark:text-brand-accent-hover">
                     {t("branch_execution_on_a_yes_no_validation")}
                   </div>
                 </div>

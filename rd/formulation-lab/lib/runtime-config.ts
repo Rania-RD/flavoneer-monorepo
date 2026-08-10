@@ -1,10 +1,9 @@
-interface PublicRuntimeConfig {
-  VITE_CONVEX_SITE_URL?: string;
-  VITE_CONVEX_URL?: string;
-  VITE_PUBLIC_POSTHOG_HOST?: string;
-  VITE_PUBLIC_POSTHOG_KEY?: string;
-  VITE_SITE_URL?: string;
-}
+import {
+  createFormulationLabEnv,
+  type FormulationLabEnvSource,
+} from "@flavoneer/config/env/formulation-lab";
+
+type PublicRuntimeConfig = Partial<FormulationLabEnvSource>;
 
 declare global {
   interface Window {
@@ -25,25 +24,25 @@ const readValue = (
   return value || undefined;
 };
 
-export const publicConfig = {
-  convexSiteUrl: readValue(
+export const publicConfig = createFormulationLabEnv({
+  VITE_CONVEX_SITE_URL: readValue(
     runtimeConfig?.VITE_CONVEX_SITE_URL,
     import.meta.env.VITE_CONVEX_SITE_URL
   ),
-  convexUrl: readValue(
+  VITE_CONVEX_URL: readValue(
     runtimeConfig?.VITE_CONVEX_URL,
     import.meta.env.VITE_CONVEX_URL
   ),
-  posthogHost: readValue(
+  VITE_PUBLIC_POSTHOG_HOST: readValue(
     runtimeConfig?.VITE_PUBLIC_POSTHOG_HOST,
     import.meta.env.VITE_PUBLIC_POSTHOG_HOST
   ),
-  posthogKey: readValue(
+  VITE_PUBLIC_POSTHOG_KEY: readValue(
     runtimeConfig?.VITE_PUBLIC_POSTHOG_KEY,
     import.meta.env.VITE_PUBLIC_POSTHOG_KEY
   ),
-  siteUrl: readValue(
+  VITE_SITE_URL: readValue(
     runtimeConfig?.VITE_SITE_URL,
     import.meta.env.VITE_SITE_URL
   ),
-} as const;
+});

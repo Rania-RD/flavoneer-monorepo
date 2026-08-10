@@ -2,5 +2,19 @@
   "name": "@flavoneer/config",
   "version": "0.1.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    "./env/core": "./src/env/core.ts",
+    "./env/formulation-lab": "./src/env/formulation-lab.ts",
+    "./env/landing": "./src/env/landing.ts",
+    "./env/mobile": "./src/env/mobile.ts",
+    "./env/server": "./src/env/server.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.2"
+  }
 }

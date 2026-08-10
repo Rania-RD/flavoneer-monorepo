@@ -1,3 +1,4 @@
+import type { Id } from "@flavoneer/backend/data-model";
 import { AnimatePresence, type HTMLMotionProps, motion } from "framer-motion";
 import {
   Archive,
@@ -10,15 +11,14 @@ import {
   Share2,
   Trash2,
 } from "lucide-react";
-import { DateTime } from "luxon";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
-import type { Id } from "../convex/_generated/dataModel";
 import type { EnrichedProject } from "../types";
 import ShareModal from "./ShareModal";
+import UserAvatar from "./user-avatar";
 
 const MotionDiv = motion.div as React.FC<
   HTMLMotionProps<"div"> & { className?: string; children?: React.ReactNode }
@@ -31,7 +31,7 @@ interface ProjectCardProps {
   onStartRun?: (projectId: Id<"projects">) => void;
   onViewDetails?: (project: EnrichedProject) => void;
   project: EnrichedProject;
-  teamMembers?: { userName: string; userAvatarUrl?: string }[];
+  organizationMembers?: { userEmail: string; userId: string; userName: string }[];
 }
 
 // Flavoneer tonal palette — deterministic, brand-safe project differentiation.
@@ -85,10 +85,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   onDelete,
   onArchive,
   onStartRun,
-  teamMembers,
+  organizationMembers,
 }) => {
   const { t } = useTranslation();
-  const { language, isRTL } = useSettings();
+  const { isRTL } = useSettings();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -161,9 +161,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           {/* Header */}
           <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-              <div className="max-w-full truncate rounded-full bg-white/80 px-4 py-1.5 font-black text-gray-900 text-xs uppercase tracking-wider shadow-sm backdrop-blur-md dark:bg-white/10 dark:text-white">
-                {t(project.category || "r_and_d")}
-              </div>
               {project.status && (
                 <div
                   className={`rounded-full border px-3 py-1.5 font-black text-[10px] uppercase tracking-wider shadow-sm ${
@@ -225,16 +222,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                       </button>
                       <button
                         className={`flex items-center gap-3 rounded-xl px-3 py-2 text-start font-bold text-sm transition-colors ${
-                          project.status !== "Released"
-                            ? "hidden cursor-not-allowed bg-gray-50/50 text-gray-400 dark:bg-slate-800/50 dark:text-gray-600"
-                            : "text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10"
+                          project.status === "Released"
+                            ? "text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10"
+                            : "hidden cursor-not-allowed bg-gray-50/50 text-gray-400 dark:bg-slate-800/50 dark:text-gray-600"
                         }`}
                         disabled={project.status !== "Released"}
                         onClick={handleStartRun}
                         title={
-                          project.status !== "Released"
-                            ? "Cannot start a run for a non-released formulation"
-                            : ""
+                          project.status === "Released"
+                            ? ""
+                            : "Cannot start a run for a non-released formulation"
                         }
                       >
                         <Play size={16} /> {t("startNewRun")}
@@ -265,31 +262,33 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
 
           {/* Card Body */}
-          <div className="min-w-0">
-            <h3 className="mb-1 line-clamp-2 text-start font-black text-3xl text-gray-900 leading-tight dark:text-slate-100">
-              {project.name}
-            </h3>
-            <p className="mb-2 flex items-center gap-2 text-start font-bold text-gray-600 text-sm dark:text-slate-400">
-              <span>v{project.version}</span>
-              <span>•</span>
-              <span>
-                {DateTime.fromMillis(project._creationTime).toRelative({
-                  locale: language === "ar" ? "ar" : "en",
-                })}
-              </span>
-            </p>
-
-            {/* Release Notes Preview */}
-            {project.releaseNotes && (
-              <div className="line-clamp-2 rounded-xl border border-white/20 bg-white/50 p-2 text-gray-600 text-xs dark:border-slate-700/30 dark:bg-black/10 dark:text-slate-400">
-                <span className="font-bold">{t("notes")}</span>{" "}
-                {project.releaseNotes}
-              </div>
+          <div className="flex min-w-0 items-start gap-4">
+            {project.photoUrl && (
+              <img
+                alt={t("project_photo_for", { name: project.name })}
+                className="h-20 w-20 shrink-0 rounded-[1.35rem] border border-white/50 object-cover shadow-sm dark:border-white/10"
+                height={80}
+                src={project.photoUrl}
+                width={80}
+              />
             )}
+            <div className="min-w-0 flex-1">
+              <h3 className="mb-1 line-clamp-2 text-start font-black text-3xl text-gray-900 leading-tight dark:text-slate-100">
+                {project.name}
+              </h3>
+
+              {/* Release Notes Preview */}
+              {project.releaseNotes && (
+                <div className="line-clamp-2 rounded-xl border border-white/20 bg-white/50 p-2 text-gray-600 text-xs dark:border-slate-700/30 dark:bg-black/10 dark:text-slate-400">
+                  <span className="font-bold">{t("notes")}</span>{" "}
+                  {project.releaseNotes}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer */}
-          <div className="mt-auto">
+          <div className="mt-auto flex min-w-0 items-center gap-2">
             {/* <div className="flex justify-between text-xs font-bold mb-3">
             <span className="text-gray-900 dark:text-slate-200">{t('progress')}</span>
             <span className="text-gray-900 dark:text-slate-200">{project.progress}%</span>
@@ -301,26 +300,25 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             />
           </div> */}
 
-            {/* Team Member Avatars */}
-            {teamMembers && teamMembers.length > 0 && (
-              <div className="mb-4 flex items-center">
+            {/* Organization Member Avatars */}
+            {organizationMembers && organizationMembers.length > 0 && (
+              <div className="flex shrink-0 items-center">
                 <div className="flex -space-x-2.5">
-                  {teamMembers.slice(0, 4).map((member, idx) => (
-                    <img
-                      alt={member.userName}
+                  {organizationMembers.slice(0, 4).map((member) => (
+                    <UserAvatar
                       className="h-8 w-8 rounded-full border-2 border-white object-cover shadow-sm dark:border-slate-800"
-                      key={idx}
-                      src={
-                        member.userAvatarUrl ||
-                        `https://api.dicebear.com/9.x/thumbs/svg?seed=${member.userName}`
-                      }
+                      key={member.userId}
+                      label={member.userName}
+                      name={member.userName}
+                      seed={member.userEmail}
+                      size={32}
                       title={member.userName}
                     />
                   ))}
-                  {teamMembers.length > 4 && (
+                  {organizationMembers.length > 4 && (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gray-200 shadow-sm dark:border-slate-800 dark:bg-slate-700">
                       <span className="font-black text-[10px] text-gray-600 dark:text-slate-300">
-                        +{teamMembers.length - 4}
+                        +{organizationMembers.length - 4}
                       </span>
                     </div>
                   )}
@@ -329,8 +327,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             )}
 
             <button
-              className={`group/btn flex w-full items-center justify-center gap-2 rounded-2xl bg-white/90 py-4 font-black text-gray-900 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white dark:bg-white/10 dark:text-white ${theme.buttonHover}`}
+              className={`group/btn ms-auto flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-white/90 px-3 py-3 font-black text-gray-900 text-xs shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white dark:bg-white/10 dark:text-white dark:hover:bg-white/15 ${theme.buttonHover}`}
               onClick={() => (onViewDetails ? onViewDetails(project) : null)}
+              type="button"
             >
               {t("viewDetails")}
               <ArrowRight

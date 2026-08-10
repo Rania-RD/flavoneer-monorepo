@@ -1,12 +1,18 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
+import {
+  getEffectiveSystemPermissions,
+  isConfigurableSystemRole,
+} from "@flavoneer/backend/system-role-access";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { useMutation, useQuery } from "convex/react";
 import { Check, Loader2, ShieldAlert, Users } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 import { usePermissions } from "../../hooks/usePermissions";
 import { isAdminRole } from "../../lib/role-access";
+import { LabDataGrid } from "../ui/LabDataGrid";
 import { Switch } from "../ui/Switch";
 
 // Available permission toggles in the system
@@ -43,6 +49,15 @@ const AVAILABLE_PERMISSIONS = [
   },
 ];
 
+type PermissionRow = (typeof AVAILABLE_PERMISSIONS)[number];
+
+const haveSamePermissions = (
+  first: readonly string[] | undefined,
+  second: readonly string[]
+) =>
+  JSON.stringify([...(first ?? [])].sort()) ===
+  JSON.stringify([...second].sort());
+
 const RoleManagementSection: React.FC = () => {
   const { t } = useTranslation();
   const { isLoading: isPermissionLoading, role } = usePermissions();
@@ -52,6 +67,7 @@ const RoleManagementSection: React.FC = () => {
     api.users.listUsersWithRoles,
     canManageRoles ? {} : "skip"
   );
+  const matrixRoles = roles?.filter(isConfigurableSystemRole) ?? [];
   const updateRolePermissions = useMutation(api.roles.updateRolePermissions);
   const updateUserRole = useMutation(api.users.updateUserRole);
 
@@ -75,9 +91,12 @@ const RoleManagementSection: React.FC = () => {
   useEffect(() => {
     if (roles) {
       const initialMap: Record<string, string[]> = {};
-      roles.forEach((r) => {
-        initialMap[r._id] = [...r.permissions];
-      });
+      for (const currentRole of roles) {
+        if (isConfigurableSystemRole(currentRole)) {
+          initialMap[currentRole._id] =
+            getEffectiveSystemPermissions(currentRole);
+        }
+      }
       setLocalPermissions(initialMap);
     }
   }, [roles]);
@@ -119,13 +138,10 @@ const RoleManagementSection: React.FC = () => {
     setPermissionsSaved(false);
 
     try {
-      const promises = roles.map(async (role) => {
+      const promises = matrixRoles.map(async (role) => {
         const newPerms = localPermissions[role._id];
-        // Only save if different (shallow compare is fine here)
-        if (
-          JSON.stringify(newPerms?.sort()) !==
-          JSON.stringify(role.permissions.sort())
-        ) {
+        // Only save roles whose permission set changed.
+        if (!haveSamePermissions(newPerms, role.permissions)) {
           await updateRolePermissions({
             roleId: role._id as Id<"roles">,
             permissions: newPerms,
@@ -174,15 +190,112 @@ const RoleManagementSection: React.FC = () => {
     }
   };
 
-  const hasPermissionChanges = roles?.some(
-    (role) =>
-      JSON.stringify(localPermissions[role._id]?.sort()) !==
-      JSON.stringify(role.permissions.sort())
+  const hasPermissionChanges = matrixRoles.some(
+    (role) => !haveSamePermissions(localPermissions[role._id], role.permissions)
   );
 
   const hasUserChanges = users?.some(
     (user) =>
       localUserRoles[user._id] && localUserRoles[user._id] !== user.roleId
+  );
+  const permissionColumnDefs = useMemo<ColDef<PermissionRow>[]>(
+    () => [
+      {
+        cellRenderer: ({ data }: ICellRendererParams<PermissionRow>) =>
+          data ? (
+            <div className="min-w-0 py-2">
+              <div className="truncate font-medium">{t(data.label)}</div>
+              <div className="mt-1 truncate text-[#527568] text-xs dark:text-[#a9cbbb]">
+                {t(data.desc)}
+              </div>
+            </div>
+          ) : null,
+        field: "label",
+        flex: 1,
+        headerName: t("permission"),
+        minWidth: 280,
+      },
+      ...matrixRoles.map(
+        (currentRole): ColDef<PermissionRow> => ({
+          cellRenderer: ({ data }: ICellRendererParams<PermissionRow>) =>
+            data ? (
+              <div className="flex w-full justify-center">
+                <Switch
+                  checked={
+                    localPermissions[currentRole._id]?.includes(data.key) ??
+                    false
+                  }
+                  onChange={() =>
+                    handleTogglePermission(currentRole._id, data.key)
+                  }
+                />
+              </div>
+            ) : null,
+          colId: currentRole._id,
+          cellClass: "lab-grid-align-center",
+          filter: false,
+          headerName: t(currentRole.key, {
+            defaultValue: currentRole.name,
+          }),
+          headerClass: "lab-grid-align-center",
+          minWidth: 140,
+          sortable: false,
+        })
+      ),
+    ],
+    [localPermissions, matrixRoles, t]
+  );
+  type UserRow = NonNullable<typeof users>[number];
+  const userColumnDefs = useMemo<ColDef<UserRow>[]>(
+    () => [
+      {
+        cellRenderer: ({ data }: ICellRendererParams<UserRow>) =>
+          data ? (
+            <div className="min-w-0 py-2">
+              <div className="truncate font-semibold">
+                {data.name || t("unknown_user")}
+              </div>
+              <div className="mt-1 truncate text-[#527568] text-xs dark:text-[#a9cbbb]">
+                {data.email || t("no_email_provided")}
+              </div>
+            </div>
+          ) : null,
+        field: "name",
+        flex: 1,
+        headerName: t("user_name"),
+        minWidth: 240,
+      },
+      {
+        cellRenderer: ({ data }: ICellRendererParams<UserRow>) =>
+          data ? (
+            <select
+              aria-label={t("selectRole")}
+              className="w-full max-w-[220px] rounded-xl border border-[#1c4a3c]/15 bg-[#fffdf4] px-3 py-2 text-[#173e33] text-sm outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-[#d2f2d4]/15 dark:bg-[#102f27] dark:text-[#f7f4df]"
+              onChange={(event) =>
+                handleUserRoleChange(data._id, event.target.value)
+              }
+              value={localUserRoles[data._id] || ""}
+            >
+              <option disabled value="">
+                {t("selectRole")}
+              </option>
+              {roles?.map((currentRole) => (
+                <option key={currentRole._id} value={currentRole._id}>
+                  {t(currentRole.key, { defaultValue: currentRole.name })}
+                </option>
+              ))}
+            </select>
+          ) : null,
+        colId: "role",
+        cellClass: "lab-grid-align-end",
+        filter: false,
+        flex: 0.7,
+        headerName: t("role"),
+        minWidth: 210,
+        sortable: false,
+      },
+    ],
+    [localUserRoles, roles, t]
   );
 
   if (isPermissionLoading) {
@@ -222,7 +335,7 @@ const RoleManagementSection: React.FC = () => {
         <button
           className={`flex items-center gap-2 rounded-xl px-4 py-2 font-semibold text-sm transition-all ${
             activeTab === "matrix"
-              ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+              ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover"
               : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
           }`}
           onClick={() => setActiveTab("matrix")}
@@ -235,7 +348,7 @@ const RoleManagementSection: React.FC = () => {
         <button
           className={`flex items-center gap-2 rounded-xl px-4 py-2 font-semibold text-sm transition-all ${
             activeTab === "users"
-              ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+              ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover"
               : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
           }`}
           onClick={() => setActiveTab("users")}
@@ -250,64 +363,19 @@ const RoleManagementSection: React.FC = () => {
       {/* Matrix Tab */}
       {activeTab === "matrix" && (
         <div className="fade-in animate-in space-y-6 duration-300">
-          <div className="overflow-x-auto rounded-[1.5rem] border border-gray-100 dark:border-slate-800">
-            <table className="w-full border-collapse text-start">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-slate-800/50">
-                  <th className="border-gray-100 border-b p-4 text-start font-semibold text-gray-900 text-sm dark:border-slate-800 dark:text-white">
-                    {t("permission")}
-                  </th>
-                  {roles.map((role) => (
-                    <th
-                      className="min-w-[120px] border-gray-100 border-b p-4 text-center font-semibold text-gray-900 text-sm dark:border-slate-800 dark:text-white"
-                      key={role._id}
-                    >
-                      {t(role.key, { defaultValue: role.name })}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {AVAILABLE_PERMISSIONS.map((perm) => (
-                  <tr
-                    className="border-gray-50 border-b transition-colors last:border-0 hover:bg-gray-50/50 dark:border-slate-800/50 dark:hover:bg-slate-800/20"
-                    key={perm.key}
-                  >
-                    <td className="p-4 text-start">
-                      <div className="font-medium text-gray-900 text-sm dark:text-white">
-                        {t(perm.label)}
-                      </div>
-                      <div className="mt-1 text-gray-400 text-xs dark:text-slate-500">
-                        {t(perm.desc)}
-                      </div>
-                    </td>
-                    {roles.map((role) => {
-                      const isChecked = localPermissions[role._id]?.includes(
-                        perm.key
-                      );
-                      // Optional: disable editing 'admin' role directly to prevent lockout,
-                      // but allowing it for flexibility as per prompt. We'll leave it enabled.
-                      const roleIsAdmin =
-                        role.key === "admin" && perm.key === "full_access";
-                      return (
-                        <td
-                          className="p-4 text-center align-middle"
-                          key={role._id}
-                        >
-                          <Switch
-                            checked={!!isChecked}
-                            disabled={roleIsAdmin}
-                            onChange={() =>
-                              handleTogglePermission(role._id, perm.key)
-                            }
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="overflow-hidden rounded-[1.5rem] border border-gray-100 dark:border-slate-800">
+            <LabDataGrid<PermissionRow>
+              className="lab-data-grid--settings"
+              columnDefs={permissionColumnDefs}
+              defaultColDef={{
+                filter: false,
+                suppressHeaderMenuButton: true,
+              }}
+              getRowId={({ data }) => data.key}
+              headerHeight={52}
+              rowData={AVAILABLE_PERMISSIONS}
+              rowHeight={68}
+            />
           </div>
 
           <div className="flex items-center justify-end gap-3">
@@ -319,7 +387,7 @@ const RoleManagementSection: React.FC = () => {
             <button
               className={`rounded-xl px-6 py-2.5 font-semibold text-sm transition-all ${
                 hasPermissionChanges && !isSavingPermissions
-                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-indigo-600"
+                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-brand-accent"
                   : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500"
               }`}
               disabled={!hasPermissionChanges || isSavingPermissions}
@@ -341,44 +409,21 @@ const RoleManagementSection: React.FC = () => {
       {/* Users Tab */}
       {activeTab === "users" && (
         <div className="fade-in animate-in space-y-6 duration-300">
-          <div className="block rounded-[1.5rem] border border-gray-100 bg-gray-50 p-2 dark:border-slate-800 dark:bg-slate-800/30">
-            {users.map((user) => (
-              <div
-                className="flex items-center justify-between rounded-xl border-gray-100 border-b p-4 transition-colors last:border-0 hover:bg-white dark:border-slate-800 dark:hover:bg-slate-800"
-                key={user._id}
-              >
-                <div className="flex flex-col">
-                  <span className="font-semibold text-gray-900 text-sm dark:text-white">
-                    {user.name || t("unknown_user")}
-                  </span>
-                  <span className="text-gray-500 text-xs dark:text-gray-400">
-                    {user.email || t("no_email_provided")}
-                  </span>
-                </div>
-
-                <select
-                  className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-gray-100"
-                  onChange={(e) =>
-                    handleUserRoleChange(user._id, e.target.value)
-                  }
-                  value={localUserRoles[user._id] || ""}
-                >
-                  <option disabled value="">
-                    {t("selectRole")}
-                  </option>
-                  {roles.map((role) => (
-                    <option key={role._id} value={role._id}>
-                      {t(role.key, { defaultValue: role.name })}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-            {users.length === 0 && (
-              <p className="py-8 text-center text-gray-500 text-sm dark:text-gray-400">
-                {t("no_users_found_in_the_system")}
-              </p>
-            )}
+          <div className="overflow-hidden rounded-[1.5rem] border border-gray-100 dark:border-slate-800">
+            <LabDataGrid<UserRow>
+              className="lab-data-grid--settings"
+              columnDefs={userColumnDefs}
+              defaultColDef={{
+                filter: false,
+                sortable: false,
+                suppressHeaderMenuButton: true,
+              }}
+              getRowId={({ data }) => data._id}
+              headerHeight={0}
+              overlayNoRowsTemplate={t("no_users_found_in_the_system")}
+              rowData={users}
+              rowHeight={68}
+            />
           </div>
 
           <div className="flex items-center justify-end gap-3">
@@ -390,7 +435,7 @@ const RoleManagementSection: React.FC = () => {
             <button
               className={`rounded-xl px-6 py-2.5 font-semibold text-sm transition-all ${
                 hasUserChanges && !isSavingUsers
-                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-indigo-600"
+                  ? "bg-gray-900 text-white shadow-md hover:scale-105 dark:bg-brand-accent"
                   : "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500"
               }`}
               disabled={!hasUserChanges || isSavingUsers}

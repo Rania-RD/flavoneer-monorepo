@@ -1,3 +1,6 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
+import { normalizeInsNumber } from "@flavoneer/backend/regulatory";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { AnimatePresence, useAnimation } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
@@ -5,11 +8,8 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
-import { normalizeInsNumber } from "../convex/regulatoryHelpers";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 import { compressImage } from "../lib/imageUtils";
@@ -55,10 +55,14 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isRTL, language } = useSettings();
-  const { activeTeamId } = useTeam();
+  const { activeOrganizationId } = useOrganization();
   const createIngredient = useMutation(api.ingredients.create);
   const updateIngredient = useMutation(api.ingredients.update);
-  const allIngredients = useQuery(api.ingredients.list, { language }) ?? [];
+  const allIngredients =
+    useQuery(api.ingredients.list, {
+      language,
+      organizationId: activeOrganizationId ?? undefined,
+    }) ?? [];
 
   const [activeTab, setActiveTab] = useState<"info" | "nutrients">("info");
   const [legislation, setLegislation] = useState<NutritionLegislation>("FDA");
@@ -413,7 +417,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
       }
 
       const payload = buildIngredientSavePayload({
-        activeTeamId: activeTeamId ?? undefined,
+        activeOrganizationId: activeOrganizationId ?? undefined,
         allergenRegion,
         allergenValues,
         allergenVerified,
@@ -552,7 +556,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
 
   // ── Style tokens ────────────────────────────────────────
   const inputClasses =
-    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:focus:ring-indigo-400/50 transition-all";
+    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:focus:ring-brand-accent/50 transition-all";
   const labelClasses =
     "block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ms-1";
 

@@ -8,8 +8,8 @@ const MotionDiv = motion.div as React.FC<
 
 import { Beaker, FlaskConical, Loader2, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
-import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
+import { useOrganization } from "../context/OrganizationContext";
+import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
@@ -17,43 +17,43 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 
 export default function OnboardingView() {
   const { t } = useTranslation();
-  const [newTeamName, setNewTeamName] = useState("");
+  const [newOrganizationName, setNewOrganizationName] = useState("");
   const { toast } = useToast();
   const [inviteToken, setInviteToken] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
 
-  const { setActiveTeamId } = useTeam();
-  const createTeam = useMutation(api.teams.create);
-  const joinTeam = useMutation(api.teamInvites.accept);
+  const { setActiveOrganizationId } = useOrganization();
+  const createOrganization = useMutation(api.organizations.create);
+  const joinOrganization = useMutation(api.organizationInvites.accept);
 
-  const handleCreateTeam = async (e: React.FormEvent) => {
+  const handleCreateOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim()) {
+    if (!newOrganizationName.trim()) {
       return;
     }
     setIsCreating(true);
     try {
-      const teamId = await createTeam({ name: newTeamName.trim() });
-      setActiveTeamId(teamId);
-      toast.success(t("teamCreated"));
+      const organizationId = await createOrganization({ name: newOrganizationName.trim() });
+      setActiveOrganizationId(organizationId);
+      toast.success(t("organizationCreated"));
     } catch (err) {
-      toast.error(getErrorMessage(err, t("failed_to_create_team")));
+      toast.error(getErrorMessage(err, t("failed_to_create_organization")));
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleJoinTeam = async (e: React.FormEvent) => {
+  const handleJoinOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteToken.trim()) {
       return;
     }
     setIsJoining(true);
     try {
-      const teamId = await joinTeam({ token: inviteToken.trim() });
-      setActiveTeamId(teamId);
-      toast.success(t("joined_team_success"));
+      const organizationId = await joinOrganization({ token: inviteToken.trim() });
+      setActiveOrganizationId(organizationId);
+      toast.success(t("joined_organization_success"));
     } catch (err) {
       toast.error(getErrorMessage(err, t("invalid_invite_token")));
     } finally {
@@ -75,7 +75,7 @@ export default function OnboardingView() {
         </div>
         <h1 className="mb-4 font-extrabold text-4xl text-charcoal tracking-tight sm:text-5xl dark:text-white">
           {t("welcome_to")}{" "}
-          <span className="text-indigo-600 dark:text-indigo-400">
+          <span className="text-brand-primary dark:text-brand-accent-hover">
             {t("app_name")}
           </span>
         </h1>
@@ -86,7 +86,7 @@ export default function OnboardingView() {
 
       {/* Action Cards */}
       <div className="z-10 grid w-full max-w-4xl grid-cols-1 gap-8 md:grid-cols-2">
-        {/* Create Team Card */}
+        {/* Create Organization Card */}
         <MotionDiv
           animate={{ opacity: 1, x: 0 }}
           className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-2xl backdrop-blur-3xl dark:border-slate-700/50 dark:bg-slate-800/80"
@@ -96,31 +96,31 @@ export default function OnboardingView() {
           <div className="pointer-events-none absolute end-0 top-0 p-6 text-gray-100 transition-transform duration-500 group-hover:scale-110 dark:text-slate-700/30">
             <FlaskConical size={120} />
           </div>
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover">
             <Users size={28} />
           </div>
           <h3 className="relative z-10 mb-2 font-bold text-2xl text-gray-900 dark:text-white">
-            {t("create_a_team")}
+            {t("create_a_organization")}
           </h3>
           <p className="relative z-10 mb-8 flex-1 text-gray-500 dark:text-slate-400">
             {t("establish_your_own_laboratory_workspace_")}
           </p>
           <form
             className="relative z-10 flex flex-col gap-3 sm:flex-row"
-            onSubmit={handleCreateTeam}
+            onSubmit={handleCreateOrganization}
           >
             <input
-              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-medium text-gray-900 placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder-slate-500"
-              data-testid="create-team-name-input"
-              onChange={(e) => setNewTeamName(e.target.value)}
+              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-medium text-gray-900 placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder-slate-500"
+              data-testid="create-organization-name-input"
+              onChange={(e) => setNewOrganizationName(e.target.value)}
               placeholder={t("example_workspace")}
               type="text"
-              value={newTeamName}
+              value={newOrganizationName}
             />
             <button
-              className="flex shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-32"
-              data-testid="create-team-submit-button"
-              disabled={!newTeamName.trim() || isCreating}
+              className="flex shrink-0 items-center justify-center rounded-xl bg-brand-primary px-6 py-3 font-bold text-white transition-colors hover:bg-brand-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-32"
+              data-testid="create-organization-submit-button"
+              disabled={!newOrganizationName.trim() || isCreating}
               type="submit"
             >
               {isCreating ? (
@@ -132,7 +132,7 @@ export default function OnboardingView() {
           </form>
         </MotionDiv>
 
-        {/* Join Team Card */}
+        {/* Join Organization Card */}
         <MotionDiv
           animate={{ opacity: 1, x: 0 }}
           className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-2xl backdrop-blur-3xl dark:border-slate-700/50 dark:bg-slate-800/80"
@@ -146,14 +146,14 @@ export default function OnboardingView() {
             <UserPlus size={28} />
           </div>
           <h3 className="relative z-10 mb-2 font-bold text-2xl text-gray-900 dark:text-white">
-            {t("join_a_team")}
+            {t("join_a_organization")}
           </h3>
           <p className="relative z-10 mb-8 flex-1 text-gray-500 dark:text-slate-400">
             {t("have_an_invite_code_enter_it_below_to_se")}
           </p>
           <form
             className="relative z-10 flex flex-col gap-3 sm:flex-row"
-            onSubmit={handleJoinTeam}
+            onSubmit={handleJoinOrganization}
           >
             <input
               className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-medium text-gray-900 placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder-slate-500"

@@ -1,0 +1,10 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Flavoneer",
+    "NSCameraUsageDescription": "Allow Flavoneer to photograph printed production carton labels.",
+    "NSPhotoLibraryUsageDescription": "Allow Flavoneer to select production record photos from your library."
+  },
+  "android": {
+    "app_name": "Flavoneer"
+  }
+}

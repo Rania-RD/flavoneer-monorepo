@@ -1,3 +1,4 @@
+import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
 import {
   AlertCircle,
@@ -13,8 +14,8 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import { useOrganization } from "../../context/OrganizationContext";
 import { useSettings } from "../../context/SettingsContext";
-import { api } from "../../convex/_generated/api";
 import type { RunRecipePhase, RunRecipeStep } from "../../types";
 import { MiniSpreadsheetEditor } from "../spreadsheet/MiniSpreadsheetEditor";
 import TimerDisplay from "./TimerDisplay";
@@ -64,7 +65,11 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useSettings();
-  const inventoryItems = useQuery(api.inventory.list, { language });
+  const { activeOrganizationId } = useOrganization();
+  const inventoryItems = useQuery(api.inventory.list, {
+    language,
+    organizationId: activeOrganizationId ?? undefined,
+  });
 
   if (!(activePhase && activeStep)) {
     return (
@@ -103,7 +108,7 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
   if (isWeighing) {
     PhaseIcon = Scale;
     iconColor =
-      "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400";
+      "bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover";
   }
   if (isTimer) {
     PhaseIcon = Clock;
@@ -123,7 +128,7 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
   if (isConditional) {
     PhaseIcon = CheckSquare;
     iconColor =
-      "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400";
+      "bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover";
   }
   if (isSpreadsheet) {
     PhaseIcon = Table2;
@@ -195,12 +200,12 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
 
             {/* WEIGHING UI */}
             {isWeighing && (
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 dark:border-slate-700 dark:bg-slate-900/50">
+              <div className="rounded-2xl border border-brand-primary/20 bg-brand-mint p-6 dark:border-slate-700 dark:bg-slate-900/50">
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="font-bold text-blue-800 text-sm uppercase tracking-wider opacity-60 dark:text-blue-300">
+                  <span className="font-bold text-brand-primary text-sm uppercase tracking-wider opacity-60 dark:text-brand-accent-hover">
                     {t("target_mass")}
                   </span>
-                  <span className="font-bold font-mono text-blue-900 text-xl dark:text-blue-200">
+                  <span className="font-bold font-mono text-brand-primary text-xl dark:text-brand-accent-hover">
                     {activeStep.expectedWeight} {activeStep.unit}
                   </span>
                 </div>
@@ -210,7 +215,7 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
                     className={`mb-5 flex items-center justify-between rounded-xl border p-4 shadow-sm transition-colors ${
                       isStockInsufficient
                         ? "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
-                        : "border-blue-100 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        : "border-brand-primary/20 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -229,7 +234,7 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
 
                 <div className="flex items-center gap-3">
                   <input
-                    className="flex-1 rounded-xl border border-blue-200 bg-white px-6 py-4 text-end font-black font-mono text-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                    className="flex-1 rounded-xl border border-brand-primary/20 bg-white px-6 py-4 text-end font-black font-mono text-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-brand-focus/50 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                     data-testid="run-actual-weight-input"
                     onChange={(e) =>
                       setRunValues((prev) => ({
@@ -247,7 +252,7 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
                 </div>
                 {/* Tolerance indication */}
                 {activeStep.expectedWeight !== undefined && (
-                  <div className="mt-4 flex justify-between border-blue-200/50 border-t pt-4 font-bold text-blue-700 text-xs dark:border-slate-700/50 dark:text-blue-400">
+                  <div className="mt-4 flex justify-between border-brand-primary/20 border-t pt-4 font-bold text-brand-primary text-xs dark:border-slate-700/50 dark:text-brand-accent-hover">
                     <span>{t("tolerance_range")}</span>
                     <span>
                       {(
@@ -323,7 +328,7 @@ const RunPhaseView: React.FC<RunPhaseViewProps> = ({
                   </div>
                 ) : (
                   <button
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-4 font-bold transition-colors hover:bg-blue-500"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary py-4 font-bold transition-colors hover:bg-brand-primary-hover"
                     onClick={() =>
                       setStepLogs((prev) => ({
                         ...prev,

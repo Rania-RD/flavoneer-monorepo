@@ -28,8 +28,8 @@ export interface IngredientGroupStyle {
 export const GROUP_STYLES: Record<string, IngredientGroupStyle> = {
   group_water_liquids: {
     icon: Droplets,
-    color: "text-sky-600 dark:text-sky-400",
-    bg: "bg-sky-50 border-sky-100 dark:bg-sky-500/10 dark:border-sky-500/20",
+    color: "text-brand-primary dark:text-brand-accent-hover",
+    bg: "bg-brand-mint border-brand-primary/20 dark:bg-brand-accent/10 dark:border-brand-mint/20",
   },
   group_dairy_eggs: {
     icon: Egg,
@@ -68,8 +68,8 @@ export const GROUP_STYLES: Record<string, IngredientGroupStyle> = {
   },
   group_functional_additives: {
     icon: FlaskConical,
-    color: "text-cyan-600 dark:text-cyan-400",
-    bg: "bg-cyan-50 border-cyan-100 dark:bg-cyan-500/10 dark:border-cyan-500/20",
+    color: "text-brand-primary dark:text-brand-accent-hover",
+    bg: "bg-brand-mint border-brand-primary/20 dark:bg-brand-accent/10 dark:border-brand-mint/20",
   },
   group_other: {
     icon: Package,

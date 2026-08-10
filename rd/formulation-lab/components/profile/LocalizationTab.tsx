@@ -19,7 +19,7 @@ const LocalizationTab: React.FC<LocalizationTabProps> = ({
           {t("interface_language")}
         </label>
         <select
-          className="w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          className="w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           onChange={(e) => setLanguage(e.target.value as "en" | "ar")}
           value={currentLanguage}
         >

@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import {
@@ -18,10 +20,8 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface AddMaterialModalProps {
@@ -49,10 +49,14 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isRTL, language } = useSettings();
-  const { teams, activeTeamId } = useTeam();
+  const { organizations, activeOrganizationId } = useOrganization();
   const createItem = useMutation(api.inventory.create);
   const logActivity = useMutation(api.activities.log);
-  const ingredientsRaw = useQuery(api.ingredients.list, { language }) ?? [];
+  const ingredientsRaw =
+    useQuery(api.ingredients.list, {
+      language,
+      organizationId: activeOrganizationId ?? undefined,
+    }) ?? [];
 
   const [activeTab, setActiveTab] = useState<"info" | "stock">("info");
   const [batchIdTouched, setBatchIdTouched] = useState(false);
@@ -86,17 +90,21 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   );
 
   const generateBatchId = useCallback((): string => {
-    const activeTeam = teams.find((tm) => tm._id === activeTeamId);
-    const teamInitials = activeTeam ? getInitials(activeTeam.name) : "";
+    const activeOrganization = organizations.find(
+      (tm) => tm._id === activeOrganizationId
+    );
+    const organizationInitials = activeOrganization
+      ? getInitials(activeOrganization.name)
+      : "";
     const productInitials = formData.name.trim()
       ? getInitials(formData.name)
       : "";
     const seq = String(Date.now() % 1000).padStart(3, "0");
-    const parts = [teamInitials, productInitials, seq].filter(
+    const parts = [organizationInitials, productInitials, seq].filter(
       (p, i) => i === 2 || p.length > 0
     );
     return parts.join("-");
-  }, [teams, activeTeamId, formData.name, getInitials]);
+  }, [organizations, activeOrganizationId, formData.name, getInitials]);
 
   useEffect(() => {
     if (!batchIdTouched && formData.name.trim()) {
@@ -196,6 +204,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
         storageConditions: formData.storageConditions,
         ingredientCode: formData.ingredientCode,
         ingredientId: formData.ingredientId as Id<"ingredients">,
+        organizationId: activeOrganizationId ?? undefined,
       });
       logActivity({
         action: "Added Inventory Item",
@@ -225,7 +234,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 
   // ── Style tokens ────────────────────────────────────────
   const inputClasses =
-    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:focus:ring-indigo-400/50 transition-all";
+    "w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-[1rem] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:focus:ring-brand-accent/50 transition-all";
   const labelClasses =
     "block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ms-1";
 
@@ -260,7 +269,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
               <div
                 className={`flex items-center ${isRTL ? "space-x-4 space-x-reverse" : "space-x-4"}`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-indigo-600 text-white shadow-indigo-600/20 shadow-lg">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-brand-primary text-white shadow-brand-primary/20 shadow-lg">
                   <Package size={24} />
                 </div>
                 <div>
@@ -288,7 +297,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-bold text-sm uppercase tracking-wide transition-colors ${
                     activeTab === "info"
-                      ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                      ? "border-brand-primary text-brand-primary dark:border-brand-mint/20 dark:text-brand-accent-hover"
                       : "border-transparent text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                   }`}
                   onClick={() => setActiveTab("info")}
@@ -299,7 +308,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-bold text-sm uppercase tracking-wide transition-colors ${
                     activeTab === "stock"
-                      ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                      ? "border-brand-primary text-brand-primary dark:border-brand-mint/20 dark:text-brand-accent-hover"
                       : "border-transparent text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                   }`}
                   onClick={() => setActiveTab("stock")}
@@ -328,13 +337,13 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                 {activeTab === "info" && (
                   <div className="fade-in slide-in-from-end-4 animate-in space-y-6 duration-300">
                     {/* Gatekeeper: Ingredient Code Link */}
-                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 dark:border-indigo-900/30 dark:bg-indigo-900/10">
+                    <div className="rounded-2xl border border-brand-primary/20 bg-brand-mint/50 p-5 dark:border-brand-mint/20 dark:bg-brand-accent/10">
                       <label className={labelClasses} htmlFor="ingredientCode">
                         {t("ingredient_code_link")}*
                       </label>
                       <div className="relative">
                         <select
-                          className={`${inputClasses} cursor-pointer appearance-none border-indigo-300 bg-white font-bold text-indigo-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-indigo-700/50 dark:bg-slate-800 dark:text-indigo-300`}
+                          className={`${inputClasses} cursor-pointer appearance-none border-brand-primary/20 bg-white font-bold text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-focus/50 dark:border-brand-mint/20 dark:bg-slate-800 dark:text-brand-accent-hover`}
                           data-testid="material-ingredient-code-select"
                           id="ingredientCode"
                           name="ingredientCode"
@@ -393,11 +402,11 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                             );
                           })()}
                         </select>
-                        <div className="pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-indigo-500">
+                        <div className="pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-brand-primary">
                           <ChevronDown size={16} />
                         </div>
                       </div>
-                      <p className="ms-1 mt-2 flex items-center gap-2 font-medium text-indigo-600 text-xs dark:text-indigo-400">
+                      <p className="ms-1 mt-2 flex items-center gap-2 font-medium text-brand-primary text-xs dark:text-brand-accent-hover">
                         <CheckCircle2 size={14} />
                         {t("required_links_batch_to_library")}
                       </p>
@@ -744,7 +753,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
 
                 {activeTab === "stock" ? (
                   <button
-                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                     data-testid="material-submit-button"
                     disabled={isSubmitting}
                     form="add-material-form"
@@ -761,7 +770,7 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
                   </button>
                 ) : (
                   <button
-                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+                    className="flex items-center gap-2 rounded-[1.2rem] bg-gray-900 px-8 py-3 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                     data-testid="material-next-step-button"
                     onClick={nextTab}
                     type="button"

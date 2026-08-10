@@ -1,0 +1,30 @@
+FROM node:22-bookworm-slim AS build
+
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/landing ./apps/landing
+
+RUN corepack enable \
+  && corepack prepare pnpm@11.5.2 --activate \
+  && pnpm --filter @flavoneer/landing... install --frozen-lockfile
+
+RUN pnpm --filter @flavoneer/landing build
+
+FROM node:22-bookworm-slim AS runtime
+
+ENV NODE_ENV=production \
+  HOST=0.0.0.0 \
+  PORT=3000
+
+WORKDIR /app
+
+COPY --from=build --chown=node:node /app/apps/landing/.output ./.output
+
+USER node
+
+EXPOSE 3000
+
+CMD ["node", ".output/server/index.mjs"]

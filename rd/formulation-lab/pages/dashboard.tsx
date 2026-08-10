@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { AnimatePresence, type HTMLMotionProps, motion } from "framer-motion";
 import { Loader2, Plus, Search } from "lucide-react";
@@ -5,16 +7,13 @@ import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-
 import InfiniteScrollObserver from "../components/InfiniteScrollObserver";
 import NewProjectModal from "../components/NewProjectModal";
 import OnboardingView from "../components/OnboardingView";
 import ProjectCard from "../components/ProjectCard";
 import ProjectDetailsModal from "../components/ProjectDetailsModal";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { useOrganization } from "../context/OrganizationContext";
 import { modalVariants, overlayVariants } from "../lib/animations";
 import type { EnrichedProject } from "../types";
 
@@ -35,21 +34,21 @@ const Dashboard: React.FC = () => {
   const [isStartingRun, setIsStartingRun] = useState(false);
   const navigate = useNavigate();
 
-  // Team context
-  const { activeTeamId, teams, teamsLoading } = useTeam();
+  // Organization context
+  const { activeOrganizationId, organizations, organizationsLoading } = useOrganization();
 
   const {
     results: projectsRaw,
     status: projectsStatus,
     loadMore: loadMoreProjects,
   } = usePaginatedQuery(
-    api.projects.listByTeam,
-    activeTeamId ? { teamId: activeTeamId, language } : { language },
+    api.projects.listByOrganization,
+    activeOrganizationId ? { organizationId: activeOrganizationId, language } : { language },
     { initialNumItems: 50 }
   );
-  const teamMembersRaw = useQuery(
-    api.teamMembers.list,
-    activeTeamId ? { teamId: activeTeamId } : "skip"
+  const organizationMembersRaw = useQuery(
+    api.organizationMembers.list,
+    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
   );
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
@@ -60,7 +59,7 @@ const Dashboard: React.FC = () => {
 
   const projects: EnrichedProject[] =
     (projectsRaw as unknown as EnrichedProject[]) ?? [];
-  const teamMembers = teamMembersRaw ?? [];
+  const organizationMembers = organizationMembersRaw ?? [];
 
   const handleOpenDetails = (project: EnrichedProject) => {
     setSelectedProject(project);
@@ -73,10 +72,10 @@ const Dashboard: React.FC = () => {
   };
 
   const onAddProject = async (projectData: EnrichedProject) => {
-    const { _id, _creationTime, userId, teamId, ...data } = projectData;
+    const { _id, _creationTime, userId, organizationId, ...data } = projectData;
     const newProjectId = await createProject({
       ...data,
-      teamId: activeTeamId ?? undefined,
+      organizationId: activeOrganizationId ?? undefined,
     });
     logActivity({
       action: "Created Project",
@@ -86,11 +85,24 @@ const Dashboard: React.FC = () => {
     navigate(`/project/${newProjectId}?tab=formulation`);
   };
 
-  const handleProjectUpdate = async (updated: EnrichedProject) => {
-    const { _id, _creationTime, updatedAt, teamId, userId, ...data } = updated;
+  const handleProjectUpdate = async (
+    updated: EnrichedProject,
+    photoStorageId?: Id<"_storage"> | null
+  ) => {
+    const {
+      _id,
+      _creationTime,
+      updatedAt,
+      organizationId,
+      userId,
+      photoStorageId: _existingPhotoStorageId,
+      photoUrl: _photoUrl,
+      ...data
+    } = updated;
     await updateProject({
       id: _id,
       ...data,
+      ...(photoStorageId === undefined ? {} : { photoStorageId }),
     });
     logActivity({
       action: "Updated Project",
@@ -102,7 +114,15 @@ const Dashboard: React.FC = () => {
     // But since it's real-time, it should update automatically.
     // However, selectedProject is local state, so we update it to reflect changes in the modal
     if (selectedProject?._id === updated._id) {
-      setSelectedProject(updated);
+      setSelectedProject({
+        ...updated,
+        ...(photoStorageId === undefined
+          ? {}
+          : {
+              photoStorageId: photoStorageId ?? undefined,
+              photoUrl: undefined,
+            }),
+      });
     }
   };
 
@@ -158,11 +178,15 @@ const Dashboard: React.FC = () => {
       .includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+  const selectedProjectFromQuery = selectedProject
+    ? (projects.find((project) => project._id === selectedProject._id) ??
+      selectedProject)
+    : null;
 
   if (
-    teamsLoading ||
+    organizationsLoading ||
     projectsRaw === undefined ||
-    (activeTeamId && teamMembersRaw === undefined)
+    (activeOrganizationId && organizationMembersRaw === undefined)
   ) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center p-8 text-center text-gray-500">
@@ -171,7 +195,7 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  if (!activeTeamId && teams.length === 0) {
+  if (!activeOrganizationId && organizations.length === 0) {
     return <OnboardingView />;
   }
   return (
@@ -191,7 +215,7 @@ const Dashboard: React.FC = () => {
               <button
                 className={`whitespace-nowrap rounded-full border px-5 py-2.5 font-bold text-sm transition-all ${
                   filter === item.key
-                    ? "scale-105 border-gray-900 bg-gray-900 text-white shadow-md hover:bg-black dark:border-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+                    ? "scale-105 border-gray-900 bg-gray-900 text-white shadow-md hover:bg-black dark:border-brand-mint/20 dark:bg-brand-accent dark:hover:bg-brand-accent-hover"
                     : "border-transparent bg-white/80 text-gray-600 shadow-sm hover:border-gray-200 hover:bg-white hover:text-gray-900 dark:bg-[#1e293b] dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
                 } active:scale-95`}
                 key={item.key}
@@ -211,7 +235,7 @@ const Dashboard: React.FC = () => {
               size={20}
             />
             <input
-              className="w-full rounded-full border border-transparent bg-white py-3 ps-11 pe-6 font-medium text-charcoal text-sm shadow-sm placeholder:text-charcoal/40 focus:outline-none focus:ring-2 focus:ring-charcoal/10 md:w-64 dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-indigo-500/50"
+              className="w-full rounded-full border border-transparent bg-white py-3 ps-11 pe-6 font-medium text-charcoal text-sm shadow-sm placeholder:text-charcoal/40 focus:outline-none focus:ring-2 focus:ring-charcoal/10 md:w-64 dark:border-slate-700 dark:bg-[#1e293b] dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-brand-accent/50"
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t("search")}
               type="text"
@@ -220,7 +244,7 @@ const Dashboard: React.FC = () => {
           </div>
           <button
             aria-label={t("newProject")}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white shadow-black/20 shadow-xl transition-all hover:scale-105 hover:bg-black dark:bg-indigo-600 dark:shadow-indigo-600/20 dark:hover:bg-indigo-500"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white shadow-black/20 shadow-xl transition-all hover:scale-105 hover:bg-black dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
             data-testid="new-project-button"
             onClick={() => setIsModalOpen(true)}
             title={t("newProject")}
@@ -240,7 +264,7 @@ const Dashboard: React.FC = () => {
             onStartRun={handleStartRun}
             onViewDetails={handleOpenDetails}
             project={project}
-            teamMembers={teamMembers}
+            organizationMembers={organizationMembers}
           />
         ))}
 
@@ -266,15 +290,15 @@ const Dashboard: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={onAddProject}
-        teamMembers={teamMembers}
+        organizationMembers={organizationMembers}
       />
 
       <ProjectDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={handleCloseDetails}
         onUpdateProject={handleProjectUpdate}
-        project={selectedProject}
-        teamMembers={teamMembers}
+        project={selectedProjectFromQuery}
+        organizationMembers={organizationMembers}
       />
 
       <AnimatePresence>
@@ -295,8 +319,8 @@ const Dashboard: React.FC = () => {
               initial="hidden"
               variants={modalVariants}
             >
-              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30">
-                <Loader2 className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-brand-mint dark:bg-brand-accent/30">
+                <Loader2 className="h-10 w-10 animate-spin text-brand-primary dark:text-brand-accent-hover" />
               </div>
               <h3 className="mb-2 font-black text-2xl text-gray-900 dark:text-white">
                 {t("initializing_batch")}

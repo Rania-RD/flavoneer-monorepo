@@ -2,8 +2,8 @@ import { useMutation, useQuery } from "convex/react";
 import { Copy, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useToast } from "../hooks/useToast";
 
 interface SensoryBuilderProps {
@@ -56,21 +56,21 @@ export const SensoryBuilder: React.FC<SensoryBuilderProps> = ({
     };
 
     return (
-      <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-6 dark:border-indigo-900/30 dark:bg-indigo-900/10">
-        <h3 className="font-bold text-indigo-900 text-lg dark:text-indigo-300">
+      <div className="rounded-2xl border border-brand-primary/20 bg-brand-mint/50 p-6 dark:border-brand-mint/20 dark:bg-brand-accent/10">
+        <h3 className="font-bold text-brand-primary text-lg dark:text-brand-accent-hover">
           {t("sensory_evaluation_form_active")}
         </h3>
-        <p className="mt-1 text-indigo-700 text-sm dark:text-indigo-400">
+        <p className="mt-1 text-brand-primary text-sm dark:text-brand-accent-hover">
           {t("this_run_already_has_an_active_sensory_t")}
         </p>
         <div className="mt-4 flex items-center gap-2">
           <input
-            className="flex-1 rounded-xl border-indigo-200 bg-white px-4 py-2 text-gray-500 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+            className="flex-1 rounded-xl border-brand-primary/20 bg-white px-4 py-2 text-gray-500 text-sm focus:border-brand-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
             readOnly
             value={link}
           />
           <button
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-indigo-700"
+            className="flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 font-bold text-sm text-white transition-colors hover:bg-brand-primary-hover"
             onClick={handleCopy}
             type="button"
           >
@@ -153,7 +153,7 @@ export const SensoryBuilder: React.FC<SensoryBuilderProps> = ({
           {t("form_title")}
         </label>
         <input
-          className="w-full rounded-xl border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          className="w-full rounded-xl border-gray-300 px-4 py-2 text-sm focus:border-brand-primary focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           id="formTitle"
           onChange={(e) => setName(e.target.value)}
           value={name}
@@ -169,7 +169,7 @@ export const SensoryBuilder: React.FC<SensoryBuilderProps> = ({
             {t("evaluation_attributes")}
           </label>
           <button
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-indigo-600 text-xs hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-brand-primary text-xs hover:bg-brand-mint dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/30"
             id="evaluationAttributesToggle"
             onClick={handleAddQuestion}
             type="button"
@@ -185,7 +185,7 @@ export const SensoryBuilder: React.FC<SensoryBuilderProps> = ({
               key={q.id}
             >
               <input
-                className="flex-1 rounded-lg border-transparent bg-transparent px-3 py-1.5 text-sm focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500 dark:text-white dark:focus:bg-slate-800"
+                className="flex-1 rounded-lg border-transparent bg-transparent px-3 py-1.5 text-sm focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-focus/50 dark:text-white dark:focus:bg-slate-800"
                 onChange={(e) =>
                   handleChange(q.id, "attribute", e.target.value)
                 }
@@ -215,7 +215,7 @@ export const SensoryBuilder: React.FC<SensoryBuilderProps> = ({
 
       <div className="pt-4">
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 font-bold text-sm text-white transition-colors hover:bg-gray-800 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-700"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 font-bold text-sm text-white transition-colors hover:bg-gray-800 disabled:opacity-50 dark:bg-brand-accent dark:hover:bg-brand-accent-hover"
           disabled={isSaving}
           onClick={handleSave}
           type="button"

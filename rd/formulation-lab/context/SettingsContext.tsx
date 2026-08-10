@@ -1,3 +1,4 @@
+import { api } from "@flavoneer/backend/api";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionArgs } from "convex/server";
 import type React from "react";
@@ -11,45 +12,34 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../convex/_generated/api";
 import { authClient } from "../lib/auth-client";
 import { authHelpers } from "../lib/auth-helpers";
+import {
+  normalizeThemePreference,
+  resolveDarkMode,
+  type ThemePreference,
+} from "../lib/theme-preference";
 
-type UnitSystem = "metric" | "imperial";
 export type Language = "en" | "ar";
-export type SignatureType = "upload" | "text";
 
 const SUPPORTED_LANGUAGES = new Set<Language>(["en", "ar"]);
 const RTL_LANGUAGES = new Set<Language>(["ar"]);
-const SUPPORTED_SIGNATURE_TYPES = new Set<SignatureType>(["upload", "text"]);
 type SettingsUpsertArgs = FunctionArgs<typeof api.settings.upsert>;
 type PersistableSettingsUpdate = Partial<
   SettingsUpsertArgs & { profile: UserProfile }
 >;
 
-const normalizeLanguage = (value: unknown): Language => {
-  return typeof value === "string" && SUPPORTED_LANGUAGES.has(value as Language)
+const normalizeLanguage = (value: unknown): Language =>
+  typeof value === "string" && SUPPORTED_LANGUAGES.has(value as Language)
     ? (value as Language)
     : "en";
-};
 
 const getIsRTLForLanguage = (lang: Language) => RTL_LANGUAGES.has(lang);
-
-const normalizeSignatureType = (value: unknown): SignatureType | undefined => {
-  const normalizedValue = value === "draw" ? "upload" : value;
-  return typeof normalizedValue === "string" &&
-    SUPPORTED_SIGNATURE_TYPES.has(normalizedValue as SignatureType)
-    ? (normalizedValue as SignatureType)
-    : undefined;
-};
 
 export interface UserProfile {
   avatarUrl: string;
   email: string;
   name: string;
-  signatureData?: string;
-  signatureFont?: string;
-  signatureType?: SignatureType;
   title: string;
 }
 
@@ -71,14 +61,12 @@ interface SettingsContextType {
   // Profile & Identity
   profile: UserProfile;
   setLanguage: (lang: Language) => void;
+  setThemePreference: (preference: ThemePreference) => void;
   settingsLoading: boolean;
-  setUnits: (unit: UnitSystem) => void;
 
   signOut: () => Promise<void>;
-  toggleDarkMode: () => void;
+  themePreference: ThemePreference;
   toggleNotification: (key: "appAlerts" | "emailSummaries") => void;
-  // Appearance & Units
-  units: UnitSystem;
   updateProfile: (updates: Partial<UserProfile>) => void;
 }
 
@@ -103,24 +91,25 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
   const [hydrated, setHydrated] = useState(false);
 
   // ─── Local state ───
-  const [units, setUnitsLocal] = useState<UnitSystem>("metric");
   const [notificationsState, setNotifications] = useState({
     appAlerts: true,
     emailSummaries: false,
   });
 
-  // Initialize dark mode from localStorage
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("theme");
-      if (stored) {
-        return stored === "dark";
+  const [themePreference, setThemePreferenceLocal] = useState<ThemePreference>(
+    () => {
+      if (typeof window !== "undefined") {
+        return normalizeThemePreference(localStorage.getItem("theme"));
       }
-      // Default to Light Mode (false) if no preference is stored
-      return false;
+      return "system";
     }
-    return false;
-  });
+  );
+  const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
+    typeof window === "undefined"
+      ? false
+      : window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+  const darkMode = resolveDarkMode(themePreference, systemPrefersDark);
 
   const [profile, setProfile] = useState<UserProfile>({
     name: "",
@@ -134,14 +123,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
   // ─── Hydrate from Convex on first load ───
   useEffect(() => {
     if (savedSettings && !hydrated) {
-      setUnitsLocal((savedSettings.units as UnitSystem) ?? "metric");
-
-      // Sync Convex settings to local state if available, otherwise keep local preference
-      const cloudDarkMode = savedSettings.darkMode;
-      if (cloudDarkMode !== undefined) {
-        setDarkMode(cloudDarkMode);
-        localStorage.setItem("theme", cloudDarkMode ? "dark" : "light");
-      }
+      const cloudThemePreference = normalizeThemePreference(
+        savedSettings.themePreference,
+        savedSettings.darkMode
+      );
+      setThemePreferenceLocal(cloudThemePreference);
+      localStorage.setItem("theme", cloudThemePreference);
 
       setLanguageLocal(normalizeLanguage(savedSettings.language));
       setNotifications({
@@ -156,13 +143,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
         email: savedSettings.email ?? savedSettings.profile?.email ?? "",
         avatarUrl:
           savedSettings.avatarUrl ?? savedSettings.profile?.avatarUrl ?? "",
-        signatureType: normalizeSignatureType(
-          savedSettings.signatureType ?? savedSettings.profile?.signatureType
-        ),
-        signatureData:
-          savedSettings.signatureData ?? savedSettings.profile?.signatureData,
-        signatureFont:
-          savedSettings.signatureFont ?? savedSettings.profile?.signatureFont,
       });
       setHydrated(true);
     }
@@ -179,9 +159,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
       // Create the settings row in Convex (flattened)
       upsertSettings({
         ...authProfile,
+        themePreference,
       });
     }
-  }, [savedSettings, sessionUser, hydrated, upsertSettings]);
+  }, [savedSettings, sessionUser, hydrated, themePreference, upsertSettings]);
 
   // If session user changes (login), and no hydration yet, seed from session
   useEffect(() => {
@@ -202,9 +183,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
 
   // ─── Persist helper (debounced) ───
   const persistToConvex = useCallback(
-    (
-      updates: PersistableSettingsUpdate
-    ) => {
+    (updates: PersistableSettingsUpdate) => {
       // Flatten updates if they contain 'profile'
       let flatUpdates: Partial<SettingsUpsertArgs> = { ...updates };
       if (updates.profile) {
@@ -226,11 +205,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
         pendingUpdatesRef.current = {}; // Reset pending updates
 
         const cleanUpdates: Partial<SettingsUpsertArgs> = {};
-        if (finalUpdates.units !== undefined) {
-          cleanUpdates.units = finalUpdates.units;
-        }
         if (finalUpdates.darkMode !== undefined) {
           cleanUpdates.darkMode = finalUpdates.darkMode;
+        }
+        if (finalUpdates.themePreference !== undefined) {
+          cleanUpdates.themePreference = finalUpdates.themePreference;
         }
         if (finalUpdates.language !== undefined) {
           cleanUpdates.language = finalUpdates.language;
@@ -253,36 +232,34 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
         if (finalUpdates.avatarUrl !== undefined) {
           cleanUpdates.avatarUrl = finalUpdates.avatarUrl;
         }
-        if (finalUpdates.signatureType !== undefined) {
-          cleanUpdates.signatureType = finalUpdates.signatureType;
-        }
-        if (finalUpdates.signatureData !== undefined) {
-          cleanUpdates.signatureData = finalUpdates.signatureData;
-        }
-        if (finalUpdates.signatureFont !== undefined) {
-          cleanUpdates.signatureFont = finalUpdates.signatureFont;
-        }
-
-        upsertSettings(cleanUpdates)
-          .catch((err) => {
-            console.error("[SettingsContext] Failed to persist settings:", err);
-          });
+        upsertSettings(cleanUpdates).catch((err) => {
+          console.error("[SettingsContext] Failed to persist settings:", err);
+        });
       }, 500);
     },
     [upsertSettings]
   );
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncSystemPreference = (event: MediaQueryListEvent) => {
+      setSystemPrefersDark(event.matches);
+    };
+
+    setSystemPrefersDark(mediaQuery.matches);
+    mediaQuery.addEventListener("change", syncSystemPreference);
+    return () => mediaQuery.removeEventListener("change", syncSystemPreference);
+  }, []);
+
   // ─── Theme Side Effect ───
   useEffect(() => {
-    // This effect runs on mount and whenever darkMode changes
     const root = window.document.documentElement;
-
-    // Explicitly add or remove the class based on state
     if (darkMode) {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
+    root.dataset.agThemeMode = darkMode ? "dark" : "light";
   }, [darkMode]);
 
   // ─── Language/RTL Side Effect ───
@@ -299,28 +276,20 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
   }, [language, i18n]);
 
   // ─── Setters that also persist ───
-  const setUnits = useCallback(
-    (unit: UnitSystem) => {
-      setUnitsLocal(unit);
-      persistToConvex({ units: unit });
+  const setThemePreference = useCallback(
+    (preference: ThemePreference) => {
+      setThemePreferenceLocal(preference);
+      localStorage.setItem("theme", preference);
+      const currentSystemPrefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      persistToConvex({
+        darkMode: resolveDarkMode(preference, currentSystemPrefersDark),
+        themePreference: preference,
+      });
     },
     [persistToConvex]
   );
-
-  const toggleDarkMode = useCallback(() => {
-    setDarkMode((prev) => {
-      const next = !prev;
-
-      // Update localStorage immediately
-      if (typeof window !== "undefined") {
-        localStorage.setItem("theme", next ? "dark" : "light");
-      }
-
-      // Sync to cloud in background
-      persistToConvex({ darkMode: next });
-      return next;
-    });
-  }, [persistToConvex]);
 
   const toggleNotification = useCallback(
     (key: "appAlerts" | "emailSummaries") => {
@@ -360,26 +329,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
 
   // ─── Unit formatters ───
   const formatMass = (kgValue: number) => {
-    if (units === "metric") {
-      if (kgValue < 1) {
-        return `${(kgValue * 1000).toFixed(0)}${isRTL ? " جم" : "g"}`;
-      }
-      return `${kgValue.toFixed(2)}${isRTL ? " كجم" : "kg"}`;
+    if (kgValue < 1) {
+      return `${(kgValue * 1000).toFixed(0)}${isRTL ? " جم" : "g"}`;
     }
-    const lbs = kgValue * 2.204_62;
-    if (lbs < 1) {
-      return `${(lbs * 16).toFixed(1)}${isRTL ? " أونصة" : "oz"}`;
-    }
-    return `${lbs.toFixed(2)}${isRTL ? " باوند" : "lbs"}`;
+    return `${kgValue.toFixed(2)}${isRTL ? " كجم" : "kg"}`;
   };
 
-  const formatTemp = (celsiusValue: number) => {
-    if (units === "metric") {
-      return `${celsiusValue}°C`;
-    }
-    const fahrenheit = (celsiusValue * 9) / 5 + 32;
-    return `${fahrenheit.toFixed(1)}°F`;
-  };
+  const formatTemp = (celsiusValue: number) => `${celsiusValue}°C`;
 
   // Loading state: savedSettings is undefined while the query is in-flight
   const settingsLoading = savedSettings === undefined && !!sessionUser;
@@ -387,12 +343,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <SettingsContext.Provider
       value={{
-        units,
-        setUnits,
         notifications: notificationsState,
         toggleNotification,
         darkMode,
-        toggleDarkMode,
+        themePreference,
+        setThemePreference,
         profile,
         updateProfile,
         language,

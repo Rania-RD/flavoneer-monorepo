@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import { useMutation } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import {
   Beaker,
@@ -10,19 +12,26 @@ import {
   X,
 } from "lucide-react";
 import type React from "react";
-import { createPortal } from "react-dom";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
+import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
+import { uploadProjectPhoto } from "../lib/projectPhoto";
 import { type EnrichedProject, ProjectStatus } from "../types";
 import { GsfaCategorySelect } from "./GsfaCategorySelect";
+import ProjectPhotoField from "./ProjectPhotoField";
 
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (project: EnrichedProject) => Promise<void> | void;
-  teamMembers?: { userId: string; userName: string; userAvatarUrl?: string }[];
+  organizationMembers?: {
+    userId: string;
+    userName: string;
+    userAvatarUrl?: string;
+  }[];
 }
 
 type ContentLanguage = "en" | "ar";
@@ -59,16 +68,19 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  teamMembers = [],
+  organizationMembers = [],
 }) => {
   const { profile } = useSettings();
   const { i18n } = useTranslation();
+  const { toast } = useToast();
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const [activeTab, setActiveTab] = useState<
     "general" | "technical" | "compliance"
   >("general");
   const [contentLanguage, setContentLanguage] = useState<ContentLanguage>("en");
   const t = i18n.getFixedT(contentLanguage);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     nameAr: "",
@@ -124,6 +136,9 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
     setIsSubmitting(true);
 
     try {
+      const photoStorageId = photoFile
+        ? await uploadProjectPhoto(photoFile, generateUploadUrl)
+        : undefined;
       const fallbackName = formData.name || formData.nameAr;
       const fallbackDescription =
         formData.description || formData.descriptionAr;
@@ -141,6 +156,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
           en: formData.description || fallbackDescription,
           ar: formData.descriptionAr || fallbackDescription,
         },
+        photoStorageId,
         ingredients: [],
         category: formData.category,
         gsfaCategoryCode: formData.gsfaCategoryCode || undefined,
@@ -185,8 +201,10 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
       });
       setActiveTab("general");
       setContentLanguage("en");
+      setPhotoFile(null);
     } catch (error) {
       console.error("Failed to create project:", error);
+      toast.error(t("project_save_failed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -210,7 +228,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
   // High contrast input classes
   const inputClasses =
-    "w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+    "w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 text-sm placeholder-gray-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-[#477665] dark:bg-[#102f27] dark:text-[#fffdf4] dark:placeholder:text-[#7fa895] dark:[color-scheme:dark] dark:focus:ring-[#f5a623]/50";
   const isArabicContent = contentLanguage === "ar";
   const localizedFieldNames = {
     title: isArabicContent ? ("nameAr" as const) : ("name" as const),
@@ -232,7 +250,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
           {/* Backdrop */}
           <MotionDiv
             animate="visible"
-            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm dark:bg-black/65"
             exit="exit"
             initial="hidden"
             onClick={onClose}
@@ -242,29 +260,33 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
           {/* Modal Card */}
           <MotionDiv
             animate="visible"
-            className="relative z-[1000] flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-white shadow-2xl sm:max-h-[90dvh] dark:border-[#d2f2d4]/10 dark:bg-[#173e33]"
+            className="relative z-[1000] flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-2xl sm:max-h-[90dvh] dark:border-[#d2f2d4]/10 dark:bg-[#143d32]"
+            data-testid="new-project-modal"
             exit="exit"
             initial="hidden"
             variants={modalVariants}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-gray-100 border-b bg-white p-6">
+            <div
+              className="flex items-center justify-between border-gray-100 border-b bg-[#fffdf4] p-6 dark:border-[#477665]/40 dark:bg-[#102f27]/45"
+              data-testid="new-project-modal-header"
+            >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-mint text-brand-primary dark:bg-[#285b4d] dark:text-[#f5a623]">
                   <Beaker size={20} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900 text-xl">
+                  <h2 className="font-bold text-gray-900 text-xl dark:text-[#fffdf4]">
                     {t("new_r_d_project")}
                   </h2>
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-gray-500 text-xs dark:text-[#a9cdb8]">
                     {t("initialize_a_new_formulation_workspace")}
                   </p>
                 </div>
               </div>
               <button
                 aria-label={t("close")}
-                className="text-gray-400 transition-colors hover:text-gray-600"
+                className="text-gray-400 transition-colors hover:text-gray-600 dark:text-[#a9cdb8] dark:hover:text-[#fffdf4]"
                 onClick={onClose}
                 type="button"
               >
@@ -274,12 +296,12 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
             {/* Tabs / Progress */}
             <div className="px-6 pt-6">
-              <div className="flex items-center gap-1 border-gray-200 border-b">
+              <div className="flex items-center gap-1 border-gray-200 border-b dark:border-[#477665]/50">
                 <button
                   className={`border-b-2 px-4 pb-3 font-medium text-sm transition-colors ${
                     activeTab === "general"
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-brand-primary text-brand-primary dark:border-[#f5a623] dark:text-[#f5a623]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 dark:text-[#a9cdb8] dark:hover:text-[#fffdf4]"
                   }`}
                   onClick={() => setActiveTab("general")}
                   type="button"
@@ -289,8 +311,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-medium text-sm transition-colors ${
                     activeTab === "technical"
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-brand-primary text-brand-primary dark:border-[#f5a623] dark:text-[#f5a623]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 dark:text-[#a9cdb8] dark:hover:text-[#fffdf4]"
                   }`}
                   onClick={() => setActiveTab("technical")}
                   type="button"
@@ -300,8 +322,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 <button
                   className={`border-b-2 px-4 pb-3 font-medium text-sm transition-colors ${
                     activeTab === "compliance"
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-brand-primary text-brand-primary dark:border-[#f5a623] dark:text-[#f5a623]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 dark:text-[#a9cdb8] dark:hover:text-[#fffdf4]"
                   }`}
                   onClick={() => setActiveTab("compliance")}
                   type="button"
@@ -312,7 +334,10 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto bg-white p-6">
+            <div
+              className="flex-1 overflow-y-auto bg-[#fffdf4] p-6 dark:bg-[#143d32]"
+              data-testid="new-project-modal-body"
+            >
               <form
                 className="space-y-6"
                 id="project-form"
@@ -320,7 +345,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
               >
                 <div className="ms-auto w-full space-y-1.5 sm:w-56">
                   <label
-                    className="font-semibold text-gray-700 text-sm"
+                    className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]"
                     htmlFor="project-content-language"
                   >
                     {t("form_content_language")}
@@ -345,7 +370,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-1.5">
                         <label
-                          className="font-semibold text-gray-700 text-sm"
+                          className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]"
                           htmlFor="project-localized-title"
                         >
                           {t("project_title")}
@@ -370,7 +395,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       <div className="space-y-1.5">
                         <GsfaCategorySelect
                           inputClassName={inputClasses}
-                          labelClassName="font-semibold text-gray-700 text-sm"
+                          labelClassName="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]"
                           language={contentLanguage}
                           onChange={(category) =>
                             setFormData((prev) => ({
@@ -389,7 +414,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
                     <div className="space-y-1.5">
                       <label
-                        className="font-semibold text-gray-700 text-sm"
+                        className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]"
                         htmlFor="project-localized-description"
                       >
                         {t("brief_description")}
@@ -411,8 +436,16 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       />
                     </div>
 
+                    <ProjectPhotoField
+                      disabled={isSubmitting}
+                      file={photoFile}
+                      language={contentLanguage}
+                      onChange={setPhotoFile}
+                      onRemove={() => setPhotoFile(null)}
+                    />
+
                     <div className="space-y-1.5">
-                      <label className="font-semibold text-gray-700 text-sm">
+                      <label className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]">
                         {t("formulation_state")}
                       </label>
                       <select
@@ -427,8 +460,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       </select>
                     </div>
 
-                    <div className="space-y-1.5 border-gray-100 border-t pt-2">
-                      <label className="font-semibold text-gray-700 text-sm">
+                    <div className="space-y-1.5 border-gray-100 border-t pt-2 dark:border-[#477665]/35">
+                      <label className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]">
                         {t("authorized_executor")}
                       </label>
                       <select
@@ -438,13 +471,13 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                         value={formData.authorizedExecutor}
                       >
                         <option value="">{t("anyone_no_restrictions")}</option>
-                        {teamMembers.map((member) => (
+                        {organizationMembers.map((member) => (
                           <option key={member.userId} value={member.userId}>
                             {member.userName}
                           </option>
                         ))}
                       </select>
-                      <p className="text-gray-500 text-xs">
+                      <p className="text-gray-500 text-xs dark:text-[#a9cdb8]">
                         {t("only_the_selected_user_will_be_able_to_e")}
                       </p>
                     </div>
@@ -455,7 +488,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 {activeTab === "technical" && (
                   <div className="fade-in slide-in-from-end-4 animate-in space-y-4 duration-300">
                     <div className="space-y-1.5">
-                      <label className="font-semibold text-gray-700 text-sm">
+                      <label className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]">
                         {t("processing_method")}
                       </label>
                       <div className="relative">
@@ -473,13 +506,13 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                           ))}
                         </datalist>
                       </div>
-                      <p className="text-gray-500 text-xs">
+                      <p className="text-gray-500 text-xs dark:text-[#a9cdb8]">
                         {t("e_g_high_pressure_processing_fermentatio")}
                       </p>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="font-semibold text-gray-700 text-sm">
+                      <label className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]">
                         {t("target_texture_outcome")}
                       </label>
                       <input
@@ -492,16 +525,19 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     </div>
 
                     {/* Batch ID Configuration */}
-                    <div className="mt-4 space-y-4 border-gray-200 border-t pt-4">
+                    <div className="mt-4 space-y-4 border-gray-200 border-t pt-4 dark:border-[#477665]/35">
                       <div className="mb-1 flex items-center gap-2">
-                        <Hash className="text-teal-600" size={16} />
-                        <label className="font-semibold text-gray-700 text-sm">
+                        <Hash
+                          className="text-teal-600 dark:text-[#f5a623]"
+                          size={16}
+                        />
+                        <label className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]">
                           {t("batch_id_format")}
                         </label>
                       </div>
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div className="space-y-1.5">
-                          <label className="font-medium text-gray-500 text-xs">
+                          <label className="font-medium text-gray-500 text-xs dark:text-[#a9cdb8]">
                             {t("prefix_max_6_chars")}
                           </label>
                           <input
@@ -527,7 +563,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="font-medium text-gray-500 text-xs">
+                          <label className="font-medium text-gray-500 text-xs dark:text-[#a9cdb8]">
                             {t("numbering_format")}
                           </label>
                           <select
@@ -556,11 +592,14 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                         </div>
                       </div>
                       {/* Live Preview */}
-                      <div className="flex items-center gap-2 rounded-lg bg-teal-50 px-4 py-2.5">
-                        <span className="font-bold text-[10px] text-teal-600 uppercase tracking-wider">
+                      <div
+                        className="flex items-center gap-2 rounded-lg bg-teal-50 px-4 py-2.5 dark:bg-[#102f27]"
+                        data-testid="batch-code-preview"
+                      >
+                        <span className="font-bold text-[10px] text-teal-600 uppercase tracking-wider dark:text-[#f5a623]">
                           {t("preview")}
                         </span>
-                        <span className="font-bold font-mono text-sm text-teal-800">
+                        <span className="font-bold font-mono text-sm text-teal-800 dark:text-[#d2f2d4]">
                           {(() => {
                             const pfx =
                               formData.batchCodePrefix ||
@@ -600,7 +639,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 {activeTab === "compliance" && (
                   <div className="fade-in slide-in-from-end-4 animate-in space-y-4 duration-300">
                     <div className="space-y-1.5">
-                      <label className="font-semibold text-gray-700 text-sm">
+                      <label className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]">
                         {t("key_nutritional_focus")}
                       </label>
                       <input
@@ -613,20 +652,21 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     </div>
 
                     <div className="space-y-3">
-                      <label className="font-semibold text-gray-700 text-sm">
+                      <label className="font-semibold text-gray-700 text-sm dark:text-[#c9e5d2]">
                         {t("testing_requirements")}
                       </label>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {TESTING_REQUIREMENTS.map((req) => (
                           <label
-                            className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-colors hover:bg-gray-50"
+                            className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-[#fffdf4] p-3 transition-colors hover:bg-[#f7f8f5] dark:border-[#477665] dark:bg-[#102f27]/55 dark:hover:bg-[#285b4d]/45"
+                            data-testid="testing-requirement-option"
                             key={req}
                           >
                             <div
                               className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
                                 formData.testingRequirements.includes(req)
-                                  ? "border-blue-600 bg-blue-600"
-                                  : "border-gray-300 bg-white"
+                                  ? "border-brand-primary bg-brand-primary dark:border-[#f5a623] dark:bg-[#f5a623]"
+                                  : "border-gray-300 bg-[#fffdf4] dark:border-[#477665] dark:bg-[#102f27]"
                               }`}
                             >
                               {formData.testingRequirements.includes(req) && (
@@ -644,7 +684,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
                               onChange={() => handleCheckboxChange(req)}
                               type="checkbox"
                             />
-                            <span className="text-gray-700 text-sm">
+                            <span className="text-gray-700 text-sm dark:text-[#c9e5d2]">
                               {t(req)}
                             </span>
                           </label>
@@ -657,9 +697,12 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between border-gray-200 border-t bg-gray-50 px-6 py-4">
+            <div
+              className="flex items-center justify-between border-gray-200 border-t bg-[#f7f8f5] px-6 py-4 dark:border-[#477665]/40 dark:bg-[#102f27]/70"
+              data-testid="new-project-modal-footer"
+            >
               <button
-                className="flex items-center px-4 py-2 font-medium text-gray-600 text-sm transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
+                className="flex items-center px-4 py-2 font-medium text-gray-600 text-sm transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30 dark:text-[#a9cdb8] dark:hover:text-[#fffdf4]"
                 disabled={activeTab === "general" || isSubmitting}
                 onClick={prevTab}
                 type="button"
@@ -675,7 +718,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
               {activeTab !== "compliance" && (
                 <button
-                  className="flex items-center rounded-lg bg-gray-900 px-6 py-2 font-medium text-sm text-white transition-colors hover:bg-gray-800"
+                  className="flex items-center rounded-lg bg-[#111827] px-6 py-2 font-medium text-sm text-white transition-colors hover:bg-[#1f2937] dark:bg-brand-accent dark:text-[#102f27] dark:hover:bg-brand-accent-hover"
                   data-testid="project-next-step-button"
                   key="btn-next"
                   onClick={nextTab}
@@ -692,7 +735,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
               {activeTab === "compliance" && (
                 <button
-                  className="flex items-center rounded-lg bg-blue-600 px-6 py-2 font-medium text-sm text-white shadow-blue-600/20 shadow-lg transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center rounded-lg bg-brand-primary px-6 py-2 font-medium text-sm text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-accent dark:text-[#102f27] dark:shadow-[#f5a623]/15 dark:hover:bg-brand-accent-hover"
                   data-testid="project-submit-button"
                   disabled={isSubmitting}
                   form="project-form"

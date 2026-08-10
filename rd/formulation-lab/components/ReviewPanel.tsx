@@ -1,14 +1,13 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import { Check, CheckCircle, MessageSquare, Send, X } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
 
 interface ReviewPanelProps {
-  currentUser?: { name: string; id: string };
   isOpen: boolean;
   onClose: () => void;
   projectId: Id<"projects">;
@@ -18,7 +17,6 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   projectId,
   isOpen,
   onClose,
-  currentUser = { name: "Current User", id: "user-id" },
 }) => {
   const { t } = useTranslation();
   const [newComment, setNewComment] = useState("");
@@ -39,8 +37,6 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       await addComment({
         projectId,
         text: newComment.trim(),
-        authorName: currentUser.name,
-        authorId: currentUser.id,
       });
       setNewComment("");
     } catch (error) {
@@ -52,10 +48,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
 
   const handleResolve = async (commentId: Id<"comments">) => {
     try {
-      await resolveComment({
-        commentId,
-        resolvedBy: currentUser.name,
-      });
+      await resolveComment({ commentId });
     } catch (error) {
       console.error("Failed to resolve comment", error);
     }
@@ -77,7 +70,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       <div className="fixed end-0 top-0 z-50 flex h-full w-full translate-x-0 transform flex-col border-gray-100 border-l bg-white shadow-2xl transition-transform duration-300 sm:w-[400px] dark:border-slate-800 dark:bg-[#1e293b]">
         <div className="flex shrink-0 items-center justify-between border-gray-100 border-b p-6 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+            <div className="rounded-lg bg-brand-mint p-2 text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover">
               <MessageSquare size={20} />
             </div>
             <h2 className="font-bold text-gray-900 text-xl dark:text-white">
@@ -179,13 +172,13 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         <div className="shrink-0 border-gray-100 border-t bg-gray-50/50 p-6 dark:border-slate-800 dark:bg-[#1e293b]/50">
           <form className="relative" onSubmit={handleSubmit}>
             <textarea
-              className="h-24 w-full resize-none rounded-xl border border-gray-200 bg-white p-3 pe-12 text-sm focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="h-24 w-full resize-none rounded-xl border border-gray-200 bg-white p-3 pe-12 text-sm focus:border-transparent focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={t("add_review_comment")}
               value={newComment}
             />
             <button
-              className="absolute end-3 bottom-3 rounded-lg bg-indigo-600 p-2 text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+              className="absolute end-3 bottom-3 rounded-lg bg-brand-primary p-2 text-white transition-colors hover:bg-brand-primary-hover disabled:opacity-50"
               disabled={!newComment.trim() || isSubmitting}
               type="submit"
             >

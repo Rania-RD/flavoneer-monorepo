@@ -1,4 +1,4 @@
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 import type { LocalizedString } from "../../lib/i18n-data";
 
 export type AllergenRegion = "FDA" | "EU" | "GSO";
@@ -61,7 +61,7 @@ export interface IngredientSavePayload {
   nutrientValues: { nutrientName: string; unit: string; value: number }[];
   subAllergenValues: Record<string, string[]>;
   subIngredients?: { ingredientId: Id<"ingredients">; percentage: number }[];
-  teamId?: Id<"teams">;
+  organizationId?: Id<"organizations">;
   yieldAmount: number;
 }
 

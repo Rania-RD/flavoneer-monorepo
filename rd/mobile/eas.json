@@ -1,0 +1,37 @@
+{
+  "cli": {
+    "version": ">= 21.4.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "environment": "development",
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "development"
+      }
+    },
+    "preview": {
+      "environment": "preview",
+      "distribution": "internal"
+    },
+    "production": {
+      "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_HOT_UPDATER_URL": "https://rare-toad-730.convex.site/hot-updater",
+        "EXPO_PUBLIC_CONVEX_URL": "https://rare-toad-730.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://rare-toad-730.convex.site",
+        "SENTRY_URL": "https://zapper.synbiodiet.com",
+        "SENTRY_ORG": "bugsinkhasnoorgs",
+        "SENTRY_PROJECT": "flavoneer-web",
+        "SENTRY_ALLOW_FAILURE": "true",
+        "APP_VARIANT": "production"
+      },
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

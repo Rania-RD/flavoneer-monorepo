@@ -55,7 +55,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
         />
         <div
           className={`absolute -end-24 -bottom-24 h-80 w-80 rounded-full opacity-15 blur-3xl ${
-            darkMode ? "bg-indigo-600" : "bg-amber-200"
+            darkMode ? "bg-brand-primary" : "bg-amber-200"
           }`}
         />
       </div>
@@ -72,7 +72,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
           <div className="mb-8 flex flex-col items-center">
             <div
               className={`mb-4 flex h-16 w-16 items-center justify-center rounded-[1.2rem] shadow-lg ${
-                darkMode ? "bg-indigo-600" : "bg-gray-900"
+                darkMode ? "bg-brand-primary" : "bg-gray-900"
               }`}
             >
               <FlaskConical className="h-8 w-8 text-white" />
@@ -116,7 +116,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
               <input
                 className={`w-full rounded-xl px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                   darkMode
-                    ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-indigo-500"
+                    ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-brand-focus/50"
                     : "border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-gray-900"
                 }`}
                 id="signup-name"
@@ -140,7 +140,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
               <input
                 className={`w-full rounded-xl px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                   darkMode
-                    ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-indigo-500"
+                    ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-brand-focus/50"
                     : "border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-gray-900"
                 }`}
                 dir="ltr"
@@ -167,7 +167,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
                   className={`w-full rounded-xl px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ${isRTL ? "ps-12" : "pe-12"}
                     ${
                       darkMode
-                        ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-indigo-500"
+                        ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-brand-focus/50"
                         : "border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-gray-900"
                     }`}
                   dir="ltr"
@@ -206,7 +206,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
               <input
                 className={`w-full rounded-xl px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                   darkMode
-                    ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-indigo-500"
+                    ? "border-slate-600 bg-slate-700/60 text-slate-100 placeholder-slate-400 focus:border-transparent focus:ring-brand-focus/50"
                     : "border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-gray-900"
                 }`}
                 dir="ltr"
@@ -223,7 +223,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
             <button
               className={`flex w-full items-center justify-center gap-2 rounded-[1.2rem] py-3.5 font-bold text-sm text-white transition-all duration-200 ${
                 darkMode
-                  ? "bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50"
+                  ? "bg-brand-primary hover:bg-brand-primary-hover disabled:bg-brand-primary/50"
                   : "bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400"
               }disabled:cursor-not-allowed shadow-lg active:scale-[0.98]`}
               disabled={loading}
@@ -264,7 +264,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigateToLogin }) => {
             <button
               className={`font-bold transition-colors ${
                 darkMode
-                  ? "text-indigo-400 hover:text-indigo-300"
+                  ? "text-brand-primary hover:text-brand-cream"
                   : "text-gray-900 hover:text-gray-700"
               }`}
               id="goto-login"

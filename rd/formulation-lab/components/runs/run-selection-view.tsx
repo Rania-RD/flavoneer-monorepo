@@ -3,6 +3,7 @@ import { Eye, FileText, History, Loader2, Play } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { modalVariants, overlayVariants } from "../../lib/animations";
+import { SIGNATURE_FONT_FAMILY } from "../../lib/signature";
 import type { EnrichedProject, RunRecord } from "../../types";
 import InfiniteScrollObserver from "../InfiniteScrollObserver";
 
@@ -13,9 +14,8 @@ const MotionDiv = motion.div as React.FC<
   }
 >;
 
-interface ProfileSignature {
-  signatureData?: string | null;
-  signatureFont?: string | null;
+interface ProfileIdentity {
+  name: string;
 }
 
 interface RunSelectionViewProps {
@@ -25,12 +25,10 @@ interface RunSelectionViewProps {
   loadMoreProjects: (numItems: number) => void;
   onStartRun: (projectId: string, projectName: string) => void;
   onViewRun: (runId: string) => void;
-  profile?: ProfileSignature | null;
+  profile?: ProfileIdentity | null;
   projects: EnrichedProject[];
   projectsStatus: string;
   runsHistory: RunRecord[];
-  setSignatures: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  signatures: Record<string, string>;
 }
 
 const getLatestVersionsMap = (projects: EnrichedProject[]) => {
@@ -57,8 +55,6 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
   loadMoreProjects,
   runsHistory,
   profile,
-  signatures,
-  setSignatures,
   currentUserId,
   isAuthorized,
   isStartingRun,
@@ -120,7 +116,7 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
               !hasExecutePermission ||
               isDraft ||
               isOutdated ||
-              !(profile?.signatureData || signatures[project._id]);
+              !profile?.name.trim();
 
             let tooltipMsg = "";
             if (!isAuthorized) {
@@ -137,19 +133,19 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
 
             return (
               <div
-                className="group relative flex flex-col justify-between overflow-hidden rounded-[2rem] border-2 border-transparent bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-500 hover:shadow-xl dark:bg-slate-800"
+                className="group relative flex flex-col justify-between overflow-hidden rounded-[2rem] border-2 border-transparent bg-white p-6 shadow-sm transition-all duration-300 hover:border-brand-primary hover:shadow-xl dark:bg-slate-800"
                 data-testid="run-project-card"
                 key={project._id}
               >
                 <div>
                   <div className="absolute end-0 top-0 translate-x-2 transform p-6 opacity-0 transition-opacity group-hover:translate-x-0 group-hover:opacity-100">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary text-white shadow-lg">
                       <Play fill="currentColor" size={20} />
                     </div>
                   </div>
 
                   <div className="mb-4">
-                    <span className="rounded-full bg-blue-50 px-3 py-1 font-bold text-blue-600 text-xs uppercase tracking-wider dark:bg-blue-900/30 dark:text-blue-400">
+                    <span className="rounded-full bg-brand-mint px-3 py-1 font-bold text-brand-primary text-xs uppercase tracking-wider dark:bg-brand-accent/30 dark:text-brand-accent-hover">
                       {project.version}
                     </span>
                   </div>
@@ -178,44 +174,22 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
 
                 <div className="mt-4 flex flex-col gap-3 border-gray-100 border-t pt-4 dark:border-slate-700">
                   <div className="flex items-center gap-2">
-                    {profile?.signatureData ? (
-                      <div className="flex flex-1 items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-900/50 dark:bg-blue-900/20">
-                        <span className="font-medium text-blue-700 text-sm dark:text-blue-300">
-                          {t("auto_signed_identity")}
-                        </span>
-                        <span
-                          className="text-blue-900 text-lg dark:text-blue-100"
-                          style={{
-                            fontFamily: profile.signatureFont || "inherit",
-                          }}
-                        >
-                          {profile.signatureData}
-                        </span>
-                      </div>
-                    ) : (
-                      <input
-                        className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
-                        data-testid="run-signature-input"
-                        disabled={!hasExecutePermission}
-                        onChange={(event) =>
-                          setSignatures((prev) => ({
-                            ...prev,
-                            [project._id]: event.target.value,
-                          }))
-                        }
-                        placeholder={
-                          hasExecutePermission
-                            ? t("sign_off_signature")
-                            : t("unauthorized")
-                        }
-                        type="text"
-                        value={signatures[project._id] || ""}
-                      />
-                    )}
+                    <div className="flex flex-1 items-center justify-between rounded-xl border border-brand-primary/20 bg-brand-mint px-4 py-2 dark:border-brand-mint/20 dark:bg-brand-accent/20">
+                      <span className="font-medium text-brand-primary text-sm dark:text-brand-accent-hover">
+                        {t("auto_signed_identity")}
+                      </span>
+                      <span
+                        className="text-brand-primary text-lg dark:text-brand-accent-hover"
+                        data-testid="run-signature-name"
+                        style={{ fontFamily: SIGNATURE_FONT_FAMILY }}
+                      >
+                        {profile?.name}
+                      </span>
+                    </div>
                   </div>
                   <div className="group/btn relative w-full">
                     <button
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-bold text-white shadow-blue-500/20 shadow-lg transition-all hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:dark:bg-slate-700"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary py-3 font-bold text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:dark:bg-slate-700"
                       data-testid="run-procedure-button"
                       disabled={isDisabled}
                       onClick={() => onStartRun(project._id, project.name)}
@@ -281,7 +255,7 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
                   type="button"
                 >
                   <Eye
-                    className="text-gray-400 group-btn-hover:text-blue-500"
+                    className="text-gray-400 group-btn-hover:text-brand-primary"
                     size={18}
                   />
                 </button>
@@ -314,8 +288,8 @@ const RunSelectionView: React.FC<RunSelectionViewProps> = ({
               initial="hidden"
               variants={modalVariants}
             >
-              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30">
-                <Loader2 className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-brand-mint dark:bg-brand-accent/30">
+                <Loader2 className="h-10 w-10 animate-spin text-brand-primary dark:text-brand-accent-hover" />
               </div>
               <h3 className="mb-2 font-black text-2xl text-gray-900 dark:text-white">
                 {t("initializing_batch")}

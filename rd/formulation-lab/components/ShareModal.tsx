@@ -1,4 +1,5 @@
 import { useMutation } from "convex/react";
+import type { Id } from "@flavoneer/backend/data-model";
 import { AnimatePresence } from "framer-motion";
 import { Copy, Link, Shield, Users, X } from "lucide-react";
 import type React from "react";
@@ -6,12 +7,12 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
+import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface ShareModalProps {
-  entityId: string;
+  entityId: Id<"projects"> | Id<"runs">;
   entityName: string;
   entityType: "project" | "run";
   isOpen: boolean;
@@ -110,7 +111,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
             {/* Header */}
             <div className="mb-6 flex items-start justify-between">
               <div>
-                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-mint text-brand-primary dark:bg-brand-accent/30 dark:text-brand-accent-hover">
                   <span className="flex items-center justify-center rounded-xl bg-white p-2 shadow-sm dark:bg-slate-800">
                     <Link size={20} />
                   </span>
@@ -144,7 +145,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
                     <p className="mb-2 font-medium text-slate-700 text-sm dark:text-slate-300">
                       {t("anyone_with_this_link_can_access_as")}{" "}
-                      <span className="font-bold text-blue-600 dark:text-blue-400">
+                      <span className="font-bold text-brand-primary dark:text-brand-accent-hover">
                         {t(role)}
                       </span>
                     </p>
@@ -155,7 +156,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                         value={generatedLink}
                       />
                       <button
-                        className="flex h-[38px] w-[38px] items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/60"
+                        className="flex h-[38px] w-[38px] items-center justify-center rounded-lg bg-brand-mint text-brand-primary transition-colors hover:bg-brand-mint dark:bg-brand-accent/40 dark:text-brand-accent-hover dark:hover:bg-brand-accent-hover/60"
                         onClick={handleCopyLink}
                       >
                         <Copy size={18} />
@@ -181,15 +182,15 @@ const ShareModal: React.FC<ShareModalProps> = ({
                       <button
                         className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all ${
                           role === "viewer"
-                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                            : "border-slate-200 hover:border-blue-200 dark:border-slate-700 dark:hover:border-slate-600"
+                            ? "border-brand-primary bg-brand-mint dark:bg-brand-accent/20"
+                            : "border-slate-200 hover:border-brand-primary/20 dark:border-slate-700 dark:hover:border-slate-600"
                         }`}
                         onClick={() => setRole("viewer")}
                       >
                         <Users
                           className={
                             role === "viewer"
-                              ? "text-blue-500"
+                              ? "text-brand-primary"
                               : "text-slate-400"
                           }
                           size={24}
@@ -197,7 +198,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                         <span
                           className={`font-semibold text-sm ${
                             role === "viewer"
-                              ? "text-blue-700 dark:text-blue-400"
+                              ? "text-brand-primary dark:text-brand-accent-hover"
                               : "text-slate-600 dark:text-slate-400"
                           }`}
                         >
@@ -211,15 +212,15 @@ const ShareModal: React.FC<ShareModalProps> = ({
                       <button
                         className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all ${
                           role === "editor"
-                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                            : "border-slate-200 hover:border-blue-200 dark:border-slate-700 dark:hover:border-slate-600"
+                            ? "border-brand-primary bg-brand-mint dark:bg-brand-accent/20"
+                            : "border-slate-200 hover:border-brand-primary/20 dark:border-slate-700 dark:hover:border-slate-600"
                         }`}
                         onClick={() => setRole("editor")}
                       >
                         <Shield
                           className={
                             role === "editor"
-                              ? "text-blue-500"
+                              ? "text-brand-primary"
                               : "text-slate-400"
                           }
                           size={24}
@@ -227,7 +228,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                         <span
                           className={`font-semibold text-sm ${
                             role === "editor"
-                              ? "text-blue-700 dark:text-blue-400"
+                              ? "text-brand-primary dark:text-brand-accent-hover"
                               : "text-slate-600 dark:text-slate-400"
                           }`}
                         >
@@ -241,7 +242,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                   </div>
 
                   <button
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white shadow-blue-500/20 shadow-lg transition-all hover:bg-blue-700 disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary py-3 font-semibold text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover disabled:opacity-50"
                     disabled={isGenerating}
                     onClick={handleGenerateLink}
                   >

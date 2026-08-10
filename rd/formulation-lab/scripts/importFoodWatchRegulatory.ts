@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
-import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
+import { createRegulatoryImportEnv } from "@flavoneer/config/env/server";
 
 interface FoodWatchCategory {
   code: string;
@@ -61,9 +62,12 @@ type FoodWatchPostgres = (
   options: { max: number }
 ) => FoodWatchSql;
 
-const FOODWATCH_BACKEND_DIR =
-  process.env.FOODWATCH_BACKEND_DIR ??
-  "/Users/subhi/Documents/GitHub/FoodWatch/packages/backend";
+const env = createRegulatoryImportEnv({
+  FOODWATCH_BACKEND_DIR: process.env.FOODWATCH_BACKEND_DIR,
+  FOODWATCH_DATABASE_URL: process.env.FOODWATCH_DATABASE_URL,
+  REGULATORY_IMPORT_TOKEN: process.env.REGULATORY_IMPORT_TOKEN,
+});
+const FOODWATCH_BACKEND_DIR = env.backendDir;
 const FOODWATCH_ENV_PATH = resolve(FOODWATCH_BACKEND_DIR, ".env");
 const BATCH_SIZE = 500;
 
@@ -99,7 +103,7 @@ function runConvexImport(payload: RegulatoryImportPayload) {
       "run",
       "regulatory:importCatalogBatch",
       JSON.stringify({
-        token: process.env.REGULATORY_IMPORT_TOKEN,
+        token: env.importToken,
         ...payload,
       }),
     ],
@@ -112,8 +116,7 @@ function runConvexImport(payload: RegulatoryImportPayload) {
 
 async function main() {
   const databaseUrl =
-    process.env.FOODWATCH_DATABASE_URL ??
-    readEnvValue(FOODWATCH_ENV_PATH, "DATABASE_URL");
+    env.databaseUrl ?? readEnvValue(FOODWATCH_ENV_PATH, "DATABASE_URL");
 
   if (!databaseUrl) {
     throw new Error(`DATABASE_URL not found in ${FOODWATCH_ENV_PATH}`);

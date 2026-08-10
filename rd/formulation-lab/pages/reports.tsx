@@ -1,3 +1,4 @@
+import { api } from "@flavoneer/backend/api";
 import { pdf } from "@react-pdf/renderer";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import {
@@ -15,8 +16,8 @@ import InfiniteScrollObserver from "../components/InfiniteScrollObserver";
 import NewLabReportModal from "../components/NewLabReportModal";
 import { ReportPDF } from "../components/ReportPDF";
 import ReportsDropdown from "../components/ReportsDropdown";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
 import { usePermissions } from "../hooks/usePermissions";
 import { useToast } from "../hooks/useToast";
 import { buildAggregatedIngredients } from "../lib/formulation/helpers";
@@ -27,7 +28,8 @@ const Reports: React.FC = () => {
   const [filter, setFilter] = useState("All");
   const [showNewModal, setShowNewModal] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string>();
-  const { language, profile } = useSettings();
+  const { language } = useSettings();
+  const { activeOrganizationId } = useOrganization();
   const { user, role } = usePermissions();
   const { toast } = useToast();
 
@@ -38,20 +40,23 @@ const Reports: React.FC = () => {
     loadMore: loadMoreReports,
   } = usePaginatedQuery(
     api.labReports.list,
-    { language },
+    { language, organizationId: activeOrganizationId ?? undefined },
     { initialNumItems: 50 }
   );
 
   const { results: runsRaw } = usePaginatedQuery(
     api.runs.list,
-    {},
+    activeOrganizationId ? { organizationId: activeOrganizationId } : {},
     { initialNumItems: 50 }
   );
   const formulationIngredientOptions = useQuery(
     api.ingredients.listFormulationOptions,
-    { language }
+    { language, organizationId: activeOrganizationId ?? undefined }
   );
-  const inventoryItems = useQuery(api.inventory.list, { language });
+  const inventoryItems = useQuery(api.inventory.list, {
+    language,
+    organizationId: activeOrganizationId ?? undefined,
+  });
 
   const updateStatus = useMutation(api.labReports.updateStatus);
 
@@ -160,16 +165,9 @@ const Reports: React.FC = () => {
         }
 
         const newStatus = report.status === "Approved" ? "Pending" : "Approved";
-        const isApproving = newStatus === "Approved";
-
         await updateStatus({
           id: report._id,
           status: newStatus,
-          signoffData: isApproving ? profile?.signatureData : undefined,
-          signoffFont: isApproving ? profile?.signatureFont : undefined,
-          signoffType: isApproving
-            ? (profile?.signatureType as "upload" | "text" | undefined)
-            : undefined,
         });
         break;
       }
@@ -207,7 +205,7 @@ const Reports: React.FC = () => {
               <button
                 className={`rounded-full px-5 py-2.5 font-bold text-sm transition-all ${
                   filter === filterType
-                    ? "bg-gray-900 text-white dark:bg-indigo-600"
+                    ? "bg-gray-900 text-white dark:bg-brand-accent"
                     : "bg-white text-gray-500 hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                 }`}
                 key={filterType}
@@ -219,7 +217,7 @@ const Reports: React.FC = () => {
             ))}
           </div>
           <button
-            className="flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 font-bold text-sm text-white shadow-indigo-600/20 shadow-lg transition-colors hover:bg-indigo-700"
+            className="flex items-center gap-2 rounded-full bg-brand-primary px-5 py-2.5 font-bold text-sm text-white shadow-brand-primary/20 shadow-lg transition-colors hover:bg-brand-primary-hover"
             onClick={() => setShowNewModal(true)}
             type="button"
           >
@@ -245,7 +243,7 @@ const Reports: React.FC = () => {
       <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-4">
         {/* Medium Card: Recent Reports Quick Access */}
         <div className="col-span-1 min-h-[300px] md:col-span-4">
-          <div className="h-full rounded-[2.5rem] border border-black/5 bg-vivid-blue p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
+          <div className="h-full rounded-[2.5rem] border border-black/5 bg-brand-mint p-6 shadow-sm sm:p-8 dark:bg-rose-900/10">
             <div className="mb-6">
               <h3 className="font-bold text-charcoal dark:text-slate-100">
                 {t("recentReports")}
@@ -268,7 +266,7 @@ const Reports: React.FC = () => {
                   </div>
 
                   <div className="min-w-0 flex-1 text-start">
-                    <h4 className="truncate font-bold text-charcoal text-sm transition-colors group-hover:text-action-pink dark:text-slate-100 dark:group-hover:text-blue-400">
+                    <h4 className="truncate font-bold text-charcoal text-sm transition-colors group-hover:text-action-pink dark:text-slate-100 dark:group-hover:text-brand-accent-hover">
                       {report.projectName}
                     </h4>
                     <div className="mt-0.5 flex items-center gap-2">
@@ -335,7 +333,7 @@ const Reports: React.FC = () => {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between">
-                    <h4 className="truncate font-bold text-gray-900 text-lg transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                    <h4 className="truncate font-bold text-gray-900 text-lg transition-colors group-hover:text-brand-primary dark:text-white dark:group-hover:text-brand-accent-hover">
                       {report.projectName}
                     </h4>
                     <span className="font-mono text-gray-400 text-xs dark:text-slate-500">
@@ -347,10 +345,10 @@ const Reports: React.FC = () => {
                   {run && (
                     <div className="mt-1 flex items-center gap-1.5">
                       <FlaskConical
-                        className="text-indigo-500 dark:text-indigo-400"
+                        className="text-brand-primary dark:text-brand-accent-hover"
                         size={12}
                       />
-                      <span className="rounded-md bg-indigo-50 px-2 py-0.5 font-bold font-mono text-indigo-600 text-xs dark:bg-indigo-900/20 dark:text-indigo-400">
+                      <span className="rounded-md bg-brand-mint px-2 py-0.5 font-bold font-mono text-brand-primary text-xs dark:bg-brand-accent/20 dark:text-brand-accent-hover">
                         {run.batchCode}
                       </span>
                       <span className="text-gray-400 text-xs dark:text-slate-500">

@@ -1,0 +1,120 @@
+# Welcome to your Expo app 👋
+
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+
+## Get started
+
+1. Install dependencies
+
+   ```bash
+   npm install
+   ```
+
+2. Start the app
+
+   ```bash
+   npx expo start
+   ```
+
+In the output, you'll find options to open the app in a
+
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+
+## Hot Updater
+
+The native app uses Hot Updater with the `appVersion` strategy and the
+`production` channel by default. Expo updates are disabled so that only Hot
+Updater controls over-the-air JavaScript updates.
+
+Create the local runtime and deploy configuration:
+
+```bash
+cp rd/mobile/.env.example rd/mobile/.env.local
+cp rd/mobile/.env.hotupdater.example rd/mobile/.env.hotupdater
+```
+
+`EXPO_PUBLIC_HOT_UPDATER_URL` and `HOT_UPDATER_SERVER_URL` must point to the
+same Convex `.site` URL under `/hot-updater`. Convex stores bundle metadata and
+exposes the standard update-check and bundle-management routes. The bundle
+archives remain in the S3-compatible storage configured by
+`hot-updater.config.ts`.
+
+The deploy process requires `HOT_UPDATER_S3_ACCESS_KEY_ID`,
+`HOT_UPDATER_S3_SECRET_ACCESS_KEY`, `HOT_UPDATER_S3_ENDPOINT`, and
+`HOT_UPDATER_API_TOKEN`. The API token must match the value configured on the
+target Convex deployment.
+
+Build a new native binary after adding or changing Hot Updater native
+configuration:
+
+```bash
+pnpm --filter mobile exec expo prebuild
+```
+
+Deploy JavaScript-only changes interactively:
+
+```bash
+pnpm --filter mobile deploy
+```
+
+Hot Updater is disabled in the JavaScript root when
+`EXPO_PUBLIC_HOT_UPDATER_URL` is absent. It does not apply updates in Expo Go
+or a development build; use an iOS or Android release build for end-to-end
+testing.
+
+## Bugsink
+
+The app reports JavaScript and native errors to the Bugsink project at
+`zapper.synbiodiet.com`. Performance tracing and session tracking are disabled
+because Bugsink only processes error events. Default PII collection is also
+disabled.
+
+EAS Build uploads Metro source maps through `sentry-cli`. The non-secret
+`SENTRY_PROJECT=flavoneer-web` value is configured in the Expo plugin and in
+the linked EAS project. Create this variable in every EAS environment used by a
+build profile:
+
+- `SENTRY_AUTH_TOKEN`: a Bugsink API token, stored with sensitive visibility.
+
+The build profiles load the matching `development`, `preview`, or `production`
+EAS environment. Run `eas env:create --environment production` once for each
+variable and repeat for any other build environment in use. The Bugsink URL,
+project slug, and single-organization value are committed in the Expo config;
+the auth token must not be committed or prefixed with `EXPO_PUBLIC_`.
+
+The Metro config injects matching debug IDs into bundles and source maps. The
+Sentry Expo config plugin adds the native EAS Build upload steps for Android and
+iOS. A missing or incorrect `SENTRY_PROJECT` or `SENTRY_AUTH_TOKEN` makes the
+upload fail instead of silently producing unsymbolicated errors.
+
+## Shared Convex backend
+
+The mobile app uses the same Convex project, generated API, and Better Auth
+identity source as the formulation lab. Configure the mobile client with the
+matching deployment URLs:
+
+```env
+EXPO_PUBLIC_CONVEX_URL=
+EXPO_PUBLIC_CONVEX_SITE_URL=
+```
+
+The Convex schema and functions live in `packages/backend/convex`. Run the
+backend development loop from the repository root:
+
+```sh
+pnpm dev:backend
+```
+
+The active organization is selected from user settings. The app persists the
+matching organization ID in SecureStore and uses it for production queries after the
+user returns to the production screen.
+
+Appearance is also a per-user Convex setting shared with the formulation lab.
+`ThemePreferenceProvider` supports Light, Dark, and System. System follows the
+device color scheme, while an explicit choice updates NativeWind, Expo Router,
+and the status bar together.
+
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).

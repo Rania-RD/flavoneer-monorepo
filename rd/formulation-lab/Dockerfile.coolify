@@ -1,2 +1,0 @@
-# Coolify performs only this lightweight pull; GitHub Actions builds the image.
-FROM ghcr.io/rania-rd/flavoneer-formulation-lab:latest

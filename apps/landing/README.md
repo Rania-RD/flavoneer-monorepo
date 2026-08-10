@@ -23,7 +23,7 @@ bun install
 Copy `.env.example` to `.env` and configure the landing page:
 
 ```bash
-NUXT_PUBLIC_LAB_URL=http://localhost:3001
+NUXT_PUBLIC_LAB_URL=https://lab.flavoneer.com
 VITE_PUBLIC_POSTHOG_KEY=phc_your_project_key
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```

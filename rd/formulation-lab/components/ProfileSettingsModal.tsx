@@ -1,12 +1,10 @@
-import { useMutation } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import {
-  Activity,
-  FileSignature,
   Languages,
   Loader2,
   LogOut,
   type LucideIcon,
+  Palette,
   User,
   X,
 } from "lucide-react";
@@ -15,20 +13,17 @@ import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "../convex/_generated/api";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
-import { compressImage } from "../lib/imageUtils";
-import ActivityTab from "./profile/ActivityTab";
+import AppearanceTab from "./profile/AppearanceTab";
 import IdentityTab from "./profile/IdentityTab";
 import LocalizationTab from "./profile/LocalizationTab";
-import SignatureTab from "./profile/SignatureTab";
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type ProfileTabId = "identity" | "signature" | "app" | "activity";
+type ProfileTabId = "identity" | "localization" | "appearance";
 
 interface TabButtonProps {
   activeTab: ProfileTabId;
@@ -52,7 +47,7 @@ const TabButton: React.FC<TabButtonProps> = ({
     aria-selected={activeTab === id}
     className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 font-bold text-sm transition-all ${
       activeTab === id
-        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300"
+        ? "bg-brand-mint text-brand-primary dark:bg-brand-accent/20 dark:text-brand-accent-hover"
         : "text-gray-500 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-800"
     }`}
     onClick={() => onSelect(id)}
@@ -76,18 +71,19 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const titleId = useId();
   const panelId = useId();
 
-  // Local state for form handling before save
-  // No more local profile state for global save
-  const [uploading, setUploading] = useState(false);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const getFileUrl = useMutation(api.files.getFileUrl);
-
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
     setActiveTab("identity");
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
@@ -104,70 +100,6 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     } catch (error) {
       console.error("Sign out failed:", error);
       setIsSigningOut(false);
-    }
-  };
-
-  // ─── Signature sub-mode state ───
-
-  // ─── Upload helpers ───
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    try {
-      setUploading(true);
-      const compressedFile = await compressImage(file, 500);
-      const uploadUrl = await generateUploadUrl();
-      const result = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": compressedFile.type },
-        body: compressedFile,
-      });
-      const { storageId } = await result.json();
-      const url = await getFileUrl({ storageId });
-      if (url) {
-        // Immediate update for Avatar
-        updateProfile({ avatarUrl: url });
-      }
-    } catch (err) {
-      console.error("Avatar upload failed:", err);
-    } finally {
-      setUploading(false);
-      // Note: we can't easily reset the input ref here unless we pass it down or state lift logic differently
-      // Since it's hidden inside the component, it's fine for now.
-    }
-  };
-
-  const handleSignatureUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    try {
-      setUploading(true);
-      const compressedFile = await compressImage(file, 500);
-      const uploadUrl = await generateUploadUrl();
-      const result = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": compressedFile.type },
-        body: compressedFile,
-      });
-      const { storageId } = await result.json();
-      const url = await getFileUrl({ storageId });
-      if (url) {
-        // Immediate update for Signature Upload
-        updateProfile({
-          signatureType: "upload",
-          signatureData: url,
-        });
-      }
-    } catch (err) {
-      console.error("Signature upload failed:", err);
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -238,25 +170,17 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   />
                   <TabButton
                     activeTab={activeTab}
-                    icon={FileSignature}
-                    id="signature"
-                    label={t("digitalSignature")}
-                    onSelect={setActiveTab}
-                    panelId={panelId}
-                  />
-                  <TabButton
-                    activeTab={activeTab}
                     icon={Languages}
-                    id="app"
+                    id="localization"
                     label={t("localization")}
                     onSelect={setActiveTab}
                     panelId={panelId}
                   />
                   <TabButton
                     activeTab={activeTab}
-                    icon={Activity}
-                    id="activity"
-                    label={t("activity")}
+                    icon={Palette}
+                    id="appearance"
+                    label={t("appearance")}
                     onSelect={setActiveTab}
                     panelId={panelId}
                   />
@@ -271,30 +195,19 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               >
                 {activeTab === "identity" && (
                   <IdentityTab
-                    handleAvatarUpload={handleAvatarUpload}
                     profile={profile}
                     updateProfile={updateProfile}
-                    uploading={uploading}
                   />
                 )}
 
-                {activeTab === "signature" && (
-                  <SignatureTab
-                    handleSignatureUpload={handleSignatureUpload}
-                    profile={profile}
-                    updateProfile={updateProfile}
-                    uploading={uploading}
-                  />
-                )}
-
-                {activeTab === "app" && (
+                {activeTab === "localization" && (
                   <LocalizationTab
                     currentLanguage={language}
                     setLanguage={setLanguage}
                   />
                 )}
 
-                {activeTab === "activity" && <ActivityTab />}
+                {activeTab === "appearance" && <AppearanceTab />}
               </div>
             </div>
 

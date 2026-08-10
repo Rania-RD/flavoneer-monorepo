@@ -3,9 +3,12 @@
 .pnpm-store
 **/node_modules
 **/dist
+**/.nuxt
+**/.output
 **/.env
 **/.env.*
 !**/.env.example
 **/playwright-report
 **/test-results
+**/*.ipa
 *.log

@@ -2,7 +2,7 @@ import { type HTMLMotionProps, motion } from "framer-motion";
 import { AlertTriangle, ArrowLeft, Check, Share2 } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@flavoneer/backend/data-model";
 import { modalVariants } from "../../lib/animations";
 import type { RunRecord } from "../../types";
 import { SensoryBuilder } from "../SensoryBuilder";
@@ -120,7 +120,7 @@ const RunDetailView: React.FC<RunDetailViewProps> = ({
                     key={step.id || stepIndex}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 font-bold text-indigo-600 text-sm dark:bg-indigo-900/30 dark:text-indigo-400">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-mint font-bold text-brand-primary text-sm dark:bg-brand-accent/30 dark:text-brand-accent-hover">
                         {stepIndex + 1}
                       </div>
                       <div>
@@ -159,7 +159,7 @@ const RunDetailView: React.FC<RunDetailViewProps> = ({
       </div>
 
       <ShareModal
-        entityId={selectedRunRecord.id}
+        entityId={selectedRunRecord.id as Id<"runs">}
         entityName={selectedRunRecord.projectName || t("unknown_project")}
         entityType="run"
         isOpen={isShareModalOpen}

@@ -111,11 +111,11 @@ const DependencyWarningModal: React.FC<DependencyWarningModalProps> = ({
                     <ul className="space-y-2">
                       {dependencies.formulas.map((form) => (
                         <li
-                          className="flex items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3 dark:border-indigo-900/30 dark:bg-indigo-900/10"
+                          className="flex items-center gap-3 rounded-xl border border-brand-primary/20 bg-brand-mint/50 px-4 py-3 dark:border-brand-mint/20 dark:bg-brand-accent/10"
                           key={form._id}
                         >
-                          <Share2 className="text-indigo-400" size={16} />
-                          <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                          <Share2 className="text-brand-primary" size={16} />
+                          <span className="font-semibold text-brand-primary dark:text-brand-accent-hover">
                             {form.name}
                           </span>
                         </li>

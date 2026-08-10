@@ -1,4 +1,4 @@
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { Mail, Shield, User, X } from "lucide-react";
 import type React from "react";
@@ -6,9 +6,9 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { useTeam } from "../context/TeamContext";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
+import { useOrganization } from "../context/OrganizationContext";
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
@@ -23,11 +23,11 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 }) => {
   const { isRTL } = useSettings();
   const { t } = useTranslation();
-  const { activeTeamId } = useTeam();
+  const { activeOrganizationId } = useOrganization();
 
   const { toast } = useToast();
 
-  const createInvite = useMutation(api.teamInvites.create);
+  const createInvite = useAction(api.organizationInvites.create);
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member">("member");
@@ -36,7 +36,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   const [inviteToken, setInviteToken] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!(email.trim() && activeTeamId)) {
+    if (!(email.trim() && activeOrganizationId)) {
       return;
     }
     setLoading(true);
@@ -44,7 +44,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 
     try {
       const result = await createInvite({
-        teamId: activeTeamId as Id<"teams">,
+        organizationId: activeOrganizationId as Id<"organizations">,
         email: email.trim(),
         role,
       });
@@ -61,7 +61,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
     if (!inviteToken) {
       return;
     }
-    const link = `${window.location.origin}${window.location.pathname}#/invite/${inviteToken}`;
+    const link = `${window.location.origin}/invite/${inviteToken}`;
     navigator.clipboard.writeText(link);
     toast.info(t("copiedToClipboard"));
   };
@@ -145,10 +145,10 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                       <input
                         className="flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 font-mono text-gray-600 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                         readOnly
-                        value={`${window.location.origin}${window.location.pathname}#/invite/${inviteToken}`}
+                        value={`${window.location.origin}/invite/${inviteToken}`}
                       />
                       <button
-                        className="flex-shrink-0 rounded-lg bg-gray-900 px-4 py-2.5 font-bold text-white text-xs transition-colors hover:bg-gray-800 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+                        className="flex-shrink-0 rounded-lg bg-gray-900 px-4 py-2.5 font-bold text-white text-xs transition-colors hover:bg-gray-800 dark:bg-brand-accent dark:hover:bg-brand-accent-hover"
                         onClick={handleCopyLink}
                       >
                         {t("copy")}
@@ -173,7 +173,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                     </label>
                     <input
                       autoFocus
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 text-sm placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-500/50"
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 text-sm placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-brand-accent/50"
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && email.trim()) {
@@ -232,7 +232,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                       {t("cancel")}
                     </button>
                     <button
-                      className="flex-1 rounded-2xl bg-gray-900 py-3.5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-indigo-600 dark:shadow-indigo-600/30 dark:hover:bg-indigo-500"
+                      className="flex-1 rounded-2xl bg-gray-900 py-3.5 font-bold text-sm text-white shadow-gray-900/20 shadow-lg transition-all hover:bg-gray-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-brand-accent dark:shadow-brand-accent/20 dark:hover:bg-brand-accent-hover"
                       disabled={!email.trim() || loading}
                       onClick={handleSubmit}
                     >

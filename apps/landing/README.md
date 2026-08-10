@@ -23,7 +23,7 @@ bun install
 Copy `.env.example` to `.env` and configure the landing page:
 
 ```bash
-NUXT_PUBLIC_LAB_URL=https://lab.flavoneer.com
+NUXT_PUBLIC_LAB_URL=
 VITE_PUBLIC_POSTHOG_KEY=phc_your_project_key
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
@@ -32,6 +32,11 @@ VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 `https://eu.i.posthog.com` for an EU-hosted project. When the key is omitted or
 blank, the analytics client becomes a no-op and the landing page continues to
 work normally.
+
+`NUXT_PUBLIC_LAB_URL` is optional. When it is blank or omitted, the landing page
+links to `http://localhost:3001` during local development and
+`https://lab.flavoneer.com` in production. Explicit URLs targeting
+`lab.flavoneer.com` are normalized to HTTPS.
 
 ## Development Server
 

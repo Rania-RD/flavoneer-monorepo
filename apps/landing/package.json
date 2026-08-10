@@ -7,8 +7,10 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
+    "lint": "biome lint app nuxt.config.ts",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@flavoneer/config": "workspace:*",
@@ -19,5 +21,9 @@
     "tailwindcss": "^4.3.0",
     "vue": "^3.5.35",
     "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.2",
+    "vue-tsc": "3.1.3"
   }
 }

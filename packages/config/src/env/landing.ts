@@ -14,10 +14,18 @@ const landingEnvSchema = {
 
 export type LandingEnvSource = EnvInput<typeof landingEnvSchema>;
 
+function normalizeLabUrl(value: string) {
+  const url = new URL(value);
+  if (url.hostname.toLowerCase() === "lab.flavoneer.com") {
+    url.protocol = "https:";
+  }
+  return url.toString().replace(/\/$/, "");
+}
+
 export function createLandingEnv(source: LandingEnvSource) {
   const env = parseEnv(landingEnvSchema, source);
   return Object.freeze({
-    labUrl: env.NUXT_PUBLIC_LAB_URL,
+    labUrl: normalizeLabUrl(env.NUXT_PUBLIC_LAB_URL),
     posthogHost: env.VITE_PUBLIC_POSTHOG_HOST,
     posthogKey: env.VITE_PUBLIC_POSTHOG_KEY ?? "",
   });

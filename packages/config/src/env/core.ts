@@ -126,7 +126,7 @@ export function parseEnv<const Schema extends EnvSchema>(
 ): InferEnv<Schema> {
   const result: Partial<Record<keyof Schema, unknown>> = {};
   for (const key of Object.keys(schema) as (keyof Schema)[]) {
-    result[key] = schema[key].parse(source[key], String(key));
+    result[key] = schema[key]!.parse(source[key], String(key));
   }
   return Object.freeze(result) as InferEnv<Schema>;
 }

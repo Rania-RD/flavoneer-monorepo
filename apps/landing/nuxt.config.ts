@@ -1,8 +1,14 @@
 import { createLandingEnv } from '@flavoneer/config/env/landing'
 import tailwindcss from '@tailwindcss/vite'
 
+const configuredLabUrl = process.env.NUXT_PUBLIC_LAB_URL?.trim()
+const defaultLabUrl =
+  process.env.NODE_ENV === 'production'
+    ? 'https://lab.flavoneer.com'
+    : 'http://localhost:3001'
+
 const env = createLandingEnv({
-  NUXT_PUBLIC_LAB_URL: process.env.NUXT_PUBLIC_LAB_URL,
+  NUXT_PUBLIC_LAB_URL: configuredLabUrl || defaultLabUrl,
   VITE_PUBLIC_POSTHOG_HOST: process.env.VITE_PUBLIC_POSTHOG_HOST,
   VITE_PUBLIC_POSTHOG_KEY: process.env.VITE_PUBLIC_POSTHOG_KEY,
 })

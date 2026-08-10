@@ -1,5 +1,6 @@
-import { useMutation } from "convex/react";
+import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
+import { useMutation } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { Copy, Link, Shield, Users, X } from "lucide-react";
 import type React from "react";
@@ -7,17 +8,20 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
-interface ShareModalProps {
-  entityId: Id<"projects"> | Id<"runs">;
+interface ShareModalBaseProps {
   entityName: string;
-  entityType: "project" | "run";
   isOpen: boolean;
   onClose: () => void;
 }
+
+type ShareModalProps = ShareModalBaseProps &
+  (
+    | { entityId: Id<"projects">; entityType: "project" }
+    | { entityId: Id<"runs">; entityType: "run" }
+  );
 
 const ShareModal: React.FC<ShareModalProps> = ({
   isOpen,

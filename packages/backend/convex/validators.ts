@@ -797,7 +797,6 @@ export const versionSnapshotDataValidator = v.object({
   gsfaCategoryName: v.optional(v.string()),
   gsfaCategoryNameI18n: v.optional(localizedStringValidator),
   formulationState: v.optional(formulationStateValidator),
-  photoStorageId: v.optional(v.id("_storage")),
   yield: v.optional(v.number()),
   batchWeight: v.optional(v.number()),
   batchCost: v.optional(v.number()),

@@ -31,6 +31,10 @@ import {
   versionTagValidator,
 } from "./validators";
 
+// @deprecated Legacy Better Auth organization ownership. This compatibility
+// validator can be removed after historical rows are migrated to verified teams.
+const legacyOrganizationIdValidator = v.optional(v.string());
+
 export default defineSchema({
   projects: defineTable({
     name: v.string(),
@@ -46,6 +50,8 @@ export default defineSchema({
     gsfaCategoryName: v.optional(v.string()),
     gsfaCategoryNameI18n: v.optional(localizedStringValidator),
     formulationState: v.optional(formulationStateValidator),
+    // @deprecated Legacy project photo reference retained for stored records.
+    photoStorageId: v.optional(v.id("_storage")),
     yield: v.optional(v.number()),
     batchWeight: v.optional(v.number()),
     batchCost: v.optional(v.number()),
@@ -87,6 +93,7 @@ export default defineSchema({
     // Multi-user/team support
     userId: v.optional(v.union(v.string(), v.null())),
     teamId: v.optional(v.union(v.id("teams"), v.null())),
+    organizationId: legacyOrganizationIdValidator,
     // Approval Workflow
     releaseNotes: v.optional(v.string()),
     releasedBy: v.optional(v.string()),
@@ -261,6 +268,7 @@ export default defineSchema({
     ingredientId: v.id("ingredients"), // Strict 1:N relationship with library required
     userId: v.optional(v.string()),
     teamId: v.optional(v.id("teams")),
+    organizationId: legacyOrganizationIdValidator,
     usedIn: v.optional(v.array(v.string())),
   })
     .index("by_category", ["category"])
@@ -321,6 +329,7 @@ export default defineSchema({
     outOfSync: v.optional(v.boolean()),
     coverImageId: v.optional(v.id("_storage")),
     teamId: v.optional(v.id("teams")),
+    organizationId: legacyOrganizationIdValidator,
     userId: v.optional(v.string()),
     createdAt: v.optional(v.number()),
   })
@@ -386,6 +395,7 @@ export default defineSchema({
     hash: v.string(),
     userId: v.optional(v.string()),
     teamId: v.optional(v.id("teams")),
+    organizationId: legacyOrganizationIdValidator,
     signoffData: v.optional(v.string()),
     signoffFont: v.optional(v.string()),
     signoffType: v.optional(signatureTypeValidator),
@@ -442,6 +452,7 @@ export default defineSchema({
     image: v.optional(v.string()),
     userId: v.optional(v.string()),
     teamId: v.optional(v.id("teams")),
+    organizationId: legacyOrganizationIdValidator,
     signoffData: v.optional(v.string()),
     signoffFont: v.optional(v.string()),
     signoffType: v.optional(signatureTypeValidator),
@@ -453,6 +464,10 @@ export default defineSchema({
     settingsKey: v.string(), // userId
     units: unitsValidator,
     darkMode: v.boolean(),
+    // @deprecated Legacy three-state theme setting retained for stored profiles.
+    themePreference: v.optional(
+      v.union(v.literal("light"), v.literal("dark"), v.literal("system"))
+    ),
     language: languageValidator,
     appAlerts: v.boolean(),
     emailSummaries: v.boolean(),
@@ -489,6 +504,7 @@ export default defineSchema({
     phases: versionSnapshotPhasesValidator,
     createdAt: v.number(),
     createdBy: v.string(),
+    organizationId: legacyOrganizationIdValidator,
     releaseNotes: v.optional(v.string()),
     status: v.optional(v.string()),
     releasedBy: v.optional(v.string()),

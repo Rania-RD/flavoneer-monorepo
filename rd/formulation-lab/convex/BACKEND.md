@@ -85,3 +85,19 @@ This separation preserves history.
   Workspace Settings version-control behavior. The Admin role receives it by
   default through `full_access`; administrators may grant it explicitly to
   other roles through the permissions matrix.
+
+## 6. Legacy Organization Ownership
+
+- `organizationId` remains optional and deprecated on `projects`,
+  `inventoryItems`, `ingredients`, `labReports`, `runs`, and `projectVersions`
+  for historical Better Auth organization-scoped rows. New writes use `teamId`
+  where ownership is stored; do not add `organizationId` to public mutation
+  arguments.
+- Keep the field optional until legacy rows have been audited and migrated to a
+  verified team. Never copy an organization ID into `teamId` without resolving
+  it to a real `teams` document first.
+- `projects.photoStorageId` and snapshot copies remain optional and deprecated
+  so historical project-photo storage references are not lost during schema
+  deployment. Current project write APIs do not accept this legacy field.
+- `userSettings.themePreference` accepts historical `light`, `dark`, and
+  `system` values while current settings continue to use `darkMode`.

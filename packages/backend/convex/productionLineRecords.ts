@@ -125,7 +125,7 @@ async function requireEditableRecord(
     throw new Error("Production-line record not found");
   }
   const { authUser } = await requireWorkspaceMember(ctx, record.organizationId);
-  await requirePermission(ctx, "record_production_checks");
+  await requirePermission(ctx, record.organizationId, "record_production_checks");
   if (!editableStatuses.has(record.status)) {
     throw new Error("This production-line record is no longer editable");
   }
@@ -229,7 +229,7 @@ export const getMobileReferenceData = query({
   returns: v.union(referenceDataValidator, v.null()),
   handler: async (ctx, args) => {
     await requireWorkspaceMember(ctx, args.organizationId);
-    await requirePermission(ctx, "record_production_checks");
+    await requirePermission(ctx, args.organizationId, "record_production_checks");
     const settings = await ctx.db
       .query("productionLineSettings")
       .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
@@ -273,7 +273,7 @@ export const listMine = query({
   returns: v.array(recordSummaryValidator),
   handler: async (ctx, args) => {
     const { authUser } = await requireWorkspaceMember(ctx, args.organizationId);
-    await requirePermission(ctx, "record_production_checks");
+    await requirePermission(ctx, args.organizationId, "record_production_checks");
     const records = await ctx.db
       .query("productionLineRecords")
       .withIndex("by_organizationId_and_qcUserId", (q) =>
@@ -303,7 +303,7 @@ export const get = query({
       return null;
     }
     await requireWorkspaceMember(ctx, record.organizationId);
-    await requirePermission(ctx, "view_production_checks");
+    await requirePermission(ctx, record.organizationId, "view_production_checks");
     return await buildRecordDetail(ctx, record);
   },
 });
@@ -317,7 +317,7 @@ export const listForReview = query({
   returns: paginationResultValidator(reviewSummaryValidator),
   handler: async (ctx, args) => {
     await requireWorkspaceMember(ctx, args.organizationId);
-    await requirePermission(ctx, "view_production_checks");
+    await requirePermission(ctx, args.organizationId, "view_production_checks");
     const selectedStatus = args.status;
     const result = selectedStatus
       ? await ctx.db
@@ -361,7 +361,7 @@ export const createDraft = mutation({
   returns: v.id("productionLineRecords"),
   handler: async (ctx, args) => {
     const { authUser } = await requireWorkspaceMember(ctx, args.organizationId);
-    await requirePermission(ctx, "record_production_checks");
+    await requirePermission(ctx, args.organizationId, "record_production_checks");
     const departmentName = args.departmentName.trim();
     if (!departmentName) {
       throw new Error("Production line or department is required");
@@ -737,7 +737,7 @@ export const review = mutation({
       throw new Error("Production-line record not found");
     }
     const { authUser } = await requireWorkspaceMember(ctx, record.organizationId);
-    await requirePermission(ctx, "review_production_checks");
+    await requirePermission(ctx, record.organizationId, "review_production_checks");
     if (record.status !== "pending_production_review") {
       throw new Error("Only pending production-line records can be reviewed");
     }

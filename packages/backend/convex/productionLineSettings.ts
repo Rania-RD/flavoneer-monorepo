@@ -72,7 +72,7 @@ export const upsert = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { authUser } = await requireWorkspaceAdmin(ctx, args.organizationId);
-    await requirePermission(ctx, "manage_production_line_settings");
+    await requirePermission(ctx, args.organizationId, "manage_production_line_settings");
     assertValidTimezone(args.timezone);
     const enabledHallCodes = [...new Set(args.enabledHallCodes)];
     if (enabledHallCodes.length === 0) {
@@ -110,7 +110,7 @@ export const initializeHallSerial = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { authUser } = await requireWorkspaceAdmin(ctx, args.organizationId);
-    await requirePermission(ctx, "manage_production_line_settings");
+    await requirePermission(ctx, args.organizationId, "manage_production_line_settings");
     if (!Number.isSafeInteger(args.nextSequence) || args.nextSequence < 1) {
       throw new Error("Next serial sequence must be a positive integer");
     }

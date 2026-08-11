@@ -1,12 +1,24 @@
-import { useQuery } from "convex/react";
 import { api } from "@flavoneer/backend/api";
+import { useQuery } from "convex/react";
+import { useOrganization } from "../context/OrganizationContext";
 
 export function usePermissions() {
-  const currentUserWithRole = useQuery(api.users.getCurrentUserRole);
-  const isLoading = currentUserWithRole === undefined;
+  const { activeOrganizationId, organizationsLoading } = useOrganization();
+  const currentUserWithRole = useQuery(
+    api.users.getCurrentUserRole,
+    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
+  );
+  const isLoading =
+    organizationsLoading ||
+    (activeOrganizationId !== null && currentUserWithRole === undefined);
 
   // If waiting for fetch or no user exists, default to fully restricted
-  if (isLoading || currentUserWithRole === null) {
+  if (
+    isLoading ||
+    !activeOrganizationId ||
+    currentUserWithRole === undefined ||
+    currentUserWithRole === null
+  ) {
     return {
       isLoading,
       hasPermission: () => false,

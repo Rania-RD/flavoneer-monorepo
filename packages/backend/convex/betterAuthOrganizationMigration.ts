@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
-import { requirePermission } from "./permissions";
+import { requireSuperAdmin } from "./superAdminAccess";
 
 const inventoryItemValidator = v.object({
   organizationId: v.id("organizations"),
@@ -24,7 +24,7 @@ export const inventory = query({
     sampleLimit: v.number(),
   }),
   handler: async (ctx, args) => {
-    await requirePermission(ctx, "manage_roles");
+    await requireSuperAdmin(ctx);
     const sampleLimit = Math.min(Math.max(args.limit ?? 100, 1), 100);
     const organizations = await ctx.db.query("organizations").take(sampleLimit + 1);
     const workspaces = await Promise.all(
@@ -41,12 +41,8 @@ export const inventory = query({
           .query("projects")
           .withIndex("by_organizationId", (q) => q.eq("organizationId", organization._id))
           .take(101);
-        const ownerCount = members.filter(
-          (member) => member.role === "owner"
-        ).length;
-        const pendingInvites = invites.filter(
-          (invite) => invite.status === "pending"
-        );
+        const ownerCount = members.filter((member) => member.role === "owner").length;
+        const pendingInvites = invites.filter((invite) => invite.status === "pending");
         const issues: string[] = [];
         if (ownerCount !== 1) {
           issues.push("owner_count");
@@ -57,9 +53,7 @@ export const inventory = query({
         if (
           members.some(
             (member, index) =>
-              members.findIndex(
-                (candidate) => candidate.userId === member.userId
-              ) !== index
+              members.findIndex((candidate) => candidate.userId === member.userId) !== index,
           )
         ) {
           issues.push("duplicate_member");
@@ -72,17 +66,13 @@ export const inventory = query({
           ownerCount,
           memberCount: Math.min(members.length, 100),
           pendingInviteCount: Math.min(pendingInvites.length, 100),
-          legacyPendingInviteCount: pendingInvites.filter(
-            (invite) => !invite.authInvitationId
-          ).length,
+          legacyPendingInviteCount: pendingInvites.filter((invite) => !invite.authInvitationId)
+            .length,
           projectCount: Math.min(projects.length, 100),
-          capped:
-            members.length > 100 ||
-            invites.length > 100 ||
-            projects.length > 100,
+          capped: members.length > 100 || invites.length > 100 || projects.length > 100,
           issues,
         };
-      })
+      }),
     );
 
     return {
@@ -102,7 +92,7 @@ export const verify = query({
     checked: v.number(),
   }),
   handler: async (ctx) => {
-    await requirePermission(ctx, "manage_roles");
+    await requireSuperAdmin(ctx);
     const organizations = await ctx.db.query("organizations").take(101);
     const remainingOrganizationIds = organizations
       .filter((organization) => !organization.authOrganizationId)

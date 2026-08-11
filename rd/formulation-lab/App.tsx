@@ -16,6 +16,7 @@ import { authClient } from "./lib/auth-client";
 import Dashboard from "./pages/dashboard";
 import Formulation from "./pages/formulation";
 import Invite from "./pages/invite";
+import LabSampleSubmission from "./pages/lab-sample-submission";
 import Login from "./pages/login";
 import Materials from "./pages/materials";
 import ProductionLineRecordDetail from "./pages/production-line-record-detail";
@@ -86,6 +87,10 @@ const App: React.FC = () => {
             <Route element={<Materials />} path="/materials" />
             <Route element={<Reports />} path="/reports" />
             <Route element={<ReportDetails />} path="/reports/:id" />
+            <Route
+              element={<LabSampleSubmission />}
+              path="/quality/lab-samples"
+            />
             <Route
               element={<ProductionLineRecords />}
               path="/quality/production-line-records"

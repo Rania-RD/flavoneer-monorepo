@@ -11,6 +11,19 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+function getSectionForRoute(
+  pathname: string,
+  currentSection: WorkspaceSection
+): WorkspaceSection {
+  if (pathname.startsWith("/quality/")) {
+    return "quality";
+  }
+  if (pathname.startsWith("/reports") && currentSection === "quality") {
+    return "lab";
+  }
+  return currentSection;
+}
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -22,9 +35,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const savedSection = window.localStorage.getItem(
       "flavoneer.workspace-section"
     );
-    return savedSection === "quality" || savedSection === "lab"
-      ? savedSection
-      : "research";
+    const savedWorkspaceSection =
+      savedSection === "quality" || savedSection === "lab"
+        ? savedSection
+        : "research";
+    return getSectionForRoute(window.location.pathname, savedWorkspaceSection);
   });
   const isFullScreenWorkspace =
     /^\/project\/[^/]+\/?$/.test(location.pathname) ||
@@ -43,14 +58,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   }, [isFullScreenWorkspace]);
 
   useEffect(() => {
-    if (
-      location.pathname.startsWith("/quality/") &&
-      activeSection !== "quality"
-    ) {
-      setActiveSection("quality");
-      window.localStorage.setItem("flavoneer.workspace-section", "quality");
-    }
-  }, [activeSection, location.pathname]);
+    setActiveSection((currentSection) => {
+      const routeSection = getSectionForRoute(
+        location.pathname,
+        currentSection
+      );
+      if (routeSection !== currentSection) {
+        window.localStorage.setItem(
+          "flavoneer.workspace-section",
+          routeSection
+        );
+      }
+      return routeSection;
+    });
+  }, [location.pathname]);
 
   const handleSectionChange = (section: WorkspaceSection) => {
     if (section === activeSection) {
@@ -58,7 +79,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
     setActiveSection(section);
     window.localStorage.setItem("flavoneer.workspace-section", section);
-    navigate(section === "research" ? "/" : "/reports");
+    const sectionRoutes: Record<WorkspaceSection, string> = {
+      lab: "/reports",
+      quality: "/quality/lab-samples",
+      research: "/",
+    };
+    navigate(sectionRoutes[section]);
   };
 
   return (

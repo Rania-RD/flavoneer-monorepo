@@ -11,7 +11,6 @@ import {
   type LucideIcon,
   Mail,
   Palette,
-  Settings2,
   Shield,
   User,
   UsersRound,
@@ -22,27 +21,19 @@ import { useSearchParams } from "react-router-dom";
 import AppearanceTab from "../components/profile/AppearanceTab";
 import IdentityTab from "../components/profile/IdentityTab";
 import LocalizationTab from "../components/profile/LocalizationTab";
-import RoleManagementSection from "../components/Settings/RoleManagementSection";
-import TraceabilityConfig from "../components/Settings/TraceabilityConfig";
-import VersionControlConfig from "../components/Settings/VersionControlConfig";
 import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
 import { usePermissions } from "../hooks/usePermissions";
 import {
   getVisibleOrganizationSettingsTabs,
+  MANAGE_VERSION_CONTROL_PERMISSION,
   type OrganizationSettingsTab,
   resolveOrganizationSettingsTab,
 } from "../lib/organization-settings-access";
 import { isAdminRole } from "../lib/role-access";
-import {
-  getVisibleWorkspaceSettingsTabs,
-  MANAGE_VERSION_CONTROL_PERMISSION,
-  resolveWorkspaceSettingsTab,
-  type WorkspaceSettingsTab,
-} from "../lib/workspace-settings-access";
 import OrganizationPage from "./organization";
 
-type SettingsScope = "user" | "workspace" | "organization";
+type SettingsScope = "user" | "organization";
 type UserSettingsTab = "identity" | "localization" | "appearance";
 
 interface NavigationItem<T extends string> {
@@ -51,16 +42,23 @@ interface NavigationItem<T extends string> {
   label: string;
 }
 
-const SETTINGS_SCOPES = new Set<SettingsScope>([
-  "user",
-  "workspace",
-  "organization",
-]);
+const SETTINGS_SCOPES = new Set<SettingsScope>(["user", "organization"]);
 const USER_TABS = new Set<UserSettingsTab>([
   "identity",
   "localization",
   "appearance",
 ]);
+
+function resolveSettingsScope(requestedScope: string | null): SettingsScope {
+  if (SETTINGS_SCOPES.has(requestedScope as SettingsScope)) {
+    return requestedScope as SettingsScope;
+  }
+  if (requestedScope === "workspace") {
+    return "organization";
+  }
+  return "user";
+}
+
 function NestedNavigation<T extends string>({
   activeId,
   ariaLabel,
@@ -123,9 +121,7 @@ const Settings: React.FC = () => {
   const [isSigningOut, setIsSigningOut] = React.useState(false);
 
   const requestedScope = searchParams.get("scope");
-  const activeScope = SETTINGS_SCOPES.has(requestedScope as SettingsScope)
-    ? (requestedScope as SettingsScope)
-    : "workspace";
+  const activeScope = resolveSettingsScope(requestedScope);
   const requestedTab = searchParams.get("tab");
   const isAdmin = isAdminRole(role);
   const canManageProductionLine =
@@ -141,8 +137,8 @@ const Settings: React.FC = () => {
   const userActiveTab = USER_TABS.has(requestedTab as UserSettingsTab)
     ? (requestedTab as UserSettingsTab)
     : "identity";
-  const workspaceActiveTab = resolveWorkspaceSettingsTab(requestedTab, access);
   const organizationActiveTab = resolveOrganizationSettingsTab(requestedTab, {
+    ...access,
     canManageProductionLine,
   });
 
@@ -150,20 +146,17 @@ const Settings: React.FC = () => {
     if (isLoading || isOrganizationAccessLoading) {
       return;
     }
-    let activeTab: string = workspaceActiveTab;
-    if (activeScope === "user") {
-      activeTab = userActiveTab;
-    } else if (activeScope === "organization") {
-      activeTab = organizationActiveTab;
-    }
+    const activeTab =
+      activeScope === "user" ? userActiveTab : organizationActiveTab;
     const invalidScope =
       requestedScope !== null && requestedScope !== activeScope;
     const invalidTab = requestedTab !== null && requestedTab !== activeTab;
     if (invalidScope || invalidTab) {
-      setSearchParams(
-        activeScope === "workspace" ? {} : { scope: activeScope },
-        { replace: true }
-      );
+      const params: Record<string, string> = { scope: activeScope };
+      if (requestedTab !== null && requestedTab === activeTab) {
+        params.tab = activeTab;
+      }
+      setSearchParams(params, { replace: true });
     }
   }, [
     activeScope,
@@ -174,12 +167,10 @@ const Settings: React.FC = () => {
     requestedTab,
     setSearchParams,
     userActiveTab,
-    workspaceActiveTab,
   ]);
 
   const scopeItems: NavigationItem<SettingsScope>[] = [
     { id: "user", label: t("user_settings"), icon: User },
-    { id: "workspace", label: t("workspace_settings"), icon: Settings2 },
     {
       id: "organization",
       label: t("organizationSettings"),
@@ -191,18 +182,6 @@ const Settings: React.FC = () => {
     { id: "localization", label: t("localization"), icon: Languages },
     { id: "appearance", label: t("appearance"), icon: Palette },
   ];
-  const workspaceDefinitions: Record<
-    WorkspaceSettingsTab,
-    Omit<NavigationItem<WorkspaceSettingsTab>, "id">
-  > = {
-    traceability: { label: t("traceability_id"), icon: Fingerprint },
-    roles: { label: t("roles_permissions"), icon: Shield },
-    versionControl: { label: t("version_control"), icon: GitBranch },
-  };
-  const workspaceItems = getVisibleWorkspaceSettingsTabs(access).map((id) => ({
-    id,
-    ...workspaceDefinitions[id],
-  }));
   const organizationDefinitions: Record<
     OrganizationSettingsTab,
     Omit<NavigationItem<OrganizationSettingsTab>, "id">
@@ -210,6 +189,9 @@ const Settings: React.FC = () => {
     members: { label: t("members"), icon: UsersRound },
     invites: { label: t("invites"), icon: Mail },
     auditLog: { label: t("auditLog"), icon: History },
+    traceability: { label: t("traceability_id"), icon: Fingerprint },
+    roles: { label: t("roles_permissions"), icon: Shield },
+    versionControl: { label: t("version_control"), icon: GitBranch },
     productionLine: {
       label: t("production_line_settings"),
       icon: Factory,
@@ -217,17 +199,16 @@ const Settings: React.FC = () => {
     settings: { label: t("settings"), icon: Shield },
   };
   const organizationItems = getVisibleOrganizationSettingsTabs({
+    ...access,
     canManageProductionLine,
   }).map((id) => ({ id, ...organizationDefinitions[id] }));
 
   const selectScope = (scope: SettingsScope) => {
-    setSearchParams(scope === "workspace" ? {} : { scope });
+    setSearchParams({ scope });
   };
   const selectNestedTab = (tab: string) => {
     const params: Record<string, string> = { tab };
-    if (activeScope !== "workspace") {
-      params.scope = activeScope;
-    }
+    params.scope = activeScope;
     setSearchParams(params);
   };
   const handleSignOut = async () => {
@@ -238,38 +219,6 @@ const Settings: React.FC = () => {
       console.error("Sign out failed:", error);
       setIsSigningOut(false);
     }
-  };
-
-  const renderWorkspaceContent = () => {
-    if (workspaceActiveTab === "traceability") {
-      return <TraceabilityConfig />;
-    }
-    if (workspaceActiveTab === "versionControl") {
-      return <VersionControlConfig />;
-    }
-    return (
-      <section className="overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
-        <div className="border-[#1c4a3c]/10 border-b px-8 py-6 dark:border-[#d2f2d4]/10">
-          <div className="mb-2 flex items-center gap-3">
-            <div className="rounded-xl bg-[#d2f2d4] p-2 dark:bg-[#285b4d]">
-              <Shield
-                aria-hidden="true"
-                className="h-6 w-6 text-[#1c4a3c] dark:text-[#f5a623]"
-              />
-            </div>
-            <h3 className="font-bold text-[#173e33] text-xl dark:text-[#f7f4df]">
-              {t("user_roles_permissions_management")}
-            </h3>
-          </div>
-          <p className="text-[#527568] text-sm dark:text-[#a9cbbb]">
-            {t("manage_user_access_across_the_staqato_ma")}
-          </p>
-        </div>
-        <div className="p-8">
-          <RoleManagementSection />
-        </div>
-      </section>
-    );
   };
 
   const renderUserContent = () => (
@@ -294,25 +243,15 @@ const Settings: React.FC = () => {
     </section>
   );
 
-  let activeNestedNavigation: React.ReactNode = (
-    <NestedNavigation
-      activeId={workspaceActiveTab}
-      ariaLabel={t("workspace_settings")}
-      items={workspaceItems}
-      onSelect={selectNestedTab}
-    />
-  );
-  if (activeScope === "user") {
-    activeNestedNavigation = (
+  const activeNestedNavigation =
+    activeScope === "user" ? (
       <NestedNavigation
         activeId={userActiveTab}
         ariaLabel={t("user_settings")}
         items={userItems}
         onSelect={selectNestedTab}
       />
-    );
-  } else if (activeScope === "organization") {
-    activeNestedNavigation = (
+    ) : (
       <NestedNavigation
         activeId={organizationActiveTab}
         ariaLabel={t("organizationSettings")}
@@ -320,7 +259,6 @@ const Settings: React.FC = () => {
         onSelect={selectNestedTab}
       />
     );
-  }
 
   return (
     <div className="fade-in mx-auto max-w-7xl animate-in px-2 pb-4 duration-500 sm:px-4 sm:pb-8">
@@ -398,11 +336,6 @@ const Settings: React.FC = () => {
               </button>
             </div>
           )}
-          {activeScope === "workspace" && role && (
-            <p className="mt-4 px-4 text-[#6f8e82] text-xs dark:text-[#8fb3a4]">
-              {t("user_role")} {t(role.key, { defaultValue: role.name })}
-            </p>
-          )}
         </aside>
 
         <main className="min-h-[580px] min-w-0">
@@ -412,7 +345,6 @@ const Settings: React.FC = () => {
             transition={{ duration: 0.2 }}
           >
             {activeScope === "user" && renderUserContent()}
-            {activeScope === "workspace" && renderWorkspaceContent()}
             {activeScope === "organization" && (
               <OrganizationPage
                 activeTab={organizationActiveTab}

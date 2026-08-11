@@ -1,12 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Building2,
-  Check,
-  Loader2,
-  LogOut,
-  Settings2,
-  UserRound,
-} from "lucide-react";
+import { Building2, Check, Loader2, LogOut, UserRound } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -64,7 +57,7 @@ const SidebarProfileMenu: React.FC<SidebarProfileMenuProps> = ({
     };
   }, [isOpen]);
 
-  const openSettings = (scope: "organization" | "user" | "workspace") => {
+  const openSettings = (scope: "organization" | "user") => {
     setIsOpen(false);
     navigate(`/settings?scope=${scope}`);
   };
@@ -255,16 +248,6 @@ const SidebarProfileMenu: React.FC<SidebarProfileMenuProps> = ({
               <Building2 aria-hidden="true" size={18} />
               <span>{t("organizationSettings")}</span>
             </button>
-            <button
-              className="flex w-full items-center gap-3 rounded-[1.15rem] px-3 py-2.5 text-start font-semibold text-[#285b4d] text-sm transition-colors hover:bg-[#eef8eb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5a623] dark:text-[#d2e7dc] dark:hover:bg-[#d2f2d4]/10"
-              onClick={() => openSettings("workspace")}
-              role="menuitem"
-              type="button"
-            >
-              <Settings2 aria-hidden="true" size={18} />
-              <span>{t("workspace_settings")}</span>
-            </button>
-
             <hr className="my-1.5 h-px border-0 bg-[#1c4a3c]/10 dark:bg-[#d2f2d4]/10" />
             <div className="px-3 pb-1 pt-1.5">
               <p className="font-bold text-[#6f8e82] text-[10px] uppercase tracking-[0.18em] dark:text-[#a9cbbb]">

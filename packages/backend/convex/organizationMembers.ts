@@ -3,11 +3,13 @@ import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { logOrganizationAction } from "./organizationAuditLogs";
-import { inviteRoleValidator, organizationMemberReturnValidator } from "./validators";
+import { getEffectivePermissions, requirePermission } from "./permissions";
 import {
-  requireWorkspaceAdmin,
-  requireWorkspaceMember,
-} from "./workspaceAccess";
+  inviteRoleValidator,
+  organizationMemberReturnValidator,
+  organizationMemberWithRoleReturnValidator,
+} from "./validators";
+import { requireWorkspaceAdmin, requireWorkspaceMember } from "./workspaceAccess";
 
 // ─── Queries ──────────────────────────────────────────
 
@@ -22,6 +24,32 @@ export const list = query({
       .query("organizationMembers")
       .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
       .take(100);
+  },
+});
+
+/** List organization members with their organization-specific system roles. */
+export const listWithRoles = query({
+  args: { organizationId: v.id("organizations") },
+  returns: v.array(organizationMemberWithRoleReturnValidator),
+  handler: async (ctx, args) => {
+    await requirePermission(ctx, args.organizationId, "manage_roles");
+    const members = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
+      .take(100);
+
+    return await Promise.all(
+      members.map(async (member) => {
+        const assignedRole = member.roleId ? await ctx.db.get(member.roleId) : null;
+        const roleDetails =
+          assignedRole?.organizationId === args.organizationId ? assignedRole : undefined;
+        return {
+          ...member,
+          roleDetails,
+          effectivePermissions: getEffectivePermissions(roleDetails),
+        };
+      }),
+    );
   },
 });
 
@@ -51,19 +79,16 @@ export const updateRole = mutation({
     let authMemberId = target.authMemberId;
     if (organization.authOrganizationId) {
       if (!authMemberId) {
-        const authMember = await ctx.runQuery(
-          components.betterAuth.adapter.findOne,
-          {
-            model: "member",
-            where: [
-              {
-                field: "organizationId",
-                value: organization.authOrganizationId,
-              },
-              { field: "userId", value: target.userId },
-            ],
-          }
-        );
+        const authMember = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+          model: "member",
+          where: [
+            {
+              field: "organizationId",
+              value: organization.authOrganizationId,
+            },
+            { field: "userId", value: target.userId },
+          ],
+        });
         authMemberId = authMember?._id;
       }
       if (!authMemberId) {
@@ -95,6 +120,35 @@ export const updateRole = mutation({
       targetLabel: target.userName,
       meta: { oldRole, newRole: args.newRole },
     });
+    return null;
+  },
+});
+
+/** Assign a system role within one organization. */
+export const updateSystemRole = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    memberId: v.id("organizationMembers"),
+    newRoleId: v.id("roles"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requirePermission(ctx, args.organizationId, "manage_roles");
+    const [member, role] = await Promise.all([
+      ctx.db.get(args.memberId),
+      ctx.db.get(args.newRoleId),
+    ]);
+    if (!member || member.organizationId !== args.organizationId) {
+      throw new Error("Member not found");
+    }
+    if (!role || role.organizationId !== args.organizationId) {
+      throw new Error("Role not found");
+    }
+    if (member.role === "owner" && role.key !== "admin") {
+      throw new Error("Organization owners must retain the Admin role");
+    }
+
+    await ctx.db.patch(member._id, { roleId: role._id });
     return null;
   },
 });
@@ -135,8 +189,7 @@ export const remove = mutation({
     await logOrganizationAction(ctx, {
       organizationId: target.organizationId,
       actorId: access.authUser._id,
-      actorName:
-        access.authUser.name ?? access.authUser.email ?? "Unknown",
+      actorName: access.authUser.name ?? access.authUser.email ?? "Unknown",
       action: "member.removed",
       targetType: "member",
       targetId: target.userId,
@@ -155,7 +208,7 @@ export const leave = mutation({
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_organizationId_and_userId", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", access.authUser._id)
+        q.eq("organizationId", args.organizationId).eq("userId", access.authUser._id),
       )
       .unique();
     if (!membership) {
@@ -178,13 +231,11 @@ export const leave = mutation({
     await logOrganizationAction(ctx, {
       organizationId: args.organizationId,
       actorId: access.authUser._id,
-      actorName:
-        access.authUser.name ?? access.authUser.email ?? "Unknown",
+      actorName: access.authUser.name ?? access.authUser.email ?? "Unknown",
       action: "member.left",
       targetType: "member",
       targetId: access.authUser._id,
-      targetLabel:
-        access.authUser.name ?? access.authUser.email ?? "Unknown",
+      targetLabel: access.authUser.name ?? access.authUser.email ?? "Unknown",
     });
     return null;
   },

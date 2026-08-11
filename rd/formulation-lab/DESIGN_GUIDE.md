@@ -261,10 +261,9 @@ All content cards share:
   opens the R&D / Quality Control / Lab selector. The mobile header exposes the
   same control.
   Selection persists in `localStorage`, updates the workspace header, and swaps
-  the rail destinations. Workspace Settings stays available in every section.
-- **Settings**: the profile avatar menu links to User, Workspace, and
-  Organization settings. The rail and mobile navigation do not use a dedicated
-  settings item.
+  the rail destinations. Organization Settings stays available in every section.
+- **Settings**: the profile avatar menu links to User and Organization settings.
+  The rail and mobile navigation do not use a dedicated settings item.
 - **Nav Items**: `w-12 h-12 rounded-[1.2rem]`
   - **Active**: amber surface, forest icon, inset amber shadow, `scale-105`
   - **Inactive**: mint-muted icon with translucent mint hover
@@ -388,8 +387,8 @@ Animated with Framer Motion `AnimatePresence`:
   label in the mobile bottom navigation. Clicking either opens the shared
   organization and account menu.
 - **Menu**: list every available organization as a radio-style selection, then
-  link to Organization Settings, Workspace Settings, the user's identity, and
-  logout. Close after selection, navigation, outside click, or Escape.
+  link to Organization Settings, the user's identity, and logout. Close after
+  selection, navigation, outside click, or Escape.
 - **Organization badge**: the active organization's logo overlaps the avatar's
   lower inline-end edge. Use organization initials when no logo is configured;
   use amber with forest text for that fallback, and omit the badge when no
@@ -397,7 +396,7 @@ Animated with Framer Motion `AnimatePresence`:
 - **User settings**: Identity, Language & Region, and Appearance remain nested
   personal-only options. Logout is a dedicated, visually separated action below
   that nested navigation.
-- **Accessibility**: the shared page exposes the three setting scopes as a
+- **Accessibility**: the shared page exposes the two setting scopes as a
   tablist and each scope exposes its options through labeled nested navigation.
 - **Direction**: settings inherit the active LTR/RTL context. Mirror only the
   directional Logout icon.
@@ -406,12 +405,11 @@ Animated with Framer Motion `AnimatePresence`:
   every platform, then fall back to the user ID or name when no email is
   available. Do not load profile images or generated avatars from external
   services.
-- **Workspace administration boundary**: Roles & Permissions and other
-  workspace controls stay under the Workspace scope. Workspace Settings contains
-  Traceability & Identity for all
-  users, Roles & Permissions only for `admin`, and Version Control only for
-  users with `manage_version_control`. Unauthorized query-string tab requests
-  fall back to the first visible Workspace option.
+- **Organization administration boundary**: Organization Settings contains
+  Traceability & Identity for all users, Roles & Permissions only for `admin`,
+  and Version Control only for users with `manage_version_control`.
+  Unauthorized query-string tab requests fall back to the first visible
+  Organization option.
 
 ## 8. Animations & Transitions
 

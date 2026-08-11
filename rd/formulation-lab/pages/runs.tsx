@@ -10,8 +10,8 @@ import RunCompletedView from "../components/runs/run-completed-view";
 import RunDetailView from "../components/runs/run-detail-view";
 import RunLoadingView from "../components/runs/run-loading-view";
 import RunSelectionView from "../components/runs/run-selection-view";
-import { useSettings } from "../context/SettingsContext";
 import { useOrganization } from "../context/OrganizationContext";
+import { useSettings } from "../context/SettingsContext";
 import { useRunExecution } from "../hooks/useRunExecution";
 import { useToast } from "../hooks/useToast";
 import { buildRunsHistory } from "../lib/runs/history";
@@ -41,11 +41,16 @@ const Runs: React.FC = () => {
 
   const { results: runsRaw } = usePaginatedQuery(
     api.runs.list,
-    activeOrganizationId ? { organizationId: activeOrganizationId, language } : { language },
+    activeOrganizationId
+      ? { organizationId: activeOrganizationId, language }
+      : { language },
     { initialNumItems: 50 }
   );
 
-  const currentUserRoleRaw = useQuery(api.users.getCurrentUserRole, {});
+  const currentUserRoleRaw = useQuery(
+    api.users.getCurrentUserRole,
+    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
+  );
   const isAuthorized =
     currentUserRoleRaw?.role?.permissions?.includes("execute_runs") ||
     currentUserRoleRaw?.role?.key === "admin" ||

@@ -25,6 +25,8 @@ import type * as i18nMaintenance from "../i18nMaintenance.js";
 import type * as ingredients from "../ingredients.js";
 import type * as inventory from "../inventory.js";
 import type * as labReports from "../labReports.js";
+import type * as labSampleHelpers from "../labSampleHelpers.js";
+import type * as labSamples from "../labSamples.js";
 import type * as labTestResults from "../labTestResults.js";
 import type * as localization from "../localization.js";
 import type * as migrations from "../migrations.js";
@@ -83,6 +85,8 @@ declare const fullApi: ApiFromModules<{
   ingredients: typeof ingredients;
   inventory: typeof inventory;
   labReports: typeof labReports;
+  labSampleHelpers: typeof labSampleHelpers;
+  labSamples: typeof labSamples;
   labTestResults: typeof labTestResults;
   localization: typeof localization;
   migrations: typeof migrations;

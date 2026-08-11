@@ -15,6 +15,7 @@
     "./regulatory": "./convex/regulatoryHelpers.ts",
     "./system-role-access": "./lib/system-role-access.ts",
     "./production-line": "./convex/productionLineRecordHelpers.ts",
+    "./lab-samples": "./convex/labSampleHelpers.ts",
     "./units": "./convex/units.ts"
   },
   "scripts": {

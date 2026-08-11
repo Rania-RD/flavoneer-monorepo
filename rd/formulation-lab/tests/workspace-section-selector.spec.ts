@@ -26,19 +26,26 @@ test("flask selector switches the workspace navigation to quality control", asyn
   const selector = page.getByTestId("rail-section-selector");
   await expect(selector).toBeVisible({ timeout: 15_000 });
   await selector.click();
-  await expect(
-    page.getByRole("menuitemradio", { name: /^Lab/ })
-  ).toBeVisible();
+  await expect(page.getByRole("menuitemradio", { name: /^Lab/ })).toBeVisible();
   await page.getByRole("menuitemradio", { name: /Quality Control/ }).click();
 
-  await expect(page).toHaveURL(/\/reports$/);
+  await expect(page).toHaveURL(/\/quality\/lab-samples$/);
   await expect(
-    page.getByRole("heading", { name: "Lab Reports", level: 1 })
+    page.getByRole("heading", { name: "Lab Sample Submission", level: 1 })
   ).toBeVisible();
+  await expect(page.getByLabel("Product name")).toBeVisible();
+  await expect(page.getByLabel("Sample number")).toHaveValue("RYYXXX");
+  await expect(page.getByLabel("Production number")).toBeVisible();
+  await expect(page.getByLabel("Place of taking sample")).toBeVisible();
+  await expect(page.getByLabel("Sample date and time")).toBeVisible();
+  await page.getByRole("button", { name: "Finished Product" }).click();
+  await expect(page.getByLabel("Sample number")).toHaveValue("FYYXXXX");
   await expect(
     page.getByRole("link", { name: "Production Monitoring" })
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Lab Reports" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Lab Sample Submission" })
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: "Run review" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Organization" })).toHaveCount(0);
@@ -70,9 +77,7 @@ test("flask selector switches the workspace navigation to quality control", asyn
 
   await page.reload();
   await expect(
-    page
-      .getByTestId("rail-section-selector")
-      .locator('[data-mode-icon="lab"]')
+    page.getByTestId("rail-section-selector").locator('[data-mode-icon="lab"]')
   ).toBeVisible();
 });
 
@@ -106,10 +111,8 @@ test("section selector is accessible in the mobile workspace header", async ({
   await selector.click();
   await page.getByRole("menuitemradio", { name: /Quality Control/ }).click();
 
-  await expect(page).toHaveURL(/\/reports$/);
+  await expect(page).toHaveURL(/\/quality\/lab-samples$/);
   await expect(mobileHeader).toContainText("Quality Control Workspace");
   await expect(selector.locator('[data-mode-icon="quality"]')).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Production Monitoring" })
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Monitor" })).toBeVisible();
 });

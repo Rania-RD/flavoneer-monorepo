@@ -514,7 +514,7 @@ export const userSettingsReturnValidator = v.object({
   settingsKey: v.string(),
   units: unitsValidator,
   darkMode: v.boolean(),
-  themePreference: v.optional(themePreferenceValidator),
+  themePreference: themePreferenceValidator,
   language: languageValidator,
   appAlerts: v.boolean(),
   emailSummaries: v.boolean(),

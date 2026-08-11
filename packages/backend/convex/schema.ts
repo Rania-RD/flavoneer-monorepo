@@ -251,11 +251,6 @@ export default defineSchema({
     parameterI18n: v.optional(localizedStringValidator),
     method: v.string(),
     methodI18n: v.optional(localizedStringValidator),
-    // Deprecated legacy storage fields. Current clients and mutations do not
-    // read or write them; keeping them optional allows old documents to pass
-    // schema validation until a separate data cleanup migration is completed.
-    targetRange: v.optional(v.string()),
-    targetRangeI18n: v.optional(localizedStringValidator),
     min: v.number(),
     max: v.number(),
     actualValue: v.number(),
@@ -480,8 +475,7 @@ export default defineSchema({
   userSettings: defineTable({
     settingsKey: v.string(), // userId
     units: unitsValidator,
-    // Optional during rollout. Clients fall back to the legacy darkMode field.
-    themePreference: v.optional(themePreferenceValidator),
+    themePreference: themePreferenceValidator,
     // @deprecated — retained for older clients that only support two modes.
     darkMode: v.boolean(),
     language: languageValidator,
@@ -492,10 +486,6 @@ export default defineSchema({
     title: v.optional(v.string()),
     email: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
-    // @deprecated — retained until existing signature settings are migrated away.
-    signatureType: v.optional(signatureTypeValidator),
-    signatureData: v.optional(v.string()),
-    signatureFont: v.optional(v.string()),
     // @deprecated — legacy field
     profile: legacyProfileValidator,
   }).index("by_settingsKey", ["settingsKey"]),

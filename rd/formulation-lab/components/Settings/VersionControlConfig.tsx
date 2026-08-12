@@ -1,16 +1,21 @@
+import { api } from "@flavoneer/backend/api";
 import { useMutation, useQuery } from "convex/react";
 import { Check, GitBranch, Loader2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "@flavoneer/backend/api";
+import { useOrganization } from "../../context/OrganizationContext";
 import { usePermissions } from "../../hooks/usePermissions";
-import { MANAGE_VERSION_CONTROL_PERMISSION } from "../../lib/workspace-settings-access";
+import { MANAGE_VERSION_CONTROL_PERMISSION } from "../../lib/organization-settings-access";
 import { Switch } from "../ui/Switch";
 
 const VersionControlConfig: React.FC = () => {
   const { t } = useTranslation();
-  const config = useQuery(api.systemConfig.getVersionControlConfig);
+  const { activeOrganizationId } = useOrganization();
+  const config = useQuery(
+    api.systemConfig.getVersionControlConfig,
+    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip",
+  );
   const updateConfig = useMutation(api.systemConfig.updateVersionControlConfig);
   const { hasPermission } = usePermissions();
 
@@ -21,7 +26,7 @@ const VersionControlConfig: React.FC = () => {
   const [saved, setSaved] = useState(false);
 
   const canManageVersionControl = hasPermission(
-    MANAGE_VERSION_CONTROL_PERMISSION
+    MANAGE_VERSION_CONTROL_PERMISSION,
   );
 
   useEffect(() => {
@@ -33,10 +38,14 @@ const VersionControlConfig: React.FC = () => {
   }, [config]);
 
   const handleSave = async () => {
+    if (!activeOrganizationId) {
+      return;
+    }
     setIsSaving(true);
     setSaved(false);
     try {
       await updateConfig({
+        organizationId: activeOrganizationId,
         versionPrefix: tempPrefix,
         versionStyle: tempStyle,
         autoIncrementVersion: tempAutoIncrement,

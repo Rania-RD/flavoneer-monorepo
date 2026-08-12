@@ -1,6 +1,6 @@
-import type { FunctionReturnType } from "convex/server";
 import type { api } from "@flavoneer/backend/api";
 import type { Doc, Id } from "@flavoneer/backend/data-model";
+import type { FunctionReturnType } from "convex/server";
 import type { LocalizedString } from "./lib/i18n-data";
 
 // ─── Backend-derived types (from Convex schema) ─────────────
@@ -268,9 +268,9 @@ export interface RunRecord {
   data: Record<string, number>; // Mapping Step ID -> Actual Value
   durationString: string; // e.g., "14m 30s"
   endTime: Date;
-  id: string;
+  id: Id<"runs">;
   phases?: RunRecipePhase[];
-  projectId: string;
+  projectId: Id<"projects">;
   projectName: string;
   startTime: Date;
   status?: "completed" | "failed" | "In Progress";

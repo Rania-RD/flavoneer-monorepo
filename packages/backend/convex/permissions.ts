@@ -1,12 +1,13 @@
 import { getEffectiveSystemPermissions, systemRoleHasPermission } from "../lib/system-role-access";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { authComponent } from "./auth";
+import { requireWorkspaceMember } from "./workspaceAccess";
 
 type ConvexCtx = QueryCtx | MutationCtx;
 
 interface AuthenticatedUserWithRole {
   user: Doc<"users">;
+  membership: Doc<"organizationMembers"> | null;
   role: Doc<"roles"> | null;
 }
 
@@ -20,11 +21,10 @@ export function roleHasPermission(role: Doc<"roles"> | null | undefined, permiss
 
 export async function getAuthenticatedUserWithRole(
   ctx: ConvexCtx,
+  organizationId: Id<"organizations">,
 ): Promise<AuthenticatedUserWithRole> {
-  const authUser = await authComponent.getAuthUser(ctx);
-  if (!authUser) {
-    throw new Error("Not authenticated");
-  }
+  const access = await requireWorkspaceMember(ctx, organizationId);
+  const authUser = access.authUser;
 
   const user = await ctx.db
     .query("users")
@@ -35,16 +35,37 @@ export async function getAuthenticatedUserWithRole(
     throw new Error("User not found");
   }
 
-  const role = user.roleId ? await ctx.db.get(user.roleId) : null;
+  const membership = await ctx.db
+    .query("organizationMembers")
+    .withIndex("by_organizationId_and_userId", (q) =>
+      q.eq("organizationId", organizationId).eq("userId", authUser._id),
+    )
+    .unique();
 
-  return { user, role };
+  let role = membership?.roleId ? await ctx.db.get(membership.roleId) : null;
+  if (role && role.organizationId !== organizationId) {
+    throw new Error("Role assignment does not belong to this organization");
+  }
+
+  if (!role) {
+    const defaultRoleKey = access.role === "member" ? "operator" : "admin";
+    role = await ctx.db
+      .query("roles")
+      .withIndex("by_organizationId_and_key", (q) =>
+        q.eq("organizationId", organizationId).eq("key", defaultRoleKey),
+      )
+      .unique();
+  }
+
+  return { user, membership, role };
 }
 
 export async function requirePermission(
   ctx: ConvexCtx,
+  organizationId: Id<"organizations">,
   permissionKey: string,
 ): Promise<AuthenticatedUserWithRole> {
-  const currentUser = await getAuthenticatedUserWithRole(ctx);
+  const currentUser = await getAuthenticatedUserWithRole(ctx, organizationId);
 
   if (!roleHasPermission(currentUser.role, permissionKey)) {
     throw new Error("Insufficient permissions");

@@ -88,6 +88,12 @@ export const create = mutation({
       status: "active",
     });
 
+    const roles = await ensureDefaultRoles(ctx, organizationId);
+    const adminRole = roles.find((role) => role.key === "admin");
+    if (!adminRole) {
+      throw new Error("Admin system role is not initialized");
+    }
+
     await ctx.db.insert("organizationMembers", {
       organizationId,
       userId: authUser._id,
@@ -95,6 +101,7 @@ export const create = mutation({
       userEmail: authUser.email ?? "",
       userAvatarUrl: authUser.image ?? undefined,
       role: "owner",
+      roleId: adminRole._id,
       joinedAt: Date.now(),
       authMemberId: ownerMember?.id,
     });
@@ -103,21 +110,12 @@ export const create = mutation({
       .query("users")
       .withIndex("by_authUserId", (q) => q.eq("authUserId", authUser._id))
       .first();
-    const roles = await ensureDefaultRoles(ctx);
-    const adminRole = roles.find((role) => role.key === "admin");
-    if (!adminRole) {
-      throw new Error("Admin system role is not initialized");
-    }
-
     if (!localUser) {
       await ctx.db.insert("users", {
         authUserId: authUser._id,
         name: authUser.name ?? "",
         email: authUser.email ?? "",
-        roleId: adminRole._id,
       });
-    } else if (localUser.roleId !== adminRole._id) {
-      await ctx.db.patch(localUser._id, { roleId: adminRole._id });
     }
 
     await logOrganizationAction(ctx, {

@@ -35,20 +35,20 @@ async function signInOrCreateAccount(page: Page) {
   }
 }
 
-test("workspace settings does not expose personal appearance or measurement system switching", async ({
+test("organization settings does not expose personal appearance or measurement system switching", async ({
   page,
 }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("i18nextLng", "en");
   });
   await signInOrCreateAccount(page);
-  await page.goto("/settings");
+  await page.goto("/settings?scope=organization");
 
   await expect(
     page.getByRole("heading", { level: 1, name: "Settings" })
   ).toBeVisible({ timeout: 15_000 });
   await expect(
-    page.getByRole("tab", { name: "Workspace Settings" })
+    page.getByRole("tab", { name: "Organization Settings" })
   ).toHaveAttribute("aria-selected", "true");
   await expect(
     page.getByRole("heading", { level: 4, name: "Dark Mode" })

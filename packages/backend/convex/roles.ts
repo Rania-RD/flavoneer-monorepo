@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { isConfigurableSystemRole } from "../lib/system-role-access";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getEffectivePermissions, requirePermission } from "./permissions";
 import { roleReturnValidator } from "./validators";
-import { getAuthUserOrThrow } from "./workspaceAccess";
+import { requireWorkspaceAdmin } from "./workspaceAccess";
 
-const DEFAULT_SYSTEM_ROLES = [
+export const DEFAULT_SYSTEM_ROLES = [
   {
     description: "Complete access to all formulation lab capabilities.",
     key: "admin",
@@ -62,20 +62,30 @@ const DEFAULT_SYSTEM_ROLES = [
  * Ensure every built-in system role exists without overwriting configured
  * permissions on roles that administrators have already customized.
  */
-export async function ensureDefaultRoles(ctx: MutationCtx): Promise<Doc<"roles">[]> {
-  const existingRoles = await ctx.db.query("roles").collect();
+export async function ensureDefaultRoles(
+  ctx: MutationCtx,
+  organizationId: Id<"organizations">,
+): Promise<Doc<"roles">[]> {
+  const existingRoles = await ctx.db
+    .query("roles")
+    .withIndex("by_organizationId", (q) => q.eq("organizationId", organizationId))
+    .take(DEFAULT_SYSTEM_ROLES.length + 1);
   const existingKeys = new Set(existingRoles.map((role) => role.key));
 
   for (const role of DEFAULT_SYSTEM_ROLES) {
     if (!existingKeys.has(role.key)) {
       await ctx.db.insert("roles", {
         ...role,
+        organizationId,
         permissions: [...role.permissions],
       });
     }
   }
 
-  return await ctx.db.query("roles").collect();
+  return await ctx.db
+    .query("roles")
+    .withIndex("by_organizationId", (q) => q.eq("organizationId", organizationId))
+    .take(DEFAULT_SYSTEM_ROLES.length + 1);
 }
 
 /**
@@ -83,16 +93,11 @@ export async function ensureDefaultRoles(ctx: MutationCtx): Promise<Doc<"roles">
  * callers must have role-management permission.
  */
 export const initializeDefaultRoles = mutation({
-  args: {},
+  args: { organizationId: v.id("organizations") },
   returns: v.array(roleReturnValidator),
-  handler: async (ctx) => {
-    await getAuthUserOrThrow(ctx);
-    const existingRole = await ctx.db.query("roles").first();
-    if (existingRole) {
-      await requirePermission(ctx, "manage_roles");
-    }
-
-    return await ensureDefaultRoles(ctx);
+  handler: async (ctx, args) => {
+    await requireWorkspaceAdmin(ctx, args.organizationId);
+    return await ensureDefaultRoles(ctx, args.organizationId);
   },
 });
 
@@ -100,11 +105,14 @@ export const initializeDefaultRoles = mutation({
  * List all available roles
  */
 export const list = query({
-  args: {},
+  args: { organizationId: v.id("organizations") },
   returns: v.array(roleReturnValidator),
-  handler: async (ctx) => {
-    await requirePermission(ctx, "manage_roles");
-    return await ctx.db.query("roles").collect();
+  handler: async (ctx, args) => {
+    await requirePermission(ctx, args.organizationId, "manage_roles");
+    return await ctx.db
+      .query("roles")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
+      .take(100);
   },
 });
 
@@ -113,15 +121,16 @@ export const list = query({
  */
 export const updateRolePermissions = mutation({
   args: {
+    organizationId: v.id("organizations"),
     roleId: v.id("roles"),
     permissions: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    await requirePermission(ctx, "manage_roles");
+    await requirePermission(ctx, args.organizationId, "manage_roles");
 
     // Attempt to update
     const targetRole = await ctx.db.get(args.roleId);
-    if (!targetRole) {
+    if (!targetRole || targetRole.organizationId !== args.organizationId) {
       throw new Error("Role not found");
     }
 

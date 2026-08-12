@@ -4,8 +4,141 @@ import { components } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { createAuth } from "./auth";
+import { DEFAULT_SYSTEM_ROLES } from "./roles";
 
 export const migrations = new Migrations<DataModel>(components.migrations);
+
+/**
+ * Copy the legacy global role matrix and settings into every organization and
+ * move user role assignments onto organization memberships.
+ */
+export const migrateOrganizationRolesAndConfig = migrations.define({
+  table: "organizations",
+  batchSize: 1,
+  migrateOne: async (ctx, organization) => {
+    const legacyRoles = await ctx.db
+      .query("roles")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", undefined))
+      .take(100);
+    const scopedRoleIds = new Map<string, Id<"roles">>();
+
+    for (const defaultRole of DEFAULT_SYSTEM_ROLES) {
+      const existing = await ctx.db
+        .query("roles")
+        .withIndex("by_organizationId_and_key", (q) =>
+          q.eq("organizationId", organization._id).eq("key", defaultRole.key),
+        )
+        .unique();
+      if (existing) {
+        scopedRoleIds.set(existing.key, existing._id);
+        continue;
+      }
+
+      const legacyRole = legacyRoles.find((role) => role.key === defaultRole.key);
+      const roleId = await ctx.db.insert("roles", {
+        organizationId: organization._id,
+        key: defaultRole.key,
+        name: legacyRole?.name ?? defaultRole.name,
+        description: legacyRole?.description ?? defaultRole.description,
+        permissions: legacyRole?.permissions ?? [...defaultRole.permissions],
+      });
+      scopedRoleIds.set(defaultRole.key, roleId);
+    }
+
+    const members = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", organization._id))
+      .take(101);
+    if (members.length > 100) {
+      throw new Error(`Organization ${organization._id} exceeds the role migration limit`);
+    }
+
+    for (const member of members) {
+      const assignedRole = member.roleId ? await ctx.db.get(member.roleId) : null;
+      if (assignedRole?.organizationId === organization._id) {
+        continue;
+      }
+
+      const localUser = await ctx.db
+        .query("users")
+        .withIndex("by_authUserId", (q) => q.eq("authUserId", member.userId))
+        .unique();
+      const legacyRole = localUser?.roleId ? await ctx.db.get(localUser.roleId) : null;
+      const legacyMemberRoleKey =
+        legacyRole && legacyRole.organizationId === undefined && legacyRole.key !== "admin"
+          ? legacyRole.key
+          : "operator";
+      const roleKey =
+        member.role === "owner" || member.role === "admin" ? "admin" : legacyMemberRoleKey;
+      const roleId = scopedRoleIds.get(roleKey) ?? scopedRoleIds.get("operator");
+      if (!roleId) {
+        throw new Error(`Organization ${organization._id} has no default role for ${roleKey}`);
+      }
+      await ctx.db.patch(member._id, { roleId });
+    }
+
+    const legacyConfigs = await ctx.db
+      .query("systemConfig")
+      .withIndex("by_organizationId_and_configKey", (q) => q.eq("organizationId", undefined))
+      .take(20);
+    for (const legacyConfig of legacyConfigs) {
+      const existing = await ctx.db
+        .query("systemConfig")
+        .withIndex("by_organizationId_and_configKey", (q) =>
+          q.eq("organizationId", organization._id).eq("configKey", legacyConfig.configKey),
+        )
+        .unique();
+      if (!existing) {
+        await ctx.db.insert("systemConfig", {
+          organizationId: organization._id,
+          configKey: legacyConfig.configKey,
+          idPrefix: legacyConfig.idPrefix,
+          currentIdNumber: legacyConfig.currentIdNumber,
+          versionPrefix: legacyConfig.versionPrefix,
+          versionStyle: legacyConfig.versionStyle,
+          autoIncrementVersion: legacyConfig.autoIncrementVersion,
+        });
+      }
+    }
+  },
+});
+
+/** Return bounded samples of organizations and memberships still missing scoped roles. */
+export const verifyOrganizationRoles = internalQuery({
+  args: {},
+  returns: v.object({
+    incompleteOrganizationIds: v.array(v.id("organizations")),
+    invalidMembershipIds: v.array(v.id("organizationMembers")),
+  }),
+  handler: async (ctx) => {
+    const organizations = await ctx.db.query("organizations").take(101);
+    const incompleteOrganizationIds: Id<"organizations">[] = [];
+    const invalidMembershipIds: Id<"organizationMembers">[] = [];
+
+    for (const organization of organizations.slice(0, 100)) {
+      const roles = await ctx.db
+        .query("roles")
+        .withIndex("by_organizationId", (q) => q.eq("organizationId", organization._id))
+        .take(DEFAULT_SYSTEM_ROLES.length + 1);
+      if (roles.length < DEFAULT_SYSTEM_ROLES.length) {
+        incompleteOrganizationIds.push(organization._id);
+      }
+
+      const members = await ctx.db
+        .query("organizationMembers")
+        .withIndex("by_organizationId", (q) => q.eq("organizationId", organization._id))
+        .take(100);
+      for (const member of members) {
+        const role = member.roleId ? await ctx.db.get(member.roleId) : null;
+        if (role?.organizationId !== organization._id) {
+          invalidMembershipIds.push(member._id);
+        }
+      }
+    }
+
+    return { incompleteOrganizationIds, invalidMembershipIds };
+  },
+});
 
 export const attachBetterAuthOrganizations = migrations.define({
   table: "organizations",

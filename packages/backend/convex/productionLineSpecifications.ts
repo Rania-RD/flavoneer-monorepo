@@ -108,7 +108,7 @@ export const createDraft = mutation({
   returns: v.id("productionLineSpecifications"),
   handler: async (ctx, args) => {
     const { authUser } = await requireWorkspaceAdmin(ctx, args.organizationId);
-    await requirePermission(ctx, "manage_production_specifications");
+    await requirePermission(ctx, args.organizationId, "manage_production_specifications");
     const product = await ctx.db.get(args.productId);
     if (!product || product.organizationId !== args.organizationId) {
       throw new Error("Product does not belong to this workspace");
@@ -195,7 +195,7 @@ export const updateLimit = mutation({
       throw new Error("Production-line specification not found");
     }
     await requireWorkspaceAdmin(ctx, specification.organizationId);
-    await requirePermission(ctx, "manage_production_specifications");
+    await requirePermission(ctx, specification.organizationId, "manage_production_specifications");
     if (specification.status !== "draft") {
       throw new Error("Published specification versions are immutable");
     }
@@ -252,7 +252,7 @@ export const publish = mutation({
       throw new Error("Production-line specification not found");
     }
     const { authUser } = await requireWorkspaceAdmin(ctx, specification.organizationId);
-    await requirePermission(ctx, "manage_production_specifications");
+    await requirePermission(ctx, specification.organizationId, "manage_production_specifications");
     if (specification.status !== "draft") {
       throw new Error("Only draft specifications can be published");
     }

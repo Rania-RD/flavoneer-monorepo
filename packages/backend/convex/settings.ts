@@ -44,9 +44,7 @@ export const get = query({
       settingsKey: settings.settingsKey,
       units: settings.units,
       darkMode: settings.darkMode,
-      ...(settings.themePreference !== undefined && {
-        themePreference: settings.themePreference,
-      }),
+      themePreference: settings.themePreference,
       language: settings.language,
       appAlerts: settings.appAlerts,
       emailSummaries: settings.emailSummaries,

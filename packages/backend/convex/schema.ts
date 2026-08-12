@@ -13,6 +13,7 @@ import {
   inviteRoleValidator,
   inviteStatusValidator,
   labReportStatusValidator,
+  labSampleTypeValidator,
   languageValidator,
   legacyIngredientsValidator,
   legacyProfileValidator,
@@ -134,17 +135,23 @@ export default defineSchema({
 
   // ─── RBAC (Role-Based Access Control) ─────────────
   roles: defineTable({
+    // Optional only for the widen/migrate/narrow rollout. Application code
+    // never authorizes against a role without an organization.
+    organizationId: v.optional(v.id("organizations")),
     key: v.string(), // "admin", "editor", "supervisor", "operator"
     name: v.string(), // "Admin", "Editor", etc.
     description: v.string(),
     permissions: v.array(v.string()), // e.g., ["manage_roles", "edit_procedures", "sign_off", "execute_runs"]
-  }).index("by_key", ["key"]),
+  })
+    .index("by_organizationId", ["organizationId"])
+    .index("by_organizationId_and_key", ["organizationId", "key"]),
 
   users: defineTable({
     authUserId: v.string(), // ID from betterAuth
     name: v.optional(v.string()),
     email: v.optional(v.string()),
-    roleId: v.optional(v.id("roles")), // References local roles table
+    // @deprecated: role assignments now live on organization memberships.
+    roleId: v.optional(v.id("roles")),
     isCreator: v.optional(v.boolean()),
   }).index("by_authUserId", ["authUserId"]),
 
@@ -251,11 +258,6 @@ export default defineSchema({
     parameterI18n: v.optional(localizedStringValidator),
     method: v.string(),
     methodI18n: v.optional(localizedStringValidator),
-    // Deprecated legacy storage fields. Current clients and mutations do not
-    // read or write them; keeping them optional allows old documents to pass
-    // schema validation until a separate data cleanup migration is completed.
-    targetRange: v.optional(v.string()),
-    targetRangeI18n: v.optional(localizedStringValidator),
     min: v.number(),
     max: v.number(),
     actualValue: v.number(),
@@ -424,6 +426,35 @@ export default defineSchema({
     .index("by_organizationId", { fields: ["organizationId"], staged: true })
     .index("by_userId", { fields: ["userId"], staged: true }),
 
+  labSampleSerialCounters: defineTable({
+    organizationId: v.id("organizations"),
+    sampleType: labSampleTypeValidator,
+    year: v.number(),
+    nextSequence: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_organizationId_and_sampleType_and_year", ["organizationId", "sampleType", "year"]),
+
+  labSampleSubmissions: defineTable({
+    organizationId: v.id("organizations"),
+    sampleType: labSampleTypeValidator,
+    sampleYear: v.number(),
+    serialSequence: v.number(),
+    sampleNumber: v.string(),
+    ingredientId: v.optional(v.id("ingredients")),
+    projectId: v.optional(v.id("projects")),
+    productName: v.string(),
+    productionNumber: v.string(),
+    sampleLocation: v.string(),
+    sampledAt: v.number(),
+    notes: v.optional(v.string()),
+    submittedBy: v.string(),
+    submittedByName: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_organizationId_and_sampleNumber", ["organizationId", "sampleNumber"])
+    .index("by_organizationId_and_sampledAt", ["organizationId", "sampledAt"]),
+
   equipment: defineTable({
     name: v.string(),
     status: equipmentStatusValidator,
@@ -480,8 +511,7 @@ export default defineSchema({
   userSettings: defineTable({
     settingsKey: v.string(), // userId
     units: unitsValidator,
-    // Optional during rollout. Clients fall back to the legacy darkMode field.
-    themePreference: v.optional(themePreferenceValidator),
+    themePreference: themePreferenceValidator,
     // @deprecated — retained for older clients that only support two modes.
     darkMode: v.boolean(),
     language: languageValidator,
@@ -492,10 +522,6 @@ export default defineSchema({
     title: v.optional(v.string()),
     email: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
-    // @deprecated — retained until existing signature settings are migrated away.
-    signatureType: v.optional(signatureTypeValidator),
-    signatureData: v.optional(v.string()),
-    signatureFont: v.optional(v.string()),
     // @deprecated — legacy field
     profile: legacyProfileValidator,
   }).index("by_settingsKey", ["settingsKey"]),
@@ -672,6 +698,8 @@ export default defineSchema({
     userEmail: v.string(),
     userAvatarUrl: v.optional(v.string()),
     role: organizationMemberRoleValidator,
+    // Optional until migrateOrganizationRolesAndConfig has backfilled memberships.
+    roleId: v.optional(v.id("roles")),
     joinedAt: v.number(),
     authMemberId: v.optional(v.string()),
   })
@@ -845,13 +873,17 @@ export default defineSchema({
 
   // ─── System Configuration ─────────────────────────
   systemConfig: defineTable({
+    // Optional only while legacy global settings are copied per organization.
+    organizationId: v.optional(v.id("organizations")),
     configKey: v.string(), // e.g., "traceability" or "versionControl"
     idPrefix: v.optional(v.string()), // e.g., "FD-"
     currentIdNumber: v.optional(v.number()), // e.g., 1
     versionPrefix: v.optional(v.string()),
     versionStyle: v.optional(v.string()),
     autoIncrementVersion: v.optional(v.boolean()),
-  }).index("by_configKey", ["configKey"]),
+  })
+    .index("by_configKey", ["configKey"])
+    .index("by_organizationId_and_configKey", ["organizationId", "configKey"]),
 
   // ─── Sharing & Permissions ────────────────────────
   sharedLinks: defineTable({

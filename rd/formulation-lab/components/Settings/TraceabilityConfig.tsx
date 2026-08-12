@@ -1,14 +1,19 @@
+import { api } from "@flavoneer/backend/api";
 import { useMutation, useQuery } from "convex/react";
 import { Check, Hash, Loader2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "@flavoneer/backend/api";
+import { useOrganization } from "../../context/OrganizationContext";
 import { usePermissions } from "../../hooks/usePermissions";
 
 const TraceabilityConfig: React.FC = () => {
   const { t } = useTranslation();
-  const config = useQuery(api.systemConfig.getTraceabilityConfig);
+  const { activeOrganizationId } = useOrganization();
+  const config = useQuery(
+    api.systemConfig.getTraceabilityConfig,
+    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip",
+  );
   const updateConfig = useMutation(api.systemConfig.updateTraceabilityConfig);
   const { hasPermission, role } = usePermissions();
 
@@ -17,7 +22,6 @@ const TraceabilityConfig: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Ensure only admins can see the save button, although prompt asked to restrict update action to admin
   const isAdmin = role?.key === "admin" || hasPermission("manage_roles");
 
   useEffect(() => {
@@ -28,10 +32,14 @@ const TraceabilityConfig: React.FC = () => {
   }, [config]);
 
   const handleSave = async () => {
+    if (!activeOrganizationId) {
+      return;
+    }
     setIsSaving(true);
     setSaved(false);
     try {
       await updateConfig({
+        organizationId: activeOrganizationId,
         idPrefix: draftPrefix,
         currentIdNumber: draftStartNum,
       });
@@ -103,7 +111,7 @@ const TraceabilityConfig: React.FC = () => {
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-gray-900 text-sm transition-all focus:border-transparent focus:ring-2 focus:ring-teal-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
               min="1"
               onChange={(e) =>
-                setDraftStartNum(Number.parseInt(e.target.value) || 1)
+                setDraftStartNum(Number.parseInt(e.target.value, 10) || 1)
               }
               type="number"
               value={draftStartNum}

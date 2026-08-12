@@ -211,7 +211,10 @@ export const updateStatus = mutation({
       throw new Error("Lab report not found");
     }
     const authUser = await requirePersonalOrWorkspaceAccess(ctx, report);
-    await requirePermission(ctx, "sign_off");
+    if (!report.organizationId) {
+      throw new Error("Organization role required to sign off lab reports");
+    }
+    await requirePermission(ctx, report.organizationId, "sign_off");
     const isApproved = args.status === "Approved";
     await ctx.db.patch(args.id, {
       status: args.status,
@@ -236,7 +239,10 @@ export const remove = mutation({
       throw new Error("Lab report not found");
     }
     await requirePersonalOrWorkspaceAccess(ctx, report);
-    await requirePermission(ctx, "sign_off");
+    if (!report.organizationId) {
+      throw new Error("Organization role required to remove lab reports");
+    }
+    await requirePermission(ctx, report.organizationId, "sign_off");
     const results = await ctx.db
       .query("labTestResults")
       .withIndex("by_labReportId", (q) => q.eq("labReportId", args.id))

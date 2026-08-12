@@ -8,6 +8,8 @@ import {
   Clock,
   Crown,
   Factory,
+  Fingerprint,
+  GitBranch,
   History,
   LogOut,
   type LucideIcon,
@@ -31,6 +33,9 @@ import { useTranslation } from "react-i18next";
 import InviteMemberModal from "../components/InviteMemberModal";
 import OrganizationIconField from "../components/organization-icon-field";
 import ProductionLineSettingsSection from "../components/Settings/ProductionLineSettingsSection";
+import RoleManagementSection from "../components/Settings/RoleManagementSection";
+import TraceabilityConfig from "../components/Settings/TraceabilityConfig";
+import VersionControlConfig from "../components/Settings/VersionControlConfig";
 import UserActivityLog from "../components/UserActivityLog";
 import UserAvatar from "../components/user-avatar";
 import { useOrganization } from "../context/OrganizationContext";
@@ -39,6 +44,7 @@ import { useToast } from "../hooks/useToast";
 import { uploadOrganizationIcon } from "../lib/organization-icon";
 import {
   getVisibleOrganizationSettingsTabs,
+  MANAGE_VERSION_CONTROL_PERMISSION,
   type OrganizationSettingsTab,
 } from "../lib/organization-settings-access";
 import { isAdminRole } from "../lib/role-access";
@@ -165,7 +171,7 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const { activeOrganizationId, organizations, currentRole, setActiveOrganizationId } = useOrganization();
-  const { role } = usePermissions();
+  const { hasPermission, role } = usePermissions();
 
   const { toast } = useToast();
 
@@ -202,6 +208,10 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
 
   const isAdmin = currentRole === "admin" || currentRole === "owner";
   const canManageProductionLine = isAdmin && isAdminRole(role);
+  const canManageRoles = isAdminRole(role);
+  const canManageVersionControl = hasPermission(
+    MANAGE_VERSION_CONTROL_PERMISSION
+  );
   const isOwner = currentRole === "owner";
   const activeOrganization = organizations.find((t) => t._id === activeOrganizationId);
   const activeTab = controlledActiveTab ?? internalActiveTab;
@@ -214,6 +224,9 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
     members: { label: t("members"), icon: UsersRound },
     invites: { label: t("invites"), icon: Mail },
     auditLog: { label: t("auditLog"), icon: History },
+    traceability: { label: t("traceability_id"), icon: Fingerprint },
+    roles: { label: t("roles_permissions"), icon: Shield },
+    versionControl: { label: t("version_control"), icon: GitBranch },
     productionLine: {
       label: t("production_line_settings"),
       icon: Factory,
@@ -224,7 +237,9 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
     { label: string; icon: LucideIcon }
   >;
   const tabs = getVisibleOrganizationSettingsTabs({
+    canManageVersionControl,
     canManageProductionLine,
+    isAdmin: canManageRoles,
   }).map((key) => ({ key, ...tabDefinitions[key] }));
 
   // ─── Organization Settings Mutation ───
@@ -671,6 +686,61 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
                 <UserActivityLog />
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {activeTab === "traceability" && (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 10 }}
+            key="traceability"
+            transition={{ duration: 0.2 }}
+          >
+            <TraceabilityConfig />
+          </motion.div>
+        )}
+
+        {activeTab === "roles" && canManageRoles && (
+          <motion.section
+            animate={{ opacity: 1, y: 0 }}
+            className="overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33]"
+            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 10 }}
+            key="roles"
+            transition={{ duration: 0.2 }}
+          >
+            <div className="border-[#1c4a3c]/10 border-b px-8 py-6 dark:border-[#d2f2d4]/10">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="rounded-xl bg-[#d2f2d4] p-2 dark:bg-[#285b4d]">
+                  <Shield
+                    aria-hidden="true"
+                    className="h-6 w-6 text-[#1c4a3c] dark:text-[#f5a623]"
+                  />
+                </div>
+                <h3 className="font-bold text-[#173e33] text-xl dark:text-[#f7f4df]">
+                  {t("user_roles_permissions_management")}
+                </h3>
+              </div>
+              <p className="text-[#527568] text-sm dark:text-[#a9cbbb]">
+                {t("manage_user_access_across_the_staqato_ma")}
+              </p>
+            </div>
+            <div className="p-8">
+              <RoleManagementSection />
+            </div>
+          </motion.section>
+        )}
+
+        {activeTab === "versionControl" && canManageVersionControl && (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 10 }}
+            key="versionControl"
+            transition={{ duration: 0.2 }}
+          >
+            <VersionControlConfig />
           </motion.div>
         )}
 

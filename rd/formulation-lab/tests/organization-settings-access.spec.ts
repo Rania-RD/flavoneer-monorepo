@@ -5,19 +5,52 @@ import {
 } from "../lib/organization-settings-access";
 
 test.describe("organization settings access policy", () => {
-  test("places production-line settings in organization settings for managers", () => {
+  test("places former workspace settings in organization settings", () => {
     expect(
-      getVisibleOrganizationSettingsTabs({ canManageProductionLine: true })
-    ).toEqual(["members", "invites", "auditLog", "productionLine", "settings"]);
+      getVisibleOrganizationSettingsTabs({
+        canManageProductionLine: true,
+        canManageVersionControl: true,
+        isAdmin: true,
+      })
+    ).toEqual([
+      "members",
+      "invites",
+      "auditLog",
+      "traceability",
+      "roles",
+      "versionControl",
+      "productionLine",
+      "settings",
+    ]);
   });
 
-  test("hides production-line settings from users without access", () => {
+  test("hides permission-controlled settings from users without access", () => {
     expect(
-      getVisibleOrganizationSettingsTabs({ canManageProductionLine: false })
-    ).toEqual(["members", "invites", "auditLog", "settings"]);
+      getVisibleOrganizationSettingsTabs({
+        canManageProductionLine: false,
+        canManageVersionControl: false,
+        isAdmin: false,
+      })
+    ).toEqual(["members", "invites", "auditLog", "traceability", "settings"]);
     expect(
       resolveOrganizationSettingsTab("productionLine", {
         canManageProductionLine: false,
+        canManageVersionControl: false,
+        isAdmin: false,
+      })
+    ).toBe("members");
+    expect(
+      resolveOrganizationSettingsTab("roles", {
+        canManageProductionLine: false,
+        canManageVersionControl: true,
+        isAdmin: false,
+      })
+    ).toBe("members");
+    expect(
+      resolveOrganizationSettingsTab("versionControl", {
+        canManageProductionLine: false,
+        canManageVersionControl: false,
+        isAdmin: true,
       })
     ).toBe("members");
   });

@@ -6,6 +6,7 @@ import { authComponent } from "./auth";
 import { localizeArray, makeLocalizedString, selectLocalizedString } from "./localization";
 import { logOrganizationAction } from "./organizationAuditLogs";
 import { getActiveSharedAccess } from "./sharedAccess";
+import { getOrganizationSystemConfig } from "./systemConfig";
 import {
   batchCodeFormatValidator,
   enrichedProjectReturnValidator,
@@ -740,17 +741,26 @@ export const create = mutation({
       await requireWorkspaceMember(ctx, projectData.organizationId);
     }
 
-    // 1. Auto-generate ID if Traceability Config is active
+    // 1. Auto-generate an ID from this organization's traceability config.
     let generatedBatchCodePrefix = projectData.batchCodePrefix;
-    const config = await ctx.db
-      .query("systemConfig")
-      .withIndex("by_configKey", (q) => q.eq("configKey", "traceability"))
-      .first();
+    const config = projectData.organizationId
+      ? await getOrganizationSystemConfig(ctx, projectData.organizationId, "traceability")
+      : null;
 
     if (config) {
       const currentIdNum = config.currentIdNumber || 1;
       generatedBatchCodePrefix = `${config.idPrefix || "FD-"}${String(currentIdNum).padStart(3, "0")}`;
-      await ctx.db.patch(config._id, { currentIdNumber: currentIdNum + 1 });
+      if (config.organizationId) {
+        await ctx.db.patch(config._id, { currentIdNumber: currentIdNum + 1 });
+      } else if (projectData.organizationId) {
+        // Copy before incrementing so legacy global counters are never shared.
+        await ctx.db.insert("systemConfig", {
+          organizationId: projectData.organizationId,
+          configKey: "traceability",
+          idPrefix: config.idPrefix,
+          currentIdNumber: currentIdNum + 1,
+        });
+      }
     }
 
     // 2. Insert the project row
@@ -939,14 +949,12 @@ export const update = mutation({
       }
     }
 
-    // Auto-increment version if Sign-off (Approved) and Config is enabled
+    // Auto-increment from this organization's config when the project is approved.
     if (updates.status === "Approved") {
       const project = await ctx.db.get(id);
-      if (project) {
-        const config = await ctx.db
-          .query("systemConfig")
-          .withIndex("by_configKey", (q) => q.eq("configKey", "versionControl"))
-          .first();
+      const organizationId = project?.organizationId;
+      if (organizationId) {
+        const config = await getOrganizationSystemConfig(ctx, organizationId, "versionControl");
 
         if (config?.autoIncrementVersion) {
           const prefix = config.versionPrefix || "V";

@@ -35,6 +35,11 @@ export const labReportStatusValidator = v.union(
   v.literal("Failed"),
 );
 
+export const labSampleTypeValidator = v.union(
+  v.literal("raw_material"),
+  v.literal("final_product"),
+);
+
 export const equipmentStatusValidator = v.union(
   v.literal("Available"),
   v.literal("In Use"),
@@ -514,7 +519,7 @@ export const userSettingsReturnValidator = v.object({
   settingsKey: v.string(),
   units: unitsValidator,
   darkMode: v.boolean(),
-  themePreference: v.optional(themePreferenceValidator),
+  themePreference: themePreferenceValidator,
   language: languageValidator,
   appAlerts: v.boolean(),
   emailSummaries: v.boolean(),
@@ -554,6 +559,17 @@ export const organizationReturnValidator = v.object({
   status: v.optional(organizationStatusValidator),
 });
 
+/** Organization-specific system role document. */
+export const roleReturnValidator = v.object({
+  _id: v.id("roles"),
+  _creationTime: v.number(),
+  organizationId: v.optional(v.id("organizations")),
+  key: v.string(),
+  name: v.string(),
+  description: v.string(),
+  permissions: v.array(v.string()),
+});
+
 /** Organization member document — returned by organizationMembers queries */
 export const organizationMemberReturnValidator = v.object({
   _id: v.id("organizationMembers"),
@@ -564,8 +580,14 @@ export const organizationMemberReturnValidator = v.object({
   userEmail: v.string(),
   userAvatarUrl: v.optional(v.string()),
   role: organizationMemberRoleValidator,
+  roleId: v.optional(v.id("roles")),
   joinedAt: v.number(),
   authMemberId: v.optional(v.string()),
+});
+
+export const organizationMemberWithRoleReturnValidator = organizationMemberReturnValidator.extend({
+  roleDetails: v.optional(roleReturnValidator),
+  effectivePermissions: v.array(v.string()),
 });
 
 /** Organization invite doc — returned by organizationInvites queries */
@@ -641,16 +663,6 @@ export const projectIngredientReturnValidator = v.object({
   costPerKg: v.optional(v.number()),
   versionTag: versionTagValidator,
   sortOrder: v.number(),
-});
-
-/** Role document */
-export const roleReturnValidator = v.object({
-  _id: v.id("roles"),
-  _creationTime: v.number(),
-  key: v.string(),
-  name: v.string(),
-  description: v.string(),
-  permissions: v.array(v.string()),
 });
 
 /** User document */
@@ -797,7 +809,6 @@ export const versionSnapshotDataValidator = v.object({
   gsfaCategoryName: v.optional(v.string()),
   gsfaCategoryNameI18n: v.optional(localizedStringValidator),
   formulationState: v.optional(formulationStateValidator),
-  photoStorageId: v.optional(v.id("_storage")),
   yield: v.optional(v.number()),
   batchWeight: v.optional(v.number()),
   batchCost: v.optional(v.number()),

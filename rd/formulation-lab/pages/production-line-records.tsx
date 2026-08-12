@@ -69,21 +69,28 @@ export default function ProductionLineRecords() {
       {
         cellRenderer: ({ data }: ICellRendererParams<ProductionRecord>) =>
           data ? (
-            <div className="flex min-w-0 flex-col items-start gap-1.5 py-2">
-              <span className="truncate font-bold font-mono">
-                {data.displaySerial}
-              </span>
-              <span
-                className={`rounded-full px-2.5 py-1 font-bold text-[10px] ${statusClasses[data.status as RecordStatus]}`}
-              >
-                {t(`production_status_${data.status}`)}
-              </span>
-            </div>
+            <span className="truncate font-bold font-mono">
+              {data.displaySerial}
+            </span>
           ) : null,
         field: "displaySerial",
-        flex: 0.8,
+        flex: 0.7,
         headerName: t("form_serial"),
-        minWidth: 175,
+        minWidth: 140,
+      },
+      {
+        cellRenderer: ({ data }: ICellRendererParams<ProductionRecord>) =>
+          data ? (
+            <span
+              className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 font-bold text-[10px] leading-normal ${statusClasses[data.status as RecordStatus]}`}
+            >
+              {t(`production_status_${data.status}`)}
+            </span>
+          ) : null,
+        field: "status",
+        flex: 0.8,
+        headerName: t("status"),
+        minWidth: 150,
       },
       {
         cellRenderer: ({ data }: ICellRendererParams<ProductionRecord>) =>
@@ -124,10 +131,10 @@ export default function ProductionLineRecords() {
         minWidth: 190,
         valueFormatter: ({ value }) =>
           typeof value === "number"
-            ? new Intl.DateTimeFormat(
-                i18n.language === "ar" ? "ar-PS" : "en",
-                { dateStyle: "medium", timeStyle: "short" }
-              ).format(value)
+            ? new Intl.DateTimeFormat(i18n.language === "ar" ? "ar-PS" : "en", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }).format(value)
             : "",
       },
       {
@@ -135,7 +142,7 @@ export default function ProductionLineRecords() {
           data ? (
             <Link
               aria-label={t("view_record")}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#d2f2d4] text-[#173e33] transition-transform hover:-translate-y-0.5 dark:bg-[#f5a623]"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#d2f2d4] text-[#173e33] transition-transform hover:-translate-y-0.5 dark:bg-[#f5a623]"
               onClick={(event) => event.stopPropagation()}
               to={`/quality/production-line-records/${data._id}`}
             >
@@ -147,8 +154,8 @@ export default function ProductionLineRecords() {
         filter: false,
         headerName: "",
         headerClass: "lab-grid-align-center",
-        maxWidth: 76,
-        minWidth: 76,
+        maxWidth: 84,
+        minWidth: 84,
         sortable: false,
       },
     ],

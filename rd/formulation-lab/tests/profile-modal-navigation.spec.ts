@@ -43,7 +43,7 @@ test("profile menu exposes organization switching and unified settings", async (
   ).toBeVisible();
   await expect(
     profileMenu.getByRole("menuitem", { name: "Workspace Settings" })
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "Workspace Settings" })
   ).toHaveCount(0);
@@ -58,7 +58,7 @@ test("profile menu exposes organization switching and unified settings", async (
   ).toHaveAttribute("aria-selected", "true");
   await expect(
     page.getByRole("tab", { name: "Workspace Settings" })
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(
     page.getByRole("tab", { name: "Organization Settings" })
   ).toBeVisible();
@@ -97,11 +97,18 @@ test("profile menu exposes organization switching and unified settings", async (
   await systemOption.click();
   await expect(systemOption).toHaveAttribute("aria-pressed", "true");
 
-  await page.getByRole("tab", { name: "Workspace Settings" }).click();
+  await page.getByRole("tab", { name: "Organization Settings" }).click();
   await expect(
     page.getByRole("button", { name: "Traceability & Identity" })
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Organization Settings" }).click();
+
+  await page.goto("/settings?scope=workspace&tab=traceability");
+  await expect(page).toHaveURL(
+    /\/settings\?scope=organization&tab=traceability/u
+  );
+  await expect(
+    page.getByRole("tab", { name: "Workspace Settings" })
+  ).toHaveCount(0);
 
   const auditLogTab = page.getByRole("button", { name: "Audit Log" });
   await expect(auditLogTab).toBeVisible();

@@ -1,24 +1,46 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { type MutationCtx, mutation, type QueryCtx, query } from "./_generated/server";
 import { requirePermission } from "./permissions";
-import { getAuthUserOrThrow } from "./workspaceAccess";
+import { requireWorkspaceMember } from "./workspaceAccess";
+
+type SystemConfigKey = "traceability" | "versionControl";
+
+/** Read the organization row, falling back to the legacy row during migration. */
+export async function getOrganizationSystemConfig(
+  ctx: QueryCtx | MutationCtx,
+  organizationId: Id<"organizations">,
+  configKey: SystemConfigKey,
+) {
+  const scopedConfig = await ctx.db
+    .query("systemConfig")
+    .withIndex("by_organizationId_and_configKey", (q) =>
+      q.eq("organizationId", organizationId).eq("configKey", configKey),
+    )
+    .unique();
+  if (scopedConfig) {
+    return scopedConfig;
+  }
+
+  return await ctx.db
+    .query("systemConfig")
+    .withIndex("by_organizationId_and_configKey", (q) =>
+      q.eq("organizationId", undefined).eq("configKey", configKey),
+    )
+    .first();
+}
 
 /**
  * Get the traceability configuration.
- * Creates a default one if it doesn't exist.
+ * Returns defaults when neither an organization nor legacy row exists.
  */
 export const getTraceabilityConfig = query({
-  args: {},
-  handler: async (ctx) => {
-    await getAuthUserOrThrow(ctx);
-    const config = await ctx.db
-      .query("systemConfig")
-      .withIndex("by_configKey", (q) => q.eq("configKey", "traceability"))
-      .first();
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    await requireWorkspaceMember(ctx, args.organizationId);
+    const config = await getOrganizationSystemConfig(ctx, args.organizationId, "traceability");
 
     if (!config) {
-      // Return default for UI purposes, but we also create it on first read if possible...
-      // Wait, queries can't mutate. We'll return a default if null.
       return {
         configKey: "traceability",
         idPrefix: "FD-",
@@ -35,16 +57,19 @@ export const getTraceabilityConfig = query({
  */
 export const updateTraceabilityConfig = mutation({
   args: {
+    organizationId: v.id("organizations"),
     idPrefix: v.string(),
     currentIdNumber: v.number(),
   },
   handler: async (ctx, args) => {
-    await requirePermission(ctx, "manage_roles");
+    await requirePermission(ctx, args.organizationId, "manage_roles");
 
     const config = await ctx.db
       .query("systemConfig")
-      .withIndex("by_configKey", (q) => q.eq("configKey", "traceability"))
-      .first();
+      .withIndex("by_organizationId_and_configKey", (q) =>
+        q.eq("organizationId", args.organizationId).eq("configKey", "traceability"),
+      )
+      .unique();
 
     if (config) {
       await ctx.db.patch(config._id, {
@@ -53,6 +78,7 @@ export const updateTraceabilityConfig = mutation({
       });
     } else {
       await ctx.db.insert("systemConfig", {
+        organizationId: args.organizationId,
         configKey: "traceability",
         idPrefix: args.idPrefix,
         currentIdNumber: args.currentIdNumber,
@@ -67,16 +93,12 @@ export const updateTraceabilityConfig = mutation({
  * Get the version control configuration.
  */
 export const getVersionControlConfig = query({
-  args: {},
-  handler: async (ctx) => {
-    await requirePermission(ctx, "manage_version_control");
-    const config = await ctx.db
-      .query("systemConfig")
-      .withIndex("by_configKey", (q) => q.eq("configKey", "versionControl"))
-      .first();
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    await requirePermission(ctx, args.organizationId, "manage_version_control");
+    const config = await getOrganizationSystemConfig(ctx, args.organizationId, "versionControl");
 
     if (!config) {
-      // Return default for UI purposes
       return {
         configKey: "versionControl",
         versionPrefix: "V",
@@ -94,17 +116,20 @@ export const getVersionControlConfig = query({
  */
 export const updateVersionControlConfig = mutation({
   args: {
+    organizationId: v.id("organizations"),
     versionPrefix: v.string(),
     versionStyle: v.string(),
     autoIncrementVersion: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await requirePermission(ctx, "manage_version_control");
+    await requirePermission(ctx, args.organizationId, "manage_version_control");
 
     const config = await ctx.db
       .query("systemConfig")
-      .withIndex("by_configKey", (q) => q.eq("configKey", "versionControl"))
-      .first();
+      .withIndex("by_organizationId_and_configKey", (q) =>
+        q.eq("organizationId", args.organizationId).eq("configKey", "versionControl"),
+      )
+      .unique();
 
     if (config) {
       await ctx.db.patch(config._id, {
@@ -114,6 +139,7 @@ export const updateVersionControlConfig = mutation({
       });
     } else {
       await ctx.db.insert("systemConfig", {
+        organizationId: args.organizationId,
         configKey: "versionControl",
         versionPrefix: args.versionPrefix,
         versionStyle: args.versionStyle,

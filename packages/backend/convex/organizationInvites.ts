@@ -1,20 +1,12 @@
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import {
-  action,
-  internalMutation,
-  internalQuery,
-  mutation,
-  query,
-} from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { logOrganizationAction } from "./organizationAuditLogs";
+import { ensureDefaultRoles } from "./roles";
 import { inviteRoleValidator, organizationInviteReturnValidator } from "./validators";
-import {
-  getAuthUserOrThrow,
-  requireWorkspaceAdmin,
-} from "./workspaceAccess";
+import { getAuthUserOrThrow, requireWorkspaceAdmin } from "./workspaceAccess";
 
 const createdInviteValidator = v.object({
   inviteId: v.id("organizationInvites"),
@@ -61,8 +53,7 @@ export const prepareCreate = internalQuery({
       .take(100);
     if (
       existingInvites.some(
-        (invite) =>
-          invite.email.toLowerCase() === email && invite.status === "pending"
+        (invite) => invite.email.toLowerCase() === email && invite.status === "pending",
       )
     ) {
       throw new Error("An invite is already pending for this email");
@@ -72,9 +63,7 @@ export const prepareCreate = internalQuery({
       .query("organizationMembers")
       .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
       .take(100);
-    if (
-      existingMembers.some((member) => member.userEmail.toLowerCase() === email)
-    ) {
+    if (existingMembers.some((member) => member.userEmail.toLowerCase() === email)) {
       throw new Error("This user is already a member of the organization");
     }
 
@@ -84,8 +73,7 @@ export const prepareCreate = internalQuery({
       email,
       role: args.role,
       actorId: access.authUser._id,
-      actorName:
-        access.authUser.name ?? access.authUser.email ?? "Unknown",
+      actorName: access.authUser.name ?? access.authUser.email ?? "Unknown",
     };
   },
 });
@@ -105,9 +93,7 @@ export const recordCreatedInvitation = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("organizationInvites")
-      .withIndex("by_authInvitationId", (q) =>
-        q.eq("authInvitationId", args.authInvitationId)
-      )
+      .withIndex("by_authInvitationId", (q) => q.eq("authInvitationId", args.authInvitationId))
       .unique();
     if (existing) {
       return { inviteId: existing._id, token: existing.token };
@@ -220,25 +206,28 @@ export const accept = mutation({
         body: { organizationId: organization.authOrganizationId },
         headers,
       });
-      const authMember = await ctx.runQuery(
-        components.betterAuth.adapter.findOne,
-        {
-          model: "member",
-          where: [
-            { field: "organizationId", value: organization.authOrganizationId },
-            { field: "userId", value: authUser._id },
-          ],
-        }
-      );
+      const authMember = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+        model: "member",
+        where: [
+          { field: "organizationId", value: organization.authOrganizationId },
+          { field: "userId", value: authUser._id },
+        ],
+      });
       authMemberId = authMember?._id;
     }
 
     const existingMembership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_organizationId_and_userId", (q) =>
-        q.eq("organizationId", invite.organizationId).eq("userId", authUser._id)
+        q.eq("organizationId", invite.organizationId).eq("userId", authUser._id),
       )
       .unique();
+    const roles = await ensureDefaultRoles(ctx, invite.organizationId);
+    const defaultRoleKey = invite.role === "admin" ? "admin" : "operator";
+    const defaultRole = roles.find((role) => role.key === defaultRoleKey);
+    if (!defaultRole) {
+      throw new Error(`Default ${defaultRoleKey} role is not initialized`);
+    }
     if (!existingMembership) {
       await ctx.db.insert("organizationMembers", {
         organizationId: invite.organizationId,
@@ -247,9 +236,12 @@ export const accept = mutation({
         userEmail: authUser.email ?? "",
         userAvatarUrl: authUser.image ?? undefined,
         role: invite.role,
+        roleId: defaultRole._id,
         joinedAt: Date.now(),
         authMemberId,
       });
+    } else if (!existingMembership.roleId) {
+      await ctx.db.patch(existingMembership._id, { roleId: defaultRole._id });
     }
 
     await ctx.db.patch(invite._id, { status: "accepted" });
@@ -293,8 +285,7 @@ export const revoke = mutation({
     await logOrganizationAction(ctx, {
       organizationId: invite.organizationId,
       actorId: access.authUser._id,
-      actorName:
-        access.authUser.name ?? access.authUser.email ?? "Unknown",
+      actorName: access.authUser.name ?? access.authUser.email ?? "Unknown",
       action: "invite.revoked",
       targetType: "invite",
       targetId: args.inviteId,

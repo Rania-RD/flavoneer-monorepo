@@ -2,9 +2,9 @@ import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
 import {
   Boxes,
-  ClipboardCheck,
   Factory,
   FileText,
+  FlaskConical,
   LayoutDashboard,
   type LucideIcon,
   PlayCircle,
@@ -63,10 +63,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               path: "/quality/production-line-records",
             },
             {
-              mobileName: t("reports"),
-              name: t("lab_reports"),
-              icon: ClipboardCheck,
-              path: "/reports",
+              mobileName: t("samples"),
+              name: t("lab_sample_submission"),
+              icon: FlaskConical,
+              path: "/quality/lab-samples",
             },
             {
               mobileName: t("review"),

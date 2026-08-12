@@ -10,6 +10,7 @@ import { Check, Loader2, ShieldAlert, Users } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useOrganization } from "../../context/OrganizationContext";
 import { usePermissions } from "../../hooks/usePermissions";
 import { isAdminRole } from "../../lib/role-access";
 import { LabDataGrid } from "../ui/LabDataGrid";
@@ -60,16 +61,18 @@ const haveSamePermissions = (
 
 const RoleManagementSection: React.FC = () => {
   const { t } = useTranslation();
+  const { activeOrganizationId } = useOrganization();
   const { isLoading: isPermissionLoading, role } = usePermissions();
   const canManageRoles = isAdminRole(role);
-  const roles = useQuery(api.roles.list, canManageRoles ? {} : "skip");
-  const users = useQuery(
-    api.users.listUsersWithRoles,
-    canManageRoles ? {} : "skip"
-  );
+  const roleQueryArgs =
+    canManageRoles && activeOrganizationId
+      ? { organizationId: activeOrganizationId }
+      : "skip";
+  const roles = useQuery(api.roles.list, roleQueryArgs);
+  const users = useQuery(api.organizationMembers.listWithRoles, roleQueryArgs);
   const matrixRoles = roles?.filter(isConfigurableSystemRole) ?? [];
   const updateRolePermissions = useMutation(api.roles.updateRolePermissions);
-  const updateUserRole = useMutation(api.users.updateUserRole);
+  const updateUserRole = useMutation(api.organizationMembers.updateSystemRole);
 
   const [activeTab, setActiveTab] = useState<"matrix" | "users">("matrix");
 
@@ -131,7 +134,7 @@ const RoleManagementSection: React.FC = () => {
   };
 
   const handleSavePermissions = async () => {
-    if (!roles) {
+    if (!(roles && activeOrganizationId)) {
       return;
     }
     setIsSavingPermissions(true);
@@ -143,6 +146,7 @@ const RoleManagementSection: React.FC = () => {
         // Only save roles whose permission set changed.
         if (!haveSamePermissions(newPerms, role.permissions)) {
           await updateRolePermissions({
+            organizationId: activeOrganizationId,
             roleId: role._id as Id<"roles">,
             permissions: newPerms,
           });
@@ -164,7 +168,7 @@ const RoleManagementSection: React.FC = () => {
   };
 
   const handleSaveUsers = async () => {
-    if (!users) {
+    if (!(users && activeOrganizationId)) {
       return;
     }
     setIsSavingUsers(true);
@@ -175,7 +179,8 @@ const RoleManagementSection: React.FC = () => {
         const newRoleId = localUserRoles[user._id];
         if (newRoleId && newRoleId !== user.roleId) {
           await updateUserRole({
-            userId: user._id as Id<"users">,
+            organizationId: activeOrganizationId,
+            memberId: user._id,
             newRoleId: newRoleId as Id<"roles">,
           });
         }
@@ -253,14 +258,14 @@ const RoleManagementSection: React.FC = () => {
           data ? (
             <div className="min-w-0 py-2">
               <div className="truncate font-semibold">
-                {data.name || t("unknown_user")}
+                {data.userName || t("unknown_user")}
               </div>
               <div className="mt-1 truncate text-[#527568] text-xs dark:text-[#a9cbbb]">
-                {data.email || t("no_email_provided")}
+                {data.userEmail || t("no_email_provided")}
               </div>
             </div>
           ) : null,
-        field: "name",
+        field: "userName",
         flex: 1,
         headerName: t("user_name"),
         minWidth: 240,

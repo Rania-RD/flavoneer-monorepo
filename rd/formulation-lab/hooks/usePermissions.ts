@@ -2,7 +2,7 @@ import { useQuery } from "convex/react";
 import { api } from "@flavoneer/backend/api";
 
 export function usePermissions() {
-  const currentUserWithRole = useQuery(api.users.getCurrentUserRole);
+  const currentUserWithRole = useQuery(api.users.getCurrentUserRole, {});
   const isLoading = currentUserWithRole === undefined;
 
   // If waiting for fetch or no user exists, default to fully restricted

@@ -110,7 +110,12 @@ export const syncCurrentUser = mutation({
  * Get current user with role.
  */
 export const getCurrentUserRole = query({
-  args: {},
+  // Keep accepting the legacy organization-scoped argument while older
+  // deployed/cached clients roll forward. System roles are global, so the
+  // value is intentionally not used when resolving the current user's role.
+  args: {
+    organizationId: v.optional(v.id("organizations")),
+  },
   returns: v.union(userWithRoleReturnValidator, v.null()),
   handler: async (ctx) => {
     const authUser = await authComponent.getAuthUser(ctx);

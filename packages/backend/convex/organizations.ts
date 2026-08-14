@@ -50,7 +50,13 @@ export const list = query({
     const organizations = await Promise.all(
       memberships.map(async (m) => {
         const organization = await ctx.db.get(m.organizationId);
-        return organization ? { ...organization, role: m.role } : null;
+        if (!organization) {
+          return null;
+        }
+        return {
+          ...organization,
+          role: organization.ownerId === authUser._id ? ("owner" as const) : m.role,
+        };
       }),
     );
     return organizations.filter((t): t is NonNullable<typeof t> => t !== null);

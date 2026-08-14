@@ -29,6 +29,10 @@ function normalizeWorkspaceRole(role: string): WorkspaceRole {
   return "member";
 }
 
+export function workspaceRoleHasFullAccess(role: WorkspaceRole): boolean {
+  return role === "owner" || role === "admin";
+}
+
 export async function getAuthUserOrThrow(
   ctx: GenericCtx<DataModel>,
 ): Promise<Awaited<ReturnType<typeof authComponent.getAuthUser>>> {
@@ -72,7 +76,7 @@ export async function getWorkspaceAccess(
     return {
       authUser,
       organization,
-      role: normalizeWorkspaceRole(member.role),
+      role: organization.ownerId === authUser._id ? "owner" : normalizeWorkspaceRole(member.role),
       authMemberId: member._id,
     };
   }
@@ -89,7 +93,7 @@ export async function getWorkspaceAccess(
   return {
     authUser,
     organization,
-    role: legacyMember.role,
+    role: organization.ownerId === authUser._id ? "owner" : legacyMember.role,
     authMemberId: legacyMember.authMemberId,
   };
 }

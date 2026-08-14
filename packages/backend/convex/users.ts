@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { getAuthenticatedUserWithRole, getEffectivePermissions } from "./permissions";
 import { userReturnValidator, userWithRoleReturnValidator } from "./validators";
+import { workspaceRoleHasFullAccess } from "./workspaceAccess";
 
 const CREATOR_EMAIL = "fro@gmail.com";
 
@@ -80,13 +81,17 @@ export const getCurrentUserRole = query({
       return null;
     }
 
-    const { membership, role } = await getAuthenticatedUserWithRole(ctx, args.organizationId);
+    const { role, workspaceRole } = await getAuthenticatedUserWithRole(ctx, args.organizationId);
 
     return {
       ...user,
-      roleId: membership?.roleId,
+      roleId: role?._id,
       role: role ?? undefined,
-      effectivePermissions: getEffectivePermissions(role),
+      effectivePermissions: workspaceRoleHasFullAccess(workspaceRole)
+        ? role
+          ? getEffectivePermissions(role)
+          : ["full_access"]
+        : getEffectivePermissions(role),
     };
   },
 });

@@ -87,6 +87,7 @@ export const getCurrentUserRole = query({
       ...user,
       roleId: role?._id,
       role: role ?? undefined,
+      workspaceRole,
       effectivePermissions: workspaceRoleHasFullAccess(workspaceRole)
         ? role
           ? getEffectivePermissions(role)

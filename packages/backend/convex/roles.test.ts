@@ -132,6 +132,7 @@ describe("organization-scoped roles", () => {
 
       const currentRole = await client.query(api.users.getCurrentUserRole, { organizationId });
       expect(currentRole?.roleId).toBe(adminRoleId);
+      expect(currentRole?.workspaceRole).toBe(workspaceRole);
       expect(currentRole?.effectivePermissions).toContain("full_access");
       await expect(client.query(api.roles.list, { organizationId })).resolves.toBeDefined();
       await expect(

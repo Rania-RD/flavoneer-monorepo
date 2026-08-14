@@ -12,7 +12,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useOrganization } from "../../context/OrganizationContext";
 import { usePermissions } from "../../hooks/usePermissions";
-import { isAdminRole } from "../../lib/role-access";
 import { LabDataGrid } from "../ui/LabDataGrid";
 import { Switch } from "../ui/Switch";
 
@@ -62,8 +61,9 @@ const haveSamePermissions = (
 const RoleManagementSection: React.FC = () => {
   const { t } = useTranslation();
   const { activeOrganizationId } = useOrganization();
-  const { isLoading: isPermissionLoading, role } = usePermissions();
-  const canManageRoles = isAdminRole(role);
+  const { isLoading: isPermissionLoading, isOrganizationAdmin } =
+    usePermissions();
+  const canManageRoles = isOrganizationAdmin;
   const roleQueryArgs =
     canManageRoles && activeOrganizationId
       ? { organizationId: activeOrganizationId }

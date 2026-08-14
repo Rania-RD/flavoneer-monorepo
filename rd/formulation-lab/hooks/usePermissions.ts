@@ -22,13 +22,16 @@ export function usePermissions() {
     return {
       isLoading,
       hasPermission: () => false,
+      isOrganizationAdmin: false,
       role: null,
       user: null,
+      workspaceRole: null,
     };
   }
 
   const rolePermissions = currentUserWithRole.effectivePermissions;
   const role = currentUserWithRole.role;
+  const workspaceRole = currentUserWithRole.workspaceRole;
 
   /**
    * Checks if the user has a specific permission.
@@ -44,8 +47,10 @@ export function usePermissions() {
   return {
     isLoading: false,
     hasPermission,
+    isOrganizationAdmin: workspaceRole === "owner" || workspaceRole === "admin",
     role,
     isCreator: currentUserWithRole.isCreator === true,
     user: currentUserWithRole,
+    workspaceRole,
   };
 }

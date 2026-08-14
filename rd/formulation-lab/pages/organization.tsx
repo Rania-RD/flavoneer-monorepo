@@ -47,7 +47,6 @@ import {
   MANAGE_VERSION_CONTROL_PERMISSION,
   type OrganizationSettingsTab,
 } from "../lib/organization-settings-access";
-import { isAdminRole } from "../lib/role-access";
 
 // ─── Role badge component ────────────────────────────
 const RoleBadge: React.FC<{ role: string; t: (k: string) => string }> = ({
@@ -171,7 +170,7 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const { activeOrganizationId, organizations, currentRole, setActiveOrganizationId } = useOrganization();
-  const { hasPermission, role } = usePermissions();
+  const { hasPermission, isOrganizationAdmin } = usePermissions();
 
   const { toast } = useToast();
 
@@ -206,9 +205,9 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const getFileUrl = useMutation(api.files.getFileUrl);
 
-  const isAdmin = currentRole === "admin" || currentRole === "owner";
-  const canManageProductionLine = isAdmin && isAdminRole(role);
-  const canManageRoles = isAdminRole(role);
+  const isAdmin = isOrganizationAdmin;
+  const canManageProductionLine = isOrganizationAdmin;
+  const canManageRoles = isOrganizationAdmin;
   const canManageVersionControl = hasPermission(
     MANAGE_VERSION_CONTROL_PERMISSION
   );

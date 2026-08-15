@@ -30,7 +30,6 @@ import {
   type OrganizationSettingsTab,
   resolveOrganizationSettingsTab,
 } from "../lib/organization-settings-access";
-import { isAdminRole } from "../lib/role-access";
 import OrganizationPage from "./organization";
 
 type SettingsScope = "user" | "organization";
@@ -110,7 +109,7 @@ function NestedNavigation<T extends string>({
 const Settings: React.FC = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { hasPermission, isLoading, role } = usePermissions();
+  const { hasPermission, isLoading, isOrganizationAdmin } = usePermissions();
   const {
     currentRole: organizationRole,
     organizations,
@@ -123,9 +122,8 @@ const Settings: React.FC = () => {
   const requestedScope = searchParams.get("scope");
   const activeScope = resolveSettingsScope(requestedScope);
   const requestedTab = searchParams.get("tab");
-  const isAdmin = isAdminRole(role);
-  const canManageProductionLine =
-    isAdmin && (organizationRole === "admin" || organizationRole === "owner");
+  const isAdmin = isOrganizationAdmin;
+  const canManageProductionLine = isOrganizationAdmin;
   const isOrganizationAccessLoading =
     organizationsLoading ||
     (organizations.length > 0 && organizationRole === null);

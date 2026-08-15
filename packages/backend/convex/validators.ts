@@ -686,6 +686,7 @@ export const userWithRoleReturnValidator = v.object({
   roleId: v.optional(v.id("roles")),
   isCreator: v.optional(v.boolean()),
   role: v.optional(roleReturnValidator),
+  workspaceRole: organizationMemberRoleValidator,
   effectivePermissions: v.array(v.string()),
 });
 

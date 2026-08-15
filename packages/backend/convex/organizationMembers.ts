@@ -9,7 +9,11 @@ import {
   organizationMemberReturnValidator,
   organizationMemberWithRoleReturnValidator,
 } from "./validators";
-import { requireWorkspaceAdmin, requireWorkspaceMember } from "./workspaceAccess";
+import {
+  requireWorkspaceAdmin,
+  requireWorkspaceMember,
+  workspaceRoleHasFullAccess,
+} from "./workspaceAccess";
 
 // ─── Queries ──────────────────────────────────────────
 
@@ -33,20 +37,42 @@ export const listWithRoles = query({
   returns: v.array(organizationMemberWithRoleReturnValidator),
   handler: async (ctx, args) => {
     await requirePermission(ctx, args.organizationId, "manage_roles");
+    const organization = await ctx.db.get(args.organizationId);
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
     const members = await ctx.db
       .query("organizationMembers")
       .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
       .take(100);
 
+    const adminRole = await ctx.db
+      .query("roles")
+      .withIndex("by_organizationId_and_key", (q) =>
+        q.eq("organizationId", args.organizationId).eq("key", "admin"),
+      )
+      .unique();
+
     return await Promise.all(
       members.map(async (member) => {
         const assignedRole = member.roleId ? await ctx.db.get(member.roleId) : null;
+        const hasWorkspaceAdminAccess =
+          member.userId === organization.ownerId || workspaceRoleHasFullAccess(member.role);
         const roleDetails =
-          assignedRole?.organizationId === args.organizationId ? assignedRole : undefined;
+          hasWorkspaceAdminAccess && adminRole
+            ? adminRole
+            : assignedRole?.organizationId === args.organizationId
+              ? assignedRole
+              : undefined;
         return {
           ...member,
+          roleId: roleDetails?._id ?? member.roleId,
           roleDetails,
-          effectivePermissions: getEffectivePermissions(roleDetails),
+          effectivePermissions: hasWorkspaceAdminAccess
+            ? roleDetails
+              ? getEffectivePermissions(roleDetails)
+              : ["full_access"]
+            : getEffectivePermissions(roleDetails),
         };
       }),
     );
@@ -134,9 +160,10 @@ export const updateSystemRole = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await requirePermission(ctx, args.organizationId, "manage_roles");
-    const [member, role] = await Promise.all([
+    const [member, role, organization] = await Promise.all([
       ctx.db.get(args.memberId),
       ctx.db.get(args.newRoleId),
+      ctx.db.get(args.organizationId),
     ]);
     if (!member || member.organizationId !== args.organizationId) {
       throw new Error("Member not found");
@@ -144,8 +171,14 @@ export const updateSystemRole = mutation({
     if (!role || role.organizationId !== args.organizationId) {
       throw new Error("Role not found");
     }
-    if (member.role === "owner" && role.key !== "admin") {
-      throw new Error("Organization owners must retain the Admin role");
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
+    if (
+      (member.userId === organization.ownerId || workspaceRoleHasFullAccess(member.role)) &&
+      role.key !== "admin"
+    ) {
+      throw new Error("Organization owners and admins must retain the Admin role");
     }
 
     await ctx.db.patch(member._id, { roleId: role._id });

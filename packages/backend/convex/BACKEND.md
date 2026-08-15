@@ -99,8 +99,8 @@ This separation preserves history.
   default. Every later non-owner receives Operator, without email-based
   overrides.
 - Creating an organization grants the creator the organization-level Owner role and the Admin
-  system role. `users.syncCurrentUser` also promotes existing organization owners to
-  Admin so ownership and administrative access cannot drift.
+  system role. Authorization always resolves organization Owners and Admins to full access,
+  even if an older local membership contains a stale system-role assignment.
 - Role keys are stable authorization identifiers. The frontend translates role
   titles from those keys; persisted English `name` values are fallbacks only.
 - The `admin` role key always resolves to `full_access`, including for existing
@@ -111,6 +111,15 @@ This separation preserves history.
   Workspace Settings version-control behavior. The Admin role receives it by
   default through `full_access`; administrators may grant it explicitly to
   other roles through the permissions matrix.
+
+To repair the stored Admin role and membership assignments for existing organizations,
+run the migration as a dry run, apply it, then verify the result:
+
+```bash
+pnpm --filter @flavoneer/backend exec convex run migrations:restoreOrganizationAdministratorAccess '{"dryRun":true}'
+pnpm --filter @flavoneer/backend exec convex run migrations:restoreOrganizationAdministratorAccess
+pnpm --filter @flavoneer/backend exec convex run migrations:verifyOrganizationRoles
+```
 
 ## 6. Domain tenancy migration
 

@@ -103,6 +103,59 @@ export const migrateOrganizationRolesAndConfig = migrations.define({
   },
 });
 
+/** Restore the fixed Admin role for every existing organization owner and admin. */
+export const restoreOrganizationAdministratorAccess = migrations.define({
+  table: "organizations",
+  batchSize: 1,
+  migrateOne: async (ctx, organization) => {
+    const adminDefaults = DEFAULT_SYSTEM_ROLES.find((role) => role.key === "admin");
+    if (!adminDefaults) {
+      throw new Error("Admin system role defaults are missing");
+    }
+
+    let adminRole = await ctx.db
+      .query("roles")
+      .withIndex("by_organizationId_and_key", (q) =>
+        q.eq("organizationId", organization._id).eq("key", "admin"),
+      )
+      .unique();
+    if (!adminRole) {
+      const adminRoleId = await ctx.db.insert("roles", {
+        ...adminDefaults,
+        organizationId: organization._id,
+        permissions: [...adminDefaults.permissions],
+      });
+      adminRole = await ctx.db.get(adminRoleId);
+    } else if (!adminRole.permissions.includes("full_access")) {
+      await ctx.db.patch(adminRole._id, {
+        permissions: ["full_access", ...adminRole.permissions],
+      });
+    }
+
+    if (!adminRole) {
+      throw new Error(`Organization ${organization._id} has no Admin system role`);
+    }
+
+    const members = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", organization._id))
+      .take(101);
+    if (members.length > 100) {
+      throw new Error(`Organization ${organization._id} exceeds the administrator repair limit`);
+    }
+
+    for (const member of members) {
+      const isOrganizationAdministrator =
+        member.userId === organization.ownerId ||
+        member.role === "owner" ||
+        member.role === "admin";
+      if (isOrganizationAdministrator && member.roleId !== adminRole._id) {
+        await ctx.db.patch(member._id, { roleId: adminRole._id });
+      }
+    }
+  },
+});
+
 /** Return bounded samples of organizations and memberships still missing scoped roles. */
 export const verifyOrganizationRoles = internalQuery({
   args: {},
@@ -130,7 +183,14 @@ export const verifyOrganizationRoles = internalQuery({
         .take(100);
       for (const member of members) {
         const role = member.roleId ? await ctx.db.get(member.roleId) : null;
-        if (role?.organizationId !== organization._id) {
+        const requiresAdminRole =
+          member.userId === organization.ownerId ||
+          member.role === "owner" ||
+          member.role === "admin";
+        if (
+          role?.organizationId !== organization._id ||
+          (requiresAdminRole && role.key !== "admin")
+        ) {
           invalidMembershipIds.push(member._id);
         }
       }

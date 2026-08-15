@@ -62,7 +62,7 @@ async function seedOrganization(
     const organizationId = await ctx.db.insert("organizations", {
       name: slug,
       slug,
-      ownerId: authUserId,
+      ownerId: `owner-${slug}`,
       createdAt: Date.now(),
       status: "active",
     });
@@ -87,6 +87,64 @@ async function seedOrganization(
 }
 
 describe("organization-scoped roles", () => {
+  test.each(["owner", "admin"] as const)(
+    "grants full access to an organization %s with a stale Operator assignment",
+    async (workspaceRole) => {
+      const backend = createTestBackend();
+      const { authUserId, client } = await createAuthenticatedUser(backend);
+      await backend.run((ctx) => ctx.db.insert("users", { authUserId }));
+
+      const { adminRoleId, memberId, operatorRoleId, organizationId } = await backend.run(
+        async (ctx) => {
+          const organizationId = await ctx.db.insert("organizations", {
+            name: `${workspaceRole}-workspace`,
+            slug: `${workspaceRole}-workspace`,
+            ownerId: workspaceRole === "owner" ? authUserId : "another-owner",
+            createdAt: Date.now(),
+            status: "active",
+          });
+          const adminRoleId = await ctx.db.insert("roles", {
+            organizationId,
+            key: "admin",
+            name: "Admin",
+            description: "Legacy administrator",
+            permissions: ["execute_runs"],
+          });
+          const operatorRoleId = await ctx.db.insert("roles", {
+            organizationId,
+            key: "operator",
+            name: "Operator",
+            description: "Operator",
+            permissions: ["execute_runs"],
+          });
+          const memberId = await ctx.db.insert("organizationMembers", {
+            organizationId,
+            userId: authUserId,
+            userName: "Organization member",
+            userEmail: "member@example.com",
+            role: workspaceRole === "owner" ? "member" : "admin",
+            roleId: operatorRoleId,
+            joinedAt: Date.now(),
+          });
+          return { adminRoleId, memberId, operatorRoleId, organizationId };
+        },
+      );
+
+      const currentRole = await client.query(api.users.getCurrentUserRole, { organizationId });
+      expect(currentRole?.roleId).toBe(adminRoleId);
+      expect(currentRole?.workspaceRole).toBe(workspaceRole);
+      expect(currentRole?.effectivePermissions).toContain("full_access");
+      await expect(client.query(api.roles.list, { organizationId })).resolves.toBeDefined();
+      await expect(
+        client.mutation(api.organizationMembers.updateSystemRole, {
+          organizationId,
+          memberId,
+          newRoleId: operatorRoleId,
+        }),
+      ).rejects.toThrow("Organization owners and admins must retain the Admin role");
+    },
+  );
+
   test("resolves a different role for the same user in each organization", async () => {
     const backend = createTestBackend();
     const { authUserId, client } = await createAuthenticatedUser(backend);

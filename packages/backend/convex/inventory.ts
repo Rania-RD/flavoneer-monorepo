@@ -78,9 +78,14 @@ export const list = query({
               q.eq(q.field("organizationId"), undefined),
               q.eq(q.field("userId"), scope.userId),
             );
+        const explicitlyAddedBatchFilter = q.eq(q.field("syncSource"), undefined);
         return args.category
-          ? q.and(tenantFilter, q.eq(q.field("category"), args.category))
-          : tenantFilter;
+          ? q.and(
+              tenantFilter,
+              explicitlyAddedBatchFilter,
+              q.eq(q.field("category"), args.category),
+            )
+          : q.and(tenantFilter, explicitlyAddedBatchFilter);
       })
       .collect();
 
@@ -132,22 +137,22 @@ export const create = mutation({
     storageConditions: v.optional(v.string()),
     storageConditionsI18n: v.optional(localizedStringValidator),
     ingredientCode: v.optional(v.string()),
-    ingredientId: v.id("ingredients"),
+    componentId: v.id("ingredients"),
     organizationId: v.optional(v.id("organizations")),
   },
   returns: v.id("inventoryItems"),
   handler: async (ctx, args) => {
     const scope = await requirePersonalOrWorkspaceScope(ctx, args.organizationId);
-    const ingredient = await ctx.db.get(args.ingredientId);
-    if (!ingredient) {
-      throw new Error("Ingredient not found");
+    const component = await ctx.db.get(args.componentId);
+    if (!component) {
+      throw new Error("Component not found");
     }
-    await requirePersonalOrWorkspaceAccess(ctx, ingredient);
+    await requirePersonalOrWorkspaceAccess(ctx, component);
     if (
-      ingredient.organizationId !== scope.organizationId ||
-      (!scope.organizationId && ingredient.userId !== scope.userId)
+      component.organizationId !== scope.organizationId ||
+      (!scope.organizationId && component.userId !== scope.userId)
     ) {
-      throw new Error("Ingredient belongs to a different workspace");
+      throw new Error("Component belongs to a different workspace");
     }
 
     const stockStatus = computeStockStatus(args.stock, args.lowStockThreshold);
@@ -161,6 +166,9 @@ export const create = mutation({
         args.storageConditions,
         args.storageConditionsI18n,
       ),
+      // Dual-write during the componentId migration. ingredientId remains the
+      // rollback-compatible legacy relation until all deployments are updated.
+      ingredientId: args.componentId,
       stockStatus,
       userId: scope.userId,
       organizationId: scope.organizationId,
@@ -188,7 +196,7 @@ export const update = mutation({
     storageConditions: v.optional(v.string()),
     storageConditionsI18n: v.optional(localizedStringValidator),
     ingredientCode: v.optional(v.string()),
-    ingredientId: v.optional(v.id("ingredients")),
+    componentId: v.optional(v.id("ingredients")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -199,17 +207,17 @@ export const update = mutation({
     }
     await requirePersonalOrWorkspaceAccess(ctx, currentItem);
 
-    if (updates.ingredientId) {
-      const ingredient = await ctx.db.get(updates.ingredientId);
-      if (!ingredient) {
-        throw new Error("Ingredient not found");
+    if (updates.componentId) {
+      const component = await ctx.db.get(updates.componentId);
+      if (!component) {
+        throw new Error("Component not found");
       }
-      await requirePersonalOrWorkspaceAccess(ctx, ingredient);
+      await requirePersonalOrWorkspaceAccess(ctx, component);
       if (
-        ingredient.organizationId !== currentItem.organizationId ||
-        (!currentItem.organizationId && ingredient.userId !== currentItem.userId)
+        component.organizationId !== currentItem.organizationId ||
+        (!currentItem.organizationId && component.userId !== currentItem.userId)
       ) {
-        throw new Error("Ingredient belongs to a different workspace");
+        throw new Error("Component belongs to a different workspace");
       }
     }
 
@@ -225,6 +233,7 @@ export const update = mutation({
 
     const localizedUpdates = {
       ...updates,
+      ...(updates.componentId !== undefined ? { ingredientId: updates.componentId } : {}),
       ...(updates.name !== undefined || updates.nameI18n !== undefined
         ? { nameI18n: makeLocalizedString(updates.name, updates.nameI18n) }
         : {}),

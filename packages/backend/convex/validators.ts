@@ -434,7 +434,9 @@ export const enrichedInventoryReturnValidator = v.object({
   storageConditions: v.optional(v.string()),
   storageConditionsI18n: v.optional(localizedStringValidator),
   ingredientCode: v.optional(v.string()),
-  ingredientId: v.optional(v.string()),
+  componentId: v.id("ingredients"),
+  ingredientId: v.optional(v.id("ingredients")),
+  syncSource: v.optional(v.literal("component_library")),
   userId: v.optional(v.string()),
   organizationId: v.optional(v.id("organizations")),
   usedIn: v.array(

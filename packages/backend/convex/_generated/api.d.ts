@@ -14,6 +14,7 @@ import type * as backdoor from "../backdoor.js";
 import type * as betterAuthOrganizationMigration from "../betterAuthOrganizationMigration.js";
 import type * as clearAllAppTables from "../clearAllAppTables.js";
 import type * as comments from "../comments.js";
+import type * as components_ from "../components.js";
 import type * as equipment from "../equipment.js";
 import type * as featureFlags from "../featureFlags.js";
 import type * as files from "../files.js";
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   betterAuthOrganizationMigration: typeof betterAuthOrganizationMigration;
   clearAllAppTables: typeof clearAllAppTables;
   comments: typeof comments;
+  components: typeof components_;
   equipment: typeof equipment;
   featureFlags: typeof featureFlags;
   files: typeof files;

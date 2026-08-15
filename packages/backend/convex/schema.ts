@@ -286,13 +286,17 @@ export default defineSchema({
     storageConditions: v.optional(v.string()),
     storageConditionsI18n: v.optional(localizedStringValidator),
     ingredientCode: v.optional(v.string()), // Kept for indexing/legacy
-    ingredientId: v.id("ingredients"), // Strict 1:N relationship with library required
+    componentId: v.id("ingredients"), // Required 1:N relation to the Components Library
+    // @deprecated rollback-compatible alias; new code reads componentId.
+    ingredientId: v.optional(v.id("ingredients")),
+    syncSource: v.optional(v.literal("component_library")),
     userId: v.optional(v.string()),
     organizationId: v.optional(v.id("organizations")),
     usedIn: v.optional(v.array(v.string())),
   })
     .index("by_category", ["category"])
     .index("by_stockStatus", ["stockStatus"])
+    .index("by_componentId", ["componentId"])
     .index("by_organizationId", { fields: ["organizationId"], staged: true })
     .index("by_userId", { fields: ["userId"], staged: true })
     .searchIndex("search_name", { searchField: "name" }),

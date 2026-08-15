@@ -8,6 +8,84 @@ import { DEFAULT_SYSTEM_ROLES } from "./roles";
 
 export const migrations = new Migrations<DataModel>(components.migrations);
 
+/** Backfill the domain-accurate component relation from the legacy ingredient relation. */
+export const backfillInventoryComponentId = migrations.define({
+  table: "inventoryItems",
+  migrateOne: (_ctx, item) => {
+    if (item.componentId !== undefined) {
+      return;
+    }
+    if (item.ingredientId === undefined) {
+      throw new Error(`Inventory item ${item._id} has no component relation to migrate`);
+    }
+    return { componentId: item.ingredientId };
+  },
+});
+
+/**
+ * Remove the zero-stock inventory placeholders that were previously generated
+ * when a Components Library item was created. Explicitly added stock batches
+ * never carry this marker and are left untouched.
+ */
+export const deleteComponentLibraryInventoryRecords = migrations.define({
+  table: "inventoryItems",
+  migrateOne: async (ctx, item) => {
+    if (item.syncSource !== "component_library") {
+      return;
+    }
+
+    const usageLog = await ctx.db
+      .query("materialUsageLogs")
+      .withIndex("by_inventoryItemId", (q) => q.eq("inventoryItemId", item._id))
+      .first();
+    if (usageLog) {
+      throw new Error(
+        `Generated inventory item ${item._id} has usage history and must be reviewed manually`,
+      );
+    }
+
+    await ctx.db.delete(item._id);
+  },
+});
+
+/** Return any generated inventory placeholders that still need removal. */
+export const verifyNoComponentLibraryInventoryRecords = internalQuery({
+  args: {},
+  returns: v.object({
+    complete: v.boolean(),
+    remainingIds: v.array(v.id("inventoryItems")),
+  }),
+  handler: async (ctx) => {
+    const remaining = await ctx.db
+      .query("inventoryItems")
+      .filter((q) => q.eq(q.field("syncSource"), "component_library"))
+      .take(100);
+    return {
+      complete: remaining.length === 0,
+      remainingIds: remaining.map((item) => item._id),
+    };
+  },
+});
+
+/** Return a bounded sample of inventory rows still missing the new relation. */
+export const verifyInventoryComponentId = internalQuery({
+  args: {},
+  returns: v.object({
+    complete: v.boolean(),
+    missingIds: v.array(v.id("inventoryItems")),
+  }),
+  handler: async (ctx) => {
+    const missing = await ctx.db
+      .query("inventoryItems")
+      .filter((q) => q.eq(q.field("componentId"), undefined))
+      .take(100);
+    return {
+      complete: missing.length === 0,
+      missingIds: missing.map((item) => item._id),
+    };
+  },
+});
+
 /**
  * Copy the legacy global role matrix and settings into every organization and
  * move user role assignments onto organization memberships.
@@ -344,7 +422,7 @@ export const backfillInventoryTenancy = migrations.define({
       return;
     }
 
-    const ingredientTenant = getTenant(await ctx.db.get(item.ingredientId));
+    const ingredientTenant = getTenant(await ctx.db.get(item.componentId));
     const usageLog = await ctx.db
       .query("materialUsageLogs")
       .withIndex("by_inventoryItemId", (q) => q.eq("inventoryItemId", item._id))

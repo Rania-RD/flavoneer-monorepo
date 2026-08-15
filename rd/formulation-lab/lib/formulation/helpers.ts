@@ -104,12 +104,12 @@ export interface FormulationIngredientSource {
   insNumber?: string;
   isAdditive?: boolean;
   name: string;
+  normalizedInsNumber?: string;
   nutrientValues?: Array<{
     nutrientName: string;
     unit: string;
     value: number;
   }>;
-  normalizedInsNumber?: string;
   /** @deprecated older ingredient docs used price before costPerKg was added. */
   price?: number;
   status?: "Draft" | "Approved";
@@ -120,55 +120,54 @@ export function buildAggregatedIngredients(
   ingredientsList: FormulationIngredientSource[],
   inventoryItems?: InventoryListItem[]
 ): AggregatedIngredient[] {
-  return ingredientsList
-    .map((ing) => {
-      const relatedInv = inventoryItems
-        ? inventoryItems.filter(
-            (inv) =>
-              inv.ingredientId === ing._id || inv.ingredientCode === ing.code
-          )
-        : [];
-      const totalStock = relatedInv.reduce(
-        (sum, inv) => sum + (inv.stock || 0),
-        0
-      );
-      const inventoryPrices = relatedInv
-        .map((inv) => inv.price)
-        .filter((price): price is number => typeof price === "number");
-      const fallbackPrice =
-        inventoryPrices.length > 0
-          ? inventoryPrices.reduce((sum, price) => sum + price, 0) /
-            inventoryPrices.length
-          : undefined;
-      const expiries = relatedInv
-        .map((inv) => new Date(inv.expiryDate).getTime())
-        .filter((time) => !Number.isNaN(time));
-      const nearestExpiry =
-        expiries.length > 0
-          ? new Date(Math.min(...expiries)).toISOString().split("T")[0]
-          : null;
+  return ingredientsList.map((ing) => {
+    const relatedInv = inventoryItems
+      ? inventoryItems.filter(
+          (inv) =>
+            inv.componentId === ing._id || inv.ingredientCode === ing.code
+        )
+      : [];
+    const totalStock = relatedInv.reduce(
+      (sum, inv) => sum + (inv.stock || 0),
+      0
+    );
+    const inventoryPrices = relatedInv
+      .map((inv) => inv.price)
+      .filter((price): price is number => typeof price === "number");
+    const fallbackPrice =
+      inventoryPrices.length > 0
+        ? inventoryPrices.reduce((sum, price) => sum + price, 0) /
+          inventoryPrices.length
+        : undefined;
+    const expiries = relatedInv
+      .map((inv) => new Date(inv.expiryDate).getTime())
+      .filter((time) => !Number.isNaN(time));
+    const nearestExpiry =
+      expiries.length > 0
+        ? new Date(Math.min(...expiries)).toISOString().split("T")[0]
+        : null;
 
-      const allergens = new Set(ing.allergenValues || []);
-      for (const subAllergens of Object.values(ing.subAllergenValues || {})) {
-        for (const subAllergen of subAllergens) {
-          allergens.add(subAllergen);
-        }
+    const allergens = new Set(ing.allergenValues || []);
+    for (const subAllergens of Object.values(ing.subAllergenValues || {})) {
+      for (const subAllergen of subAllergens) {
+        allergens.add(subAllergen);
       }
+    }
 
-      return {
-        _id: ing._id,
-        name: ing.name,
-        unit: ing.conversions?.[0]?.unit || "g",
-        stock: totalStock,
-        nearestExpiry,
-        allergens: Array.from(allergens),
-        isAdditive: ing.isAdditive,
-        insNumber: ing.insNumber,
-        nutritionPer100g: normalizeNutritionPer100g(ing.nutrientValues),
-        normalizedInsNumber: ing.normalizedInsNumber,
-        costPerKg: ing.costPerKg ?? ing.price ?? fallbackPrice,
-      };
-    });
+    return {
+      _id: ing._id,
+      name: ing.name,
+      unit: ing.conversions?.[0]?.unit || "g",
+      stock: totalStock,
+      nearestExpiry,
+      allergens: Array.from(allergens),
+      isAdditive: ing.isAdditive,
+      insNumber: ing.insNumber,
+      nutritionPer100g: normalizeNutritionPer100g(ing.nutrientValues),
+      normalizedInsNumber: ing.normalizedInsNumber,
+      costPerKg: ing.costPerKg ?? ing.price ?? fallbackPrice,
+    };
+  });
 }
 
 function normalizeNutrientKey(name: string) {
@@ -413,7 +412,7 @@ export interface RegulationComplianceResult {
 
 export function additiveMgPerKgToPercent(mgPerKg?: number): number | undefined {
   if (typeof mgPerKg !== "number" || !Number.isFinite(mgPerKg)) {
-    return undefined;
+    return;
   }
   return mgPerKg / 10_000;
 }
@@ -516,7 +515,9 @@ export function createStep(
     criticalParams:
       type === "critical_check" ? [{ name: criticalParamName }] : undefined,
     spreadsheet:
-      type === "spreadsheet_note" ? createDefaultMiniSpreadsheet(id) : undefined,
+      type === "spreadsheet_note"
+        ? createDefaultMiniSpreadsheet(id)
+        : undefined,
   };
 }
 

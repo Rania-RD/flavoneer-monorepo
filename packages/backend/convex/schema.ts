@@ -406,6 +406,7 @@ export default defineSchema({
   labReports: defineTable({
     reportId: v.string(),
     runId: v.id("runs"),
+    sampleSubmissionId: v.optional(v.id("labSampleSubmissions")),
     projectId: v.id("projects"),
     projectName: v.optional(v.string()),
     projectNameI18n: v.optional(localizedStringValidator),
@@ -425,6 +426,7 @@ export default defineSchema({
     signedAt: v.optional(v.number()),
   })
     .index("by_runId", ["runId"])
+    .index("by_sampleSubmissionId", ["sampleSubmissionId"])
     .index("by_projectId", ["projectId"])
     .index("by_status", ["status"])
     .index("by_organizationId", { fields: ["organizationId"], staged: true })
@@ -457,6 +459,12 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_organizationId_and_sampleNumber", ["organizationId", "sampleNumber"])
+    .index("by_organizationId_and_productionNumber", ["organizationId", "productionNumber"])
+    .index("by_organizationId_and_projectId_and_sampledAt", [
+      "organizationId",
+      "projectId",
+      "sampledAt",
+    ])
     .index("by_organizationId_and_sampledAt", ["organizationId", "sampledAt"]),
 
   equipment: defineTable({

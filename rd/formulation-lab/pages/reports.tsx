@@ -357,6 +357,12 @@ const Reports: React.FC = () => {
                     </div>
                   )}
 
+                  {report.sampleNumber && (
+                    <p className="mt-1 font-mono text-brand-primary text-xs dark:text-brand-accent-hover">
+                      {t("sample_number")}: {report.sampleNumber}
+                    </p>
+                  )}
+
                   <p className="mt-1 text-gray-500 text-sm dark:text-slate-400">
                     {report.results.length} {t("tests_lead")}{" "}
                     {report.leadChemist}

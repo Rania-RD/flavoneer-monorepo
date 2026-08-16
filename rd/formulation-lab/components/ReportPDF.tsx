@@ -155,6 +155,12 @@ export const ReportPDF: React.FC<ReportPDFProps> = ({
             <Text style={styles.label}>{t("lot_number")}</Text>
             <Text style={styles.value}>{report.lotNumber}</Text>
           </View>
+          {report.sampleNumber && (
+            <View style={styles.row}>
+              <Text style={styles.label}>{t("sample_number")}</Text>
+              <Text style={styles.value}>{report.sampleNumber}</Text>
+            </View>
+          )}
           <View style={styles.row}>
             <Text style={styles.label}>{t("version")}</Text>
             <Text style={styles.value}>v{report.version}</Text>

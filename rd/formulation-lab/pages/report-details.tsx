@@ -198,6 +198,14 @@ const ReportDetails: React.FC = () => {
               </span>
               <span>•</span>
               <span>v{report.version}</span>
+              {report.sampleNumber && (
+                <>
+                  <span>•</span>
+                  <span>
+                    {t("sample_number")}: {report.sampleNumber}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>

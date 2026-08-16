@@ -466,6 +466,8 @@ export const enrichedLabReportReturnValidator = v.object({
   _creationTime: v.number(),
   reportId: v.string(),
   runId: v.id("runs"),
+  sampleSubmissionId: v.optional(v.id("labSampleSubmissions")),
+  sampleNumber: v.optional(v.string()),
   projectId: v.id("projects"),
   projectName: v.string(),
   projectNameI18n: v.optional(localizedStringValidator),

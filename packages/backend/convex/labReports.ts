@@ -2,6 +2,7 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import { normalizeProductionNumber } from "./labSampleHelpers";
 import { makeLocalizedString, selectLocalizedString } from "./localization";
 import { requirePermission } from "./permissions";
 import {
@@ -18,6 +19,9 @@ import {
 async function enrichReport(ctx: QueryCtx, report: Doc<"labReports">, language?: string) {
   let projectName = selectLocalizedString(report.projectName, report.projectNameI18n, language);
   let projectNameI18n = makeLocalizedString(report.projectName, report.projectNameI18n);
+  const sampleSubmission = report.sampleSubmissionId
+    ? await ctx.db.get(report.sampleSubmissionId)
+    : null;
 
   try {
     const project = await ctx.db.get(report.projectId);
@@ -51,6 +55,7 @@ async function enrichReport(ctx: QueryCtx, report: Doc<"labReports">, language?:
     ...report,
     projectName,
     projectNameI18n,
+    sampleNumber: sampleSubmission?.sampleNumber,
     results,
     signoffData: report.signoffData,
     signoffFont: report.signoffFont,
@@ -127,6 +132,7 @@ export const create = mutation({
   args: {
     reportId: v.string(),
     runId: v.id("runs"),
+    sampleSubmissionId: v.optional(v.id("labSampleSubmissions")),
     projectId: v.id("projects"),
     projectName: v.optional(v.string()),
     projectNameI18n: v.optional(localizedStringValidator),
@@ -150,7 +156,7 @@ export const create = mutation({
   },
   returns: v.id("labReports"),
   handler: async (ctx, args) => {
-    const { results, ...reportData } = args;
+    const { results, sampleSubmissionId, ...reportData } = args;
     const project = await ctx.db.get(args.projectId);
     if (!project) {
       throw new Error("Project not found");
@@ -168,6 +174,27 @@ export const create = mutation({
       throw new Error("Run belongs to a different workspace");
     }
 
+    let linkedSample: Doc<"labSampleSubmissions"> | null = null;
+    let lotNumber = args.lotNumber;
+    if (project.organizationId) {
+      if (!sampleSubmissionId) {
+        throw new Error("Select a sample submission for this QC report");
+      }
+      linkedSample = await ctx.db.get(sampleSubmissionId);
+      if (!linkedSample || linkedSample.organizationId !== project.organizationId) {
+        throw new Error("Sample submission does not belong to this workspace");
+      }
+      if (linkedSample.sampleType !== "final_product" || linkedSample.projectId !== project._id) {
+        throw new Error("Sample submission does not belong to this product");
+      }
+
+      const reportBatchNumber = normalizeProductionNumber(args.lotNumber);
+      if (linkedSample.productionNumber !== reportBatchNumber) {
+        throw new Error("Sample submission and QC report must have the same batch number");
+      }
+      lotNumber = linkedSample.productionNumber;
+    }
+
     const projectName = args.projectName ?? project.name;
     const projectNameI18n = makeLocalizedString(
       projectName,
@@ -176,6 +203,8 @@ export const create = mutation({
 
     const reportId = await ctx.db.insert("labReports", {
       ...reportData,
+      sampleSubmissionId: linkedSample?._id,
+      lotNumber,
       projectName,
       projectNameI18n,
       status: "Pending",

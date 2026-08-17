@@ -15,6 +15,8 @@ import type * as betterAuthOrganizationMigration from "../betterAuthOrganization
 import type * as clearAllAppTables from "../clearAllAppTables.js";
 import type * as comments from "../comments.js";
 import type * as components_ from "../components.js";
+import type * as e2eQualityReportSeed from "../e2eQualityReportSeed.js";
+import type * as e2eQualityReportSeedAction from "../e2eQualityReportSeedAction.js";
 import type * as equipment from "../equipment.js";
 import type * as featureFlags from "../featureFlags.js";
 import type * as files from "../files.js";
@@ -43,6 +45,9 @@ import type * as productionLineSpecifications from "../productionLineSpecificati
 import type * as projectIngredients from "../projectIngredients.js";
 import type * as projectVersions from "../projectVersions.js";
 import type * as projects from "../projects.js";
+import type * as qualityManagerReports from "../qualityManagerReports.js";
+import type * as qualityReportMetrics from "../qualityReportMetrics.js";
+import type * as qualityReportingFacts from "../qualityReportingFacts.js";
 import type * as recipePhases from "../recipePhases.js";
 import type * as regulatory from "../regulatory.js";
 import type * as regulatoryHelpers from "../regulatoryHelpers.js";
@@ -76,6 +81,8 @@ declare const fullApi: ApiFromModules<{
   clearAllAppTables: typeof clearAllAppTables;
   comments: typeof comments;
   components: typeof components_;
+  e2eQualityReportSeed: typeof e2eQualityReportSeed;
+  e2eQualityReportSeedAction: typeof e2eQualityReportSeedAction;
   equipment: typeof equipment;
   featureFlags: typeof featureFlags;
   files: typeof files;
@@ -104,6 +111,9 @@ declare const fullApi: ApiFromModules<{
   projectIngredients: typeof projectIngredients;
   projectVersions: typeof projectVersions;
   projects: typeof projects;
+  qualityManagerReports: typeof qualityManagerReports;
+  qualityReportMetrics: typeof qualityReportMetrics;
+  qualityReportingFacts: typeof qualityReportingFacts;
   recipePhases: typeof recipePhases;
   regulatory: typeof regulatory;
   regulatoryHelpers: typeof regulatoryHelpers;

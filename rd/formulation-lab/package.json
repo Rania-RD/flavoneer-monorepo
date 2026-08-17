@@ -31,6 +31,8 @@
     "@react-pdf/renderer": "^4.3.2",
     "@tailwindcss/vite": "^4.1.18",
     "@types/luxon": "^3.7.1",
+    "ag-charts-community": "14.1.0",
+    "ag-charts-react": "14.1.0",
     "ag-grid-community": "36.1.0",
     "ag-grid-react": "36.1.0",
     "better-auth": "1.5.6",

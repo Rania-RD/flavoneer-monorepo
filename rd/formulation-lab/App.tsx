@@ -21,6 +21,7 @@ import Login from "./pages/login";
 import Materials from "./pages/materials";
 import ProductionLineRecordDetail from "./pages/production-line-record-detail";
 import ProductionLineRecords from "./pages/production-line-records";
+import QualityReports from "./pages/quality-reports";
 import ReportDetails from "./pages/report-details";
 import Reports from "./pages/reports";
 import Runs from "./pages/runs";
@@ -99,6 +100,7 @@ const App: React.FC = () => {
               element={<ProductionLineRecordDetail />}
               path="/quality/production-line-records/:id"
             />
+            <Route element={<QualityReports />} path="/quality/reports" />
             <Route element={<Navigate replace to="/" />} path="/schedule" />
             <Route
               element={<Navigate replace to="/settings?scope=organization" />}

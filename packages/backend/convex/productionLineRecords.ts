@@ -12,6 +12,12 @@ import {
   parsePrintedBatchCode,
 } from "./productionLineRecordHelpers";
 import {
+  closeReviewCycle,
+  openReviewCycle,
+  syncInspectionSummary,
+  syncReadingFact,
+} from "./qualityReportingFacts";
+import {
   productionHallCodeValidator,
   productionLineCheckKeyValidator,
   productionLineMeasurementUnitValidator,
@@ -453,6 +459,7 @@ export const createDraft = mutation({
       displaySerial,
       inspectionHourKey,
     });
+    await syncInspectionSummary(ctx, recordId);
     return recordId;
   },
 });
@@ -504,6 +511,7 @@ export const attachBatchLabelPhoto = mutation({
       record.batchLabelPhotoStorageId ? "batch_label.photo_replaced" : "batch_label.photo_attached",
       nextRevision,
     );
+    await syncInspectionSummary(ctx, record._id);
     if (record.batchLabelPhotoStorageId && record.batchLabelPhotoStorageId !== args.storageId) {
       await ctx.storage.delete(record.batchLabelPhotoStorageId);
     }
@@ -543,6 +551,7 @@ export const updateBatchLabelCode = mutation({
       labelProductionDate: parsed.labelProductionDate,
       dailyBatchSequence: String(parsed.dailyBatchSequence),
     });
+    await syncInspectionSummary(ctx, record._id);
     return null;
   },
 });
@@ -579,6 +588,7 @@ export const saveReading = mutation({
       .unique();
     const nextRevision = record.recordRevision + 1;
     const now = Date.now();
+    let readingId = existing?._id;
     if (args.value === null) {
       if (!existing) {
         return null;
@@ -608,7 +618,7 @@ export const saveReading = mutation({
       if (existing) {
         await ctx.db.patch(existing._id, reading);
       } else {
-        await ctx.db.insert("productionLineReadings", {
+        readingId = await ctx.db.insert("productionLineReadings", {
           recordId: record._id,
           readingKey: args.readingKey,
           readingIndex: args.readingIndex,
@@ -630,6 +640,10 @@ export const saveReading = mutation({
         ...(args.value === null ? {} : { value: String(args.value) }),
       },
     );
+    if (readingId) {
+      await syncReadingFact(ctx, readingId);
+    }
+    await syncInspectionSummary(ctx, record._id);
     return null;
   },
 });
@@ -671,6 +685,7 @@ export const updateComplianceCheck = mutation({
       checkKey: args.checkKey,
       checked: String(args.checked),
     });
+    await syncInspectionSummary(ctx, record._id);
     return null;
   },
 });
@@ -716,10 +731,12 @@ export const submitForReview = mutation({
       recordRevision: nextRevision,
       updatedAt: now,
     });
+    await openReviewCycle(ctx, record, now);
     await addRecordEvent(ctx, record, authUser, "record.submitted_for_review", nextRevision, {
       previousStatus: record.status,
       status: "pending_production_review",
     });
+    await syncInspectionSummary(ctx, record._id);
     return null;
   },
 });
@@ -757,6 +774,7 @@ export const review = mutation({
       recordRevision: nextRevision,
       updatedAt: now,
     });
+    await closeReviewCycle(ctx, record, authUser, args.decision, now, Boolean(note));
     await addRecordEvent(
       ctx,
       record,
@@ -769,6 +787,7 @@ export const review = mutation({
         ...(note ? { note } : {}),
       },
     );
+    await syncInspectionSummary(ctx, record._id);
     return null;
   },
 });
@@ -823,6 +842,7 @@ export const updateComplianceChecks = mutation({
       checked: String(args.checked),
       count: String(changedKeys.length),
     });
+    await syncInspectionSummary(ctx, record._id);
     return null;
   },
 });

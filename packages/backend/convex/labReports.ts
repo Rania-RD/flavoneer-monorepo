@@ -5,6 +5,7 @@ import { mutation, type QueryCtx, query } from "./_generated/server";
 import { normalizeProductionNumber } from "./labSampleHelpers";
 import { makeLocalizedString, selectLocalizedString } from "./localization";
 import { requirePermission } from "./permissions";
+import { removeLabReportSummary, syncLabReportSummary } from "./qualityReportingFacts";
 import {
   enrichedLabReportReturnValidator,
   labReportStatusValidator,
@@ -224,6 +225,8 @@ export const create = mutation({
       });
     }
 
+    await syncLabReportSummary(ctx, reportId);
+
     return reportId;
   },
 });
@@ -255,6 +258,7 @@ export const updateStatus = mutation({
       signedBy: isApproved ? authUser._id : undefined,
       signedAt: isApproved ? Date.now() : undefined,
     });
+    await syncLabReportSummary(ctx, args.id);
     return null;
   },
 });
@@ -279,6 +283,7 @@ export const remove = mutation({
     for (const result of results) {
       await ctx.db.delete(result._id);
     }
+    await removeLabReportSummary(ctx, args.id);
     await ctx.db.delete(args.id);
     return null;
   },

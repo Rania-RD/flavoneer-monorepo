@@ -1441,7 +1441,6 @@
   "qc_reports_pdf_filename": "qc-management-report",
   "qc_reports_reporting_period": "Reporting period",
   "qc_reports_generated_at": "Generated at",
-  "qc_reports_pdf_page": "Page {{page}} of {{total}}",
   "qc_reports_audit_csv_filename": "qc-audit-register.csv",
   "qc_reports_search_audit": "Search serial, batch, product, or inspector",
   "qc_reports_evidence": "Evidence",

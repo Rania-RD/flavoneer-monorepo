@@ -105,18 +105,11 @@ const styles = StyleSheet.create({
   tableRow: {
     borderBottomColor: colors.border,
     borderBottomWidth: 1,
-    display: "flex",
-    flexDirection: "row",
     minHeight: 22,
     width: "100%",
   },
   tableHeader: { backgroundColor: colors.mint },
-  tableCell: {
-    display: "flex",
-    flexBasis: 0,
-    flexDirection: "column",
-    flexShrink: 1,
-    justifyContent: "center",
+  tableLine: {
     paddingHorizontal: 6,
     paddingVertical: 4,
   },
@@ -128,15 +121,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     color: colors.muted,
     padding: 12,
-    textAlign: "center",
-  },
-  footer: {
-    bottom: 18,
-    color: colors.muted,
-    fontSize: 6,
-    left: 34,
-    position: "absolute",
-    right: 34,
     textAlign: "center",
   },
 });
@@ -186,27 +170,20 @@ function ReportTable({
   emptyLabel,
   headers,
   rows,
-  widths,
 }: {
   emptyLabel: string;
   headers: string[];
   rows: { dangerColumns?: number[]; values: (string | number)[] }[];
-  widths: number[];
 }) {
   if (rows.length === 0) {
     return <Text style={styles.empty}>{emptyLabel}</Text>;
   }
   return (
     <View style={styles.table}>
-      <View fixed style={[styles.tableRow, styles.tableHeader]}>
-        {headers.map((header, index) => (
-          <View
-            key={`${header}-${index.toString()}`}
-            style={[styles.tableCell, { flexGrow: widths[index] }]}
-          >
-            <Text style={styles.tableHeaderText}>{header}</Text>
-          </View>
-        ))}
+      <View style={[styles.tableRow, styles.tableHeader]} wrap={false}>
+        <Text style={[styles.tableLine, styles.tableHeaderText]}>
+          {headers.join("  |  ")}
+        </Text>
       </View>
       {rows.map((row, rowIndex) => (
         <View
@@ -214,22 +191,20 @@ function ReportTable({
           style={styles.tableRow}
           wrap={false}
         >
-          {row.values.map((value, columnIndex) => (
-            <View
-              key={`${columnIndex.toString()}-${String(value)}`}
-              style={[styles.tableCell, { flexGrow: widths[columnIndex] }]}
-            >
+          <Text style={styles.tableLine}>
+            {row.values.map((value, columnIndex) => (
               <Text
+                key={`${columnIndex.toString()}-${String(value)}`}
                 style={
                   row.dangerColumns?.includes(columnIndex)
                     ? styles.danger
                     : undefined
                 }
               >
-                {value}
+                {`${columnIndex === 0 ? "" : "  |  "}${String(value)}`}
               </Text>
-            </View>
-          ))}
+            ))}
+          </Text>
         </View>
       ))}
     </View>
@@ -406,7 +381,6 @@ export function QualityManagerReportPdf({
                 t(`production_status_${item.status}`),
               ],
             }))}
-            widths={[24, 34, 20, 22]}
           />
         </View>
 
@@ -477,7 +451,6 @@ export function QualityManagerReportPdf({
                 duration(item.ageMs, locale),
               ],
             }))}
-            widths={[22, 28, 32, 18]}
           />
         </View>
 
@@ -502,7 +475,6 @@ export function QualityManagerReportPdf({
                 percent(group.firstPassApprovalRate, locale),
               ],
             }))}
-            widths={[28, 14, 18, 20, 20]}
           />
         </View>
 
@@ -528,7 +500,6 @@ export function QualityManagerReportPdf({
                 percent(item.firstPassApprovalRate, locale),
               ],
             }))}
-            widths={[32, 17, 17, 17, 17]}
           />
         </View>
 
@@ -554,14 +525,11 @@ export function QualityManagerReportPdf({
                 duration(item.medianReviewTimeMs, locale),
               ],
             }))}
-            widths={[32, 17, 17, 17, 17]}
           />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_laboratory")}
-          </Text>
+          <Text style={styles.sectionTitle}>{t("qc_reports_laboratory")}</Text>
           <MetricGrid
             items={[
               {
@@ -607,17 +575,8 @@ export function QualityManagerReportPdf({
                 item.outOfSpecTestCount,
               ],
             }))}
-            widths={[22, 28, 20, 16, 14]}
           />
         </View>
-
-        <Text
-          fixed
-          render={({ pageNumber, totalPages }) =>
-            `${t("qc_reports_pdf_page", { page: pageNumber, total: totalPages })}`
-          }
-          style={styles.footer}
-        />
       </Page>
     </Document>
   );

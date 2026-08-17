@@ -1441,7 +1441,6 @@
   "qc_reports_pdf_filename": "تقرير-إدارة-الجودة",
   "qc_reports_reporting_period": "فترة التقرير",
   "qc_reports_generated_at": "وقت الإنشاء",
-  "qc_reports_pdf_page": "صفحة {{page}} من {{total}}",
   "qc_reports_audit_csv_filename": "qc-audit-register.csv",
   "qc_reports_search_audit": "ابحث بالرقم أو الدفعة أو الصنف أو المفتش",
   "qc_reports_evidence": "الأدلة",

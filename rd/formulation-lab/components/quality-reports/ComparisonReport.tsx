@@ -1,5 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -22,14 +23,36 @@ const groupOptions = [
   "specification",
 ] as const;
 
-export function ComparisonReport({ args }: { args: QualityReportArgs }) {
+export type ComparisonGroup = (typeof groupOptions)[number];
+type ComparisonReportData = FunctionReturnType<
+  typeof api.qualityManagerReports.getComparisons
+>;
+
+export function ComparisonReport({
+  args,
+  data,
+  embedded = false,
+  groupBy: controlledGroupBy,
+  onGroupByChange,
+}: {
+  args: QualityReportArgs;
+  data?: ComparisonReportData;
+  embedded?: boolean;
+  groupBy?: ComparisonGroup;
+  onGroupByChange?: (groupBy: ComparisonGroup) => void;
+}) {
   const { t, i18n } = useTranslation();
-  const [groupBy, setGroupBy] =
-    useState<(typeof groupOptions)[number]>("product");
-  const report = useQuery(api.qualityManagerReports.getComparisons, {
-    ...args,
-    groupBy,
-  });
+  const [localGroupBy, setLocalGroupBy] = useState<ComparisonGroup>("product");
+  const groupBy = controlledGroupBy ?? localGroupBy;
+  const queriedReport = useQuery(
+    api.qualityManagerReports.getComparisons,
+    data ? "skip" : { ...args, groupBy }
+  );
+  const report = data ?? queriedReport;
+  const setGroupBy = (next: ComparisonGroup) => {
+    setLocalGroupBy(next);
+    onGroupByChange?.(next);
+  };
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
   if (report === undefined) {
     return <ReportLoading />;
@@ -37,51 +60,56 @@ export function ComparisonReport({ args }: { args: QualityReportArgs }) {
 
   return (
     <div className="space-y-7">
-      <ReportHeading
-        action={
-          <div className="flex flex-wrap gap-2">
-            {groupOptions.map((option) => (
-              <button
-                className={`rounded-full px-4 py-2 font-bold text-xs transition-colors ${
-                  groupBy === option
-                    ? "bg-[#1c4a3c] text-white dark:bg-[#f5a623] dark:text-[#173e33]"
-                    : "bg-[#eef8eb] text-[#527568] hover:bg-[#d2f2d4] dark:bg-[#285b4d] dark:text-[#a9cbbb]"
-                }`}
-                key={option}
-                onClick={() => setGroupBy(option)}
-                type="button"
-              >
-                {t(`qc_reports_group_${option}`)}
-              </button>
-            ))}
-          </div>
-        }
-        description={t("qc_reports_comparison_description")}
-        title={t("qc_reports_comparison")}
-      />
-      <MetricStrip
-        items={[
-          {
-            label: t("qc_reports_inspections"),
-            value: report.baseline.inspections,
-          },
-          {
-            label: t("qc_reports_baseline_ool_rate"),
-            value: formatPercent(report.baseline.outOfLimitRate, locale),
-          },
-          {
-            label: t("qc_reports_reading_conformance"),
-            value: formatPercent(
-              report.baseline.readingConformanceRate,
-              locale
-            ),
-          },
-          {
-            label: t("qc_reports_first_pass_approval"),
-            value: formatPercent(report.baseline.firstPassApprovalRate, locale),
-          },
-        ]}
-      />
+      {embedded ? null : (
+        <>
+          <ReportHeading
+            description={t("qc_reports_comparison_description")}
+            title={t("qc_reports_comparison")}
+          />
+          <MetricStrip
+            items={[
+              {
+                label: t("qc_reports_inspections"),
+                value: report.baseline.inspections,
+              },
+              {
+                label: t("qc_reports_baseline_ool_rate"),
+                value: formatPercent(report.baseline.outOfLimitRate, locale),
+              },
+              {
+                label: t("qc_reports_reading_conformance"),
+                value: formatPercent(
+                  report.baseline.readingConformanceRate,
+                  locale
+                ),
+              },
+              {
+                label: t("qc_reports_first_pass_approval"),
+                value: formatPercent(
+                  report.baseline.firstPassApprovalRate,
+                  locale
+                ),
+              },
+            ]}
+          />
+        </>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {groupOptions.map((option) => (
+          <button
+            className={`rounded-full px-4 py-2 font-bold text-xs transition-colors ${
+              groupBy === option
+                ? "bg-[#1c4a3c] text-white dark:bg-[#f5a623] dark:text-[#173e33]"
+                : "bg-[#eef8eb] text-[#527568] hover:bg-[#d2f2d4] dark:bg-[#285b4d] dark:text-[#a9cbbb]"
+            }`}
+            key={option}
+            onClick={() => setGroupBy(option)}
+            type="button"
+          >
+            {t(`qc_reports_group_${option}`)}
+          </button>
+        ))}
+      </div>
       {report.groups.length === 0 ? (
         <EmptyReport>{t("qc_reports_no_data")}</EmptyReport>
       ) : (

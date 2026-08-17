@@ -27,7 +27,13 @@ const readingKeys = [
   "carton_weight",
 ] as const;
 
-export function MeasurementReport({ args }: { args: QualityReportArgs }) {
+export function MeasurementReport({
+  args,
+  embedded = false,
+}: {
+  args: QualityReportArgs;
+  embedded?: boolean;
+}) {
   const { t, i18n } = useTranslation();
   const [readingKey, setReadingKey] = useState<(typeof readingKeys)[number]>(
     readingKeys[0]
@@ -61,26 +67,28 @@ export function MeasurementReport({ args }: { args: QualityReportArgs }) {
 
   return (
     <div className="space-y-7">
-      <ReportHeading
-        action={
-          <select
-            aria-label={t("qc_reports_parameter")}
-            className="min-h-11 rounded-2xl border border-[#1c4a3c]/10 bg-[#fffdf4] px-4 text-[#173e33] text-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33] dark:text-[#f7f4df]"
-            onChange={(event) =>
-              setReadingKey(event.target.value as typeof readingKey)
-            }
-            value={readingKey}
-          >
-            {readingKeys.map((key) => (
-              <option key={key} value={key}>
-                {t(`production_reading_${key}`)}
-              </option>
-            ))}
-          </select>
-        }
-        description={t("qc_reports_measurements_description")}
-        title={t("qc_reports_measurements")}
-      />
+      {embedded ? null : (
+        <ReportHeading
+          description={t("qc_reports_measurements_description")}
+          title={t("qc_reports_measurements")}
+        />
+      )}
+      <div className="flex justify-end">
+        <select
+          aria-label={t("qc_reports_parameter")}
+          className="min-h-11 rounded-2xl border border-[#1c4a3c]/10 bg-[#fffdf4] px-4 text-[#173e33] text-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33] dark:text-[#f7f4df]"
+          onChange={(event) =>
+            setReadingKey(event.target.value as typeof readingKey)
+          }
+          value={readingKey}
+        >
+          {readingKeys.map((key) => (
+            <option key={key} value={key}>
+              {t(`production_reading_${key}`)}
+            </option>
+          ))}
+        </select>
+      </div>
       <MetricStrip
         items={[
           {

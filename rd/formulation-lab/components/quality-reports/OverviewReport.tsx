@@ -1,5 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { ArrowUpRight, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -18,9 +19,25 @@ import {
 } from "./shared";
 import type { QualityReportArgs } from "./types";
 
-export function OverviewReport({ args }: { args: QualityReportArgs }) {
+type OverviewReportData = FunctionReturnType<
+  typeof api.qualityManagerReports.getOverview
+>;
+
+export function OverviewReport({
+  args,
+  data,
+  embedded = false,
+}: {
+  args: QualityReportArgs;
+  data?: OverviewReportData;
+  embedded?: boolean;
+}) {
   const { t, i18n } = useTranslation();
-  const report = useQuery(api.qualityManagerReports.getOverview, args);
+  const queriedReport = useQuery(
+    api.qualityManagerReports.getOverview,
+    data ? "skip" : args
+  );
+  const report = data ?? queriedReport;
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
   if (report === undefined) {
     return <ReportLoading />;
@@ -28,35 +45,39 @@ export function OverviewReport({ args }: { args: QualityReportArgs }) {
 
   return (
     <div className="space-y-7">
-      <ReportHeading
-        description={t("qc_reports_overview_description")}
-        title={t("qc_reports_overview")}
-      />
+      {embedded ? null : (
+        <ReportHeading
+          description={t("qc_reports_overview_description")}
+          title={t("qc_reports_overview")}
+        />
+      )}
       <p className="rounded-2xl border border-[#f5a623]/25 bg-[#fff4d9] px-4 py-3 font-semibold text-[#795018] text-sm dark:bg-[#f5a623]/10 dark:text-[#ffc760]">
         {t("qc_reports_hourly_inspection_requirement")}
       </p>
-      <MetricStrip
-        items={[
-          {
-            label: t("qc_reports_inspections"),
-            value: report.totals.inspections,
-          },
-          {
-            label: t("qc_reports_pending_queue"),
-            value: report.totals.pending,
-            tone: report.totals.pending > 0 ? "warning" : "default",
-          },
-          {
-            label: t("qc_reports_out_of_limit_records"),
-            value: report.totals.outOfLimitRecords,
-            tone: report.totals.outOfLimitRecords > 0 ? "danger" : "default",
-          },
-          {
-            label: t("qc_reports_oldest_pending_hhmm"),
-            value: formatDuration(report.totals.oldestPendingAgeMs, locale),
-          },
-        ]}
-      />
+      {embedded ? null : (
+        <MetricStrip
+          items={[
+            {
+              label: t("qc_reports_inspections"),
+              value: report.totals.inspections,
+            },
+            {
+              label: t("qc_reports_pending_queue"),
+              value: report.totals.pending,
+              tone: report.totals.pending > 0 ? "warning" : "default",
+            },
+            {
+              label: t("qc_reports_out_of_limit_records"),
+              value: report.totals.outOfLimitRecords,
+              tone: report.totals.outOfLimitRecords > 0 ? "danger" : "default",
+            },
+            {
+              label: t("qc_reports_oldest_pending_hhmm"),
+              value: formatDuration(report.totals.oldestPendingAgeMs, locale),
+            },
+          ]}
+        />
+      )}
 
       {report.awaitingBackfill > 0 ? (
         <div className="flex items-center gap-3 rounded-2xl bg-[#fff4d9] px-4 py-3 text-[#8a5811] text-sm dark:bg-[#f5a623]/15 dark:text-[#ffc760]">

@@ -1,6 +1,7 @@
 import type { AgChartOptions } from "ag-charts-community";
 import { AgCharts } from "ag-charts-react";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import {
   Children,
@@ -66,6 +67,29 @@ export function EmptyReport({ children }: { children: ReactNode }) {
   );
 }
 
+function metricToneClass(tone?: "default" | "warning" | "danger") {
+  if (tone === "danger") {
+    return "text-[#a43434] dark:text-[#ffb8ad]";
+  }
+  if (tone === "warning") {
+    return "text-[#9b6515] dark:text-[#ffc760]";
+  }
+  return "text-[#173e33] dark:text-[#f7f4df]";
+}
+
+function kpiToneClass(tone?: "default" | "good" | "warning" | "danger") {
+  if (tone === "danger") {
+    return "bg-[#fff0ed] text-[#8f2929] dark:bg-[#6d302d] dark:text-[#ffd4cc]";
+  }
+  if (tone === "warning") {
+    return "bg-[#fff4d9] text-[#795018] dark:bg-[#5b481f] dark:text-[#ffe0a1]";
+  }
+  if (tone === "good") {
+    return "bg-[#e6f4e1] text-[#173e33] dark:bg-[#285b4d] dark:text-[#f7f4df]";
+  }
+  return "bg-[#fffdf4] text-[#173e33] dark:bg-[#173e33] dark:text-[#f7f4df]";
+}
+
 export function MetricStrip({
   items,
 }: {
@@ -86,19 +110,80 @@ export function MetricStrip({
             {item.label}
           </p>
           <p
-            className={`mt-2 font-bold font-display text-3xl tracking-tight ${
-              item.tone === "danger"
-                ? "text-[#a43434] dark:text-[#ffb8ad]"
-                : item.tone === "warning"
-                  ? "text-[#9b6515] dark:text-[#ffc760]"
-                  : "text-[#173e33] dark:text-[#f7f4df]"
-            }`}
+            className={`mt-2 font-bold font-display text-3xl tracking-tight ${metricToneClass(item.tone)}`}
           >
             {item.value}
           </p>
         </div>
       ))}
     </div>
+  );
+}
+
+export function KpiGrid({
+  items,
+}: {
+  items: {
+    label: string;
+    supporting?: ReactNode;
+    tone?: "default" | "good" | "warning" | "danger";
+    value: ReactNode;
+  }[];
+}) {
+  return (
+    <div className="grid gap-px overflow-hidden rounded-[1.75rem] bg-[#1c4a3c]/12 sm:grid-cols-2 lg:grid-cols-4 dark:bg-[#d2f2d4]/12">
+      {items.map((item) => {
+        const toneClass = kpiToneClass(item.tone);
+        return (
+          <div className={`min-h-32 px-5 py-5 ${toneClass}`} key={item.label}>
+            <p className="font-bold text-[10px] uppercase tracking-[0.14em] opacity-70">
+              {item.label}
+            </p>
+            <p className="mt-3 font-bold font-display text-3xl tracking-tight sm:text-[2rem]">
+              {item.value}
+            </p>
+            {item.supporting ? (
+              <p className="mt-2 text-xs leading-5 opacity-75">
+                {item.supporting}
+              </p>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function ReportSection({
+  children,
+  description,
+  id,
+  title,
+}: {
+  children: ReactNode;
+  description: string;
+  id: string;
+  title: string;
+}) {
+  return (
+    <motion.section
+      className="scroll-mt-36 border-[#1c4a3c]/12 border-t pt-8 dark:border-[#d2f2d4]/12"
+      id={id}
+      initial={{ opacity: 0, y: 12 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
+      viewport={{ amount: 0.08, once: true }}
+      whileInView={{ opacity: 1, y: 0 }}
+    >
+      <div className="mb-6 max-w-3xl">
+        <h2 className="font-bold font-display text-2xl text-[#173e33] tracking-tight sm:text-3xl dark:text-[#f7f4df]">
+          {title}
+        </h2>
+        <p className="mt-2 text-[#527568] text-sm leading-6 dark:text-[#a9cbbb]">
+          {description}
+        </p>
+      </div>
+      {children}
+    </motion.section>
   );
 }
 

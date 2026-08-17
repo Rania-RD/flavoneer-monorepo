@@ -1,5 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useTranslation } from "react-i18next";
 import {
   cellClassName,
@@ -16,9 +17,25 @@ import {
 } from "./shared";
 import type { QualityReportArgs } from "./types";
 
-export function WorkflowReport({ args }: { args: QualityReportArgs }) {
+type WorkflowReportData = FunctionReturnType<
+  typeof api.qualityManagerReports.getWorkflow
+>;
+
+export function WorkflowReport({
+  args,
+  data,
+  embedded = false,
+}: {
+  args: QualityReportArgs;
+  data?: WorkflowReportData;
+  embedded?: boolean;
+}) {
   const { t, i18n } = useTranslation();
-  const report = useQuery(api.qualityManagerReports.getWorkflow, args);
+  const queriedReport = useQuery(
+    api.qualityManagerReports.getWorkflow,
+    data ? "skip" : args
+  );
+  const report = data ?? queriedReport;
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
   if (report === undefined) {
     return <ReportLoading />;
@@ -26,10 +43,12 @@ export function WorkflowReport({ args }: { args: QualityReportArgs }) {
 
   return (
     <div className="space-y-7">
-      <ReportHeading
-        description={t("qc_reports_workflow_description")}
-        title={t("qc_reports_workflow")}
-      />
+      {embedded ? null : (
+        <ReportHeading
+          description={t("qc_reports_workflow_description")}
+          title={t("qc_reports_workflow")}
+        />
+      )}
       <MetricStrip
         items={[
           {

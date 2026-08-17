@@ -127,7 +127,7 @@ async function getReadingFacts(
   if (rows.length > MAXIMUM_REPORT_ROWS) {
     throw new Error("This report range contains too many readings; use a narrower range");
   }
-  return rows.filter(
+  const filteredRows = rows.filter(
     (row) =>
       (!args.productId || row.productId === args.productId) &&
       (!args.productionHallCode || row.productionHallCode === args.productionHallCode) &&
@@ -136,6 +136,13 @@ async function getReadingFacts(
       (args.specificationVersion === undefined ||
         row.specificationVersion === args.specificationVersion),
   );
+  if (!args.status) {
+    return filteredRows;
+  }
+  const recordIds = new Set(
+    (await getInspectionSummaries(ctx, args)).map((summary) => summary.recordId),
+  );
+  return filteredRows.filter((row) => recordIds.has(row.recordId));
 }
 
 async function getReviewCycles(ctx: QueryCtx, args: ReportFilters) {
@@ -152,13 +159,20 @@ async function getReviewCycles(ctx: QueryCtx, args: ReportFilters) {
   if (rows.length > MAXIMUM_REPORT_ROWS) {
     throw new Error("This report range contains too many review cycles; use a narrower range");
   }
-  return rows.filter(
+  const filteredRows = rows.filter(
     (row) =>
       (!args.productId || row.productId === args.productId) &&
       (!args.productionHallCode || row.productionHallCode === args.productionHallCode) &&
       (!args.departmentName || row.departmentName === args.departmentName) &&
       (!args.qcUserId || row.qcUserId === args.qcUserId),
   );
+  if (!args.status && args.specificationVersion === undefined) {
+    return filteredRows;
+  }
+  const recordIds = new Set(
+    (await getInspectionSummaries(ctx, args)).map((summary) => summary.recordId),
+  );
+  return filteredRows.filter((row) => recordIds.has(row.recordId));
 }
 
 function localHourKey(timestamp: number, timezone: string) {
@@ -175,8 +189,313 @@ function localHourKey(timestamp: number, timezone: string) {
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}`;
 }
 
+type ComparisonGroup = "product" | "hall" | "department" | "specification";
+
+function buildOverviewReport(
+  rows: Doc<"qualityInspectionSummaries">[],
+  timezone: string,
+  sourceRows: Doc<"productionLineRecords">[],
+  args: ReportFilters,
+) {
+  const pendingAges = rows
+    .filter((row) => row.status === "pending_production_review" && row.lastSubmittedAt)
+    .map((row) => Math.max(0, args.now - (row.lastSubmittedAt ?? args.now)));
+  const timelineMap = new Map<
+    string,
+    { key: string; draft: number; pending: number; returned: number; approved: number }
+  >();
+  for (const row of rows) {
+    const key = localHourKey(row.inspectionAt, timezone);
+    const bucket = timelineMap.get(key) ?? {
+      key,
+      draft: 0,
+      pending: 0,
+      returned: 0,
+      approved: 0,
+    };
+    if (row.status === "pending_production_review") {
+      bucket.pending += 1;
+    } else {
+      bucket[row.status] += 1;
+    }
+    timelineMap.set(key, bucket);
+  }
+  const exceptions = rows
+    .filter(
+      (row) =>
+        row.outOfLimitReadingCount > 0 ||
+        row.status === "pending_production_review" ||
+        row.status === "returned",
+    )
+    .map((row) => ({
+      recordId: row.recordId,
+      displaySerial: row.displaySerial,
+      productName: row.productName,
+      productionHallCode: row.productionHallCode,
+      departmentName: row.departmentName,
+      printedBatchCode: row.printedBatchCode,
+      qcUserName: row.qcUserName,
+      inspectionAt: row.inspectionAt,
+      status: row.status,
+      outOfLimitReadingCount: row.outOfLimitReadingCount,
+      outOfLimitReadingKeys: row.outOfLimitReadingKeys,
+      pendingAgeMs:
+        row.status === "pending_production_review" && row.lastSubmittedAt
+          ? Math.max(0, args.now - row.lastSubmittedAt)
+          : null,
+    }))
+    .sort(
+      (a, b) =>
+        Number(b.outOfLimitReadingCount > 0) - Number(a.outOfLimitReadingCount > 0) ||
+        (b.pendingAgeMs ?? 0) - (a.pendingAgeMs ?? 0) ||
+        b.inspectionAt - a.inspectionAt,
+    )
+    .slice(0, 100);
+  const summarizedRecordIds = new Set(rows.map((row) => row.recordId));
+  return {
+    totals: {
+      inspections: rows.length,
+      drafts: rows.filter((row) => row.status === "draft").length,
+      pending: rows.filter((row) => row.status === "pending_production_review").length,
+      returned: rows.filter((row) => row.status === "returned").length,
+      approved: rows.filter((row) => row.status === "approved").length,
+      outOfLimitRecords: rows.filter((row) => row.outOfLimitReadingCount > 0).length,
+      medianPendingAgeMs: median(pendingAges),
+      oldestPendingAgeMs: pendingAges.length > 0 ? Math.max(...pendingAges) : null,
+    },
+    timeline: [...timelineMap.values()].sort((a, b) => a.key.localeCompare(b.key)),
+    exceptions,
+    awaitingBackfill: sourceRows.filter(
+      (source) =>
+        source.inspectionAt >= args.from &&
+        source.inspectionAt < args.to &&
+        !summarizedRecordIds.has(source._id),
+    ).length,
+  };
+}
+
+function buildReadinessReport(summaries: Doc<"qualityInspectionSummaries">[], args: ReportFilters) {
+  const rows = summaries.filter((row) => row.status === "draft" || row.status === "returned");
+  const withMissing = rows.map((row) => {
+    const missing: string[] = [];
+    if (!row.hasBatchLabelPhoto) missing.push("batch_label_photo");
+    if (!row.hasConfirmedBatchCode) missing.push("batch_code_confirmation");
+    if (row.completedReadingRequirementCount < row.requiredReadingRequirementCount) {
+      missing.push("required_measurements");
+    }
+    if (row.completedCheckCount < row.requiredCheckCount) missing.push("compliance_checks");
+    return { row, missing, ageMs: Math.max(0, args.now - row.updatedAt) };
+  });
+  const draftAges = rows
+    .filter((row) => row.status === "draft")
+    .map((row) => Math.max(0, args.now - row.createdAt));
+  return {
+    totals: {
+      openRecords: rows.length,
+      drafts: rows.filter((row) => row.status === "draft").length,
+      returned: rows.filter((row) => row.status === "returned").length,
+      medianDraftAgeMs: median(draftAges),
+      oldestStalledAgeMs:
+        withMissing.length > 0 ? Math.max(...withMissing.map((item) => item.ageMs)) : null,
+      photoCoverage: ratio(rows.filter((row) => row.hasBatchLabelPhoto).length, rows.length),
+      codeCoverage: ratio(rows.filter((row) => row.hasConfirmedBatchCode).length, rows.length),
+      readingCoverage: ratio(
+        rows.filter(
+          (row) => row.completedReadingRequirementCount >= row.requiredReadingRequirementCount,
+        ).length,
+        rows.length,
+      ),
+      checkCoverage: ratio(
+        rows.filter((row) => row.completedCheckCount >= row.requiredCheckCount).length,
+        rows.length,
+      ),
+    },
+    missingRequirements: {
+      batchLabelPhoto: rows.filter((row) => !row.hasBatchLabelPhoto).length,
+      batchCodeConfirmation: rows.filter((row) => !row.hasConfirmedBatchCode).length,
+      requiredMeasurements: rows.filter(
+        (row) => row.completedReadingRequirementCount < row.requiredReadingRequirementCount,
+      ).length,
+      complianceChecks: rows.filter((row) => row.completedCheckCount < row.requiredCheckCount)
+        .length,
+    },
+    stalledRecords: withMissing
+      .sort((a, b) => b.ageMs - a.ageMs)
+      .slice(0, 200)
+      .map(({ row, missing, ageMs }) => ({
+        recordId: row.recordId,
+        displaySerial: row.displaySerial,
+        productName: row.productName,
+        productionHallCode: row.productionHallCode,
+        departmentName: row.departmentName,
+        qcUserName: row.qcUserName,
+        status: row.status,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        ageMs,
+        missing,
+      })),
+  };
+}
+
+function buildComparisonReport(
+  summaries: Doc<"qualityInspectionSummaries">[],
+  readings: Doc<"qualityReadingFacts">[],
+  cycles: Doc<"qualityReviewCycles">[],
+  groupBy: ComparisonGroup,
+) {
+  const keyFor = (row: Doc<"qualityInspectionSummaries">) => {
+    if (groupBy === "product") return { key: row.productId, label: row.productName };
+    if (groupBy === "hall") {
+      return { key: row.productionHallCode, label: row.productionHallCode };
+    }
+    if (groupBy === "department") {
+      return { key: row.departmentName, label: row.departmentName };
+    }
+    return { key: String(row.specificationVersion), label: `v${row.specificationVersion}` };
+  };
+  const groups = new Map<string, { label: string; rows: Doc<"qualityInspectionSummaries">[] }>();
+  for (const row of summaries) {
+    const { key, label } = keyFor(row);
+    const current = groups.get(key) ?? { label, rows: [] };
+    current.rows.push(row);
+    groups.set(key, current);
+  }
+  const completedCycles = cycles.filter(
+    (cycle) => cycle.decision && cycle.durationMs !== undefined,
+  );
+  const groupRows = [...groups.entries()].map(([key, group]) => {
+    const recordIds = new Set(group.rows.map((row) => row.recordId));
+    const groupReadings = readings.filter((reading) => recordIds.has(reading.recordId));
+    const groupCycles = completedCycles.filter((cycle) => recordIds.has(cycle.recordId));
+    const reviewedRecords = group.rows.filter((row) => row.firstReviewDecision !== undefined);
+    return {
+      key,
+      label: group.label,
+      inspections: group.rows.length,
+      approved: group.rows.filter((row) => row.status === "approved").length,
+      returned: group.rows.filter((row) => row.status === "returned").length,
+      outOfLimitRecords: group.rows.filter((row) => row.outOfLimitReadingCount > 0).length,
+      outOfLimitRate: ratio(
+        group.rows.filter((row) => row.outOfLimitReadingCount > 0).length,
+        group.rows.filter((row) => row.totalReadingCount > 0).length,
+      ),
+      readingConformanceRate: ratio(
+        groupReadings.filter((reading) => reading.withinLimit).length,
+        groupReadings.length,
+      ),
+      firstPassApprovalRate: ratio(
+        reviewedRecords.filter((row) => row.firstReviewDecision === "approved").length,
+        reviewedRecords.length,
+      ),
+      medianReviewTimeMs: median(
+        groupCycles.flatMap((cycle) => (cycle.durationMs === undefined ? [] : [cycle.durationMs])),
+      ),
+      lowSample: group.rows.length < 10,
+    };
+  });
+  const reviewed = summaries.filter((row) => row.firstReviewDecision !== undefined);
+  return {
+    baseline: {
+      inspections: summaries.length,
+      outOfLimitRate: ratio(
+        summaries.filter((row) => row.outOfLimitReadingCount > 0).length,
+        summaries.filter((row) => row.totalReadingCount > 0).length,
+      ),
+      readingConformanceRate: ratio(
+        readings.filter((reading) => reading.withinLimit).length,
+        readings.length,
+      ),
+      firstPassApprovalRate: ratio(
+        reviewed.filter((row) => row.firstReviewDecision === "approved").length,
+        reviewed.length,
+      ),
+    },
+    groups: groupRows.sort(
+      (a, b) =>
+        Number(a.lowSample) - Number(b.lowSample) ||
+        b.outOfLimitRate - a.outOfLimitRate ||
+        b.inspections - a.inspections,
+    ),
+  };
+}
+
+function buildWorkflowReport(
+  summaries: Doc<"qualityInspectionSummaries">[],
+  cycles: Doc<"qualityReviewCycles">[],
+  args: ReportFilters,
+) {
+  const completed = cycles.filter(
+    (cycle) => cycle.decision !== undefined && cycle.durationMs !== undefined,
+  );
+  const pending = cycles.filter((cycle) => cycle.decision === undefined);
+  const inspectorIds = new Set([
+    ...summaries.map((row) => row.qcUserId),
+    ...cycles.map((cycle) => cycle.qcUserId),
+  ]);
+  const inspectors = [...inspectorIds].map((id) => {
+    const owned = summaries.filter((row) => row.qcUserId === id);
+    const ownedCycles = cycles.filter((cycle) => cycle.qcUserId === id);
+    const reviewed = owned.filter((row) => row.firstReviewDecision !== undefined);
+    const createToSubmit = owned.flatMap((row) =>
+      row.firstSubmittedAt === undefined ? [] : [Math.max(0, row.firstSubmittedAt - row.createdAt)],
+    );
+    return {
+      id,
+      name: owned[0]?.qcUserName ?? ownedCycles[0]?.qcUserName ?? "Unknown",
+      assigned: owned.length,
+      submitted: ownedCycles.length,
+      drafts: owned.filter((row) => row.status === "draft").length,
+      returned: owned.filter((row) => row.status === "returned").length,
+      reviewed: reviewed.length,
+      firstPassApprovals: reviewed.filter((row) => row.firstReviewDecision === "approved").length,
+      firstPassApprovalRate: ratio(
+        reviewed.filter((row) => row.firstReviewDecision === "approved").length,
+        reviewed.length,
+      ),
+      medianCreateToSubmitMs: median(createToSubmit),
+    };
+  });
+  const reviewerMap = new Map<string, typeof completed>();
+  for (const cycle of completed) {
+    if (!cycle.reviewerId) continue;
+    const rows = reviewerMap.get(cycle.reviewerId) ?? [];
+    rows.push(cycle);
+    reviewerMap.set(cycle.reviewerId, rows);
+  }
+  return {
+    totals: {
+      submissions: cycles.length,
+      decisions: completed.length,
+      approvals: completed.filter((cycle) => cycle.decision === "approved").length,
+      returns: completed.filter((cycle) => cycle.decision === "returned").length,
+      pending: pending.length,
+      medianReviewTimeMs: median(completed.map((cycle) => cycle.durationMs ?? 0)),
+      p90ReviewTimeMs: percentile(
+        completed.map((cycle) => cycle.durationMs ?? 0),
+        0.9,
+      ),
+      oldestPendingAgeMs:
+        pending.length > 0
+          ? Math.max(...pending.map((cycle) => Math.max(0, args.now - cycle.submittedAt)))
+          : null,
+    },
+    inspectors: inspectors.sort((a, b) => b.assigned - a.assigned),
+    reviewers: [...reviewerMap.entries()]
+      .map(([id, rows]) => ({
+        id,
+        name: rows[0]?.reviewerName ?? "Unknown",
+        decisions: rows.length,
+        approvals: rows.filter((row) => row.decision === "approved").length,
+        returns: rows.filter((row) => row.decision === "returned").length,
+        medianReviewTimeMs: median(rows.map((row) => row.durationMs ?? 0)),
+      }))
+      .sort((a, b) => b.decisions - a.decisions),
+  };
+}
+
 export const getFilterOptions = query({
-  args: reportFilterValidator.fields,
+  args: reportFilterValidator.pick("organizationId", "from", "to").fields,
   returns: v.object({
     products: v.array(v.object({ id: v.id("projects"), name: v.string() })),
     productionHallCodes: v.array(productionHallCodeValidator),
@@ -186,7 +505,7 @@ export const getFilterOptions = query({
   }),
   handler: async (ctx, args) => {
     await authorize(ctx, args.organizationId);
-    const rows = await getInspectionSummaries(ctx, { ...args });
+    const rows = await getInspectionSummaries(ctx, { ...args, now: args.to });
     return {
       products: [
         ...new Map(
@@ -261,80 +580,7 @@ export const getOverview = query({
         .order("desc")
         .take(250),
     ]);
-    const pendingAges = rows
-      .filter((row) => row.status === "pending_production_review" && row.lastSubmittedAt)
-      .map((row) => Math.max(0, args.now - (row.lastSubmittedAt ?? args.now)));
-    const timelineMap = new Map<
-      string,
-      { key: string; draft: number; pending: number; returned: number; approved: number }
-    >();
-    for (const row of rows) {
-      const key = localHourKey(row.inspectionAt, settings?.timezone ?? "UTC");
-      const bucket = timelineMap.get(key) ?? {
-        key,
-        draft: 0,
-        pending: 0,
-        returned: 0,
-        approved: 0,
-      };
-      if (row.status === "pending_production_review") {
-        bucket.pending += 1;
-      } else {
-        bucket[row.status] += 1;
-      }
-      timelineMap.set(key, bucket);
-    }
-    const exceptions = rows
-      .filter(
-        (row) =>
-          row.outOfLimitReadingCount > 0 ||
-          row.status === "pending_production_review" ||
-          row.status === "returned",
-      )
-      .map((row) => ({
-        recordId: row.recordId,
-        displaySerial: row.displaySerial,
-        productName: row.productName,
-        productionHallCode: row.productionHallCode,
-        departmentName: row.departmentName,
-        printedBatchCode: row.printedBatchCode,
-        qcUserName: row.qcUserName,
-        inspectionAt: row.inspectionAt,
-        status: row.status,
-        outOfLimitReadingCount: row.outOfLimitReadingCount,
-        outOfLimitReadingKeys: row.outOfLimitReadingKeys,
-        pendingAgeMs:
-          row.status === "pending_production_review" && row.lastSubmittedAt
-            ? Math.max(0, args.now - row.lastSubmittedAt)
-            : null,
-      }))
-      .sort(
-        (a, b) =>
-          Number(b.outOfLimitReadingCount > 0) - Number(a.outOfLimitReadingCount > 0) ||
-          (b.pendingAgeMs ?? 0) - (a.pendingAgeMs ?? 0) ||
-          b.inspectionAt - a.inspectionAt,
-      )
-      .slice(0, 100);
-    return {
-      totals: {
-        inspections: rows.length,
-        drafts: rows.filter((row) => row.status === "draft").length,
-        pending: rows.filter((row) => row.status === "pending_production_review").length,
-        returned: rows.filter((row) => row.status === "returned").length,
-        approved: rows.filter((row) => row.status === "approved").length,
-        outOfLimitRecords: rows.filter((row) => row.outOfLimitReadingCount > 0).length,
-        medianPendingAgeMs: median(pendingAges),
-        oldestPendingAgeMs: pendingAges.length > 0 ? Math.max(...pendingAges) : null,
-      },
-      timeline: [...timelineMap.values()].sort((a, b) => a.key.localeCompare(b.key)),
-      exceptions,
-      awaitingBackfill: sourceRows.filter(
-        (source) =>
-          source.inspectionAt >= args.from &&
-          source.inspectionAt < args.to &&
-          !rows.some((row) => row.recordId === source._id),
-      ).length,
-    };
+    return buildOverviewReport(rows, settings?.timezone ?? "UTC", sourceRows, args);
   },
 });
 
@@ -505,69 +751,7 @@ export const getReadiness = query({
   }),
   handler: async (ctx, args) => {
     await authorize(ctx, args.organizationId);
-    const rows = (await getInspectionSummaries(ctx, { ...args })).filter(
-      (row) => row.status === "draft" || row.status === "returned",
-    );
-    const withMissing = rows.map((row) => {
-      const missing: string[] = [];
-      if (!row.hasBatchLabelPhoto) missing.push("batch_label_photo");
-      if (!row.hasConfirmedBatchCode) missing.push("batch_code_confirmation");
-      if (row.completedReadingRequirementCount < row.requiredReadingRequirementCount) {
-        missing.push("required_measurements");
-      }
-      if (row.completedCheckCount < row.requiredCheckCount) missing.push("compliance_checks");
-      return { row, missing, ageMs: Math.max(0, args.now - row.updatedAt) };
-    });
-    const draftAges = rows
-      .filter((row) => row.status === "draft")
-      .map((row) => Math.max(0, args.now - row.createdAt));
-    return {
-      totals: {
-        openRecords: rows.length,
-        drafts: rows.filter((row) => row.status === "draft").length,
-        returned: rows.filter((row) => row.status === "returned").length,
-        medianDraftAgeMs: median(draftAges),
-        oldestStalledAgeMs:
-          withMissing.length > 0 ? Math.max(...withMissing.map((item) => item.ageMs)) : null,
-        photoCoverage: ratio(rows.filter((row) => row.hasBatchLabelPhoto).length, rows.length),
-        codeCoverage: ratio(rows.filter((row) => row.hasConfirmedBatchCode).length, rows.length),
-        readingCoverage: ratio(
-          rows.filter(
-            (row) => row.completedReadingRequirementCount >= row.requiredReadingRequirementCount,
-          ).length,
-          rows.length,
-        ),
-        checkCoverage: ratio(
-          rows.filter((row) => row.completedCheckCount >= row.requiredCheckCount).length,
-          rows.length,
-        ),
-      },
-      missingRequirements: {
-        batchLabelPhoto: rows.filter((row) => !row.hasBatchLabelPhoto).length,
-        batchCodeConfirmation: rows.filter((row) => !row.hasConfirmedBatchCode).length,
-        requiredMeasurements: rows.filter(
-          (row) => row.completedReadingRequirementCount < row.requiredReadingRequirementCount,
-        ).length,
-        complianceChecks: rows.filter((row) => row.completedCheckCount < row.requiredCheckCount)
-          .length,
-      },
-      stalledRecords: withMissing
-        .sort((a, b) => b.ageMs - a.ageMs)
-        .slice(0, 200)
-        .map(({ row, missing, ageMs }) => ({
-          recordId: row.recordId,
-          displaySerial: row.displaySerial,
-          productName: row.productName,
-          productionHallCode: row.productionHallCode,
-          departmentName: row.departmentName,
-          qcUserName: row.qcUserName,
-          status: row.status,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-          ageMs,
-          missing,
-        })),
-    };
+    return buildReadinessReport(await getInspectionSummaries(ctx, { ...args }), args);
   },
 });
 
@@ -610,82 +794,7 @@ export const getComparisons = query({
       getReadingFacts(ctx, { ...args }),
       getReviewCycles(ctx, { ...args }),
     ]);
-    const keyFor = (row: Doc<"qualityInspectionSummaries">) => {
-      if (args.groupBy === "product") return { key: row.productId, label: row.productName };
-      if (args.groupBy === "hall") {
-        return { key: row.productionHallCode, label: row.productionHallCode };
-      }
-      if (args.groupBy === "department") {
-        return { key: row.departmentName, label: row.departmentName };
-      }
-      return { key: String(row.specificationVersion), label: `v${row.specificationVersion}` };
-    };
-    const groups = new Map<string, { label: string; rows: Doc<"qualityInspectionSummaries">[] }>();
-    for (const row of summaries) {
-      const { key, label } = keyFor(row);
-      const current = groups.get(key) ?? { label, rows: [] };
-      current.rows.push(row);
-      groups.set(key, current);
-    }
-    const completedCycles = cycles.filter(
-      (cycle) => cycle.decision && cycle.durationMs !== undefined,
-    );
-    const groupRows = [...groups.entries()].map(([key, group]) => {
-      const recordIds = new Set(group.rows.map((row) => row.recordId));
-      const groupReadings = readings.filter((reading) => recordIds.has(reading.recordId));
-      const groupCycles = completedCycles.filter((cycle) => recordIds.has(cycle.recordId));
-      const reviewedRecords = group.rows.filter((row) => row.firstReviewDecision !== undefined);
-      return {
-        key,
-        label: group.label,
-        inspections: group.rows.length,
-        approved: group.rows.filter((row) => row.status === "approved").length,
-        returned: group.rows.filter((row) => row.status === "returned").length,
-        outOfLimitRecords: group.rows.filter((row) => row.outOfLimitReadingCount > 0).length,
-        outOfLimitRate: ratio(
-          group.rows.filter((row) => row.outOfLimitReadingCount > 0).length,
-          group.rows.filter((row) => row.totalReadingCount > 0).length,
-        ),
-        readingConformanceRate: ratio(
-          groupReadings.filter((reading) => reading.withinLimit).length,
-          groupReadings.length,
-        ),
-        firstPassApprovalRate: ratio(
-          reviewedRecords.filter((row) => row.firstReviewDecision === "approved").length,
-          reviewedRecords.length,
-        ),
-        medianReviewTimeMs: median(
-          groupCycles.flatMap((cycle) =>
-            cycle.durationMs === undefined ? [] : [cycle.durationMs],
-          ),
-        ),
-        lowSample: group.rows.length < 10,
-      };
-    });
-    const reviewed = summaries.filter((row) => row.firstReviewDecision !== undefined);
-    return {
-      baseline: {
-        inspections: summaries.length,
-        outOfLimitRate: ratio(
-          summaries.filter((row) => row.outOfLimitReadingCount > 0).length,
-          summaries.filter((row) => row.totalReadingCount > 0).length,
-        ),
-        readingConformanceRate: ratio(
-          readings.filter((reading) => reading.withinLimit).length,
-          readings.length,
-        ),
-        firstPassApprovalRate: ratio(
-          reviewed.filter((row) => row.firstReviewDecision === "approved").length,
-          reviewed.length,
-        ),
-      },
-      groups: groupRows.sort(
-        (a, b) =>
-          Number(a.lowSample) - Number(b.lowSample) ||
-          b.outOfLimitRate - a.outOfLimitRate ||
-          b.inspections - a.inspections,
-      ),
-    };
+    return buildComparisonReport(summaries, readings, cycles, args.groupBy);
   },
 });
 
@@ -733,74 +842,163 @@ export const getWorkflow = query({
       getInspectionSummaries(ctx, { ...args }),
       getReviewCycles(ctx, { ...args }),
     ]);
-    const completed = cycles.filter(
-      (cycle) => cycle.decision !== undefined && cycle.durationMs !== undefined,
-    );
-    const pending = cycles.filter((cycle) => cycle.decision === undefined);
-    const inspectorIds = new Set([
-      ...summaries.map((row) => row.qcUserId),
-      ...cycles.map((cycle) => cycle.qcUserId),
+    return buildWorkflowReport(summaries, cycles, args);
+  },
+});
+
+export const getManagerReport = query({
+  args: reportFilterValidator.extend({ groupBy: comparisonGroupValidator }).fields,
+  returns: v.object({
+    overview: v.object({
+      totals: v.object({
+        inspections: v.number(),
+        drafts: v.number(),
+        pending: v.number(),
+        returned: v.number(),
+        approved: v.number(),
+        outOfLimitRecords: v.number(),
+        medianPendingAgeMs: nullableNumberValidator,
+        oldestPendingAgeMs: nullableNumberValidator,
+      }),
+      timeline: v.array(
+        v.object({
+          key: v.string(),
+          draft: v.number(),
+          pending: v.number(),
+          returned: v.number(),
+          approved: v.number(),
+        }),
+      ),
+      exceptions: v.array(exceptionRowValidator),
+      awaitingBackfill: v.number(),
+    }),
+    readiness: v.object({
+      totals: v.object({
+        openRecords: v.number(),
+        drafts: v.number(),
+        returned: v.number(),
+        medianDraftAgeMs: nullableNumberValidator,
+        oldestStalledAgeMs: nullableNumberValidator,
+        photoCoverage: v.number(),
+        codeCoverage: v.number(),
+        readingCoverage: v.number(),
+        checkCoverage: v.number(),
+      }),
+      missingRequirements: v.object({
+        batchLabelPhoto: v.number(),
+        batchCodeConfirmation: v.number(),
+        requiredMeasurements: v.number(),
+        complianceChecks: v.number(),
+      }),
+      stalledRecords: v.array(
+        v.object({
+          recordId: v.id("productionLineRecords"),
+          displaySerial: v.string(),
+          productName: v.string(),
+          productionHallCode: productionHallCodeValidator,
+          departmentName: v.string(),
+          qcUserName: v.string(),
+          status: productionLineRecordStatusValidator,
+          createdAt: v.number(),
+          updatedAt: v.number(),
+          ageMs: v.number(),
+          missing: v.array(v.string()),
+        }),
+      ),
+    }),
+    comparison: v.object({
+      baseline: v.object({
+        inspections: v.number(),
+        outOfLimitRate: v.number(),
+        readingConformanceRate: v.number(),
+        firstPassApprovalRate: v.number(),
+      }),
+      groups: v.array(
+        v.object({
+          key: v.string(),
+          label: v.string(),
+          inspections: v.number(),
+          approved: v.number(),
+          returned: v.number(),
+          outOfLimitRecords: v.number(),
+          outOfLimitRate: v.number(),
+          readingConformanceRate: v.number(),
+          firstPassApprovalRate: v.number(),
+          medianReviewTimeMs: nullableNumberValidator,
+          lowSample: v.boolean(),
+        }),
+      ),
+    }),
+    workflow: v.object({
+      totals: v.object({
+        submissions: v.number(),
+        decisions: v.number(),
+        approvals: v.number(),
+        returns: v.number(),
+        pending: v.number(),
+        medianReviewTimeMs: nullableNumberValidator,
+        p90ReviewTimeMs: nullableNumberValidator,
+        oldestPendingAgeMs: nullableNumberValidator,
+      }),
+      inspectors: v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          assigned: v.number(),
+          submitted: v.number(),
+          drafts: v.number(),
+          returned: v.number(),
+          reviewed: v.number(),
+          firstPassApprovals: v.number(),
+          firstPassApprovalRate: v.number(),
+          medianCreateToSubmitMs: nullableNumberValidator,
+        }),
+      ),
+      reviewers: v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          decisions: v.number(),
+          approvals: v.number(),
+          returns: v.number(),
+          medianReviewTimeMs: nullableNumberValidator,
+        }),
+      ),
+    }),
+  }),
+  handler: async (ctx, args) => {
+    await authorize(ctx, args.organizationId);
+    const [summaries, readings, cycles, settings, sourceRows] = await Promise.all([
+      getInspectionSummaries(ctx, { ...args }),
+      getReadingFacts(ctx, { ...args, status: undefined }),
+      getReviewCycles(ctx, {
+        ...args,
+        specificationVersion: undefined,
+        status: undefined,
+      }),
+      ctx.db
+        .query("productionLineSettings")
+        .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
+        .unique(),
+      ctx.db
+        .query("productionLineRecords")
+        .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
+        .order("desc")
+        .take(250),
     ]);
-    const inspectors = [...inspectorIds].map((id) => {
-      const owned = summaries.filter((row) => row.qcUserId === id);
-      const ownedCycles = cycles.filter((cycle) => cycle.qcUserId === id);
-      const reviewed = owned.filter((row) => row.firstReviewDecision !== undefined);
-      const createToSubmit = owned.flatMap((row) =>
-        row.firstSubmittedAt === undefined
-          ? []
-          : [Math.max(0, row.firstSubmittedAt - row.createdAt)],
-      );
-      return {
-        id,
-        name: owned[0]?.qcUserName ?? ownedCycles[0]?.qcUserName ?? "Unknown",
-        assigned: owned.length,
-        submitted: ownedCycles.length,
-        drafts: owned.filter((row) => row.status === "draft").length,
-        returned: owned.filter((row) => row.status === "returned").length,
-        reviewed: reviewed.length,
-        firstPassApprovals: reviewed.filter((row) => row.firstReviewDecision === "approved").length,
-        firstPassApprovalRate: ratio(
-          reviewed.filter((row) => row.firstReviewDecision === "approved").length,
-          reviewed.length,
-        ),
-        medianCreateToSubmitMs: median(createToSubmit),
-      };
-    });
-    const reviewerMap = new Map<string, typeof completed>();
-    for (const cycle of completed) {
-      if (!cycle.reviewerId) continue;
-      const rows = reviewerMap.get(cycle.reviewerId) ?? [];
-      rows.push(cycle);
-      reviewerMap.set(cycle.reviewerId, rows);
-    }
+    const selectedRecordIds = new Set(summaries.map((summary) => summary.recordId));
+    const scopedReadings = args.status
+      ? readings.filter((reading) => selectedRecordIds.has(reading.recordId))
+      : readings;
+    const scopedCycles =
+      args.status || args.specificationVersion !== undefined
+        ? cycles.filter((cycle) => selectedRecordIds.has(cycle.recordId))
+        : cycles;
     return {
-      totals: {
-        submissions: cycles.length,
-        decisions: completed.length,
-        approvals: completed.filter((cycle) => cycle.decision === "approved").length,
-        returns: completed.filter((cycle) => cycle.decision === "returned").length,
-        pending: pending.length,
-        medianReviewTimeMs: median(completed.map((cycle) => cycle.durationMs ?? 0)),
-        p90ReviewTimeMs: percentile(
-          completed.map((cycle) => cycle.durationMs ?? 0),
-          0.9,
-        ),
-        oldestPendingAgeMs:
-          pending.length > 0
-            ? Math.max(...pending.map((cycle) => Math.max(0, args.now - cycle.submittedAt)))
-            : null,
-      },
-      inspectors: inspectors.sort((a, b) => b.assigned - a.assigned),
-      reviewers: [...reviewerMap.entries()]
-        .map(([id, rows]) => ({
-          id,
-          name: rows[0]?.reviewerName ?? "Unknown",
-          decisions: rows.length,
-          approvals: rows.filter((row) => row.decision === "approved").length,
-          returns: rows.filter((row) => row.decision === "returned").length,
-          medianReviewTimeMs: median(rows.map((row) => row.durationMs ?? 0)),
-        }))
-        .sort((a, b) => b.decisions - a.decisions),
+      overview: buildOverviewReport(summaries, settings?.timezone ?? "UTC", sourceRows, args),
+      readiness: buildReadinessReport(summaries, args),
+      comparison: buildComparisonReport(summaries, scopedReadings, scopedCycles, args.groupBy),
+      workflow: buildWorkflowReport(summaries, scopedCycles, args),
     };
   },
 });

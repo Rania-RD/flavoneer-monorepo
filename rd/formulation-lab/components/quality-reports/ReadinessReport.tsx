@@ -1,5 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
@@ -23,9 +24,25 @@ const requirementTranslationKeys: Record<string, string> = {
   compliance_checks: "qc_reports_compliance_confirmations",
 };
 
-export function ReadinessReport({ args }: { args: QualityReportArgs }) {
+type ReadinessReportData = FunctionReturnType<
+  typeof api.qualityManagerReports.getReadiness
+>;
+
+export function ReadinessReport({
+  args,
+  data,
+  embedded = false,
+}: {
+  args: QualityReportArgs;
+  data?: ReadinessReportData;
+  embedded?: boolean;
+}) {
   const { t, i18n } = useTranslation();
-  const report = useQuery(api.qualityManagerReports.getReadiness, args);
+  const queriedReport = useQuery(
+    api.qualityManagerReports.getReadiness,
+    data ? "skip" : args
+  );
+  const report = data ?? queriedReport;
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
   if (report === undefined) {
     return <ReportLoading />;
@@ -33,31 +50,35 @@ export function ReadinessReport({ args }: { args: QualityReportArgs }) {
 
   return (
     <div className="space-y-7">
-      <ReportHeading
-        description={t("qc_reports_readiness_description")}
-        title={t("qc_reports_readiness")}
-      />
-      <MetricStrip
-        items={[
-          {
-            label: t("qc_reports_open_records"),
-            value: report.totals.openRecords,
-          },
-          {
-            label: t("qc_reports_photo_coverage"),
-            value: formatPercent(report.totals.photoCoverage, locale),
-          },
-          {
-            label: t("qc_reports_measurement_coverage"),
-            value: formatPercent(report.totals.readingCoverage, locale),
-          },
-          {
-            label: t("qc_reports_oldest_stalled_hhmm"),
-            value: formatDuration(report.totals.oldestStalledAgeMs, locale),
-            tone: report.totals.oldestStalledAgeMs ? "warning" : "default",
-          },
-        ]}
-      />
+      {embedded ? null : (
+        <>
+          <ReportHeading
+            description={t("qc_reports_readiness_description")}
+            title={t("qc_reports_readiness")}
+          />
+          <MetricStrip
+            items={[
+              {
+                label: t("qc_reports_open_records"),
+                value: report.totals.openRecords,
+              },
+              {
+                label: t("qc_reports_photo_coverage"),
+                value: formatPercent(report.totals.photoCoverage, locale),
+              },
+              {
+                label: t("qc_reports_measurement_coverage"),
+                value: formatPercent(report.totals.readingCoverage, locale),
+              },
+              {
+                label: t("qc_reports_oldest_stalled_hhmm"),
+                value: formatDuration(report.totals.oldestStalledAgeMs, locale),
+                tone: report.totals.oldestStalledAgeMs ? "warning" : "default",
+              },
+            ]}
+          />
+        </>
+      )}
 
       <div className="grid gap-px overflow-hidden rounded-[2.5rem] bg-[#1c4a3c]/10 sm:grid-cols-2 lg:grid-cols-4 dark:bg-[#d2f2d4]/10">
         {[

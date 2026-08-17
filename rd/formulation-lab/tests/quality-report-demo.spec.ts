@@ -50,6 +50,16 @@ async function selectOrCreateDemoOrganization(page: Page) {
   await expect(page).toHaveURL(ROOT_URL_PATTERN, { timeout: 20_000 });
 }
 
+async function ensureEnglishInterface(page: Page) {
+  await page.goto("/settings?scope=user&tab=localization");
+  const languageSelect = page.locator(
+    'select:has(option[value="en"]):has(option[value="ar"])'
+  );
+  await expect(languageSelect).toBeVisible({ timeout: 20_000 });
+  await languageSelect.selectOption("en");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+}
+
 function seedDemoData() {
   const output = execFileSync(
     "pnpm",
@@ -84,6 +94,7 @@ test("seeds and displays representative hourly QC manager reports", async ({
   test.setTimeout(180_000);
   await signIn(page);
   await selectOrCreateDemoOrganization(page);
+  await ensureEnglishInterface(page);
 
   const seeded = seedDemoData();
   expect(seeded).toMatchObject({
@@ -105,6 +116,10 @@ test("seeds and displays representative hourly QC manager reports", async ({
       "Operating requirement: complete one QC inspection every hour for each active production line."
     )
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "QC management summary", level: 2 })
+  ).toBeVisible();
+  await expect(page.getByText("Evidence completeness")).toBeVisible();
   for (const productName of ["Twin", "Rocky", "Daymeh", "Icy Lemon"]) {
     await expect(
       page
@@ -114,23 +129,41 @@ test("seeds and displays representative hourly QC manager reports", async ({
         .first()
     ).toBeVisible();
   }
+  for (const [productName, productionLine] of [
+    ["Twin", "BTC1"],
+    ["Icy Lemon", "Rollo A"],
+    ["Daymeh", "BTC2"],
+    ["Rocky", "BTC2"],
+  ]) {
+    await expect(
+      page
+        .getByRole("row")
+        .filter({ hasText: productName })
+        .filter({ hasText: productionLine })
+        .first()
+    ).toBeVisible({ timeout: 15_000 });
+  }
 
-  await page.getByRole("button", { name: "Measurements" }).click();
+  await page
+    .getByRole("link", { name: "Process quality", exact: true })
+    .click();
   const parameterSelect = page.getByLabel("Parameter");
   await expect(parameterSelect).toHaveValue("pour_weight");
   await expect(parameterSelect.locator('option[value=""]')).toHaveCount(0);
+  const qualitySection = page.locator("#quality");
   await expect(
-    page.getByRole("figure", { name: "chart, 1 series" })
+    qualitySection.getByRole("figure", { name: "chart, 1 series" })
   ).toBeVisible();
   await expect(
-    page.getByRole("grid").getByText("103.6 g").first()
+    qualitySection.getByRole("grid").getByText("103.6 g").first()
   ).toBeVisible();
   await expect(page.getByText("103.600000", { exact: false })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Workflow & team" }).click();
+  await page.getByRole("link", { name: "Workflow", exact: true }).click();
   for (const inspectorName of ["Ameer", "Qusai", "Shaima"]) {
     await expect(
       page
+        .locator("#workflow")
         .getByRole("grid")
         .first()
         .getByText(inspectorName, { exact: true })
@@ -138,8 +171,34 @@ test("seeds and displays representative hourly QC manager reports", async ({
     ).toBeVisible();
   }
 
-  await page.goto("/quality/reports?tab=laboratory");
-  await expect(page.getByText("Recent batch-linked lab reports")).toBeVisible();
-  await expect(page.getByText("QC-DEMO-001", { exact: true })).toBeVisible();
-  await expect(page.getByText("QC-DEMO-006", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Laboratory", exact: true }).click();
+  const laboratorySection = page.locator("#laboratory");
+  await expect(
+    laboratorySection.getByText("Recent batch-linked lab reports")
+  ).toBeVisible();
+  await expect(
+    laboratorySection.getByText("QC-DEMO-001", { exact: true })
+  ).toBeVisible();
+  await expect(
+    laboratorySection.getByText("QC-DEMO-006", { exact: true })
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Open audit register" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Batch traceability and audit register",
+      level: 2,
+    })
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Management report" }).click();
+  await page.setViewportSize({ height: 844, width: 390 });
+  await expect(
+    page.getByRole("heading", { name: "QC management summary", level: 2 })
+  ).toBeVisible();
+  const viewport = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
 });

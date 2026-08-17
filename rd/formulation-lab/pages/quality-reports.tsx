@@ -2,47 +2,21 @@ import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Activity,
-  BarChart3,
-  ClipboardCheck,
-  FileSearch,
-  FlaskConical,
-  Gauge,
-  Loader2,
-  ShieldCheck,
-  UsersRound,
-} from "lucide-react";
+import { Activity, FileSearch, Loader2, ShieldCheck } from "lucide-react";
 import { DateTime } from "luxon";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { AuditReport } from "../components/quality-reports/AuditReport";
-import { ComparisonReport } from "../components/quality-reports/ComparisonReport";
-import { LaboratoryReport } from "../components/quality-reports/LaboratoryReport";
-import { MeasurementReport } from "../components/quality-reports/MeasurementReport";
-import { OverviewReport } from "../components/quality-reports/OverviewReport";
-import { ReadinessReport } from "../components/quality-reports/ReadinessReport";
+import { ManagerReport } from "../components/quality-reports/ManagerReport";
 import {
   type QualityFilterState,
   ReportFilters,
 } from "../components/quality-reports/ReportFilters";
 import type { QualityReportArgs } from "../components/quality-reports/types";
-import { WorkflowReport } from "../components/quality-reports/WorkflowReport";
 import { useOrganization } from "../context/OrganizationContext";
 import { usePermissions } from "../hooks/usePermissions";
 
-const tabs = [
-  { key: "overview", icon: Activity },
-  { key: "measurements", icon: Gauge },
-  { key: "readiness", icon: ClipboardCheck },
-  { key: "comparison", icon: BarChart3 },
-  { key: "workflow", icon: UsersRound },
-  { key: "audit", icon: FileSearch },
-  { key: "laboratory", icon: FlaskConical },
-] as const;
-
-type TabKey = (typeof tabs)[number]["key"];
 const MAXIMUM_RANGE_MS = 90 * 24 * 60 * 60 * 1000;
 
 function defaultDates(zone = "UTC") {
@@ -66,9 +40,10 @@ export default function QualityReports() {
   const [now, setNow] = useState(Date.now());
   const zone = settings?.timezone ?? "UTC";
   const defaults = defaultDates(zone);
-  const activeTab = tabs.some((tab) => tab.key === searchParams.get("tab"))
-    ? (searchParams.get("tab") as TabKey)
-    : "overview";
+  const activeView =
+    searchParams.get("view") === "audit" || searchParams.get("tab") === "audit"
+      ? "audit"
+      : "report";
   const filters: QualityFilterState = {
     from: searchParams.get("from") ?? defaults.from,
     to: searchParams.get("to") ?? defaults.to,
@@ -141,7 +116,6 @@ export default function QualityReports() {
           organizationId: reportArgs.organizationId,
           from: reportArgs.from,
           to: reportArgs.to,
-          now: reportArgs.now,
         }
       : "skip"
   );
@@ -168,15 +142,17 @@ export default function QualityReports() {
     setSearchParams(params, { replace: true });
   };
 
-  const setTab = (tab: TabKey) => {
+  const setView = (view: "report" | "audit") => {
     const params = new URLSearchParams(searchParams);
-    params.set("tab", tab);
+    params.set("view", view);
+    params.delete("tab");
     setSearchParams(params, { replace: true });
+    window.scrollTo({ behavior: "smooth", top: 0 });
   };
 
   const resetFilters = () => {
     const params = new URLSearchParams();
-    params.set("tab", activeTab);
+    params.set("view", activeView);
     const nextDefaults = defaultDates(zone);
     params.set("from", nextDefaults.from);
     params.set("to", nextDefaults.to);
@@ -202,91 +178,90 @@ export default function QualityReports() {
     );
   }
 
-  const activeReport = (() => {
-    if (!reportArgs) {
-      return (
-        <p className="py-16 text-center text-[#a43434] text-sm dark:text-[#ffb8ad]">
-          {t("qc_reports_invalid_date_range")}
-        </p>
-      );
-    }
-    switch (activeTab) {
-      case "overview":
-        return <OverviewReport args={reportArgs} />;
-      case "measurements":
-        return <MeasurementReport args={reportArgs} />;
-      case "readiness":
-        return <ReadinessReport args={reportArgs} />;
-      case "comparison":
-        return <ComparisonReport args={reportArgs} />;
-      case "workflow":
-        return <WorkflowReport args={reportArgs} />;
-      case "audit":
-        return <AuditReport args={reportArgs} />;
-      case "laboratory":
-        return <LaboratoryReport args={reportArgs} />;
-      default:
-        return <OverviewReport args={reportArgs} />;
-    }
-  })();
+  let reportContent: ReactNode;
+  if (!reportArgs) {
+    reportContent = (
+      <p className="rounded-[1.75rem] border border-[#a43434]/15 bg-[#fff0ed] py-16 text-center text-[#a43434] text-sm dark:bg-[#6d302d] dark:text-[#ffd4cc]">
+        {t("qc_reports_invalid_date_range")}
+      </p>
+    );
+  } else if (activeView === "audit") {
+    reportContent = (
+      <div className="rounded-[1.75rem] border border-[#1c4a3c]/10 bg-[#fffdf4] p-5 sm:p-7 lg:p-9 dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
+        <AuditReport args={reportArgs} />
+      </div>
+    );
+  } else {
+    reportContent = (
+      <ManagerReport args={reportArgs} onOpenAudit={() => setView("audit")} />
+    );
+  }
 
   return (
-    <div className="space-y-7">
-      <header className="flex flex-col gap-5 px-1 pt-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="mb-2 font-bold text-[#527568] text-xs uppercase tracking-[0.18em] dark:text-[#a9cbbb]">
-            {t("quality_control")}
-          </p>
-          <h1 className="font-bold font-display text-3xl text-[#173e33] tracking-tight sm:text-4xl dark:text-[#f7f4df]">
-            {t("qc_reports_title")}
-          </h1>
-          <p className="mt-2 max-w-3xl text-[#527568] text-sm dark:text-[#a9cbbb]">
-            {t("qc_reports_subtitle")}
-          </p>
-        </div>
-        <div className="text-[#527568] text-xs dark:text-[#a9cbbb]">
-          {t("qc_reports_timezone", { timezone: zone })}
+    <div className="space-y-6 pb-10">
+      <header className="rounded-[1.75rem] bg-[#173e33] px-5 py-5 text-[#f7f4df] shadow-[0_18px_55px_rgba(16,47,39,0.14)] sm:px-7 sm:py-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 font-bold text-[#a9cbbb] text-xs uppercase tracking-[0.18em]">
+              {t("quality_control")}
+            </p>
+            <h1 className="font-bold font-display text-3xl tracking-tight sm:text-4xl">
+              {t("qc_reports_title")}
+            </h1>
+            <p className="mt-2 max-w-3xl text-[#c9ddcf] text-sm leading-6">
+              {t("qc_reports_subtitle")}
+            </p>
+          </div>
+          <div className="flex flex-col items-start gap-3 sm:items-end">
+            <div className="text-[#a9cbbb] text-xs">
+              {t("qc_reports_timezone", { timezone: zone })}
+            </div>
+            <div className="flex rounded-xl bg-white/8 p-1">
+              {(
+                [
+                  ["report", Activity, "qc_reports_view_report"],
+                  ["audit", FileSearch, "qc_reports_view_audit"],
+                ] as const
+              ).map(([view, Icon, label]) => (
+                <button
+                  className={`flex min-h-10 items-center gap-2 rounded-lg px-3 font-bold text-xs transition-colors ${
+                    activeView === view
+                      ? "bg-[#f7f4df] text-[#173e33]"
+                      : "text-[#c9ddcf] hover:bg-white/10 hover:text-white"
+                  }`}
+                  key={view}
+                  onClick={() => setView(view)}
+                  type="button"
+                >
+                  <Icon aria-hidden="true" size={15} />
+                  {t(label)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 
-      <div className="overflow-hidden rounded-[2.5rem] border border-[#1c4a3c]/10 bg-[#fffdf4] shadow-[0_18px_55px_rgba(16,47,39,0.08)] dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
-        <div className="flex gap-1 overflow-x-auto border-[#1c4a3c]/10 border-b px-3 pt-3 dark:border-[#d2f2d4]/10">
-          {tabs.map((tab) => (
-            <button
-              className={`flex min-h-12 shrink-0 items-center gap-2 rounded-t-2xl px-4 font-bold text-xs transition-colors ${
-                activeTab === tab.key
-                  ? "bg-[#eef8eb] text-[#173e33] dark:bg-[#285b4d] dark:text-[#f7f4df]"
-                  : "text-[#527568] hover:bg-[#eef8eb]/55 dark:text-[#a9cbbb] dark:hover:bg-[#285b4d]/45"
-              }`}
-              key={tab.key}
-              onClick={() => setTab(tab.key)}
-              type="button"
-            >
-              <tab.icon aria-hidden="true" size={16} />
-              {t(`qc_reports_tab_${tab.key}`)}
-            </button>
-          ))}
-        </div>
+      <div className="overflow-hidden rounded-[1.75rem] border border-[#1c4a3c]/10 bg-[#fffdf4] dark:border-[#d2f2d4]/10 dark:bg-[#173e33]">
         <ReportFilters
           filters={filters}
           onChange={setFilters}
           onReset={resetFilters}
           options={filterOptions}
         />
-        <div className="p-5 sm:p-7 lg:p-9">
-          <AnimatePresence mode="wait">
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              initial={{ opacity: 0, y: 8 }}
-              key={activeTab}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-            >
-              {activeReport}
-            </motion.div>
-          </AnimatePresence>
-        </div>
       </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          initial={{ opacity: 0, y: 8 }}
+          key={activeView}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+        >
+          {reportContent}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

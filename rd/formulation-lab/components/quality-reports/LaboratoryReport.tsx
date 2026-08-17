@@ -1,5 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
@@ -18,9 +19,25 @@ import {
 } from "./shared";
 import type { QualityReportArgs } from "./types";
 
-export function LaboratoryReport({ args }: { args: QualityReportArgs }) {
+export type LaboratoryReportData = FunctionReturnType<
+  typeof api.qualityManagerReports.getLaboratoryQuality
+>;
+
+export function LaboratoryReport({
+  args,
+  data,
+  embedded = false,
+}: {
+  args: QualityReportArgs;
+  data?: LaboratoryReportData;
+  embedded?: boolean;
+}) {
   const { t, i18n } = useTranslation();
-  const report = useQuery(api.qualityManagerReports.getLaboratoryQuality, args);
+  const queriedReport = useQuery(
+    api.qualityManagerReports.getLaboratoryQuality,
+    data ? "skip" : args
+  );
+  const report = data ?? queriedReport;
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
   if (report === undefined) {
     return <ReportLoading />;
@@ -28,28 +45,36 @@ export function LaboratoryReport({ args }: { args: QualityReportArgs }) {
 
   return (
     <div className="space-y-8">
-      <ReportHeading
-        description={t("qc_reports_laboratory_description")}
-        title={t("qc_reports_laboratory")}
-      />
-      <MetricStrip
-        items={[
-          { label: t("qc_reports_lab_reports"), value: report.totals.reports },
-          {
-            label: t("qc_reports_test_conformance"),
-            value: formatPercent(report.totals.testConformanceRate, locale),
-          },
-          {
-            label: t("qc_reports_sample_coverage"),
-            value: formatPercent(report.totals.sampleCoverageRate, locale),
-          },
-          {
-            label: t("qc_reports_unreported_samples"),
-            value: report.totals.unreportedSamples,
-            tone: report.totals.unreportedSamples > 0 ? "warning" : "default",
-          },
-        ]}
-      />
+      {embedded ? null : (
+        <>
+          <ReportHeading
+            description={t("qc_reports_laboratory_description")}
+            title={t("qc_reports_laboratory")}
+          />
+          <MetricStrip
+            items={[
+              {
+                label: t("qc_reports_lab_reports"),
+                value: report.totals.reports,
+              },
+              {
+                label: t("qc_reports_test_conformance"),
+                value: formatPercent(report.totals.testConformanceRate, locale),
+              },
+              {
+                label: t("qc_reports_sample_coverage"),
+                value: formatPercent(report.totals.sampleCoverageRate, locale),
+              },
+              {
+                label: t("qc_reports_unreported_samples"),
+                value: report.totals.unreportedSamples,
+                tone:
+                  report.totals.unreportedSamples > 0 ? "warning" : "default",
+              },
+            ]}
+          />
+        </>
+      )}
 
       <div className="grid gap-px overflow-hidden rounded-[2.5rem] bg-[#1c4a3c]/10 sm:grid-cols-3 dark:bg-[#d2f2d4]/10">
         {[

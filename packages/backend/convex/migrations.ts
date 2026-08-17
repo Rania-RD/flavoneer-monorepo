@@ -4,6 +4,13 @@ import { components } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { createAuth } from "./auth";
+import { normalizeProductionNumber } from "./labSampleHelpers";
+import {
+  syncInspectionSummary,
+  syncLabReportSummary,
+  syncReadingFact,
+  syncReviewCyclesFromEvents,
+} from "./qualityReportingFacts";
 import { DEFAULT_SYSTEM_ROLES } from "./roles";
 
 export const migrations = new Migrations<DataModel>(components.migrations);
@@ -555,6 +562,173 @@ export const verifyDomainTenancy = internalQuery({
       ingredientIds: ingredients.map((item) => item._id),
       inventoryItemIds: inventoryItems.map((item) => item._id),
       labReportIds: labReports.map((item) => item._id),
+    };
+  },
+});
+
+/** Build one manager-reporting summary for every historical production record. */
+export const backfillQualityInspectionSummaries = migrations.define({
+  table: "productionLineRecords",
+  batchSize: 10,
+  migrateOne: async (ctx, record) => {
+    await syncInspectionSummary(ctx, record._id);
+  },
+});
+
+/** Copy historical readings into the bounded, date-indexed reporting fact table. */
+export const backfillQualityReadingFacts = migrations.define({
+  table: "productionLineReadings",
+  batchSize: 25,
+  migrateOne: async (ctx, reading) => {
+    await syncReadingFact(ctx, reading._id);
+  },
+});
+
+/** Reconstruct submission/review cycles from the immutable production event log. */
+export const backfillQualityReviewCycles = migrations.define({
+  table: "productionLineRecords",
+  batchSize: 10,
+  migrateOne: async (ctx, record) => {
+    await syncReviewCyclesFromEvents(ctx, record);
+  },
+});
+
+/**
+ * Link legacy organization reports to a unique final-product sample with the
+ * same project and normalized batch number. Ambiguous rows are recorded for
+ * manual resolution instead of being guessed.
+ */
+export const backfillLabReportSampleLinks = migrations.define({
+  table: "labReports",
+  batchSize: 10,
+  migrateOne: async (ctx, report) => {
+    if (!(report.organizationId && !report.sampleSubmissionId)) {
+      return;
+    }
+    const organizationId = report.organizationId;
+
+    const existingIssue = await ctx.db
+      .query("qualityReportingMigrationIssues")
+      .withIndex("by_labReportId", (q) => q.eq("labReportId", report._id))
+      .unique();
+    let normalizedBatch: string;
+    try {
+      normalizedBatch = normalizeProductionNumber(report.lotNumber);
+    } catch {
+      const fields = {
+        organizationId,
+        labReportId: report._id,
+        lotNumber: report.lotNumber,
+        reason: "invalid_batch" as const,
+        candidateSampleIds: [],
+        createdAt: Date.now(),
+      };
+      if (existingIssue) {
+        await ctx.db.patch(existingIssue._id, fields);
+      } else {
+        await ctx.db.insert("qualityReportingMigrationIssues", fields);
+      }
+      return;
+    }
+
+    const candidates = (
+      await ctx.db
+        .query("labSampleSubmissions")
+        .withIndex("by_organizationId_and_productionNumber", (q) =>
+          q.eq("organizationId", organizationId).eq("productionNumber", normalizedBatch),
+        )
+        .take(101)
+    ).filter(
+      (sample) => sample.sampleType === "final_product" && sample.projectId === report.projectId,
+    );
+
+    if (candidates.length === 1) {
+      await ctx.db.patch(report._id, {
+        sampleSubmissionId: candidates[0]._id,
+        lotNumber: normalizedBatch,
+      });
+      if (existingIssue) {
+        await ctx.db.delete(existingIssue._id);
+      }
+      return;
+    }
+
+    const fields = {
+      organizationId,
+      labReportId: report._id,
+      lotNumber: report.lotNumber,
+      reason: candidates.length === 0 ? ("no_match" as const) : ("ambiguous" as const),
+      candidateSampleIds: candidates.slice(0, 100).map((sample) => sample._id),
+      createdAt: Date.now(),
+    };
+    if (existingIssue) {
+      await ctx.db.patch(existingIssue._id, fields);
+    } else {
+      await ctx.db.insert("qualityReportingMigrationIssues", fields);
+    }
+  },
+});
+
+/** Build lab conformance and batch-link facts after the link migration. */
+export const backfillQualityLabReportSummaries = migrations.define({
+  table: "labReports",
+  batchSize: 20,
+  migrateOne: async (ctx, report) => {
+    await syncLabReportSummary(ctx, report._id);
+  },
+});
+
+/** Return a bounded sample of reporting source rows that still lack facts. */
+export const verifyQualityReportingBackfill = internalQuery({
+  args: {},
+  returns: v.object({
+    missingInspectionRecordIds: v.array(v.id("productionLineRecords")),
+    missingReadingIds: v.array(v.id("productionLineReadings")),
+    missingLabReportIds: v.array(v.id("labReports")),
+    unresolvedLabReportIds: v.array(v.id("labReports")),
+  }),
+  handler: async (ctx) => {
+    const missingInspectionRecordIds: Id<"productionLineRecords">[] = [];
+    for (const record of await ctx.db.query("productionLineRecords").take(100)) {
+      const summary = await ctx.db
+        .query("qualityInspectionSummaries")
+        .withIndex("by_recordId", (q) => q.eq("recordId", record._id))
+        .unique();
+      if (!summary) {
+        missingInspectionRecordIds.push(record._id);
+      }
+    }
+
+    const missingReadingIds: Id<"productionLineReadings">[] = [];
+    for (const reading of await ctx.db.query("productionLineReadings").take(100)) {
+      const fact = await ctx.db
+        .query("qualityReadingFacts")
+        .withIndex("by_sourceReadingId", (q) => q.eq("sourceReadingId", reading._id))
+        .unique();
+      if (!fact) {
+        missingReadingIds.push(reading._id);
+      }
+    }
+
+    const missingLabReportIds: Id<"labReports">[] = [];
+    for (const report of await ctx.db.query("labReports").take(100)) {
+      if (!report.organizationId) {
+        continue;
+      }
+      const summary = await ctx.db
+        .query("qualityLabReportSummaries")
+        .withIndex("by_labReportId", (q) => q.eq("labReportId", report._id))
+        .unique();
+      if (!summary) {
+        missingLabReportIds.push(report._id);
+      }
+    }
+    const issues = await ctx.db.query("qualityReportingMigrationIssues").take(100);
+    return {
+      missingInspectionRecordIds,
+      missingReadingIds,
+      missingLabReportIds,
+      unresolvedLabReportIds: issues.map((issue) => issue.labReportId),
     };
   },
 });

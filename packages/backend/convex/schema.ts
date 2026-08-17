@@ -685,6 +685,187 @@ export default defineSchema({
     .index("by_recordId", ["recordId"])
     .index("by_organizationId_and_createdAt", ["organizationId", "createdAt"]),
 
+  // Manager-facing QC reporting facts. These rows mirror operational records
+  // so bounded date-range reports do not need N+1 reads across child tables.
+  qualityInspectionSummaries: defineTable({
+    organizationId: v.id("organizations"),
+    recordId: v.id("productionLineRecords"),
+    inspectionAt: v.number(),
+    dayKey: v.string(),
+    productId: v.id("projects"),
+    productName: v.string(),
+    productionHallCode: productionHallCodeValidator,
+    departmentName: v.string(),
+    specificationId: v.id("productionLineSpecifications"),
+    specificationVersion: v.number(),
+    qcUserId: v.string(),
+    qcUserName: v.string(),
+    editableOwnerUserId: v.string(),
+    displaySerial: v.string(),
+    printedBatchCode: v.optional(v.string()),
+    status: productionLineRecordStatusValidator,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    firstSubmittedAt: v.optional(v.number()),
+    lastSubmittedAt: v.optional(v.number()),
+    lastReviewedAt: v.optional(v.number()),
+    firstReviewDecision: v.optional(v.union(v.literal("approved"), v.literal("returned"))),
+    returnedCount: v.number(),
+    totalReadingCount: v.number(),
+    withinLimitReadingCount: v.number(),
+    outOfLimitReadingCount: v.number(),
+    outOfLimitReadingKeys: v.array(productionLineReadingKeyValidator),
+    hasBatchLabelPhoto: v.boolean(),
+    hasConfirmedBatchCode: v.boolean(),
+    completedCheckCount: v.number(),
+    requiredCheckCount: v.number(),
+    completedReadingRequirementCount: v.number(),
+    requiredReadingRequirementCount: v.number(),
+  })
+    .index("by_recordId", ["recordId"])
+    .index("by_organizationId_and_inspectionAt", ["organizationId", "inspectionAt"])
+    .index("by_organizationId_and_status_and_inspectionAt", [
+      "organizationId",
+      "status",
+      "inspectionAt",
+    ])
+    .index("by_organizationId_and_productId_and_inspectionAt", [
+      "organizationId",
+      "productId",
+      "inspectionAt",
+    ])
+    .index("by_organizationId_and_qcUserId_and_inspectionAt", [
+      "organizationId",
+      "qcUserId",
+      "inspectionAt",
+    ]),
+
+  qualityReadingFacts: defineTable({
+    organizationId: v.id("organizations"),
+    sourceReadingId: v.id("productionLineReadings"),
+    recordId: v.id("productionLineRecords"),
+    inspectionAt: v.number(),
+    productId: v.id("projects"),
+    productName: v.string(),
+    productionHallCode: productionHallCodeValidator,
+    departmentName: v.string(),
+    specificationVersion: v.number(),
+    qcUserId: v.string(),
+    qcUserName: v.string(),
+    displaySerial: v.string(),
+    printedBatchCode: v.optional(v.string()),
+    readingKey: productionLineReadingKeyValidator,
+    readingIndex: v.number(),
+    value: v.number(),
+    unit: productionLineMeasurementUnitValidator,
+    minimum: v.number(),
+    maximum: v.number(),
+    target: v.optional(v.number()),
+    withinLimit: v.boolean(),
+  })
+    .index("by_sourceReadingId", ["sourceReadingId"])
+    .index("by_recordId", ["recordId"])
+    .index("by_organizationId_and_inspectionAt", ["organizationId", "inspectionAt"])
+    .index("by_organizationId_and_readingKey_and_inspectionAt", [
+      "organizationId",
+      "readingKey",
+      "inspectionAt",
+    ]),
+
+  qualityReviewCycles: defineTable({
+    organizationId: v.id("organizations"),
+    recordId: v.id("productionLineRecords"),
+    cycleNumber: v.number(),
+    qcUserId: v.string(),
+    qcUserName: v.string(),
+    productId: v.id("projects"),
+    productName: v.string(),
+    productionHallCode: productionHallCodeValidator,
+    departmentName: v.string(),
+    displaySerial: v.string(),
+    submittedAt: v.number(),
+    reviewerId: v.optional(v.string()),
+    reviewerName: v.optional(v.string()),
+    reviewedAt: v.optional(v.number()),
+    decision: v.optional(v.union(v.literal("approved"), v.literal("returned"))),
+    durationMs: v.optional(v.number()),
+    hasNote: v.optional(v.boolean()),
+  })
+    .index("by_recordId_and_cycleNumber", ["recordId", "cycleNumber"])
+    .index("by_organizationId_and_submittedAt", ["organizationId", "submittedAt"])
+    .index("by_organizationId_and_qcUserId_and_submittedAt", [
+      "organizationId",
+      "qcUserId",
+      "submittedAt",
+    ])
+    .index("by_organizationId_and_reviewerId_and_reviewedAt", [
+      "organizationId",
+      "reviewerId",
+      "reviewedAt",
+    ]),
+
+  qualityLabReportSummaries: defineTable({
+    organizationId: v.id("organizations"),
+    labReportId: v.id("labReports"),
+    sampleSubmissionId: v.optional(v.id("labSampleSubmissions")),
+    sampleNumber: v.optional(v.string()),
+    sampleLocation: v.optional(v.string()),
+    sampledAt: v.optional(v.number()),
+    projectId: v.id("projects"),
+    productName: v.string(),
+    lotNumber: v.string(),
+    reportId: v.string(),
+    reportStatus: labReportStatusValidator,
+    leadChemist: v.string(),
+    sampleType: v.string(),
+    reportCreatedAt: v.number(),
+    signedAt: v.optional(v.number()),
+    totalTestCount: v.number(),
+    inSpecTestCount: v.number(),
+    outOfSpecTestCount: v.number(),
+    outOfSpecParameters: v.array(v.string()),
+  })
+    .index("by_labReportId", ["labReportId"])
+    .index("by_sampleSubmissionId", ["sampleSubmissionId"])
+    .index("by_organizationId_and_reportCreatedAt", ["organizationId", "reportCreatedAt"])
+    .index("by_organizationId_and_sampledAt", ["organizationId", "sampledAt"])
+    .index("by_organizationId_and_projectId_and_reportCreatedAt", [
+      "organizationId",
+      "projectId",
+      "reportCreatedAt",
+    ]),
+
+  qualityLabTestFacts: defineTable({
+    organizationId: v.id("organizations"),
+    sourceTestResultId: v.id("labTestResults"),
+    labReportId: v.id("labReports"),
+    sampleSubmissionId: v.optional(v.id("labSampleSubmissions")),
+    reportCreatedAt: v.number(),
+    projectId: v.id("projects"),
+    productName: v.string(),
+    lotNumber: v.string(),
+    parameter: v.string(),
+    actualValue: v.number(),
+    minimum: v.number(),
+    maximum: v.number(),
+    unit: v.string(),
+    inSpec: v.boolean(),
+  })
+    .index("by_sourceTestResultId", ["sourceTestResultId"])
+    .index("by_labReportId", ["labReportId"])
+    .index("by_organizationId_and_reportCreatedAt", ["organizationId", "reportCreatedAt"]),
+
+  qualityReportingMigrationIssues: defineTable({
+    organizationId: v.id("organizations"),
+    labReportId: v.id("labReports"),
+    lotNumber: v.string(),
+    reason: v.union(v.literal("invalid_batch"), v.literal("no_match"), v.literal("ambiguous")),
+    candidateSampleIds: v.array(v.id("labSampleSubmissions")),
+    createdAt: v.number(),
+  })
+    .index("by_labReportId", ["labReportId"])
+    .index("by_organizationId_and_reason", ["organizationId", "reason"]),
+
   projectVersions: defineTable({
     projectId: v.id("projects"),
     version: v.string(),

@@ -108,6 +108,30 @@ async function seedWorkspace(backend: ReturnType<typeof createTestBackend>) {
 }
 
 describe("lab sample submissions", () => {
+  test("loads reference data only for the selected sample type", async () => {
+    const backend = createTestBackend();
+    const { client, ingredientId, organizationId, projectId } = await seedWorkspace(backend);
+
+    await expect(
+      client.query(api.labSamples.getReferenceData, {
+        organizationId,
+        sampleType: "raw_material",
+      }),
+    ).resolves.toEqual({
+      rawMaterials: [{ id: ingredientId, name: "Cocoa butter" }],
+      finishedProducts: [],
+    });
+    await expect(
+      client.query(api.labSamples.getReferenceData, {
+        organizationId,
+        sampleType: "final_product",
+      }),
+    ).resolves.toEqual({
+      rawMaterials: [],
+      finishedProducts: [{ id: projectId, name: "Dark chocolate" }],
+    });
+  });
+
   test("allocates separate yearly sequences and stores traceability data", async () => {
     const backend = createTestBackend();
     const { client, ingredientId, organizationId, projectId } = await seedWorkspace(backend);

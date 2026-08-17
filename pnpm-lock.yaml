@@ -143,6 +143,12 @@ importers:
       '@types/luxon':
         specifier: ^3.7.1
         version: 3.7.1
+      ag-charts-community:
+        specifier: 14.1.0
+        version: 14.1.0
+      ag-charts-react:
+        specifier: 14.1.0
+        version: 14.1.0(react@18.3.1)
       ag-grid-community:
         specifier: 36.1.0
         version: 36.1.0
@@ -4794,6 +4800,20 @@ packages:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
+
+  ag-charts-community@14.1.0:
+    resolution: {integrity: sha512-J5S2Gag/nEJy7WzX/esAguqkuNHBYB3nly4vItMM/DggnnOYCopjLBEtkXXZZt1If1IQstnU4sKaUTmteAoj1Q==}
+
+  ag-charts-core@14.1.0:
+    resolution: {integrity: sha512-lkjDoudYOiUncHQ0FaDv8CaQ+TsOK16vUZnkJNPIaC92opRP95pryDbWQ6VDWzCLCqsJbAGPx2xlsTor+WgA2A==}
+
+  ag-charts-locale@14.1.0:
+    resolution: {integrity: sha512-5UFnL7JoOj491LtqZmlCdbxDvXqE12qz664CZFBK4Tzlh8n48pN9yWfVqhlmkJWEC/wugG3Yf6/i3WGxL5qljw==}
+
+  ag-charts-react@14.1.0:
+    resolution: {integrity: sha512-gEyLSBsCzBNcJRJ2Ux9k6oVryOLUhJ16u0HH27K+9Y0Xtt2AypvZ3cQIKpJIywsffbrYZwcYAbEbIoKR2qWJow==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
 
   ag-charts-types@14.1.0:
     resolution: {integrity: sha512-mmzkng88c0l+Z9PvCMowMilhVeNgDU/iMuMemcOQD4BG/qO4vbkxWvyQO0iqju8Dx7YOY81PNzC/RmElQNiVkA==}
@@ -14985,6 +15005,23 @@ snapshots:
       acorn: 8.16.0
 
   acorn@8.16.0: {}
+
+  ag-charts-community@14.1.0:
+    dependencies:
+      ag-charts-core: 14.1.0
+      ag-charts-locale: 14.1.0
+      ag-charts-types: 14.1.0
+
+  ag-charts-core@14.1.0:
+    dependencies:
+      ag-charts-types: 14.1.0
+
+  ag-charts-locale@14.1.0: {}
+
+  ag-charts-react@14.1.0(react@18.3.1):
+    dependencies:
+      ag-charts-community: 14.1.0
+      react: 18.3.1
 
   ag-charts-types@14.1.0: {}
 

@@ -148,9 +148,32 @@
 }
 
 .lab-data-grid--production .ag-header-cell-label,
-.lab-data-grid--stock .ag-header-cell-label {
+.lab-data-grid--stock .ag-header-cell-label,
+.lab-data-grid--report .ag-header-cell-label {
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.lab-data-grid--report {
+  --ag-cell-horizontal-padding: 20px;
+}
+
+.lab-data-grid--report .ag-header {
+  background-color: rgba(238, 248, 235, 0.7);
+}
+
+.dark .lab-data-grid--report .ag-header {
+  background-color: rgba(40, 91, 77, 0.45);
+}
+
+.lab-data-grid--report .ag-header-cell {
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.lab-data-grid--report .ag-cell {
+  align-items: flex-start;
+  line-height: 1.25rem;
 }
 
 .lab-data-grid--production .ag-header-cell,

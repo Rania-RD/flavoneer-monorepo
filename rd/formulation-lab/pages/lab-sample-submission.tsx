@@ -56,7 +56,11 @@ export default function LabSampleSubmission() {
   const referenceData = useQuery(
     api.labSamples.getReferenceData,
     activeOrganizationId && canCreate
-      ? { language, organizationId: activeOrganizationId }
+      ? {
+          language,
+          organizationId: activeOrganizationId,
+          sampleType,
+        }
       : "skip"
   );
   const recentSamples = useQuery(

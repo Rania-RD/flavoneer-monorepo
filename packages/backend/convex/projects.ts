@@ -110,14 +110,21 @@ function withProjectLocalizedFields<T extends Record<string, unknown>>(data: T) 
   return output as T;
 }
 
-async function enrichProject(ctx: QueryCtx, project: Doc<"projects">, language?: string) {
+async function enrichProject(
+  ctx: QueryCtx,
+  project: Doc<"projects">,
+  language?: string,
+  includeFormulation = true,
+) {
   const photoUrl = project.photoStorageId ? await ctx.storage.getUrl(project.photoStorageId) : null;
 
   // Join ingredients
-  const allIngredients = await ctx.db
-    .query("projectIngredients")
-    .withIndex("by_projectId", (q) => q.eq("projectId", project._id))
-    .collect();
+  const allIngredients = includeFormulation
+    ? await ctx.db
+        .query("projectIngredients")
+        .withIndex("by_projectId", (q) => q.eq("projectId", project._id))
+        .collect()
+    : [];
 
   const ingredients = allIngredients
     .filter((i) => i.versionTag === "current")
@@ -132,24 +139,13 @@ async function enrichProject(ctx: QueryCtx, project: Doc<"projects">, language?:
       costPerKg: i.costPerKg,
     }));
 
-  const previousVersionIngredients = allIngredients
-    .filter((i) => i.versionTag === "previous")
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((i) => ({
-      id: i.ingredientKey,
-      name: selectLocalizedString(i.name, i.nameI18n, language),
-      nameI18n: makeLocalizedString(i.name, i.nameI18n),
-      weight: i.weight,
-      unit: i.unit,
-      percentage: i.percentage,
-      costPerKg: i.costPerKg,
-    }));
-
   // Join phases + steps
-  const phaseDocs = await ctx.db
-    .query("recipePhases")
-    .withIndex("by_projectId", (q) => q.eq("projectId", project._id))
-    .collect();
+  const phaseDocs = includeFormulation
+    ? await ctx.db
+        .query("recipePhases")
+        .withIndex("by_projectId", (q) => q.eq("projectId", project._id))
+        .collect()
+    : [];
 
   const phases = await Promise.all(
     phaseDocs
@@ -557,6 +553,7 @@ export const list = query({
 
 export const listByOrganization = query({
   args: {
+    includeFormulation: v.optional(v.boolean()),
     paginationOpts: paginationOptsValidator,
     organizationId: v.optional(v.id("organizations")),
     status: v.optional(projectStatusValidator),
@@ -606,7 +603,11 @@ export const listByOrganization = query({
         .withIndex("by_userId", (q) => q.eq("userId", authUser._id))
         .paginate(args.paginationOpts);
     }
-    const page = await Promise.all(result.page.map((p) => enrichProject(ctx, p, args.language)));
+    const page = await Promise.all(
+      result.page.map((project) =>
+        enrichProject(ctx, project, args.language, args.includeFormulation ?? true),
+      ),
+    );
     return { ...result, page };
   },
 });

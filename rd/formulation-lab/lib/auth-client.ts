@@ -8,6 +8,9 @@ import { publicConfig } from "./runtime-config";
 
 export const authClient = createAuthClient({
   baseURL: publicConfig.convexSiteUrl,
+  sessionOptions: {
+    refetchOnWindowFocus: false,
+  },
   plugins: [
     organizationClient(),
     convexClient(),

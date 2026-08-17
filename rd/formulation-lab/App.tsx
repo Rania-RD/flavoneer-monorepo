@@ -21,6 +21,7 @@ import Login from "./pages/login";
 import Materials from "./pages/materials";
 import ProductionLineRecordDetail from "./pages/production-line-record-detail";
 import ProductionLineRecords from "./pages/production-line-records";
+import QualityReports from "./pages/quality-reports";
 import ReportDetails from "./pages/report-details";
 import Reports from "./pages/reports";
 import Runs from "./pages/runs";
@@ -31,12 +32,25 @@ import Signup from "./pages/signup";
 import SuperAdmin from "./pages/super-admin";
 
 // Component to handle user syncing
-const UserSync: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const UserSync: React.FC<{
+  authUserId: string;
+  children: React.ReactNode;
+}> = ({ authUserId, children }) => {
   const syncCurrentUser = useMutation(api.users.syncCurrentUser);
 
   React.useEffect(() => {
-    syncCurrentUser().catch(console.error);
-  }, [syncCurrentUser]);
+    const storageKey = `flavoneer-user-synced:${authUserId}`;
+    if (sessionStorage.getItem(storageKey)) {
+      return;
+    }
+    sessionStorage.setItem(storageKey, "pending");
+    syncCurrentUser()
+      .then(() => sessionStorage.setItem(storageKey, "done"))
+      .catch((error) => {
+        sessionStorage.removeItem(storageKey);
+        console.error(error);
+      });
+  }, [authUserId, syncCurrentUser]);
 
   return <>{children}</>;
 };
@@ -73,7 +87,7 @@ const App: React.FC = () => {
     );
   const appElement = session ? (
     <OrganizationProvider>
-      <UserSync>
+      <UserSync authUserId={session.user.id}>
         <AppToaster />
         <DashboardLayout>
           <Routes>
@@ -99,6 +113,7 @@ const App: React.FC = () => {
               element={<ProductionLineRecordDetail />}
               path="/quality/production-line-records/:id"
             />
+            <Route element={<QualityReports />} path="/quality/reports" />
             <Route element={<Navigate replace to="/" />} path="/schedule" />
             <Route
               element={<Navigate replace to="/settings?scope=organization" />}

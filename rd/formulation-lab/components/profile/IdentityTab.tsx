@@ -1,10 +1,8 @@
-import type { Id } from "@flavoneer/backend/data-model";
-import { ChevronDown, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { UserProfile } from "../../context/SettingsContext";
-import { useOrganization } from "../../context/OrganizationContext";
 import UserAvatar from "../user-avatar";
 
 interface IdentityTabProps {
@@ -17,12 +15,10 @@ const IdentityTab: React.FC<IdentityTabProps> = ({
   updateProfile,
 }) => {
   const { t } = useTranslation();
-  const { organizations, activeOrganizationId, setActiveOrganizationId } = useOrganization();
 
   // Local state for editing
   const [name, setName] = useState(profile.name || "");
   const [title, setTitle] = useState(profile.title || "");
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState(activeOrganizationId ?? "");
 
   // Sync if profile changes externally (e.g. initial load)
   useEffect(() => {
@@ -30,22 +26,12 @@ const IdentityTab: React.FC<IdentityTabProps> = ({
     setTitle(profile.title || "");
   }, [profile.name, profile.title]);
 
-  // Sync organization selection with context
-  useEffect(() => {
-    setSelectedOrganizationId(activeOrganizationId ?? "");
-  }, [activeOrganizationId]);
-
   const handleSave = () => {
     updateProfile({ name, title });
-    if (selectedOrganizationId && selectedOrganizationId !== (activeOrganizationId ?? "")) {
-      setActiveOrganizationId(selectedOrganizationId as Id<"organizations">);
-    }
   };
 
   const hasChanges =
-    name !== (profile.name || "") ||
-    title !== (profile.title || "") ||
-    selectedOrganizationId !== (activeOrganizationId ?? "");
+    name !== (profile.name || "") || title !== (profile.title || "");
   return (
     <div className="fade-in slide-in-from-end-4 animate-in space-y-6 duration-300">
       <div className="mb-8 flex items-center gap-6">
@@ -94,33 +80,6 @@ const IdentityTab: React.FC<IdentityTabProps> = ({
             onChange={(e) => setTitle(e.target.value)}
             value={title}
           />
-        </div>
-        <div>
-          <label
-            className="mb-2 block font-bold text-gray-500 text-xs uppercase dark:text-slate-400"
-            htmlFor="profile-organization"
-          >
-            {t("organizationName")}
-          </label>
-          <div className="relative">
-            <select
-              className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pe-10 text-gray-900 outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              id="profile-organization"
-              onChange={(e) => setSelectedOrganizationId(e.target.value)}
-              value={selectedOrganizationId}
-            >
-              <option value="">{t("no_organization_selected")}</option>
-              {organizations.map((organization) => (
-                <option key={organization._id} value={organization._id}>
-                  {organization.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"
-              size={16}
-            />
-          </div>
         </div>
         <div>
           <label

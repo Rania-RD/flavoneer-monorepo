@@ -77,6 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     mobileName: t("qc_reports_mobile"),
                     name: t("qc_reports_title"),
                     icon: BarChart3,
+                    mirrorInRTL: true,
                     path: "/quality/reports",
                   },
                 ]

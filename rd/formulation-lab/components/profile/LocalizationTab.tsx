@@ -15,26 +15,21 @@ const LocalizationTab: React.FC<LocalizationTabProps> = ({
   return (
     <div className="fade-in slide-in-from-end-4 animate-in space-y-6 duration-300">
       <div>
-        <label className="mb-2 block font-bold text-gray-500 text-xs uppercase dark:text-slate-400">
+        <label
+          className="mb-2 block font-bold text-gray-500 text-xs uppercase dark:text-slate-400"
+          htmlFor="profile-interface-language"
+        >
           {t("interface_language")}
         </label>
         <select
           className="w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-brand-focus/50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          id="profile-interface-language"
           onChange={(e) => setLanguage(e.target.value as "en" | "ar")}
           value={currentLanguage}
         >
           <option value="en">{t("english_us")}</option>
           <option value="ar">{t("arabic")}</option>
         </select>
-      </div>
-
-      <div className="border-gray-100 border-t pt-4 dark:border-slate-700">
-        <h4 className="mb-2 font-bold text-gray-900 dark:text-white">
-          {t("regional_formats")}
-        </h4>
-        <p className="mb-4 text-gray-500 text-sm dark:text-slate-400">
-          {t("regional_formats_auto")}
-        </p>
       </div>
     </div>
   );

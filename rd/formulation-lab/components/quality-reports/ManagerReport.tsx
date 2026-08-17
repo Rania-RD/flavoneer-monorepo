@@ -47,12 +47,37 @@ function printPdf(blob: Blob) {
     const url = URL.createObjectURL(blob);
     const frame = document.createElement("iframe");
     let cleanupTimer: number | undefined;
+    let loadFallbackTimer: number | undefined;
+    let printStarted = false;
     const cleanup = () => {
       if (cleanupTimer !== undefined) {
         window.clearTimeout(cleanupTimer);
       }
+      if (loadFallbackTimer !== undefined) {
+        window.clearTimeout(loadFallbackTimer);
+      }
       frame.remove();
       URL.revokeObjectURL(url);
+    };
+    const startPrint = () => {
+      if (printStarted) {
+        return;
+      }
+      const printWindow = frame.contentWindow;
+      if (!printWindow) {
+        cleanup();
+        reject(new Error("PDF print frame did not load"));
+        return;
+      }
+      printStarted = true;
+      if (loadFallbackTimer !== undefined) {
+        window.clearTimeout(loadFallbackTimer);
+      }
+      printWindow.onafterprint = cleanup;
+      cleanupTimer = window.setTimeout(cleanup, 60_000);
+      printWindow.focus();
+      printWindow.print();
+      resolve();
     };
 
     frame.setAttribute("aria-hidden", "true");
@@ -64,25 +89,14 @@ function printPdf(blob: Blob) {
     frame.style.border = "0";
     frame.src = url;
     frame.onload = () => {
-      const printWindow = frame.contentWindow;
-      if (!printWindow) {
-        cleanup();
-        reject(new Error("PDF print frame did not load"));
-        return;
-      }
-      printWindow.onafterprint = cleanup;
-      window.setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-        resolve();
-      }, 150);
-      cleanupTimer = window.setTimeout(cleanup, 60_000);
+      window.setTimeout(startPrint, 150);
     };
     frame.onerror = () => {
       cleanup();
       reject(new Error("PDF print frame failed to load"));
     };
     document.body.appendChild(frame);
+    loadFallbackTimer = window.setTimeout(startPrint, 2000);
   });
 }
 

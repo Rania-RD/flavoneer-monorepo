@@ -1,5 +1,12 @@
 import type { api } from "@flavoneer/backend/api";
-import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import {
+  Document,
+  Font,
+  Page,
+  StyleSheet,
+  Text,
+  View,
+} from "@react-pdf/renderer";
 import type { FunctionReturnType } from "convex/server";
 import i18n from "../../lib/i18n";
 
@@ -21,6 +28,22 @@ const colors = {
   white: "#ffffff",
 };
 
+const ARABIC_FONT_FAMILY = "Noto Sans Arabic";
+
+Font.register({
+  family: ARABIC_FONT_FAMILY,
+  fonts: [
+    {
+      fontWeight: 400,
+      src: "/fonts/NotoSansArabic-Regular.ttf",
+    },
+    {
+      fontWeight: 700,
+      src: "/fonts/NotoSansArabic-Bold.ttf",
+    },
+  ],
+});
+
 const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.white,
@@ -30,6 +53,12 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
     paddingHorizontal: 34,
     paddingTop: 34,
+  },
+  ltrPage: { direction: "ltr", textAlign: "left" },
+  rtlPage: {
+    direction: "rtl",
+    fontFamily: ARABIC_FONT_FAMILY,
+    textAlign: "right",
   },
   titleBlock: {
     backgroundColor: colors.forest,
@@ -55,6 +84,9 @@ const styles = StyleSheet.create({
     gap: 18,
     marginTop: 11,
   },
+  rtlRow: { flexDirection: "row-reverse" },
+  rtlText: { direction: "rtl", lineHeight: 1.45, textAlign: "right" },
+  rtlLabel: { letterSpacing: 0 },
   metaItem: { flexGrow: 1 },
   metaLabel: {
     color: "#a9cbbb",
@@ -109,6 +141,14 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   tableHeader: { backgroundColor: colors.mint },
+  rtlTableRow: {
+    display: "flex",
+    flexDirection: "row-reverse",
+  },
+  tableCell: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
   tableLine: {
     paddingHorizontal: 6,
     paddingVertical: 4,
@@ -151,14 +191,24 @@ function dateTime(value: number, locale: string) {
 
 function MetricGrid({
   items,
+  rtl,
 }: {
   items: { label: string; value: string | number }[];
+  rtl: boolean;
 }) {
   return (
-    <View style={styles.metricGrid}>
+    <View style={rtl ? [styles.metricGrid, styles.rtlRow] : styles.metricGrid}>
       {items.map((item) => (
         <View key={item.label} style={styles.metric}>
-          <Text style={styles.metricLabel}>{item.label}</Text>
+          <Text
+            style={
+              rtl
+                ? [styles.metricLabel, styles.rtlLabel, styles.rtlText]
+                : styles.metricLabel
+            }
+          >
+            {item.label}
+          </Text>
           <Text style={styles.metricValue}>{item.value}</Text>
         </View>
       ))}
@@ -170,41 +220,86 @@ function ReportTable({
   emptyLabel,
   headers,
   rows,
+  rtl,
+  widths,
 }: {
   emptyLabel: string;
   headers: string[];
   rows: { dangerColumns?: number[]; values: (string | number)[] }[];
+  rtl: boolean;
+  widths: number[];
 }) {
   if (rows.length === 0) {
     return <Text style={styles.empty}>{emptyLabel}</Text>;
   }
   return (
     <View style={styles.table}>
-      <View style={[styles.tableRow, styles.tableHeader]} wrap={false}>
-        <Text style={[styles.tableLine, styles.tableHeaderText]}>
-          {headers.join("  |  ")}
-        </Text>
+      <View
+        style={
+          rtl
+            ? [styles.tableRow, styles.tableHeader, styles.rtlTableRow]
+            : [styles.tableRow, styles.tableHeader]
+        }
+        wrap={false}
+      >
+        {rtl ? (
+          headers.map((header, columnIndex) => (
+            <Text
+              key={`${header}-${columnIndex.toString()}`}
+              style={[
+                styles.tableCell,
+                styles.tableHeaderText,
+                styles.rtlText,
+                { width: `${widths[columnIndex]}%` },
+              ]}
+            >
+              {header}
+            </Text>
+          ))
+        ) : (
+          <Text style={[styles.tableLine, styles.tableHeaderText]}>
+            {headers.join("  |  ")}
+          </Text>
+        )}
       </View>
       {rows.map((row, rowIndex) => (
         <View
           key={`${row.values.join("-")}-${rowIndex.toString()}`}
-          style={styles.tableRow}
+          style={rtl ? [styles.tableRow, styles.rtlTableRow] : styles.tableRow}
           wrap={false}
         >
-          <Text style={styles.tableLine}>
-            {row.values.map((value, columnIndex) => (
+          {rtl ? (
+            row.values.map((value, columnIndex) => (
               <Text
                 key={`${columnIndex.toString()}-${String(value)}`}
-                style={
-                  row.dangerColumns?.includes(columnIndex)
-                    ? styles.danger
-                    : undefined
-                }
+                style={[
+                  styles.tableCell,
+                  styles.rtlText,
+                  { width: `${widths[columnIndex]}%` },
+                  ...(row.dangerColumns?.includes(columnIndex)
+                    ? [styles.danger]
+                    : []),
+                ]}
               >
-                {`${columnIndex === 0 ? "" : "  |  "}${String(value)}`}
+                {value}
               </Text>
-            ))}
-          </Text>
+            ))
+          ) : (
+            <Text style={styles.tableLine}>
+              {row.values.map((value, columnIndex) => (
+                <Text
+                  key={`${columnIndex.toString()}-${String(value)}`}
+                  style={
+                    row.dangerColumns?.includes(columnIndex)
+                      ? styles.danger
+                      : undefined
+                  }
+                >
+                  {`${columnIndex === 0 ? "" : "  |  "}${String(value)}`}
+                </Text>
+              ))}
+            </Text>
+          )}
         </View>
       ))}
     </View>
@@ -244,7 +339,7 @@ export function QualityManagerReportPdf({
             4,
           locale
         );
-  const pageTextAlign = language === "ar" ? "right" : "left";
+  const rtl = language === "ar";
   const period = `${dateTime(from, locale)} - ${dateTime(to - 1, locale)}`;
   const missingRequirementLabels: Record<string, string> = {
     batch_code_confirmation: t("qc_reports_batch_code_confirmation"),
@@ -259,20 +354,40 @@ export function QualityManagerReportPdf({
       subject={t("qc_reports_management_summary")}
       title={t("qc_reports_title")}
     >
-      <Page size="A4" style={[styles.page, { textAlign: pageTextAlign }]} wrap>
+      <Page
+        size="A4"
+        style={[styles.page, rtl ? styles.rtlPage : styles.ltrPage]}
+        wrap
+      >
         <View style={styles.titleBlock}>
-          <Text style={styles.eyebrow}>{t("quality_control")}</Text>
+          <Text
+            style={rtl ? [styles.eyebrow, styles.rtlLabel] : styles.eyebrow}
+          >
+            {t("quality_control")}
+          </Text>
           <Text style={styles.title}>{t("qc_reports_title")}</Text>
           <Text style={styles.subtitle}>{t("qc_reports_subtitle")}</Text>
-          <View style={styles.metaRow}>
+          <View style={rtl ? [styles.metaRow, styles.rtlRow] : styles.metaRow}>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>
+              <Text
+                style={
+                  rtl
+                    ? [styles.metaLabel, styles.rtlLabel, styles.rtlText]
+                    : styles.metaLabel
+                }
+              >
                 {t("qc_reports_reporting_period")}
               </Text>
               <Text style={styles.metaValue}>{period}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>
+              <Text
+                style={
+                  rtl
+                    ? [styles.metaLabel, styles.rtlLabel, styles.rtlText]
+                    : styles.metaLabel
+                }
+              >
                 {t("qc_reports_generated_at")}
               </Text>
               <Text style={styles.metaValue}>
@@ -280,7 +395,15 @@ export function QualityManagerReportPdf({
               </Text>
             </View>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>{t("timezone")}</Text>
+              <Text
+                style={
+                  rtl
+                    ? [styles.metaLabel, styles.rtlLabel, styles.rtlText]
+                    : styles.metaLabel
+                }
+              >
+                {t("timezone")}
+              </Text>
               <Text style={styles.metaValue}>{timezone}</Text>
             </View>
           </View>
@@ -331,6 +454,7 @@ export function QualityManagerReportPdf({
                 value: laboratory.totals.unreportedSamples,
               },
             ]}
+            rtl={rtl}
           />
         </View>
 
@@ -357,6 +481,7 @@ export function QualityManagerReportPdf({
                 value: report.overview.totals.returned,
               },
             ]}
+            rtl={rtl}
           />
         </View>
 
@@ -381,6 +506,8 @@ export function QualityManagerReportPdf({
                 t(`production_status_${item.status}`),
               ],
             }))}
+            rtl={rtl}
+            widths={[24, 34, 20, 22]}
           />
         </View>
 
@@ -426,6 +553,7 @@ export function QualityManagerReportPdf({
                 value: report.readiness.missingRequirements.complianceChecks,
               },
             ]}
+            rtl={rtl}
           />
         </View>
 
@@ -451,6 +579,8 @@ export function QualityManagerReportPdf({
                 duration(item.ageMs, locale),
               ],
             }))}
+            rtl={rtl}
+            widths={[22, 28, 32, 18]}
           />
         </View>
 
@@ -475,6 +605,8 @@ export function QualityManagerReportPdf({
                 percent(group.firstPassApprovalRate, locale),
               ],
             }))}
+            rtl={rtl}
+            widths={[28, 14, 18, 20, 20]}
           />
         </View>
 
@@ -500,6 +632,8 @@ export function QualityManagerReportPdf({
                 percent(item.firstPassApprovalRate, locale),
               ],
             }))}
+            rtl={rtl}
+            widths={[32, 17, 17, 17, 17]}
           />
         </View>
 
@@ -525,6 +659,8 @@ export function QualityManagerReportPdf({
                 duration(item.medianReviewTimeMs, locale),
               ],
             }))}
+            rtl={rtl}
+            widths={[32, 17, 17, 17, 17]}
           />
         </View>
 
@@ -549,6 +685,7 @@ export function QualityManagerReportPdf({
                 value: laboratory.totals.unreportedSamples,
               },
             ]}
+            rtl={rtl}
           />
         </View>
 
@@ -575,6 +712,8 @@ export function QualityManagerReportPdf({
                 item.outOfSpecTestCount,
               ],
             }))}
+            rtl={rtl}
+            widths={[22, 28, 20, 16, 14]}
           />
         </View>
       </Page>

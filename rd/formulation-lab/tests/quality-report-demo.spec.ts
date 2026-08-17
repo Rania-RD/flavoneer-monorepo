@@ -9,6 +9,8 @@ const BACKEND_DIRECTORY = fileURLToPath(
 const ROOT_URL_PATTERN = /\/$/u;
 const QC_REPORT_FILENAME_PATTERN =
   /^qc-management-report-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}\.pdf$/u;
+const ARABIC_QC_REPORT_FILENAME_PATTERN =
+  /^تقرير-إدارة-الجودة-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}\.pdf$/u;
 const ACTION_QUEUE_FIRST_PAGE_PATTERN = /^Page 1 of \d+$/u;
 const ACTION_QUEUE_SECOND_PAGE_PATTERN = /^Page 2 of \d+$/u;
 const REMOVED_REPORT_COPY = [
@@ -108,7 +110,7 @@ function seedDemoData() {
 test("seeds and displays representative hourly QC manager reports", async ({
   page,
 }, testInfo) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   await signIn(page);
   await selectOrCreateDemoOrganization(page);
   await ensureEnglishInterface(page);
@@ -270,4 +272,40 @@ test("seeds and displays representative hourly QC manager reports", async ({
     scrollWidth: document.documentElement.scrollWidth,
   }));
   expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+
+  await page.goto("/settings?scope=user&tab=localization");
+  const languageSelect = page.locator(
+    'select:has(option[value="en"]):has(option[value="ar"])'
+  );
+  await languageSelect.selectOption("ar");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+  await page.waitForTimeout(1000);
+  await page.goto("/quality/reports");
+  await expect(
+    page.getByRole("heading", { name: "تقارير ضبط الجودة", level: 1 })
+  ).toBeVisible({ timeout: 30_000 });
+  const arabicExportButton = page.getByRole("button", {
+    name: "تصدير PDF",
+  });
+  await expect(arabicExportButton).toBeEnabled({ timeout: 30_000 });
+  const arabicDownloadPromise = page.waitForEvent("download");
+  await arabicExportButton.click();
+  const arabicDownload = await arabicDownloadPromise;
+  expect(arabicDownload.suggestedFilename()).toMatch(
+    ARABIC_QC_REPORT_FILENAME_PATTERN
+  );
+  const arabicPdfPath = testInfo.outputPath(
+    `arabic-${arabicDownload.suggestedFilename()}`
+  );
+  await arabicDownload.saveAs(arabicPdfPath);
+  await testInfo.attach("Arabic QC management report PDF", {
+    contentType: "application/pdf",
+    path: arabicPdfPath,
+  });
+  const arabicPrintButton = page.getByRole("button", {
+    name: "طباعة التقرير",
+  });
+  await arabicPrintButton.click();
+  await expect(arabicPrintButton).toBeDisabled();
+  await expect(arabicPrintButton).toBeEnabled({ timeout: 30_000 });
 });

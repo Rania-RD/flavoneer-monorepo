@@ -32,6 +32,7 @@ export default function ProductionLineSettingsSection() {
     api.projects.listByOrganization,
     activeOrganizationId
       ? {
+          includeFormulation: false,
           organizationId: activeOrganizationId,
           language: i18n.language === "ar" ? "ar" : "en",
         }

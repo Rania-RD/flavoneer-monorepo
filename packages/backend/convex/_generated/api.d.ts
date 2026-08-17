@@ -17,6 +17,7 @@ import type * as comments from "../comments.js";
 import type * as components_ from "../components.js";
 import type * as e2eQualityReportSeed from "../e2eQualityReportSeed.js";
 import type * as e2eQualityReportSeedAction from "../e2eQualityReportSeedAction.js";
+import type * as e2eQualityReportSeedSchedule from "../e2eQualityReportSeedSchedule.js";
 import type * as equipment from "../equipment.js";
 import type * as featureFlags from "../featureFlags.js";
 import type * as files from "../files.js";
@@ -83,6 +84,7 @@ declare const fullApi: ApiFromModules<{
   components: typeof components_;
   e2eQualityReportSeed: typeof e2eQualityReportSeed;
   e2eQualityReportSeedAction: typeof e2eQualityReportSeedAction;
+  e2eQualityReportSeedSchedule: typeof e2eQualityReportSeedSchedule;
   equipment: typeof equipment;
   featureFlags: typeof featureFlags;
   files: typeof files;

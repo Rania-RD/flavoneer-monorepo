@@ -1,11 +1,14 @@
 import { api } from "@flavoneer/backend/api";
+import { pdf } from "@react-pdf/renderer";
 import { useQuery } from "convex/react";
-import { FileSearch } from "lucide-react";
+import { Download, FileSearch, Loader2, Printer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "../../hooks/useToast";
 import { type ComparisonGroup, ComparisonReport } from "./ComparisonReport";
 import { LaboratoryReport } from "./LaboratoryReport";
 import { MeasurementReport } from "./MeasurementReport";
+import { QualityManagerReportPdf } from "./manager-report-pdf";
 import { OverviewReport } from "./OverviewReport";
 import { ReadinessReport } from "./ReadinessReport";
 import {
@@ -15,7 +18,7 @@ import {
   ReportLoading,
   ReportSection,
 } from "./shared";
-import type { QualityReportArgs } from "./types";
+import type { QualityReportArgs, QualityReportProductOption } from "./types";
 import { WorkflowReport } from "./WorkflowReport";
 
 const sections = [
@@ -28,17 +31,79 @@ const sections = [
   ["laboratory", "qc_reports_section_laboratory"],
 ] as const;
 
+function downloadPdf(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function printPdf(blob: Blob) {
+  return new Promise<void>((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const frame = document.createElement("iframe");
+    let cleanupTimer: number | undefined;
+    const cleanup = () => {
+      if (cleanupTimer !== undefined) {
+        window.clearTimeout(cleanupTimer);
+      }
+      frame.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.position = "fixed";
+    frame.style.inlineSize = "1px";
+    frame.style.blockSize = "1px";
+    frame.style.insetInlineEnd = "0";
+    frame.style.insetBlockEnd = "0";
+    frame.style.border = "0";
+    frame.src = url;
+    frame.onload = () => {
+      const printWindow = frame.contentWindow;
+      if (!printWindow) {
+        cleanup();
+        reject(new Error("PDF print frame did not load"));
+        return;
+      }
+      printWindow.onafterprint = cleanup;
+      window.setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        resolve();
+      }, 150);
+      cleanupTimer = window.setTimeout(cleanup, 60_000);
+    };
+    frame.onerror = () => {
+      cleanup();
+      reject(new Error("PDF print frame failed to load"));
+    };
+    document.body.appendChild(frame);
+  });
+}
+
 export function ManagerReport({
   args,
   onOpenAudit,
+  products,
+  timezone,
 }: {
   args: QualityReportArgs;
   onOpenAudit: () => void;
+  products?: QualityReportProductOption[];
+  timezone: string;
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
+  const language = i18n.language === "ar" ? "ar" : "en";
+  const { toast } = useToast();
   const [groupBy, setGroupBy] = useState<ComparisonGroup>("product");
   const [activeSection, setActiveSection] = useState("summary");
+  const [pdfAction, setPdfAction] = useState<"download" | "print" | null>(null);
   const report = useQuery(api.qualityManagerReports.getManagerReport, {
     ...args,
     groupBy,
@@ -51,6 +116,45 @@ export function ManagerReport({
     to: args.to,
   });
   const reportReady = report !== undefined;
+
+  const handlePdfAction = async (action: "download" | "print") => {
+    if (!(report && laboratory) || pdfAction) {
+      return;
+    }
+    setPdfAction(action);
+    toast.info(t("qc_reports_preparing_pdf"));
+    try {
+      const blob = await pdf(
+        <QualityManagerReportPdf
+          from={args.from}
+          generatedAt={Date.now()}
+          groupBy={groupBy}
+          laboratory={laboratory}
+          language={language}
+          locale={locale}
+          report={report}
+          timezone={timezone}
+          to={args.to}
+        />
+      ).toBlob();
+      if (action === "download") {
+        const fromDate = new Date(args.from).toISOString().slice(0, 10);
+        const toDate = new Date(args.to - 1).toISOString().slice(0, 10);
+        downloadPdf(
+          blob,
+          `${t("qc_reports_pdf_filename")}-${fromDate}-${toDate}.pdf`
+        );
+        toast.success(t("qc_reports_pdf_exported"));
+      } else {
+        await printPdf(blob);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(t("qc_reports_pdf_failed"));
+    } finally {
+      setPdfAction(null);
+    }
+  };
 
   useEffect(() => {
     if (!reportReady) {
@@ -91,6 +195,35 @@ export function ManagerReport({
 
   return (
     <div className="space-y-10">
+      <div className="flex flex-wrap justify-end gap-2">
+        <button
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#1c4a3c]/12 bg-[#fffdf4] px-4 font-bold text-[#173e33] text-xs transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-[#eef8eb] disabled:cursor-wait disabled:opacity-60 dark:border-[#d2f2d4]/12 dark:bg-[#173e33] dark:text-[#f7f4df] dark:hover:bg-[#285b4d]"
+          disabled={laboratory === undefined || pdfAction !== null}
+          onClick={() => handlePdfAction("download")}
+          type="button"
+        >
+          {pdfAction === "download" ? (
+            <Loader2 aria-hidden="true" className="animate-spin" size={15} />
+          ) : (
+            <Download aria-hidden="true" size={15} />
+          )}
+          {t("qc_reports_export_pdf")}
+        </button>
+        <button
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1c4a3c] px-4 font-bold text-white text-xs shadow-[0_8px_22px_rgba(28,74,60,0.16)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60 dark:bg-[#f5a623] dark:text-[#173e33]"
+          disabled={laboratory === undefined || pdfAction !== null}
+          onClick={() => handlePdfAction("print")}
+          type="button"
+        >
+          {pdfAction === "print" ? (
+            <Loader2 aria-hidden="true" className="animate-spin" size={15} />
+          ) : (
+            <Printer aria-hidden="true" size={15} />
+          )}
+          {t("qc_reports_print")}
+        </button>
+      </div>
+
       <nav
         aria-label={t("qc_reports_section_navigation")}
         className="sticky top-3 z-20 -mx-1 flex gap-1 overflow-x-auto rounded-2xl border border-[#1c4a3c]/10 bg-[#fffdf4]/95 p-1.5 shadow-[0_10px_30px_rgba(16,47,39,0.08)] backdrop-blur dark:border-[#d2f2d4]/10 dark:bg-[#173e33]/95"
@@ -121,14 +254,9 @@ export function ManagerReport({
       </nav>
 
       <section className="scroll-mt-36 space-y-6" id="summary">
-        <div>
-          <h2 className="font-bold font-display text-2xl text-[#173e33] tracking-tight sm:text-3xl dark:text-[#f7f4df]">
-            {t("qc_reports_management_summary")}
-          </h2>
-          <p className="mt-2 max-w-3xl text-[#527568] text-sm leading-6 dark:text-[#a9cbbb]">
-            {t("qc_reports_management_summary_description")}
-          </p>
-        </div>
+        <h2 className="font-bold font-display text-2xl text-[#173e33] tracking-tight sm:text-3xl dark:text-[#f7f4df]">
+          {t("qc_reports_management_summary")}
+        </h2>
         <KpiGrid
           items={[
             {
@@ -222,35 +350,24 @@ export function ManagerReport({
         />
       </section>
 
-      <ReportSection
-        description={t("qc_reports_overview_description")}
-        id="operations"
-        title={t("qc_reports_section_operations")}
-      >
+      <ReportSection id="operations" title={t("qc_reports_section_operations")}>
         <OverviewReport args={args} data={report.overview} embedded />
       </ReportSection>
 
-      <ReportSection
-        description={t("qc_reports_measurements_description")}
-        id="quality"
-        title={t("qc_reports_measurements")}
-      >
-        <MeasurementReport args={args} embedded />
+      <ReportSection id="quality" title={t("qc_reports_measurements")}>
+        <MeasurementReport
+          args={args}
+          embedded
+          key={args.productId ?? "all-products"}
+          products={products}
+        />
       </ReportSection>
 
-      <ReportSection
-        description={t("qc_reports_readiness_description")}
-        id="readiness"
-        title={t("qc_reports_readiness")}
-      >
+      <ReportSection id="readiness" title={t("qc_reports_readiness")}>
         <ReadinessReport args={args} data={report.readiness} embedded />
       </ReportSection>
 
-      <ReportSection
-        description={t("qc_reports_comparison_description")}
-        id="comparison"
-        title={t("qc_reports_comparison")}
-      >
+      <ReportSection id="comparison" title={t("qc_reports_comparison")}>
         <ComparisonReport
           args={args}
           data={report.comparison}
@@ -260,11 +377,7 @@ export function ManagerReport({
         />
       </ReportSection>
 
-      <ReportSection
-        description={t("qc_reports_workflow_description")}
-        id="workflow"
-        title={t("qc_reports_workflow")}
-      >
+      <ReportSection id="workflow" title={t("qc_reports_workflow")}>
         <WorkflowReport args={args} data={report.workflow} embedded />
       </ReportSection>
 

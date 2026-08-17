@@ -161,7 +161,7 @@ export function ReportSection({
   title,
 }: {
   children: ReactNode;
-  description: string;
+  description?: string;
   id: string;
   title: string;
 }) {
@@ -178,9 +178,11 @@ export function ReportSection({
         <h2 className="font-bold font-display text-2xl text-[#173e33] tracking-tight sm:text-3xl dark:text-[#f7f4df]">
           {title}
         </h2>
-        <p className="mt-2 text-[#527568] text-sm leading-6 dark:text-[#a9cbbb]">
-          {description}
-        </p>
+        {description ? (
+          <p className="mt-2 text-[#527568] text-sm leading-6 dark:text-[#a9cbbb]">
+            {description}
+          </p>
+        ) : null}
       </div>
       {children}
     </motion.section>

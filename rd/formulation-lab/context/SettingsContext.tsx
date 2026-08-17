@@ -84,7 +84,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
   const sessionUser = session?.user;
 
   // ─── Convex settings (per-user) ───
-  const savedSettings = useQuery(api.settings.get);
+  const savedSettings = useQuery(api.settings.get, sessionUser ? {} : "skip");
   const upsertSettings = useMutation(api.settings.upsert);
 
   // Track whether we've hydrated from Convex

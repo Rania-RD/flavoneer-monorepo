@@ -12,3 +12,8 @@ export interface QualityReportArgs {
   status?: "draft" | "pending_production_review" | "returned" | "approved";
   to: number;
 }
+
+export interface QualityReportProductOption {
+  id: Id<"projects">;
+  name: string;
+}

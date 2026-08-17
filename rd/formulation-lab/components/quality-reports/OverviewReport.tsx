@@ -1,7 +1,13 @@
 import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { ArrowUpRight, TriangleAlert } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  TriangleAlert,
+} from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
@@ -23,6 +29,8 @@ type OverviewReportData = FunctionReturnType<
   typeof api.qualityManagerReports.getOverview
 >;
 
+const ACTION_QUEUE_PAGE_SIZE = 10;
+
 export function OverviewReport({
   args,
   data,
@@ -38,10 +46,41 @@ export function OverviewReport({
     data ? "skip" : args
   );
   const report = data ?? queriedReport;
+  const actionQueueFilterKey = JSON.stringify([
+    args.organizationId,
+    args.from,
+    args.to,
+    args.productId,
+    args.productionHallCode,
+    args.departmentName,
+    args.qcUserId,
+    args.status,
+    args.specificationVersion,
+  ]);
+  const [actionQueuePagination, setActionQueuePagination] = useState({
+    filterKey: actionQueueFilterKey,
+    page: 1,
+  });
+  const actionQueuePageCount = Math.max(
+    1,
+    Math.ceil((report?.exceptions.length ?? 0) / ACTION_QUEUE_PAGE_SIZE)
+  );
+  const currentActionQueuePage =
+    actionQueuePagination.filterKey === actionQueueFilterKey
+      ? Math.min(actionQueuePagination.page, actionQueuePageCount)
+      : 1;
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
+  const PreviousPageIcon = i18n.dir() === "rtl" ? ChevronRight : ChevronLeft;
+  const NextPageIcon = i18n.dir() === "rtl" ? ChevronLeft : ChevronRight;
+
   if (report === undefined) {
     return <ReportLoading />;
   }
+
+  const visibleExceptions = report.exceptions.slice(
+    (currentActionQueuePage - 1) * ACTION_QUEUE_PAGE_SIZE,
+    currentActionQueuePage * ACTION_QUEUE_PAGE_SIZE
+  );
 
   return (
     <div className="space-y-7">
@@ -51,9 +90,6 @@ export function OverviewReport({
           title={t("qc_reports_overview")}
         />
       )}
-      <p className="rounded-2xl border border-[#f5a623]/25 bg-[#fff4d9] px-4 py-3 font-semibold text-[#795018] text-sm dark:bg-[#f5a623]/10 dark:text-[#ffc760]">
-        {t("qc_reports_hourly_inspection_requirement")}
-      </p>
       {embedded ? null : (
         <MetricStrip
           items={[
@@ -158,64 +194,110 @@ export function OverviewReport({
         {report.exceptions.length === 0 ? (
           <EmptyReport>{t("qc_reports_no_exceptions")}</EmptyReport>
         ) : (
-          <ReportTable
-            headers={[
-              t("form_serial"),
-              t("product_label"),
-              t("department_or_line"),
-              t("qc_inspector"),
-              t("inspection_time"),
-              t("qc_reports_exception"),
-              t("status"),
-              "",
-            ]}
-          >
-            {report.exceptions.map((row) => (
-              <tr className={rowClassName} key={row.recordId}>
-                <td className={`${cellClassName} font-bold font-mono`}>
-                  {row.displaySerial}
-                </td>
-                <td className={cellClassName}>
-                  <p className="font-bold">{row.productName}</p>
-                  <p className="mt-1 font-mono text-[#527568] text-xs dark:text-[#a9cbbb]">
-                    {row.printedBatchCode ?? "—"}
-                  </p>
-                </td>
-                <td className={cellClassName}>{row.departmentName}</td>
-                <td className={cellClassName}>{row.qcUserName}</td>
-                <td className={cellClassName}>
-                  {formatDateTime(row.inspectionAt, locale)}
-                </td>
-                <td className={cellClassName}>
-                  {row.outOfLimitReadingCount > 0 ? (
-                    <span className="text-[#a43434] dark:text-[#ffb8ad]">
-                      {t("qc_reports_out_of_limit_count", {
-                        count: row.outOfLimitReadingCount,
-                      })}
-                    </span>
-                  ) : row.pendingAgeMs === null ? (
-                    t("production_status_returned")
-                  ) : (
-                    t("qc_reports_pending_for_hhmm", {
-                      duration: formatDuration(row.pendingAgeMs, locale),
+          <div className="space-y-4">
+            <ReportTable
+              headers={[
+                t("form_serial"),
+                t("product_label"),
+                t("department_or_line"),
+                t("qc_inspector"),
+                t("inspection_time"),
+                t("qc_reports_exception"),
+                t("status"),
+                "",
+              ]}
+            >
+              {visibleExceptions.map((row) => (
+                <tr className={rowClassName} key={row.recordId}>
+                  <td className={`${cellClassName} font-bold font-mono`}>
+                    {row.displaySerial}
+                  </td>
+                  <td className={cellClassName}>
+                    <p className="font-bold">{row.productName}</p>
+                    <p className="mt-1 font-mono text-[#527568] text-xs dark:text-[#a9cbbb]">
+                      {row.printedBatchCode ?? "—"}
+                    </p>
+                  </td>
+                  <td className={cellClassName}>{row.departmentName}</td>
+                  <td className={cellClassName}>{row.qcUserName}</td>
+                  <td className={cellClassName}>
+                    {formatDateTime(row.inspectionAt, locale)}
+                  </td>
+                  <td className={cellClassName}>
+                    {row.outOfLimitReadingCount > 0 ? (
+                      <span className="text-[#a43434] dark:text-[#ffb8ad]">
+                        {t("qc_reports_out_of_limit_count", {
+                          count: row.outOfLimitReadingCount,
+                        })}
+                      </span>
+                    ) : row.pendingAgeMs === null ? (
+                      t("production_status_returned")
+                    ) : (
+                      t("qc_reports_pending_for_hhmm", {
+                        duration: formatDuration(row.pendingAgeMs, locale),
+                      })
+                    )}
+                  </td>
+                  <td className={cellClassName}>
+                    {t(`production_status_${row.status}`)}
+                  </td>
+                  <td className={cellClassName}>
+                    <Link
+                      aria-label={t("view_record")}
+                      className="inline-flex size-9 items-center justify-center rounded-full bg-[#d2f2d4] text-[#173e33] dark:bg-[#f5a623]"
+                      to={`/quality/production-line-records/${row.recordId}`}
+                    >
+                      <ArrowUpRight aria-hidden="true" size={16} />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </ReportTable>
+            {actionQueuePageCount > 1 ? (
+              <nav
+                aria-label={t("qc_reports_action_queue_pagination")}
+                className="flex items-center justify-center gap-3"
+              >
+                <button
+                  aria-label={t("qc_reports_previous_page")}
+                  className="inline-flex size-10 items-center justify-center rounded-full bg-[#eef8eb] text-[#173e33] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#285b4d] dark:text-[#f7f4df]"
+                  disabled={currentActionQueuePage === 1}
+                  onClick={() =>
+                    setActionQueuePagination({
+                      filterKey: actionQueueFilterKey,
+                      page: currentActionQueuePage - 1,
                     })
-                  )}
-                </td>
-                <td className={cellClassName}>
-                  {t(`production_status_${row.status}`)}
-                </td>
-                <td className={cellClassName}>
-                  <Link
-                    aria-label={t("view_record")}
-                    className="inline-flex size-9 items-center justify-center rounded-full bg-[#d2f2d4] text-[#173e33] dark:bg-[#f5a623]"
-                    to={`/quality/production-line-records/${row.recordId}`}
-                  >
-                    <ArrowUpRight aria-hidden="true" size={16} />
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </ReportTable>
+                  }
+                  type="button"
+                >
+                  <PreviousPageIcon aria-hidden="true" size={18} />
+                </button>
+                <span
+                  aria-live="polite"
+                  className="min-w-28 text-center font-bold text-[#527568] text-sm dark:text-[#a9cbbb]"
+                >
+                  {t("qc_reports_page_of", {
+                    page: currentActionQueuePage,
+                    total: actionQueuePageCount,
+                  })}
+                </span>
+                <button
+                  aria-label={t("qc_reports_next_page")}
+                  className="inline-flex size-10 items-center justify-center rounded-full bg-[#eef8eb] text-[#173e33] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#285b4d] dark:text-[#f7f4df]"
+                  disabled={currentActionQueuePage === actionQueuePageCount}
+                  onClick={() =>
+                    setActionQueuePagination({
+                      filterKey: actionQueueFilterKey,
+                      page: currentActionQueuePage + 1,
+                    })
+                  }
+                  type="button"
+                >
+                  <NextPageIcon aria-hidden="true" size={18} />
+                </button>
+              </nav>
+            ) : null}
+          </div>
         )}
       </section>
     </div>

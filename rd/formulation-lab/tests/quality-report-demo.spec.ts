@@ -7,6 +7,21 @@ const BACKEND_DIRECTORY = fileURLToPath(
   new URL("../../../packages/backend/", import.meta.url)
 );
 const ROOT_URL_PATTERN = /\/$/u;
+const QC_REPORT_FILENAME_PATTERN =
+  /^qc-management-report-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}\.pdf$/u;
+const ACTION_QUEUE_FIRST_PAGE_PATTERN = /^Page 1 of \d+$/u;
+const ACTION_QUEUE_SECOND_PAGE_PATTERN = /^Page 2 of \d+$/u;
+const REMOVED_REPORT_COPY = [
+  "Production exceptions, process trends, review flow, audit evidence, and batch-linked laboratory outcomes.",
+  "Current volume, exceptions, conformance, evidence, review flow, and laboratory coverage for the selected cohort.",
+  "Find pending reviews, returned work, and measurement exceptions that need action.",
+  "Operating requirement: complete one QC inspection every hour for each active production line.",
+  "Compare actual readings with the limits stored on each inspection and isolate process drift.",
+  "Find draft and returned records that are waiting for evidence or required confirmations.",
+  "Compare recurring measurement and review outcomes while keeping sample size visible.",
+  "Separate inspection preparation, review delays, repeat returns, and assignment volume.",
+  "Workload and sample size are shown beside outcomes. These rows are not employee rankings.",
+];
 
 async function signIn(page: Page) {
   await page.addInitScript(() => {
@@ -83,6 +98,8 @@ function seedDemoData() {
     inspections: number;
     inspectors: number;
     labReports: number;
+    lineHours: number;
+    offlineLineHours: number;
     productionLines: number;
     samples: number;
   };
@@ -90,7 +107,7 @@ function seedDemoData() {
 
 test("seeds and displays representative hourly QC manager reports", async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(180_000);
   await signIn(page);
   await selectOrCreateDemoOrganization(page);
@@ -98,9 +115,11 @@ test("seeds and displays representative hourly QC manager reports", async ({
 
   const seeded = seedDemoData();
   expect(seeded).toMatchObject({
-    inspections: 36,
+    inspections: 479,
     inspectors: 3,
     labReports: 6,
+    lineHours: 504,
+    offlineLineHours: 25,
     productionLines: 3,
     samples: 8,
   });
@@ -112,50 +131,100 @@ test("seeds and displays representative hourly QC manager reports", async ({
     timeout: 30_000,
   });
   await expect(
-    page.getByText(
-      "Operating requirement: complete one QC inspection every hour for each active production line."
-    )
-  ).toBeVisible();
-  await expect(
     page.getByRole("heading", { name: "QC management summary", level: 2 })
   ).toBeVisible();
-  await expect(page.getByText("Evidence completeness")).toBeVisible();
-  for (const productName of ["Twin", "Rocky", "Daymeh", "Icy Lemon"]) {
-    await expect(
-      page
-        .getByRole("grid")
-        .first()
-        .getByText(productName, { exact: true })
-        .first()
-    ).toBeVisible();
+  const exportButton = page.getByRole("button", { name: "Export PDF" });
+  const printButton = page.getByRole("button", { name: "Print report" });
+  await expect(exportButton).toBeEnabled({ timeout: 30_000 });
+  await expect(printButton).toBeEnabled();
+  const downloadPromise = page.waitForEvent("download");
+  await exportButton.click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(QC_REPORT_FILENAME_PATTERN);
+  const pdfPath = testInfo.outputPath(download.suggestedFilename());
+  await download.saveAs(pdfPath);
+  await testInfo.attach("QC management report PDF", {
+    contentType: "application/pdf",
+    path: pdfPath,
+  });
+  for (const removedCopy of REMOVED_REPORT_COPY) {
+    await expect(page.getByText(removedCopy, { exact: true })).toHaveCount(0);
   }
-  for (const [productName, productionLine] of [
+  await expect(page.getByText("Evidence completeness")).toBeVisible();
+  const expectedActionQueueRows = [
     ["Twin", "BTC1"],
     ["Icy Lemon", "Rollo A"],
     ["Daymeh", "BTC2"],
     ["Rocky", "BTC2"],
-  ]) {
-    await expect(
-      page
-        .getByRole("row")
-        .filter({ hasText: productName })
-        .filter({ hasText: productionLine })
-        .first()
-    ).toBeVisible({ timeout: 15_000 });
+  ] as const;
+  const operationsSection = page.locator("#operations");
+  const actionQueueGrid = operationsSection.getByRole("grid");
+  const actionQueuePagination = operationsSection.getByRole("navigation", {
+    name: "Action queue pages",
+  });
+  const previousPageButton = actionQueuePagination.getByRole("button", {
+    name: "Previous page",
+  });
+  const nextPageButton = actionQueuePagination.getByRole("button", {
+    name: "Next page",
+  });
+  const foundActionQueueRows = new Set<string>();
+  await expect(
+    actionQueuePagination.getByText(ACTION_QUEUE_FIRST_PAGE_PATTERN)
+  ).toBeVisible();
+  let pageNumber = 1;
+  while (true) {
+    const rowTexts = await actionQueueGrid.getByRole("row").allTextContents();
+    for (const [productName, productionLine] of expectedActionQueueRows) {
+      if (
+        rowTexts.some(
+          (rowText) =>
+            rowText.includes(productName) && rowText.includes(productionLine)
+        )
+      ) {
+        foundActionQueueRows.add(`${productName}:${productionLine}`);
+      }
+    }
+    if (await nextPageButton.isDisabled()) {
+      break;
+    }
+    await nextPageButton.click();
+    pageNumber += 1;
+    if (pageNumber === 2) {
+      await expect(
+        actionQueuePagination.getByText(ACTION_QUEUE_SECOND_PAGE_PATTERN)
+      ).toBeVisible();
+    }
   }
+  expect(foundActionQueueRows).toEqual(
+    new Set(
+      expectedActionQueueRows.map(
+        ([productName, productionLine]) => `${productName}:${productionLine}`
+      )
+    )
+  );
+  while (!(await previousPageButton.isDisabled())) {
+    await previousPageButton.click();
+  }
+  await expect(
+    actionQueuePagination.getByText(ACTION_QUEUE_FIRST_PAGE_PATTERN)
+  ).toBeVisible();
 
   await page
     .getByRole("link", { name: "Process quality", exact: true })
     .click();
-  const parameterSelect = page.getByLabel("Parameter");
+  const qualitySection = page.locator("#quality");
+  const productSelect = qualitySection.getByLabel("Product");
+  const parameterSelect = qualitySection.getByLabel("Parameter");
+  await expect(productSelect.locator("option:checked")).toHaveText("Daymeh");
+  await expect(productSelect.locator('option[value=""]')).toHaveCount(0);
   await expect(parameterSelect).toHaveValue("pour_weight");
   await expect(parameterSelect.locator('option[value=""]')).toHaveCount(0);
-  const qualitySection = page.locator("#quality");
   await expect(
     qualitySection.getByRole("figure", { name: "chart, 1 series" })
   ).toBeVisible();
   await expect(
-    qualitySection.getByRole("grid").getByText("103.6 g").first()
+    qualitySection.getByRole("grid").getByText("103.8 g").first()
   ).toBeVisible();
   await expect(page.getByText("103.600000", { exact: false })).toHaveCount(0);
 

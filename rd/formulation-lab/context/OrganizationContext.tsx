@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useQuery } from "convex/react";
 import type React from "react";
 import {
@@ -7,8 +9,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { authClient } from "../lib/auth-client";
 
 interface OrganizationContextType {
@@ -16,8 +16,6 @@ interface OrganizationContextType {
   activeOrganizationId: Id<"organizations"> | null;
   /** Current user's role in the active organization */
   currentRole: string | null;
-  /** Set the active organization */
-  setActiveOrganizationId: (id: Id<"organizations"> | null) => void;
   /** All organizations the current user belongs to */
   organizations: {
     _id: Id<"organizations">;
@@ -29,25 +27,29 @@ interface OrganizationContextType {
   }[];
   /** Whether organizations are still loading */
   organizationsLoading: boolean;
+  /** Set the active organization */
+  setActiveOrganizationId: (id: Id<"organizations"> | null) => void;
 }
 
-const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
+const OrganizationContext = createContext<OrganizationContextType | undefined>(
+  undefined
+);
 
 const STORAGE_KEY = "food-rd-lab-active-organization";
 
 export const OrganizationProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { data: authSession } = authClient.useSession();
   const userOrganizationsQuery = useQuery(api.organizations.list);
   const userOrganizations = userOrganizationsQuery ?? [];
   const organizationsLoading = userOrganizationsQuery === undefined;
 
-  const [activeOrganizationId, setActiveOrganizationIdState] = useState<Id<"organizations"> | null>(
-    () => {
+  const [activeOrganizationId, setActiveOrganizationIdState] =
+    useState<Id<"organizations"> | null>(() => {
       const stored = localStorage.getItem(STORAGE_KEY);
       return stored ? (stored as Id<"organizations">) : null;
-    }
-  );
+    });
 
   // Persist to localStorage
   const setActiveOrganizationId = (id: Id<"organizations"> | null) => {
@@ -85,14 +87,25 @@ export const OrganizationProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [userOrganizations, activeOrganizationId, organizationsLoading]);
 
-  const activeOrganization = userOrganizations.find((organization) => organization._id === activeOrganizationId);
+  const activeOrganization = userOrganizations.find(
+    (organization) => organization._id === activeOrganizationId
+  );
   useEffect(() => {
-    if (activeOrganization?.authOrganizationId) {
-      authClient.organization.setActive({
-        organizationId: activeOrganization.authOrganizationId,
-      }).catch(console.error);
+    if (
+      activeOrganization?.authOrganizationId &&
+      activeOrganization.authOrganizationId !==
+        authSession?.session.activeOrganizationId
+    ) {
+      authClient.organization
+        .setActive({
+          organizationId: activeOrganization.authOrganizationId,
+        })
+        .catch(console.error);
     }
-  }, [activeOrganization?.authOrganizationId]);
+  }, [
+    activeOrganization?.authOrganizationId,
+    authSession?.session.activeOrganizationId,
+  ]);
 
   // Derive current role
   const currentRole = activeOrganization?.role ?? null;
@@ -115,7 +128,9 @@ export const OrganizationProvider: React.FC<{ children: ReactNode }> = ({
 export const useOrganization = () => {
   const context = useContext(OrganizationContext);
   if (context === undefined) {
-    throw new Error("useOrganization must be used within an OrganizationProvider");
+    throw new Error(
+      "useOrganization must be used within an OrganizationProvider"
+    );
   }
   return context;
 };

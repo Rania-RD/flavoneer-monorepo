@@ -4,7 +4,7 @@ import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, FileSearch, Loader2, ShieldCheck } from "lucide-react";
 import { DateTime } from "luxon";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { AuditReport } from "../components/quality-reports/AuditReport";
@@ -37,7 +37,7 @@ export default function QualityReports() {
     activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
   );
   const [searchParams, setSearchParams] = useSearchParams();
-  const [now, setNow] = useState(Date.now());
+  const [now] = useState(Date.now);
   const zone = settings?.timezone ?? "UTC";
   const defaults = defaultDates(zone);
   const activeView =
@@ -54,11 +54,6 @@ export default function QualityReports() {
     status: searchParams.get("status") ?? "",
     specificationVersion: searchParams.get("spec") ?? "",
   };
-
-  useEffect(() => {
-    const interval = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(interval);
-  }, []);
 
   const reportArgs = useMemo<QualityReportArgs | null>(() => {
     if (!(activeOrganizationId && settings)) {
@@ -193,7 +188,12 @@ export default function QualityReports() {
     );
   } else {
     reportContent = (
-      <ManagerReport args={reportArgs} onOpenAudit={() => setView("audit")} />
+      <ManagerReport
+        args={reportArgs}
+        onOpenAudit={() => setView("audit")}
+        products={filterOptions?.products}
+        timezone={zone}
+      />
     );
   }
 
@@ -208,9 +208,6 @@ export default function QualityReports() {
             <h1 className="font-bold font-display text-3xl tracking-tight sm:text-4xl">
               {t("qc_reports_title")}
             </h1>
-            <p className="mt-2 max-w-3xl text-[#c9ddcf] text-sm leading-6">
-              {t("qc_reports_subtitle")}
-            </p>
           </div>
           <div className="flex flex-col items-start gap-3 sm:items-end">
             <div className="text-[#a9cbbb] text-xs">

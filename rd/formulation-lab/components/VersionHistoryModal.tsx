@@ -1,3 +1,5 @@
+import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { History, Plus, RotateCcw, Save, X } from "lucide-react";
@@ -6,8 +8,6 @@ import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingsContext";
-import { api } from "@flavoneer/backend/api";
-import type { Id } from "@flavoneer/backend/data-model";
 import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
@@ -26,19 +26,21 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
 }) => {
   const { isRTL } = useSettings();
   const { t } = useTranslation();
-  const versions = useQuery(api.projectVersions.list, { projectId });
-  const { toast } = useToast();
-  const nextVersionSuggestion = useQuery(api.projectVersions.getNextVersion, {
-    projectId,
-  });
-
-  const createVersion = useMutation(api.projectVersions.create);
-  const restoreVersion = useMutation(api.projectVersions.restore);
-
-  // New Version Form State
   const [isCreating, setIsCreating] = useState(false);
   const [newVersionNum, setNewVersionNum] = useState("");
   const [newVersionName, setNewVersionName] = useState("");
+  const versions = useQuery(
+    api.projectVersions.list,
+    isOpen ? { projectId } : "skip"
+  );
+  const { toast } = useToast();
+  const nextVersionSuggestion = useQuery(
+    api.projectVersions.getNextVersion,
+    isOpen && isCreating ? { projectId } : "skip"
+  );
+
+  const createVersion = useMutation(api.projectVersions.create);
+  const restoreVersion = useMutation(api.projectVersions.restore);
 
   const getVersionDisplayName = (name?: string) => {
     if (!name) {
@@ -83,11 +85,7 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
     versionId: Id<"projectVersions">,
     versionNum: string
   ) => {
-    if (
-      !confirm(
-        t("restore_version_confirmation", { version: versionNum })
-      )
-    ) {
+    if (!confirm(t("restore_version_confirmation", { version: versionNum }))) {
       return;
     }
 

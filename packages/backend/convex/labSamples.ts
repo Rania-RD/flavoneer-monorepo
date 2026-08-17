@@ -42,6 +42,7 @@ export const getReferenceData = query({
   args: {
     language: v.optional(languageValidator),
     organizationId: v.id("organizations"),
+    sampleType: labSampleTypeValidator,
   },
   returns: v.object({
     finishedProducts: v.array(productOptionValidator),
@@ -51,24 +52,30 @@ export const getReferenceData = query({
     await requireWorkspaceMember(ctx, args.organizationId);
     await requirePermission(ctx, args.organizationId, "record_production_checks");
 
-    const [ingredients, projects] = await Promise.all([
-      ctx.db
+    if (args.sampleType === "raw_material") {
+      const ingredients = await ctx.db
         .query("ingredients")
         .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
         .order("desc")
-        .take(250),
-      ctx.db
-        .query("projects")
-        .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
-        .order("desc")
-        .take(250),
-    ]);
+        .take(250);
+
+      return {
+        rawMaterials: ingredients.map((ingredient) => ({
+          id: ingredient._id,
+          name: selectLocalizedString(ingredient.name, ingredient.nameI18n, args.language),
+        })),
+        finishedProducts: [],
+      };
+    }
+
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
+      .order("desc")
+      .take(250);
 
     return {
-      rawMaterials: ingredients.map((ingredient) => ({
-        id: ingredient._id,
-        name: selectLocalizedString(ingredient.name, ingredient.nameI18n, args.language),
-      })),
+      rawMaterials: [],
       finishedProducts: projects.map((project) => ({
         id: project._id,
         name: selectLocalizedString(project.name, project.nameI18n, args.language),

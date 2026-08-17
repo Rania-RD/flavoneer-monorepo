@@ -1,4 +1,5 @@
 import { api } from "@flavoneer/backend/api";
+import type { Id } from "@flavoneer/backend/data-model";
 import { useQuery } from "convex/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,7 +18,7 @@ import {
   ReportTable,
   rowClassName,
 } from "./shared";
-import type { QualityReportArgs } from "./types";
+import type { QualityReportArgs, QualityReportProductOption } from "./types";
 
 const readingKeys = [
   "pour_weight",
@@ -30,21 +31,41 @@ const readingKeys = [
 export function MeasurementReport({
   args,
   embedded = false,
+  products,
 }: {
   args: QualityReportArgs;
   embedded?: boolean;
+  products?: QualityReportProductOption[];
 }) {
   const { t, i18n } = useTranslation();
+  const [productId, setProductId] = useState<Id<"projects"> | undefined>(
+    args.productId
+  );
   const [readingKey, setReadingKey] = useState<(typeof readingKeys)[number]>(
     readingKeys[0]
   );
-  const report = useQuery(api.qualityManagerReports.getMeasurementConformance, {
-    ...args,
-    readingKey,
-  });
+  const productOptions = products ?? [];
+  const selectedProductId = productOptions.some(
+    (product) => product.id === productId
+  )
+    ? productId
+    : (args.productId ?? productOptions[0]?.id);
+  const report = useQuery(
+    api.qualityManagerReports.getMeasurementConformance,
+    selectedProductId
+      ? {
+          ...args,
+          productId: selectedProductId,
+          readingKey,
+        }
+      : "skip"
+  );
   const locale = i18n.language === "ar" ? "ar-PS" : "en";
-  if (report === undefined) {
+  if (products === undefined || (selectedProductId && report === undefined)) {
     return <ReportLoading />;
+  }
+  if (!(selectedProductId && report)) {
+    return <EmptyReport>{t("qc_reports_no_data")}</EmptyReport>;
   }
   const chartPoints = report.points.map((point, index) => ({
     ...point,
@@ -73,7 +94,21 @@ export function MeasurementReport({
           title={t("qc_reports_measurements")}
         />
       )}
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-3">
+        <select
+          aria-label={t("product_label")}
+          className="min-h-11 rounded-2xl border border-[#1c4a3c]/10 bg-[#fffdf4] px-4 text-[#173e33] text-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33] dark:text-[#f7f4df]"
+          onChange={(event) =>
+            setProductId(event.target.value as Id<"projects">)
+          }
+          value={selectedProductId}
+        >
+          {productOptions.map((product) => (
+            <option key={product.id} value={product.id}>
+              {product.name}
+            </option>
+          ))}
+        </select>
         <select
           aria-label={t("qc_reports_parameter")}
           className="min-h-11 rounded-2xl border border-[#1c4a3c]/10 bg-[#fffdf4] px-4 text-[#173e33] text-sm dark:border-[#d2f2d4]/10 dark:bg-[#173e33] dark:text-[#f7f4df]"

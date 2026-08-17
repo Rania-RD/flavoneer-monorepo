@@ -1,7 +1,16 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
-import { type SeedResult, seedResultValidator } from "./e2eQualityReportSeed";
+import {
+  type CleanupBatchResult,
+  INSPECTION_BATCH_HOURS,
+  type PreparedSeed,
+  type SeedResult,
+  seedResultValidator,
+} from "./e2eQualityReportSeed";
+import { DEMO_INSPECTION_COUNT, DEMO_WEEK_HOURS } from "./e2eQualityReportSeedSchedule";
+
+const HOUR_MS = 60 * 60 * 1000;
 
 export const seedQualityReports = internalAction({
   args: {
@@ -19,6 +28,20 @@ export const seedQualityReports = internalAction({
       return existing;
     }
 
+    const staleStorageIds = new Set<CleanupBatchResult["storageIds"][number]>();
+    while (true) {
+      const cleanup: CleanupBatchResult = await ctx.runMutation(
+        internal.e2eQualityReportSeed.removeQualityReportRecordsBatch,
+        args,
+      );
+      for (const storageId of cleanup.storageIds) {
+        staleStorageIds.add(storageId);
+      }
+      if (cleanup.removed === 0) {
+        break;
+      }
+    }
+
     const evidenceImage = await ctx.storage.store(
       new Blob(
         [
@@ -27,12 +50,42 @@ export const seedQualityReports = internalAction({
         { type: "image/svg+xml" },
       ),
     );
+    const prepared: PreparedSeed = await ctx.runMutation(
+      internal.e2eQualityReportSeed.prepareQualityReports,
+      { ...args, now, staleStorageIds: [...staleStorageIds] },
+    );
+    const newestHour = Math.floor(now / HOUR_MS) * HOUR_MS;
+    const firstHour = newestHour - (DEMO_WEEK_HOURS - 1) * HOUR_MS;
+    let inserted = 0;
+    for (let startHourIndex = 0; startHourIndex < DEMO_WEEK_HOURS; ) {
+      const endHourIndex = Math.min(startHourIndex + INSPECTION_BATCH_HOURS, DEMO_WEEK_HOURS);
+      const batchCount: number = await ctx.runMutation(
+        internal.e2eQualityReportSeed.seedQualityReportHours,
+        {
+          organizationId: prepared.organizationId,
+          evidenceImage,
+          firstHour,
+          startHourIndex,
+          endHourIndex,
+          products: prepared.products,
+        },
+      );
+      inserted += batchCount;
+      startHourIndex = endHourIndex;
+    }
+    if (inserted !== DEMO_INSPECTION_COUNT) {
+      throw new Error(
+        `Expected ${DEMO_INSPECTION_COUNT} demo inspections but inserted ${inserted}`,
+      );
+    }
+
     const result: SeedResult = await ctx.runMutation(
-      internal.e2eQualityReportSeed.seedQualityReports,
+      internal.e2eQualityReportSeed.finishQualityReports,
       {
-        ...args,
-        evidenceImage,
+        organizationId: prepared.organizationId,
+        firstHour,
         now,
+        products: prepared.products,
       },
     );
     return result;

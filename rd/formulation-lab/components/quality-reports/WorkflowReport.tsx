@@ -190,9 +190,6 @@ export function WorkflowReport({
           </ReportTable>
         )}
       </section>
-      <p className="px-1 text-[#527568] text-xs dark:text-[#a9cbbb]">
-        {t("qc_reports_workload_fairness_note")}
-      </p>
     </div>
   );
 }

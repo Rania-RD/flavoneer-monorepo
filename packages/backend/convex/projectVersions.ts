@@ -12,6 +12,8 @@ type RecipeStepType =
   | "conditional"
   | "spreadsheet_note";
 
+const MAX_VERSION_HISTORY_ITEMS = 100;
+
 export const list = query({
   args: { projectId: v.id("projects") },
   returns: v.array(projectVersionReturnValidator),
@@ -25,7 +27,7 @@ export const list = query({
       .query("projectVersions")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
       .order("desc")
-      .collect();
+      .take(MAX_VERSION_HISTORY_ITEMS);
   },
 });
 

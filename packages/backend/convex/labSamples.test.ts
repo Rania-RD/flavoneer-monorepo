@@ -108,6 +108,30 @@ async function seedWorkspace(backend: ReturnType<typeof createTestBackend>) {
 }
 
 describe("lab sample submissions", () => {
+  test("loads reference data only for the selected sample type", async () => {
+    const backend = createTestBackend();
+    const { client, ingredientId, organizationId, projectId } = await seedWorkspace(backend);
+
+    await expect(
+      client.query(api.labSamples.getReferenceData, {
+        organizationId,
+        sampleType: "raw_material",
+      }),
+    ).resolves.toEqual({
+      rawMaterials: [{ id: ingredientId, name: "Cocoa butter" }],
+      finishedProducts: [],
+    });
+    await expect(
+      client.query(api.labSamples.getReferenceData, {
+        organizationId,
+        sampleType: "final_product",
+      }),
+    ).resolves.toEqual({
+      rawMaterials: [],
+      finishedProducts: [{ id: projectId, name: "Dark chocolate" }],
+    });
+  });
+
   test("allocates separate yearly sequences and stores traceability data", async () => {
     const backend = createTestBackend();
     const { client, ingredientId, organizationId, projectId } = await seedWorkspace(backend);
@@ -177,5 +201,95 @@ describe("lab sample submissions", () => {
         sampledAt: Date.parse("2026-07-29T10:00:00.000Z"),
       }),
     ).rejects.toThrow("Selected product does not belong to this workspace");
+  });
+
+  test("links a QC report to one submitted sample through the normalized batch number", async () => {
+    const backend = createTestBackend();
+    const { client, organizationId, projectId } = await seedWorkspace(backend);
+    const runId = await backend.run((ctx) =>
+      ctx.db.insert("runs", {
+        projectId,
+        projectName: "Dark chocolate",
+        batchCode: "CHOC-001",
+        startTime: Date.parse("2026-07-29T08:00:00.000Z"),
+        endTime: Date.parse("2026-07-29T09:00:00.000Z"),
+        data: {},
+        status: "completed",
+        organizationId,
+      }),
+    );
+    const sample = await client.mutation(api.labSamples.create, {
+      organizationId,
+      product: { sampleType: "final_product", projectId },
+      productionNumber: "2907261",
+      sampleLocation: "Packing line",
+      sampledAt: Date.parse("2026-07-29T09:15:00.000Z"),
+    });
+
+    await expect(
+      client.query(api.labSamples.listForReport, { organizationId, runId }),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        _id: sample.sampleId,
+        productionNumber: "2907261",
+        sampleNumber: sample.sampleNumber,
+      }),
+    ]);
+
+    const otherBatchSample = await client.mutation(api.labSamples.create, {
+      organizationId,
+      product: { sampleType: "final_product", projectId },
+      productionNumber: "3007261",
+      sampleLocation: "Packing line",
+      sampledAt: Date.parse("2026-07-30T09:15:00.000Z"),
+    });
+    await expect(
+      client.mutation(api.labReports.create, {
+        reportId: "LR-2026-WRONG-BATCH",
+        runId,
+        sampleSubmissionId: otherBatchSample.sampleId,
+        projectId,
+        version: "1.0",
+        lotNumber: "2907261",
+        date: "Jul 29, 2026",
+        sampleType: "Finished Product",
+        hash: "test-hash",
+        results: [],
+      }),
+    ).rejects.toThrow("must have the same batch number");
+
+    const reportId = await client.mutation(api.labReports.create, {
+      reportId: "LR-2026-001",
+      runId,
+      sampleSubmissionId: sample.sampleId,
+      projectId,
+      version: "1.0",
+      lotNumber: "290726 1",
+      date: "Jul 29, 2026",
+      sampleType: "Finished Product",
+      hash: "test-hash",
+      results: [
+        {
+          parameter: "pH",
+          method: "ISO",
+          min: 6,
+          max: 7,
+          actualValue: 6.5,
+          unit: "pH",
+        },
+      ],
+    });
+
+    await expect(client.query(api.labReports.get, { id: reportId })).resolves.toEqual(
+      expect.objectContaining({
+        lotNumber: "2907261",
+        sampleSubmissionId: sample.sampleId,
+        sampleNumber: sample.sampleNumber,
+      }),
+    );
+    const recentSamples = await client.query(api.labSamples.listRecent, { organizationId });
+    expect(recentSamples.find((item) => item._id === sample.sampleId)?.qcReports).toEqual([
+      expect.objectContaining({ _id: reportId, reportId: "LR-2026-001" }),
+    ]);
   });
 });

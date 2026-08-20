@@ -109,9 +109,18 @@ function formatAction(
   t: ReturnType<typeof useTranslation>["t"]
 ): React.ReactNode {
   const map: Record<string, { icon: LucideIcon; key: string }> = {
-    "organization.created": { icon: Building2, key: "organization_created_action" },
-    "organization.updated": { icon: PencilLine, key: "organization_updated_action" },
-    "organization.deleted": { icon: Trash2, key: "organization_deleted_action" },
+    "organization.created": {
+      icon: Building2,
+      key: "organization_created_action",
+    },
+    "organization.updated": {
+      icon: PencilLine,
+      key: "organization_updated_action",
+    },
+    "organization.deleted": {
+      icon: Trash2,
+      key: "organization_deleted_action",
+    },
     "member.invited": { icon: MailPlus, key: "member_invited_action" },
     "member.joined": { icon: PartyPopper, key: "member_joined_action" },
     "member.role_changed": { icon: ArrowLeftRight, key: "role_changed_action" },
@@ -169,7 +178,12 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
   onActiveTabChange,
 }) => {
   const { t } = useTranslation();
-  const { activeOrganizationId, organizations, currentRole, setActiveOrganizationId } = useOrganization();
+  const {
+    activeOrganizationId,
+    organizations,
+    currentRole,
+    setActiveOrganizationId,
+  } = useOrganization();
   const { hasPermission, isOrganizationAdmin } = usePermissions();
 
   const { toast } = useToast();
@@ -177,11 +191,13 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
   const [internalActiveTab, setInternalActiveTab] =
     useState<OrganizationSettingsTab>("members");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [createOrganizationModalOpen, setCreateOrganizationModalOpen] = useState(false);
+  const [createOrganizationModalOpen, setCreateOrganizationModalOpen] =
+    useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingIcon, setIsUpdatingIcon] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const activeTab = controlledActiveTab ?? internalActiveTab;
 
   // ── Queries ──
   const members = useQuery(
@@ -190,11 +206,15 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
   );
   const invites = useQuery(
     api.organizationInvites.listByOrganization,
-    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
+    activeOrganizationId && activeTab === "invites"
+      ? { organizationId: activeOrganizationId }
+      : "skip"
   );
   const auditLogs = useQuery(
     api.organizationAuditLogs.list,
-    activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
+    activeOrganizationId && activeTab === "auditLog"
+      ? { organizationId: activeOrganizationId }
+      : "skip"
   );
 
   // ── Mutations ──
@@ -212,8 +232,9 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
     MANAGE_VERSION_CONTROL_PERMISSION
   );
   const isOwner = currentRole === "owner";
-  const activeOrganization = organizations.find((t) => t._id === activeOrganizationId);
-  const activeTab = controlledActiveTab ?? internalActiveTab;
+  const activeOrganization = organizations.find(
+    (t) => t._id === activeOrganizationId
+  );
   const setActiveTab = (tab: OrganizationSettingsTab) => {
     setInternalActiveTab(tab);
     onActiveTabChange?.(tab);
@@ -288,7 +309,9 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
   // ── No organization selected / empty ──
   if (!activeOrganizationId || organizations.length === 0) {
     return (
-      <div className={embedded ? "w-full" : "mx-auto max-w-[1600px] p-6 md:ms-32"}>
+      <div
+        className={embedded ? "w-full" : "mx-auto max-w-[1600px] p-6 md:ms-32"}
+      >
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/20">
@@ -346,7 +369,8 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
               {activeOrganization?.name ?? t("organization")}
             </h2>
             <p className="text-gray-500 text-sm dark:text-slate-400">
-              {t("organizationSettings")} · {members?.length ?? 0} {t("members")}
+              {t("organizationSettings")} · {members?.length ?? 0}{" "}
+              {t("members")}
             </p>
           </div>
         </div>
@@ -864,13 +888,20 @@ const OrganizationPage: React.FC<OrganizationPageProps> = ({
 
           const organizationIdToDelete = activeOrganizationId;
           // Calculate next organization to switch to (if any)
-          const remainingOrganizations = organizations.filter((t) => t._id !== organizationIdToDelete);
-          const nextOrganization = remainingOrganizations.length > 0 ? remainingOrganizations[0] : null;
+          const remainingOrganizations = organizations.filter(
+            (t) => t._id !== organizationIdToDelete
+          );
+          const nextOrganization =
+            remainingOrganizations.length > 0
+              ? remainingOrganizations[0]
+              : null;
 
           try {
             // Switch context BEFORE deleting so queries immediately skip the stale organization
             if (activeOrganizationId === organizationIdToDelete) {
-              setActiveOrganizationId(nextOrganization ? nextOrganization._id : null);
+              setActiveOrganizationId(
+                nextOrganization ? nextOrganization._id : null
+              );
             }
 
             await deleteOrganization({ id: organizationIdToDelete });

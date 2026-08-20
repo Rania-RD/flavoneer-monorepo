@@ -161,6 +161,7 @@ export interface EnrichedLabReport extends LabReport {
   projectName: string;
   projectNameI18n?: LocalizedString;
   results: TestResult[];
+  sampleNumber?: string;
 }
 
 // Enriched inventory item with computed usedIn (from backend query)

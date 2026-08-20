@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QC Manager Reporting Implementation Plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --forest: #173e33;
+      --forest-2: #285b4d;
+      --mint: #d2f2d4;
+      --cream: #fffdf4;
+      --paper: #f4f7f2;
+      --amber: #f5a623;
+      --red: #a43434;
+      --green: #247a51;
+      --ink: #173e33;
+      --muted: #527568;
+      --line: rgba(23, 62, 51, 0.16);
+      --shadow: 0 18px 55px rgba(16, 47, 39, 0.09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    a { color: inherit; }
+    code {
+      border-radius: 0.35rem;
+      background: rgba(23, 62, 51, 0.08);
+      padding: 0.12rem 0.35rem;
+      font-size: 0.9em;
+    }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    .hero {
+      background:
+        radial-gradient(circle at 85% 15%, rgba(245, 166, 35, 0.28), transparent 24rem),
+        linear-gradient(145deg, #102f27, #173e33 56%, #285b4d);
+      color: #f7f4df;
+      padding: 72px 0 58px;
+    }
+    .eyebrow { margin: 0 0 12px; color: #b7dfc0; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+    h1 { max-width: 900px; margin: 0; font-size: clamp(2.25rem, 5vw, 4.5rem); line-height: 1.02; letter-spacing: -0.045em; }
+    .lede { max-width: 820px; margin: 24px 0 0; color: #d9eadc; font-size: 1.08rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .pill { border: 1px solid rgba(210, 242, 212, 0.22); border-radius: 999px; background: rgba(210, 242, 212, 0.09); padding: 8px 13px; color: #eef8eb; font-size: 0.86rem; font-weight: 700; }
+    main { padding: 34px 0 80px; }
+    .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 30px; align-items: start; }
+    nav {
+      position: sticky;
+      top: 20px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255, 253, 244, 0.94);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    nav strong { display: block; margin: 2px 8px 10px; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    nav a { display: block; border-radius: 12px; padding: 8px; color: var(--muted); font-size: 0.88rem; text-decoration: none; }
+    nav a:hover { background: var(--mint); color: var(--forest); }
+    article { min-width: 0; }
+    section {
+      margin-bottom: 26px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--cream);
+      box-shadow: var(--shadow);
+      padding: clamp(22px, 4vw, 38px);
+    }
+    section.report { border-top: 7px solid var(--forest-2); }
+    h2 { margin: 0 0 18px; font-size: clamp(1.55rem, 3vw, 2.3rem); line-height: 1.12; letter-spacing: -0.025em; }
+    h3 { margin: 28px 0 10px; font-size: 1.15rem; }
+    h4 { margin: 20px 0 7px; font-size: 0.98rem; }
+    p { margin: 0.55rem 0 0; }
+    ul, ol { margin: 10px 0 0; padding-left: 22px; }
+    li + li { margin-top: 7px; }
+    .callout { margin-top: 20px; border-left: 5px solid var(--amber); border-radius: 14px; background: #fff4d9; padding: 15px 18px; }
+    .danger { border-left-color: var(--red); background: #fff0ed; }
+    .success { border-left-color: var(--green); background: #e8f7ed; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+    .card { border: 1px solid var(--line); border-radius: 18px; background: white; padding: 18px; }
+    .card h3, .card h4 { margin-top: 0; }
+    .tag { display: inline-block; margin: 0 6px 6px 0; border-radius: 999px; background: #eef8eb; padding: 5px 9px; color: var(--forest); font-size: 0.78rem; font-weight: 800; }
+    .number { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 50%; background: var(--forest); color: white; font-weight: 900; }
+    .formula { overflow-x: auto; border: 1px solid rgba(23, 62, 51, 0.13); border-radius: 12px; background: #f0f5ef; padding: 11px 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+    .table-wrap { overflow-x: auto; margin-top: 15px; border: 1px solid var(--line); border-radius: 16px; }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 0.9rem; }
+    th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #eef8eb; font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    .status { border-radius: 999px; padding: 4px 8px; font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
+    .now { background: #e8f7ed; color: var(--green); }
+    .derived { background: #fff4d9; color: #8a5811; }
+    .later { background: #fff0ed; color: var(--red); }
+    .files { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.86rem; }
+    footer { padding: 30px 0 55px; color: var(--muted); font-size: 0.9rem; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; }
+    }
+    @media (max-width: 650px) {
+      .grid { grid-template-columns: 1fr; }
+      .shell { width: min(100% - 20px, 1180px); }
+      .hero { padding: 50px 0 42px; }
+    }
+    @media print {
+      body { background: white; }
+      .hero { padding: 34px 0; }
+      .layout { display: block; }
+      nav { display: none; }
+      section { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="shell">
+      <p class="eyebrow">Implementation design · Quality control</p>
+      <h1>Manager reporting without changing existing QC pages</h1>
+      <p class="lede">
+        A new manager-only page at <code>/quality/reports</code> containing seven decision-focused reports. The plan uses existing inspection, review, lab, and sample data first. Final-product lab reports are connected to sample submissions by a normalized batch-number match and retain the sample ID as the durable relationship.
+      </p>
+      <div class="meta">
+        <span class="pill">Date: 2026-08-16</span>
+        <span class="pill">Mode: Intrapreneurship</span>
+        <span class="pill">Selected: Modular report suite</span>
+        <span class="pill">No existing page replacement</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="layout">
+      <nav aria-label="Plan contents">
+        <strong>Contents</strong>
+        <a href="#goal">Goal and premises</a>
+        <a href="#approach">Approach decision</a>
+        <a href="#page">Page structure</a>
+        <a href="#report-1">1. Daily control</a>
+        <a href="#report-2">2. Measurements</a>
+        <a href="#report-3">3. Readiness</a>
+        <a href="#report-4">4. Product and line</a>
+        <a href="#report-5">5. Workflow and team</a>
+        <a href="#report-6">6. Audit register</a>
+        <a href="#report-7">7. Laboratory</a>
+        <a href="#backend">Backend shape</a>
+        <a href="#frontend">Frontend shape</a>
+        <a href="#rollout">Rollout and tests</a>
+        <a href="#risks">Risks and open items</a>
+      </nav>
+
+      <article>
+        <section id="goal">
+          <h2>Goal and agreed premises</h2>
+          <p>The manager needs a separate place to find exceptions, trends, workload constraints, and audit evidence. Managers should not have to inspect individual records to discover where action is needed.</p>
+          <ol>
+            <li><strong>Separate delivery:</strong> add a new route and navigation item. Do not replace or repurpose <code>/reports</code>, <code>/quality/production-line-records</code>, <code>/quality/lab-samples</code>, or their detail pages.</li>
+            <li><strong>Decision support:</strong> every report must end in a drill-down list that tells the manager which record, product, line, batch, or person needs attention.</li>
+            <li><strong>Existing data first:</strong> release one uses stored inspection readings, checks, evidence, workflow events, lab reports, test results, and batch-linked sample submissions. Derived reporting tables may be added, but no QC capture screen is changed.</li>
+            <li><strong>Fair team reporting:</strong> show workload, timeliness, and workflow outcomes with sample sizes. Do not create an inspector score or rank people by raw failure counts.</li>
+          </ol>
+          <div class="callout danger">
+            <strong>Data truth:</strong> all 22 compliance checks must be checked before an inspection can be submitted. An unchecked item means “not yet confirmed,” not “failed.” Release one must never label unchecked draft items as defects. Confirmed compliance failures require a later structured finding model.
+          </div>
+        </section>
+
+        <section id="approach">
+          <h2>Approach decision</h2>
+          <div class="grid">
+            <div class="card">
+              <h3>Approach A: Small dashboard</h3>
+              <p>One overview with KPI cards and a filtered inspection table.</p>
+              <p><strong>Effort:</strong> low. <strong>Risk:</strong> low.</p>
+              <p><strong>Rejected because:</strong> it helps daily review but does not satisfy the request for an implementation case and exact contents for each report.</p>
+            </div>
+            <div class="card">
+              <h3>Approach B: Modular report suite</h3>
+              <p>One manager route with seven tabs, shared filters, bounded reporting queries, exports, and record drill-down.</p>
+              <p><strong>Effort:</strong> medium. <strong>Risk:</strong> medium.</p>
+              <p><strong>Selected because:</strong> it covers every stated manager decision while preserving current operational pages.</p>
+            </div>
+            <div class="card">
+              <h3>Approach C: External analytics warehouse</h3>
+              <p>Replicate data into a BI system and build dashboards there.</p>
+              <p><strong>Effort:</strong> high. <strong>Risk:</strong> high.</p>
+              <p><strong>Rejected because:</strong> the current scope is organization-level operational reporting, and Convex already contains the required source records.</p>
+            </div>
+          </div>
+          <p class="callout">No external landscape search was run. The plan is based on the repository’s actual data model and workflow. The main risk is missing an organization-specific regulatory export format.</p>
+        </section>
+
+        <section id="page">
+          <h2>New page structure</h2>
+          <p>Add <code>/quality/reports</code> to the Quality workspace navigation as <strong>QC reports</strong>. The route is visible only to users with <code>review_production_checks</code>; organization administrators retain access through <code>full_access</code>.</p>
+          <div class="grid">
+            <div class="card">
+              <h3>Global controls</h3>
+              <ul>
+                <li>Date range, default last 30 calendar days in the organization timezone.</li>
+                <li>Product, production hall, department/line, QC inspector, record status, and specification version.</li>
+                <li>Filters are stored in URL search parameters so a manager can bookmark a view.</li>
+                <li>Interactive ranges are capped at 90 days. Longer periods use CSV export jobs or later daily aggregates.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Report navigation</h3>
+              <p>Tabs: Overview, Measurements, Readiness, Products &amp; lines, Workflow &amp; team, Audit, Laboratory.</p>
+              <p>Every tab shows the active date range, last refresh time, applied filters, an explanatory metric note, and a CSV export button where tabular data exists.</p>
+            </div>
+          </div>
+          <h3>Shared display rules</h3>
+          <ul>
+            <li>Use the organization timezone from <code>productionLineSettings.timezone</code> for day and hour boundaries.</li>
+            <li>Show numerator and denominator beside every percentage, for example “8.3% · 5 of 60 records.”</li>
+            <li>Do not rank comparison rows until they contain at least 10 inspections. Mark smaller groups “low sample.”</li>
+            <li>Clicking a production record opens the existing detail route. Clicking a lab report opens the existing lab report detail route.</li>
+            <li>Use Recharts for trends and control charts, and <code>LabDataGrid</code> for sortable drill-down tables.</li>
+          </ul>
+        </section>
+
+        <section class="report" id="report-1">
+          <h2><span class="number">1</span> Daily QC control report</h2>
+          <p><strong>Case:</strong> this is the first screen a production manager opens. It answers “what needs action now?” without forcing the manager to open every pending record.</p>
+          <h3>Exact information shown</h3>
+          <div class="grid">
+            <div class="card"><h4>Inspections today</h4><p>Count of records whose <code>inspectionAt</code> falls within today in the organization timezone, split by status.</p></div>
+            <div class="card"><h4>Pending queue</h4><p>Count pending review, median pending age, and oldest pending age. No arbitrary “overdue” label is used until an SLA is configured.</p></div>
+            <div class="card"><h4>Out-of-limit records</h4><p>Count of submitted, returned, or approved records containing at least one reading where <code>withinLimit = false</code>.</p></div>
+            <div class="card"><h4>Return decisions</h4><p>Review decisions marked returned today, with the return note available in the drill-down.</p></div>
+          </div>
+          <ul>
+            <li><strong>Queue chart:</strong> inspection count by hour and status for today.</li>
+            <li><strong>Exception table:</strong> serial, product, hall, department, printed batch code, inspector, inspection time, out-of-limit reading count, affected reading names, status, and pending age.</li>
+            <li><strong>Action order:</strong> out-of-limit pending records first, then oldest pending records, then returned records awaiting resubmission.</li>
+          </ul>
+          <h3>Metric definitions</h3>
+          <p class="formula">pending age = now - most recent submittedAt<br />out-of-limit record = outOfLimitReadingCount &gt; 0<br />returned awaiting work = current status == "returned"</p>
+          <p><span class="status now">Available now</span> inspection time, product, hall, department, batch code, inspector, status, readings, and review events. <span class="status derived">Derived</span> pending age and exception ordering.</p>
+          <h3>Acceptance criteria</h3>
+          <ul>
+            <li>A manager can identify all currently pending out-of-limit records in two clicks or fewer.</li>
+            <li>Counts match the record list for the same organization and status.</li>
+            <li>Today’s boundary changes correctly for a non-UTC organization timezone.</li>
+          </ul>
+        </section>
+
+        <section class="report" id="report-2">
+          <h2><span class="number">2</span> Measurement conformance and drift report</h2>
+          <p><strong>Case:</strong> a single approved record can still contain an out-of-limit measurement. This report detects process drift by parameter, product, specification version, line, and time before repeated variation becomes a larger batch problem.</p>
+          <h3>Exact information shown</h3>
+          <ul>
+            <li>KPI cards for total readings, in-limit readings, out-of-limit readings, records with any out-of-limit reading, and record conformance rate.</li>
+            <li>A parameter selector for pour weight, additive weight, chocolate temperature, coated piece weight, and carton weight.</li>
+            <li>A time-series control chart showing each actual value plus its stored minimum, target when present, and maximum. Never use the current specification for an old reading; use the limits snapshotted on that reading.</li>
+            <li>A daily conformance trend and a table grouped by product, hall, department, parameter, and specification version.</li>
+            <li>An outlier table with serial, batch, product, value, unit, minimum, target, maximum, signed distance beyond the nearest limit, inspector, and inspection time.</li>
+          </ul>
+          <h3>Metric definitions</h3>
+          <p class="formula">reading conformance rate = within-limit readings / all readings<br />record conformance rate = records with zero out-of-limit readings / records with readings<br />distance beyond limit = value &lt; min ? value - min : value &gt; max ? value - max : 0</p>
+          <div class="callout">
+            <strong>Optional capability statistic:</strong> show Cpk only when there are at least 30 readings for one product, one parameter, and one specification version. Compute sample standard deviation and <code>min((USL - mean)/(3s), (mean - LSL)/(3s))</code>. Label it “observed capability,” not a release decision, and hide it when standard deviation is zero or the sample is too small.
+          </div>
+          <p><span class="status now">Available now</span> actual values, units, snapshotted limits, targets, parameter keys, product, hall, line, inspector, and specification version.</p>
+          <h3>Acceptance criteria</h3>
+          <ul>
+            <li>A point outside its stored limits appears in both the chart and outlier table.</li>
+            <li>Changing specification version never combines incompatible limits in one Cpk calculation.</li>
+            <li>Every aggregate percentage exposes its count and denominator.</li>
+          </ul>
+        </section>
+
+        <section class="report" id="report-3">
+          <h2><span class="number">3</span> Inspection readiness and evidence report</h2>
+          <p><strong>Case:</strong> managers need to find inspections stalled before submission and evidence gaps that could block review or an audit. This is a completeness report, not a defect report.</p>
+          <h3>Exact information shown</h3>
+          <ul>
+            <li>Counts of draft and returned records, median draft age, and oldest unchanged record.</li>
+            <li>Readiness breakdown: missing batch-label photo, missing confirmed batch code, missing required measurements, or incomplete compliance confirmations.</li>
+            <li>Evidence coverage cards: records with photo, records with confirmed code, records with all required readings, and records with all 22 checks confirmed.</li>
+            <li>Stalled record table: serial, product, hall, department, owner, created time, last updated time, current status, and each missing requirement.</li>
+            <li>Compliance confirmation matrix by check group: packaging/product, materials/people, environment/safety, and maintenance. Values are “confirmed,” “awaiting confirmation,” and “not applicable only after phase-two support.”</li>
+          </ul>
+          <h3>Metric definitions</h3>
+          <p class="formula">evidence coverage = records satisfying requirement / records in selected set<br />draft age = now - createdAt<br />stalled age = now - updatedAt<br />readiness = same getProductionLineSubmissionReadiness rules used by submission</p>
+          <div class="callout danger"><strong>Never display:</strong> “compliance failure rate” from unchecked boxes. Current data cannot distinguish failure from unfinished work.</div>
+          <p><span class="status now">Available now</span> photo/code confirmation, checks, required reading counts, record timestamps, owner, and status. <span class="status later">Later capture</span> true failed checks, severity, notes, photos, and corrective actions.</p>
+          <h3>Acceptance criteria</h3>
+          <ul>
+            <li>The readiness reason matches the mobile submission blocker for the same record.</li>
+            <li>No unchecked item is described as a defect, nonconformance, or failed inspection.</li>
+            <li>A manager can open the existing production record detail directly from each row.</li>
+          </ul>
+        </section>
+
+        <section class="report" id="report-4">
+          <h2><span class="number">4</span> Product, hall, and line comparison report</h2>
+          <p><strong>Case:</strong> this report locates recurring process risk. It answers whether variation is concentrated in a specific product, production hall, department, or specification version.</p>
+          <h3>Exact information shown</h3>
+          <ul>
+            <li>Toggle grouping by product, hall, department/line, or specification version.</li>
+            <li>For each group: inspection count, approved count, returned count, records with out-of-limit readings, reading conformance rate, first-pass approval rate, and median review time.</li>
+            <li>Heatmap with group rows and the five reading parameters as columns; each cell contains out-of-limit count and conformance percentage.</li>
+            <li>Eight-week trend for the selected group versus the organization baseline.</li>
+            <li>Drill-down table containing the exact records behind a selected cell.</li>
+          </ul>
+          <h3>Metric rules</h3>
+          <p class="formula">group out-of-limit rate = group records with OOL / group records with readings<br />baseline delta = group rate - organization rate for the same date range<br />first-pass approval = records whose first review decision was approved / reviewed records</p>
+          <ul>
+            <li>Sort by highest actionable rate only when sample size is at least 10; otherwise sort low-sample rows after comparable groups.</li>
+            <li>Do not combine product versions with different specification versions in a capability calculation.</li>
+            <li>Show raw count beside rate to prevent a small group from appearing more important than a large group.</li>
+          </ul>
+          <p><span class="status now">Available now</span> all required grouping dimensions and outcomes. <span class="status later">Not available</span> production quantity, so the report cannot calculate defects per thousand units.</p>
+          <h3>Acceptance criteria</h3>
+          <ul>
+            <li>Selecting a heatmap cell produces a drill-down whose count equals the cell count.</li>
+            <li>Low-sample groups are visibly marked and are not given a red/green performance rank.</li>
+            <li>The organization baseline uses the same filters and date range as the selected group.</li>
+          </ul>
+        </section>
+
+        <section class="report" id="report-5">
+          <h2><span class="number">5</span> Review workflow and QC workload report</h2>
+          <p><strong>Case:</strong> managers need to see whether delays come from inspection preparation, the review queue, repeat returns, or uneven assignment. The report manages flow; it does not produce a staff league table.</p>
+          <h3>Exact information shown</h3>
+          <ul>
+            <li>Workflow cards: submissions, review decisions, approvals, returns, median submission-to-review time, 90th-percentile review time, current pending queue, and oldest pending item.</li>
+            <li>Funnel: created → submitted → approved or returned → resubmitted → final approval.</li>
+            <li>Inspector workload table: assigned inspections, submitted inspections, current drafts, current returned records, reviewed sample size, first-pass approvals, return count, and median create-to-submit time.</li>
+            <li>Reviewer workload table from record events: decisions completed, approvals, returns, and median submission-to-decision time.</li>
+            <li>Daily queue trend and review-time distribution rather than a misleading single average.</li>
+          </ul>
+          <h3>Metric definitions</h3>
+          <p class="formula">create-to-submit = first submission time - record.createdAt<br />review time per cycle = reviewedAt - submittedAt<br />first-pass approval = first review decision == approved<br />return rate = returned decisions / all review decisions<br />P90 = nearest-rank 90th percentile of completed review-cycle durations</p>
+          <div class="callout success">
+            <strong>Fairness rule:</strong> never label an inspector “best” or “worst.” Display product mix, hall mix, and reviewed sample size beside outcomes. Returns are workflow signals because reviewer notes and assignment difficulty affect them.
+          </div>
+          <p><span class="status now">Available now</span> record owner/QC user and timestamped submitted, approved, and returned events. <span class="status derived">Derived</span> review cycles, percentiles, and first-pass status.</p>
+          <h3>Acceptance criteria</h3>
+          <ul>
+            <li>A returned and resubmitted record creates two review cycles and only one first review decision.</li>
+            <li>Pending cycles are excluded from completed review-time medians but included in queue age.</li>
+            <li>No staff row is ranked without its workload and sample-size context.</li>
+          </ul>
+        </section>
+
+        <section class="report" id="report-6">
+          <h2><span class="number">6</span> Batch traceability and audit register</h2>
+          <p><strong>Case:</strong> this report assembles the evidence already spread across production records, readings, photos, specifications, and review events. It supports internal audits and batch investigations.</p>
+          <h3>Exact information shown</h3>
+          <ul>
+            <li>Searchable register by printed batch code, form serial, product, date, hall, department, QC officer, status, and specification version.</li>
+            <li>Evidence columns: label photo present, code confirmed, required readings complete, compliance checks complete, reviewer decision present, return note count, and final status.</li>
+            <li>Record audit drawer: organization, serial, batch, product, hall/line, inspection time, inspector, captured label photo, printed code, specification ID/version, every reading with stored limits, all check confirmations, and the ordered event history with actor and revision.</li>
+            <li>Single-record PDF packet using <code>@react-pdf/renderer</code>; CSV exports for the register and readings.</li>
+            <li>A SHA-256 digest of the exported packet payload can be printed in the footer for later integrity comparison. It is an export digest, not a digital signature.</li>
+          </ul>
+          <h3>Batch-to-sample relationship</h3>
+          <p>For organization reports, the sample <code>productionNumber</code> and report <code>lotNumber</code> use the same canonical <code>DDMMYYN</code> batch format. Report creation validates the selected sample belongs to the same organization and product, is a final-product sample, and has the same normalized batch number. The report then stores <code>sampleSubmissionId</code>, so reporting uses an ID relationship after batch-number matching rather than repeating a text join.</p>
+          <p>If a product has more than one sample submission for the same batch, the report must show each sample number, sampling time, and location and retain the specifically selected sample ID. The audit packet displays both the canonical batch number and linked sample number.</p>
+          <p><span class="status now">Available now</span> all production inspection evidence, event history, canonical batch number, linked sample number, and linked lab report evidence. <span class="status later">Later capture</span> an authorized digital signature for exported audit packets.</p>
+          <h3>Acceptance criteria</h3>
+          <ul>
+            <li>The audit event order matches <code>productionLineRecordEvents.createdAt</code> and shows every revision.</li>
+            <li>The PDF contains the same values and stored limits as the existing record detail.</li>
+            <li>Possible text matches are clearly separated from verified relationships.</li>
+          </ul>
+        </section>
+
+        <section class="report" id="report-7">
+          <h2><span class="number">7</span> Laboratory quality report</h2>
+          <p><strong>Case:</strong> production checks show process conditions, while lab results show whether the sampled finished-product batch met analytical specifications. The batch-number relationship lets managers follow a sample from collection into its lab report and find sampled batches that still have no report.</p>
+          <h3>Exact information shown</h3>
+          <ul>
+            <li>Lab report cards: total reports, approved, pending, failed, reports with any out-of-spec test, and overall test conformance rate.</li>
+            <li>Sample coverage cards for final products: sampled batches, unique linked samples, samples without a linked report, sample-to-report creation time, sample-to-approval time, and report-to-approval time.</li>
+            <li>Parameter table: test count, in-spec count, out-of-spec count, conformance rate, actual-value range, and affected products.</li>
+            <li>Product table: reports, failed reports, reports containing out-of-spec tests, top affected parameters, and latest report date.</li>
+            <li>Pending report list: report ID, linked sample number, product, canonical batch number, sample time, sample location, lead chemist, report date, age since record creation, and open action.</li>
+            <li>Unreported final-product sample table: sample number, product, canonical batch number, sample location, sampled time, sample age, and submitter. Each row opens a report-page drawer with the stored sample details; no separate sample-detail route currently exists.</li>
+            <li>Batch drill-down: sample metadata, all reports linked to that sample, report status, test conformance, signed approval time, and a link to each existing report detail page.</li>
+            <li>Raw-material sample intake remains a separate volume section because the current report workflow only permits links to final-product samples.</li>
+          </ul>
+          <h3>Metric definitions</h3>
+          <p class="formula">test is in spec = actualValue &gt;= min AND actualValue &lt;= max<br />test conformance rate = in-spec tests / all tests<br />report has OOS = at least one child test is outside min/max<br />sample coverage = unique final-product samples with at least one linked report / final-product samples in the sampledAt cohort<br />sample-to-report time = labReport._creationTime - sample.sampledAt<br />sample-to-approval time = labReport.signedAt - sample.sampledAt<br />report-to-approval time = labReport.signedAt - labReport._creationTime<br />pending age = now - labReport._creationTime</p>
+          <div class="callout">
+            <strong>Cohort rule:</strong> coverage uses samples whose <code>sampledAt</code> falls inside the selected range, even if their reports were created later. Count each linked sample once when several reports reference it. Report totals remain report counts.
+          </div>
+          <div class="callout danger">
+            <strong>Still unavailable:</strong> received-to-tested and tested-to-approved stage times. The batch link provides end-to-end sample and approval timing, but the intermediate laboratory workflow timestamps are not stored.
+          </div>
+          <p><span class="status now">Available now</span> report status, product, canonical batch number, linked sample ID and number, sampling time, sample location, lead chemist, tests and limits, submitter, report creation time, and signed approval time. <span class="status later">Later capture</span> received, testing-started, testing-completed, and technical-review timestamps.</p>
+          <h3>Acceptance criteria</h3>
+          <ul>
+            <li>Report-level OOS is derived from child test values, not inferred from the manually assigned report status.</li>
+            <li>Pending report age uses a timestamp, not locale-formatted report date text.</li>
+            <li>A linked report is included only when <code>sampleSubmissionId</code> resolves inside the same organization and its normalized lot number equals the sample production number.</li>
+            <li>A sample with two linked reports counts once in sample coverage and twice in report totals.</li>
+          </ul>
+        </section>
+
+        <section id="backend">
+          <h2>Backend implementation shape</h2>
+          <h3>New reporting module</h3>
+          <p>Create <code>packages/backend/convex/qualityManagerReports.ts</code> with public, read-only queries. Every query must call <code>requireWorkspaceMember</code> and <code>requirePermission(..., "review_production_checks")</code>, accept <code>organizationId</code>, validate all filters, and enforce a 90-day interactive range.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Query</th><th>Returns</th><th>Used by</th></tr></thead>
+              <tbody>
+                <tr><td><code>getOverview</code></td><td>Today/status cards, hourly series, ordered exception rows</td><td>Daily control</td></tr>
+                <tr><td><code>getMeasurementConformance</code></td><td>Totals, parameter trend, grouped rates, outlier rows, eligible Cpk</td><td>Measurements</td></tr>
+                <tr><td><code>getReadiness</code></td><td>Missing-requirement totals and stalled draft/returned records</td><td>Readiness</td></tr>
+                <tr><td><code>getComparisons</code></td><td>Grouped metrics, baseline, heatmap cells, drill-down IDs</td><td>Products &amp; lines</td></tr>
+                <tr><td><code>getWorkflow</code></td><td>Cycle metrics, funnel, inspector and reviewer workload</td><td>Workflow &amp; team</td></tr>
+                <tr><td><code>listAuditRecords</code></td><td>Paginated evidence register</td><td>Audit</td></tr>
+                <tr><td><code>getAuditRecord</code></td><td>Complete evidence and event packet for one record</td><td>Audit drawer/PDF</td></tr>
+                <tr><td><code>getLaboratoryQuality</code></td><td>Report/test conformance, batch-linked sample coverage, turnaround, pending reports, and unreported samples</td><td>Laboratory</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Derived inspection summary</h3>
+          <p>Add one bounded document per production record named <code>qualityInspectionSummaries</code>. It avoids reading every child reading and check for every chart.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Field group</th><th>Exact fields</th></tr></thead>
+              <tbody>
+                <tr><td>Identity</td><td><code>organizationId</code>, <code>recordId</code>, <code>inspectionAt</code>, <code>dayKey</code>, <code>productId</code>, <code>productName</code>, <code>productionHallCode</code>, <code>departmentName</code>, <code>specificationId</code>, <code>specificationVersion</code></td></tr>
+                <tr><td>Ownership</td><td><code>qcUserId</code>, <code>qcUserName</code>, <code>editableOwnerUserId</code></td></tr>
+                <tr><td>State</td><td><code>status</code>, <code>createdAt</code>, <code>updatedAt</code>, <code>firstSubmittedAt?</code>, <code>lastSubmittedAt?</code>, <code>lastReviewedAt?</code>, <code>firstReviewDecision?</code>, <code>returnedCount</code></td></tr>
+                <tr><td>Measurements</td><td><code>totalReadingCount</code>, <code>withinLimitReadingCount</code>, <code>outOfLimitReadingCount</code>, bounded <code>outOfLimitReadingKeys</code></td></tr>
+                <tr><td>Readiness</td><td><code>hasBatchLabelPhoto</code>, <code>hasConfirmedBatchCode</code>, <code>completedCheckCount</code>, <code>requiredCheckCount</code>, <code>completedReadingRequirementCount</code>, <code>requiredReadingRequirementCount</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Indexes: <code>by_recordId</code>, <code>by_organizationId_and_inspectionAt</code>, <code>by_organizationId_and_status_and_inspectionAt</code>, <code>by_organizationId_and_productId_and_inspectionAt</code>, and <code>by_organizationId_and_qcUserId_and_inspectionAt</code>. Declare new indexes staged for the first deploy, wait for backfill, then activate them in a second deploy.</p>
+
+          <h3>Review cycle facts</h3>
+          <p>Add <code>qualityReviewCycles</code>, one document per submission cycle. On submission insert a pending cycle with record, organization, cycle number, QC user, product, hall, department, and <code>submittedAt</code>. On review patch that cycle with reviewer, <code>reviewedAt</code>, decision, note-present flag, and <code>durationMs</code>.</p>
+          <p>Indexes: <code>by_recordId_and_cycleNumber</code>, <code>by_organizationId_and_submittedAt</code>, <code>by_organizationId_and_qcUserId_and_submittedAt</code>, and <code>by_organizationId_and_reviewerId_and_reviewedAt</code>.</p>
+
+          <h3>Consistency rules</h3>
+          <ul>
+            <li>Create and update derived facts in the same mutation that changes the source record. Do not schedule eventual updates.</li>
+            <li><code>saveReading</code> adjusts summary counts from the previous and next <code>withinLimit</code> values. Photo, code, check, submit, and review mutations update only their owned summary fields.</li>
+            <li>Backfill historical summaries and cycles with <code>@convex-dev/migrations</code>. Derive cycles by ordering record events and pairing each submission with the next approval or return.</li>
+            <li>Add invariant tests comparing a summary with its source record, readings, checks, and events.</li>
+            <li>Return only explicit validators. Do not expose unrestricted documents to the client.</li>
+          </ul>
+
+          <h3>Laboratory summary and batch linkage</h3>
+          <p>Add <code>qualityLabReportSummaries</code> with <code>labReportId</code>, <code>sampleSubmissionId</code>, <code>sampleNumber</code>, organization, project, product name, canonical batch number, sample location, <code>sampledAt</code>, report status, lead chemist, sample type, report creation time, <code>signedAt</code>, total test count, in-spec count, out-of-spec count, and bounded out-of-spec parameter names. Create it in <code>labReports.create</code>, update approval fields in <code>labReports.updateStatus</code>, remove it in <code>labReports.remove</code>, and backfill existing reports.</p>
+          <h4>Link creation rules</h4>
+          <ol>
+            <li>Normalize the report batch input with the existing <code>normalizeProductionNumber</code> helper. It removes whitespace, validates <code>DDMMYYN</code>, and rejects invalid calendar dates.</li>
+            <li>Limit candidates to the same <code>organizationId</code>, the run’s <code>projectId</code>, and <code>sampleType = "final_product"</code>. Use <code>by_organizationId_and_productionNumber</code> for batch lookup and then apply the product/type checks.</li>
+            <li>If exactly one candidate exists, select it automatically. If several samples share the batch, require the user to choose by sample number, sampled time, and location. If none exists, block organization report creation and direct the user to submit the sample first.</li>
+            <li>Store both the canonical value in <code>labReports.lotNumber</code> and the durable foreign key in <code>labReports.sampleSubmissionId</code>. Use the foreign key for report queries and the batch value for validation, search, and audit display.</li>
+            <li>Use <code>labReports.by_sampleSubmissionId</code> to list all reports for one sample. Do not assume the relationship is one-to-one.</li>
+          </ol>
+          <h4>Historical backfill</h4>
+          <p>For every organization report without <code>sampleSubmissionId</code>, normalize <code>lotNumber</code>, find final-product samples in the same organization and project with that production number, and link only a unique match. Record zero-match and multiple-match cases for manual resolution. Never choose a sample by date proximity alone.</p>
+        </section>
+
+        <section id="frontend">
+          <h2>Frontend implementation shape</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>File</th><th>Change</th></tr></thead>
+              <tbody class="files">
+                <tr><td>rd/formulation-lab/App.tsx</td><td>Add the /quality/reports route. Leave /reports and existing quality routes unchanged.</td></tr>
+                <tr><td>rd/formulation-lab/components/Sidebar.tsx</td><td>Add QC reports to the Quality workspace only when review permission is present.</td></tr>
+                <tr><td>rd/formulation-lab/pages/quality-reports.tsx</td><td>Own URL filters, permission guard, tabs, suspense/loading, and report query selection.</td></tr>
+                <tr><td>rd/formulation-lab/components/quality-reports/report-filters.tsx</td><td>Date and dimension filters shared by all tabs.</td></tr>
+                <tr><td>rd/formulation-lab/components/quality-reports/*.tsx</td><td>One component per report plus shared KPI, metric-note, empty-state, and drill-down components.</td></tr>
+                <tr><td>rd/formulation-lab/components/quality-reports/audit-pdf.tsx</td><td>Printable single-record audit packet.</td></tr>
+                <tr><td>rd/formulation-lab/lib/quality-report-export.ts</td><td>CSV escaping, localized headings, date formatting, and export digest helpers.</td></tr>
+                <tr><td>rd/formulation-lab/locales/en.json</td><td>English report, metric, help, empty-state, filter, and export strings.</td></tr>
+                <tr><td>rd/formulation-lab/locales/ar.json</td><td>Complete Arabic equivalents; charts and tables must respect RTL layout.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Loading and failure behavior</h3>
+          <ul>
+            <li>Load only the active tab’s main query. Do not subscribe to all seven reports at once.</li>
+            <li>Debounce text filters and keep chart queries bounded. Audit rows use Convex pagination.</li>
+            <li>Show “No records in this range” separately from query failure.</li>
+            <li>When a derived summary is missing during rollout, exclude it from percentages and show the number of records still awaiting backfill.</li>
+            <li>Exports state the organization, filters, timezone, generation timestamp, and row count.</li>
+          </ul>
+        </section>
+
+        <section id="rollout">
+          <h2>Rollout, assignment, and verification</h2>
+          <h3>Delivery sequence</h3>
+          <ol>
+            <li><strong>Widen:</strong> add optional derived summary/cycle tables and staged indexes. Add query validators and pure metric helpers.</li>
+            <li><strong>Maintain:</strong> update production and lab mutations so every new or changed record maintains its reporting facts transactionally.</li>
+            <li><strong>Backfill:</strong> run idempotent migrations for inspection summaries, review cycles, legacy batch-to-sample links, and lab summaries. Record linked, no-match, ambiguous, processed, and failed counts.</li>
+            <li><strong>Activate:</strong> remove staged flags after index backfill, deploy the reporting queries, and compare report totals to source queries.</li>
+            <li><strong>Expose:</strong> add the manager-only route, Quality sidebar item, seven report tabs, drill-down, localization, and exports.</li>
+          </ol>
+          <h3>Test matrix</h3>
+          <ul>
+            <li>Backend: organization isolation, manager permission, date-bound validation, timezone day keys, OOL math, first-pass logic, resubmission cycles, percentile math, and lab OOS derivation.</li>
+            <li>Migration: rerun safety, missing event pairs, records with no readings, unique batch matches, zero batch matches, ambiguous same-batch samples, legacy lab reports without organization, and summary/source parity.</li>
+            <li>Frontend: route invisibility for QC officers, tab filters, URL restoration, empty states, low-sample labels, record drill-down, CSV quoting, PDF content, dark mode, English, Arabic, and RTL.</li>
+            <li>Performance: seed 90 days of hourly records across both halls and confirm every interactive query stays below Convex read limits and renders within the agreed target.</li>
+          </ul>
+          <div class="callout success">
+            <strong>Concrete next assignment:</strong> implement the reporting fact schema, staged indexes, pure metric helpers, and backfill tests before building charts. The page should not be connected until parity tests prove the derived counts match existing source records.
+          </div>
+        </section>
+
+        <section id="risks">
+          <h2>Risks, later data, and open decisions</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Risk or missing fact</th><th>Effect</th><th>Planned response</th></tr></thead>
+              <tbody>
+                <tr><td>Unchecked compliance items are not failures.</td><td>No true compliance-failure trend.</td><td>Release readiness reporting now. Later add structured observations with result, severity, note, photo, and check key.</td></tr>
+                <tr><td>Legacy reports can lack a sample ID or match several samples with one batch number.</td><td>Coverage and turnaround would be incomplete if ambiguous rows were guessed.</td><td>Backfill only unique organization/product/batch matches and place ambiguous cases in a manual-resolution queue.</td></tr>
+                <tr><td>No corrective-action entity exists.</td><td>No CAPA aging, recurrence, or closure report.</td><td>Later add nonconformance and corrective-action tables with owner, due date, status, root cause, and verification.</td></tr>
+                <tr><td>No production quantity is stored.</td><td>Cannot normalize issues per unit or batch output.</td><td>Later capture batch quantity from a trusted production source.</td></tr>
+                <tr><td>No review SLA is configured.</td><td>Cannot honestly label a pending record overdue.</td><td>Show age now. Later add organization-level review SLA hours.</td></tr>
+                <tr><td>Legacy lab reports may lack organization IDs.</td><td>Some rows cannot be safely shown in organization reports.</td><td>Exclude ambiguous rows and migrate ownership before reporting them.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Phase-two report additions after new capture exists</h3>
+          <ul>
+            <li><strong>Nonconformance report:</strong> finding frequency by check, severity, product, line, and batch.</li>
+            <li><strong>CAPA report:</strong> open actions, overdue actions, average closure time, recurrence after closure, and verification status.</li>
+            <li><strong>Laboratory stage-timing report:</strong> sampled-to-received, received-to-testing-start, testing duration, technical-review duration, and approval percentiles after those stage timestamps are captured.</li>
+            <li><strong>Normalized defect report:</strong> nonconformances per thousand units or per production batch.</li>
+          </ul>
+          <p><strong>Open decisions before implementation:</strong> the organization’s required review SLA, whether audit PDFs need an authorized digital signature, the expected maximum 90-day record volume, and whether production managers alone or additional supervisory roles should receive report access.</p>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer class="shell">
+    <p><strong>Status: DONE_WITH_CONCERNS.</strong> The selected modular suite is fully specified, including verified batch-to-sample linkage and sample/report timing. Structured compliance failures, CAPA, intermediate laboratory stage timestamps, and production-volume normalization remain outside release one because the source data does not exist.</p>
+  </footer>
+</body>
+</html>

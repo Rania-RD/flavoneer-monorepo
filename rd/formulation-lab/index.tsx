@@ -1,4 +1,8 @@
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import {
+  AllCommunityModule as AllChartsCommunityModule,
+  ModuleRegistry as ChartsModuleRegistry,
+} from "ag-charts-community";
 import { AllCommunityModule } from "ag-grid-community";
 import { AgGridProvider } from "ag-grid-react";
 import { ConvexReactClient } from "convex/react";
@@ -19,6 +23,8 @@ if (!publicConfig.convexUrl) {
 }
 
 const convex = new ConvexReactClient(publicConfig.convexUrl);
+
+ChartsModuleRegistry.registerModules([AllChartsCommunityModule]);
 
 initializeAnalytics();
 

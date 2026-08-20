@@ -28,9 +28,9 @@
     "production": {
       "environment": "production",
       "env": {
-        "EXPO_PUBLIC_HOT_UPDATER_URL": "https://site.prod.convex.flavoneer.com/hot-updater",
-        "EXPO_PUBLIC_CONVEX_URL": "https://backend.prod.convex.flavoneer.com",
-        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://site.prod.convex.flavoneer.com",
+        "EXPO_PUBLIC_HOT_UPDATER_URL": "https://rare-toad-730.convex.site/hot-updater",
+        "EXPO_PUBLIC_CONVEX_URL": "https://rare-toad-730.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://rare-toad-730.convex.site",
         "SENTRY_URL": "https://zapper.synbiodiet.com",
         "SENTRY_ORG": "bugsinkhasnoorgs",
         "SENTRY_PROJECT": "flavoneer-web",

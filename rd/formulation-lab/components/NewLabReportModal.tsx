@@ -1,6 +1,6 @@
 import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { FlaskConical, Plus, Save, Trash2, X } from "lucide-react";
 import { DateTime } from "luxon";
@@ -8,7 +8,9 @@ import type React from "react";
 import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
+import { useToast } from "../hooks/useToast";
 import { MotionDiv, modalVariants, overlayVariants } from "../lib/animations";
 
 interface Run {
@@ -200,10 +202,14 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isRTL } = useSettings();
+  const { activeOrganizationId } = useOrganization();
+  const { toast } = useToast();
   const createLabReport = useMutation(api.labReports.create);
+  const sampleSelectId = useId();
 
   const [saving, setSaving] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState("");
+  const [selectedSampleId, setSelectedSampleId] = useState("");
 
   const [sampleType, setSampleType] = useState(SAMPLE_TYPES[0].value);
   const [version, setVersion] = useState("");
@@ -219,6 +225,20 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
   ]);
 
   const selectedRun = runs.find((r) => r._id === selectedRunId);
+  const reportSamples = useQuery(
+    api.labSamples.listForReport,
+    isOpen && activeOrganizationId && selectedRun
+      ? { organizationId: activeOrganizationId, runId: selectedRun._id }
+      : "skip"
+  );
+  const availableSamples = reportSamples ?? [];
+  const selectedSample = availableSamples.find(
+    (sample) => sample._id === selectedSampleId
+  );
+  const effectiveSample =
+    selectedSample ??
+    (availableSamples.length === 1 ? availableSamples[0] : undefined);
+  const requiresSampleLink = Boolean(activeOrganizationId);
 
   const handleAddResult = () => {
     setResults((prev) => [
@@ -250,6 +270,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
 
   const resetForm = () => {
     setSelectedRunId("");
+    setSelectedSampleId("");
     setSampleType(SAMPLE_TYPES[0].value);
     setVersion("");
     setResults([
@@ -266,7 +287,7 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRun) {
+    if (!selectedRun || (requiresSampleLink && !effectiveSample)) {
       return;
     }
 
@@ -281,9 +302,10 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
       await createLabReport({
         reportId,
         runId: selectedRun._id,
+        sampleSubmissionId: effectiveSample?._id,
         projectId: selectedRun.projectId,
         version: version || "1.0",
-        lotNumber: selectedRun.batchCode,
+        lotNumber: effectiveSample?.productionNumber ?? selectedRun.batchCode,
         date: DateTime.now().toLocaleString(DateTime.DATE_MED),
         sampleType,
         hash:
@@ -296,6 +318,9 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
       onClose();
     } catch (err) {
       console.error("Failed to create lab report:", err);
+      toast.error(
+        err instanceof Error ? err.message : t("qc_report_create_failed")
+      );
     } finally {
       setSaving(false);
     }
@@ -369,7 +394,10 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                   <label className={labelClasses}>{t("run_batch")}</label>
                   <select
                     className={inputClasses}
-                    onChange={(e) => setSelectedRunId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedRunId(e.target.value);
+                      setSelectedSampleId("");
+                    }}
                     required
                     value={selectedRunId}
                   >
@@ -389,6 +417,54 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
                     </p>
                   )}
                 </div>
+
+                {activeOrganizationId && selectedRun && (
+                  <div className="space-y-1.5">
+                    <label className={labelClasses} htmlFor={sampleSelectId}>
+                      {t("qc_sample_submission")}
+                    </label>
+                    <select
+                      className={inputClasses}
+                      disabled={
+                        reportSamples === undefined ||
+                        availableSamples.length === 0
+                      }
+                      id={sampleSelectId}
+                      onChange={(event) =>
+                        setSelectedSampleId(event.target.value)
+                      }
+                      required
+                      value={effectiveSample?._id ?? ""}
+                    >
+                      <option disabled value="">
+                        {reportSamples === undefined
+                          ? t("loading")
+                          : t("select_sample_for_batch")}
+                      </option>
+                      {availableSamples.map((sample) => (
+                        <option key={sample._id} value={sample._id}>
+                          {sample.sampleNumber} — {sample.productionNumber}
+                        </option>
+                      ))}
+                    </select>
+                    {reportSamples !== undefined &&
+                      availableSamples.length === 0 && (
+                        <p className="text-red-600 text-xs dark:text-red-300">
+                          {t("no_sample_for_product", {
+                            productName: selectedRun.projectName,
+                          })}
+                        </p>
+                      )}
+                    {effectiveSample && (
+                      <p className="font-medium text-brand-primary text-xs dark:text-brand-accent-hover">
+                        {t("sample_linked_by_batch", {
+                          batchNumber: effectiveSample.productionNumber,
+                          sampleNumber: effectiveSample.sampleNumber,
+                        })}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Meta Fields */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -558,7 +634,11 @@ const NewLabReportModal: React.FC<NewLabReportModalProps> = ({
               </button>
               <button
                 className="flex items-center rounded-lg bg-brand-primary px-6 py-2 font-medium text-sm text-white shadow-brand-primary/20 shadow-lg transition-all hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={saving || !selectedRunId}
+                disabled={
+                  saving ||
+                  !selectedRunId ||
+                  (requiresSampleLink && !effectiveSample)
+                }
                 form="lab-report-form"
                 type="submit"
               >

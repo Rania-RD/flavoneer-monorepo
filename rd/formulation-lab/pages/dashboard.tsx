@@ -12,8 +12,8 @@ import NewProjectModal from "../components/NewProjectModal";
 import OnboardingView from "../components/OnboardingView";
 import ProjectCard from "../components/ProjectCard";
 import ProjectDetailsModal from "../components/ProjectDetailsModal";
-import { useSettings } from "../context/SettingsContext";
 import { useOrganization } from "../context/OrganizationContext";
+import { useSettings } from "../context/SettingsContext";
 import { modalVariants, overlayVariants } from "../lib/animations";
 import type { EnrichedProject } from "../types";
 
@@ -35,7 +35,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // Organization context
-  const { activeOrganizationId, organizations, organizationsLoading } = useOrganization();
+  const { activeOrganizationId, organizations, organizationsLoading } =
+    useOrganization();
 
   const {
     results: projectsRaw,
@@ -43,12 +44,24 @@ const Dashboard: React.FC = () => {
     loadMore: loadMoreProjects,
   } = usePaginatedQuery(
     api.projects.listByOrganization,
-    activeOrganizationId ? { organizationId: activeOrganizationId, language } : { language },
+    activeOrganizationId
+      ? {
+          includeFormulation: false,
+          organizationId: activeOrganizationId,
+          language,
+        }
+      : { includeFormulation: false, language },
     { initialNumItems: 50 }
   );
   const organizationMembersRaw = useQuery(
     api.organizationMembers.list,
     activeOrganizationId ? { organizationId: activeOrganizationId } : "skip"
+  );
+  const selectedProjectDetails = useQuery(
+    api.projects.get,
+    isDetailsModalOpen && selectedProject
+      ? { id: selectedProject._id, language }
+      : "skip"
   );
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
@@ -178,9 +191,8 @@ const Dashboard: React.FC = () => {
       .includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
-  const selectedProjectFromQuery = selectedProject
-    ? (projects.find((project) => project._id === selectedProject._id) ??
-      selectedProject)
+  const selectedProjectFromQuery = selectedProjectDetails
+    ? (selectedProjectDetails as EnrichedProject)
     : null;
 
   if (
@@ -263,8 +275,8 @@ const Dashboard: React.FC = () => {
             onDuplicate={handleDuplicateProject}
             onStartRun={handleStartRun}
             onViewDetails={handleOpenDetails}
-            project={project}
             organizationMembers={organizationMembers}
+            project={project}
           />
         ))}
 
@@ -297,8 +309,8 @@ const Dashboard: React.FC = () => {
         isOpen={isDetailsModalOpen}
         onClose={handleCloseDetails}
         onUpdateProject={handleProjectUpdate}
-        project={selectedProjectFromQuery}
         organizationMembers={organizationMembers}
+        project={selectedProjectFromQuery}
       />
 
       <AnimatePresence>

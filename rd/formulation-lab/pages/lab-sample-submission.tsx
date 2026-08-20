@@ -16,6 +16,7 @@ import {
 import type React from "react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { useOrganization } from "../context/OrganizationContext";
 import { useSettings } from "../context/SettingsContext";
 import { usePermissions } from "../hooks/usePermissions";
@@ -55,7 +56,11 @@ export default function LabSampleSubmission() {
   const referenceData = useQuery(
     api.labSamples.getReferenceData,
     activeOrganizationId && canCreate
-      ? { language, organizationId: activeOrganizationId }
+      ? {
+          language,
+          organizationId: activeOrganizationId,
+          sampleType,
+        }
       : "skip"
   );
   const recentSamples = useQuery(
@@ -391,7 +396,7 @@ export default function LabSampleSubmission() {
 
           {recentSamples && recentSamples.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] border-collapse text-start text-sm">
+              <table className="w-full min-w-[940px] border-collapse text-start text-sm">
                 <thead>
                   <tr className="bg-[#eef8eb]/70 text-[#527568] text-xs uppercase tracking-wider dark:bg-[#102f27]/55 dark:text-[#a9cbbb]">
                     <th className="px-6 py-4 text-start font-bold">
@@ -411,6 +416,9 @@ export default function LabSampleSubmission() {
                     </th>
                     <th className="px-6 py-4 text-start font-bold">
                       {t("submitted_by")}
+                    </th>
+                    <th className="px-6 py-4 text-start font-bold">
+                      {t("linked_qc_reports")}
                     </th>
                   </tr>
                 </thead>
@@ -446,6 +454,25 @@ export default function LabSampleSubmission() {
                         ).format(sample.sampledAt)}
                       </td>
                       <td className="px-6 py-4">{sample.submittedByName}</td>
+                      <td className="px-6 py-4">
+                        {sample.qcReports.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {sample.qcReports.map((report) => (
+                              <Link
+                                className="rounded-full bg-[#d2f2d4] px-2.5 py-1 font-bold font-mono text-[#173e33] text-xs transition hover:bg-[#bde7c0] dark:bg-[#285b4d] dark:text-[#d2f2d4] dark:hover:bg-[#356f5d]"
+                                key={report._id}
+                                to={`/reports/${report._id}`}
+                              >
+                                {report.reportId}
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[#6f8e82] text-xs dark:text-[#a9cbbb]">
+                            {t("no_linked_qc_reports")}
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

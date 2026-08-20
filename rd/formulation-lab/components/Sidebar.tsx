@@ -1,6 +1,7 @@
 import { api } from "@flavoneer/backend/api";
 import { useQuery } from "convex/react";
 import {
+  BarChart3,
   Boxes,
   Factory,
   FileText,
@@ -14,6 +15,7 @@ import type React from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
+import { usePermissions } from "../hooks/usePermissions";
 import SidebarItem from "./SidebarItem";
 import SidebarProfileMenu from "./SidebarProfileMenu";
 import WorkspaceSectionSwitcher, {
@@ -31,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { t } = useTranslation();
   const superAdminAccess = useQuery(api.superAdmin.getAccess);
+  const { hasPermission } = usePermissions();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -68,6 +71,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon: FlaskConical,
               path: "/quality/lab-samples",
             },
+            ...(hasPermission("review_production_checks")
+              ? [
+                  {
+                    mobileName: t("qc_reports_mobile"),
+                    name: t("qc_reports_title"),
+                    icon: BarChart3,
+                    mirrorInRTL: true,
+                    path: "/quality/reports",
+                  },
+                ]
+              : []),
             {
               mobileName: t("review"),
               name: t("run_review"),
@@ -97,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       });
     }
     return workspaceItems;
-  }, [activeSection, superAdminAccess?.isSuperAdmin, t]);
+  }, [activeSection, hasPermission, superAdminAccess?.isSuperAdmin, t]);
 
   return (
     <>

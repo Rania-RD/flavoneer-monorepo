@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { buildLabSampleNumber, getSampleYear, normalizeProductionNumber } from "./labSampleHelpers";
 import { selectLocalizedString } from "./localization";
 import { requirePermission } from "./permissions";
-import { labSampleTypeValidator, languageValidator } from "./validators";
+import { labReportStatusValidator, labSampleTypeValidator, languageValidator } from "./validators";
 import { requireWorkspaceMember } from "./workspaceAccess";
 
 const productOptionValidator = v.object({
@@ -21,12 +21,28 @@ const sampleSummaryValidator = v.object({
   sampleType: labSampleTypeValidator,
   sampledAt: v.number(),
   submittedByName: v.string(),
+  qcReports: v.array(
+    v.object({
+      _id: v.id("labReports"),
+      reportId: v.string(),
+      status: labReportStatusValidator,
+    }),
+  ),
+});
+
+const reportSampleValidator = v.object({
+  _id: v.id("labSampleSubmissions"),
+  productName: v.string(),
+  productionNumber: v.string(),
+  sampleNumber: v.string(),
+  sampledAt: v.number(),
 });
 
 export const getReferenceData = query({
   args: {
     language: v.optional(languageValidator),
     organizationId: v.id("organizations"),
+    sampleType: labSampleTypeValidator,
   },
   returns: v.object({
     finishedProducts: v.array(productOptionValidator),
@@ -36,24 +52,30 @@ export const getReferenceData = query({
     await requireWorkspaceMember(ctx, args.organizationId);
     await requirePermission(ctx, args.organizationId, "record_production_checks");
 
-    const [ingredients, projects] = await Promise.all([
-      ctx.db
+    if (args.sampleType === "raw_material") {
+      const ingredients = await ctx.db
         .query("ingredients")
         .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
         .order("desc")
-        .take(250),
-      ctx.db
-        .query("projects")
-        .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
-        .order("desc")
-        .take(250),
-    ]);
+        .take(250);
+
+      return {
+        rawMaterials: ingredients.map((ingredient) => ({
+          id: ingredient._id,
+          name: selectLocalizedString(ingredient.name, ingredient.nameI18n, args.language),
+        })),
+        finishedProducts: [],
+      };
+    }
+
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("by_organizationId", (q) => q.eq("organizationId", args.organizationId))
+      .order("desc")
+      .take(250);
 
     return {
-      rawMaterials: ingredients.map((ingredient) => ({
-        id: ingredient._id,
-        name: selectLocalizedString(ingredient.name, ingredient.nameI18n, args.language),
-      })),
+      rawMaterials: [],
       finishedProducts: projects.map((project) => ({
         id: project._id,
         name: selectLocalizedString(project.name, project.nameI18n, args.language),
@@ -76,16 +98,66 @@ export const listRecent = query({
       .order("desc")
       .take(50);
 
-    return samples.map((sample) => ({
+    return await Promise.all(
+      samples.map(async (sample) => {
+        const reports = await ctx.db
+          .query("labReports")
+          .withIndex("by_sampleSubmissionId", (q) => q.eq("sampleSubmissionId", sample._id))
+          .order("desc")
+          .take(10);
+        return {
+          _id: sample._id,
+          notes: sample.notes,
+          productName: sample.productName,
+          productionNumber: sample.productionNumber,
+          sampleLocation: sample.sampleLocation,
+          sampleNumber: sample.sampleNumber,
+          sampleType: sample.sampleType,
+          sampledAt: sample.sampledAt,
+          submittedByName: sample.submittedByName,
+          qcReports: reports.map((report) => ({
+            _id: report._id,
+            reportId: report.reportId,
+            status: report.status,
+          })),
+        };
+      }),
+    );
+  },
+});
+
+export const listForReport = query({
+  args: {
+    organizationId: v.id("organizations"),
+    runId: v.id("runs"),
+  },
+  returns: v.array(reportSampleValidator),
+  handler: async (ctx, args) => {
+    await requireWorkspaceMember(ctx, args.organizationId);
+    await requirePermission(ctx, args.organizationId, "view_production_checks");
+
+    const run = await ctx.db.get(args.runId);
+    if (!run || run.organizationId !== args.organizationId) {
+      throw new Error("Selected run does not belong to this workspace");
+    }
+
+    const samples = await ctx.db
+      .query("labSampleSubmissions")
+      .withIndex("by_organizationId_and_projectId_and_sampledAt", (q) =>
+        q.eq("organizationId", args.organizationId).eq("projectId", run.projectId),
+      )
+      .order("desc")
+      .take(50);
+    const matchingSamples = samples.filter(
+      (sample) => sample.sampleType === "final_product" && sample.projectId === run.projectId,
+    );
+
+    return matchingSamples.map((sample) => ({
       _id: sample._id,
-      notes: sample.notes,
       productName: sample.productName,
       productionNumber: sample.productionNumber,
-      sampleLocation: sample.sampleLocation,
       sampleNumber: sample.sampleNumber,
-      sampleType: sample.sampleType,
       sampledAt: sample.sampledAt,
-      submittedByName: sample.submittedByName,
     }));
   },
 });

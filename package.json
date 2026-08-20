@@ -19,7 +19,9 @@
     "check:write": "biome check --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint": "biome lint ."
+    "lint": "biome lint .",
+    "validate:convex-targets": "node scripts/validate-convex-targets.mjs",
+    "validate:convex-targets:local": "node scripts/validate-convex-targets.mjs --require-local"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",

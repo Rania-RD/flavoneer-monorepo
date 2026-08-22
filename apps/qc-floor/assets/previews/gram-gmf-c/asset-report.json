@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "gram-gmf-c.glb",
+  "sourceBlend": "assets/blender/gram-gmf-c.blend",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -3.100000113248825,
+      0,
+      -0.7999999970197678
+    ],
+    "max": [
+      3.100000113248825,
+      3.3000000854954123,
+      0.7999999970197678
+    ],
+    "size": [
+      6.20000022649765,
+      3.3000000854954123,
+      1.5999999940395355
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -3.1,
+      0,
+      -0.8
+    ],
+    "max": [
+      3.1,
+      3.3,
+      0.8
+    ],
+    "size": [
+      6.2,
+      3.3,
+      1.6
+    ]
+  },
+  "budget": {
+    "fileBytes": 1428732,
+    "triangles": 56102,
+    "vertices": 44788,
+    "meshes": 345,
+    "materials": 10,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.closing_station",
+    "inspection.container_magazine",
+    "inspection.control_panel",
+    "inspection.filling_station",
+    "inspection.slat_conveyor",
+    "inspection.topping_station",
+    "inspection.wash_unit"
+  ],
+  "requiredNodeChecks": {
+    "machine.gmf-c": true,
+    "structure.frame": true,
+    "inspection.slat_conveyor": true,
+    "inspection.container_magazine": true,
+    "inspection.filling_station": true,
+    "inspection.control_panel": true,
+    "inspection.topping_station": true,
+    "inspection.closing_station": true,
+    "inspection.wash_unit": true,
+    "utilities.connections": true,
+    "safety.guarding": true
+  },
+  "limits": {
+    "maxFileBytes": 5000000,
+    "maxTriangles": 110000,
+    "maxMaterials": 12,
+    "maxTextures": 0
+  }
+}

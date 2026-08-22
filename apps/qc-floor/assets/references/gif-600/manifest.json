@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "gram-gif-600",
+  "rootNode": "machine.gif-600",
+  "manufacturer": "Gram Equipment A/S / Sidam",
+  "model": "GIF 600",
+  "revisionBasis": "2002 self-contained R404A revision",
+  "description": "Approximate, reference-led exterior model of the Gram GIF 600 continuous ice-cream freezer.",
+  "dimensionsMeters": {
+    "lengthX": 1.47,
+    "widthZ": 0.6,
+    "heightY": 1.6
+  },
+  "dimensionBasis": "Gram/Sidam manual M8620000GB-UL Fig. 2-1 gives 1470 mm overall length, 600 mm width, and approximately 1600 mm height. The manual technical-data table lists 1450 mm nominal length and 1600 +/- 40 mm height; the model uses the drawing's 1470 mm installed exterior bound.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "lineAssignments": ["Rollo A", "Rollo B", "SLC"],
+  "references": [
+    {
+      "id": "official-service-manual",
+      "type": "manufacturer service manual",
+      "url": "https://www.machineryworld.com/manuals/Gram-Sidam/GRAM-GIF-600-Ice-Cream-Continuous-Freezer.pdf",
+      "use": "Exact GIF 600 envelope, cabinet-to-hardware proportions, connection types and locations, feet, internal arrangement, and 2002 revision identification.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "machinery-world-listing",
+      "type": "used-equipment listing and exact-model photograph",
+      "url": "https://www.machineryworld.com/product/gram-gif600-ice-cream-continuous-freezer/",
+      "imageUrl": "https://cdn.wotol.com/mH-leawOGiV5L5dFBiUUgA9vpbE%3D/fit-in/1000x1000/media%2Fpictures%2Ff7c%2Ff7c32486-9ba9-45c1-b7c0-32a6c1628728.jpg",
+      "use": "Exact blue operator strip, HMI, five-button stack, model badge, process-hardware placement, pipe route, and 145 x 60 x 185 cm listing dimensions.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "fincher-front",
+      "type": "used-equipment photographs",
+      "pageUrl": "https://www.fincherlimited.com/listings/8172857-used-gram-gif-600-continuous-freezer",
+      "imageUrl": "https://i.machineryhost.com/92262bf907af914b95a0fc33c3f33bf6/0c06839de17a3f946e72a40e648d93b5/large-used.jpg",
+      "use": "Exact front-right cabinet depth, removable side panels, recessed handle, control-panel placement, adjustable feet, and installed condition.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "fincher-front-straight",
+      "type": "used-equipment photograph",
+      "pageUrl": "https://www.fincherlimited.com/listings/8172857-used-gram-gif-600-continuous-freezer",
+      "imageUrl": "https://i.machineryhost.com/92262bf907af914b95a0fc33c3f33bf6/84e886a64cdfe2084ede5a26c68fc5b4/large-profreeze-600-continuous-freezer.jpg",
+      "use": "Straight-on process layout, discharge and mix pump housings, central flange, curved sanitary product pipe, and blue pneumatic tails.",
+      "accessed": "2026-08-20"
+    }
+  ],
+  "recognizableFeatures": [
+    "Tall 1.00 m deep stainless cabinet with removable service panels and a 0.47 m front process zone.",
+    "Narrow blue Gram operator strip on the upper right with HMI, five controls, GIF 600 badge, and emergency stop.",
+    "Upper discharge pump, central freezing-cylinder flange, and lower mix pump on the left side of the front face.",
+    "Large polished S-shaped sanitary pipe linking the upper discharge pump to the central flange.",
+    "Side louvers, recessed service handles, four tapered adjustable legs, and small blue pneumatic tails."
+  ],
+  "confidence": [
+    {
+      "area": "Exterior envelope",
+      "level": "high",
+      "note": "The exact manual supplies an overall-dimension drawing and nominal technical-data dimensions."
+    },
+    {
+      "area": "Front silhouette and controls",
+      "level": "medium-high",
+      "note": "Multiple exact-model photographs agree on handedness, control layout, pump positions, and the primary pipe route."
+    },
+    {
+      "area": "Side service details",
+      "level": "medium",
+      "note": "The panel split, handle, and louver locations are estimated from oblique listing photographs and manual elevation drawings."
+    },
+    {
+      "area": "Rear, hidden mechanisms, and installed utility routing",
+      "level": "low",
+      "note": "Hidden systems remain cabinet volume. Utility markers are schematic and external installation hoses are omitted."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and freezer selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a schematic exterior asset, not a fabrication, installation, maintenance, process-piping, or safety model."
+  }
+}

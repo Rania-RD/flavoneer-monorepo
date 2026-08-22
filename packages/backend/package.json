@@ -21,6 +21,7 @@
   "scripts": {
     "dev": "convex dev",
     "deploy": "convex deploy",
+    "deploy:staging": "convex deploy --env-file .env.staging",
     "codegen": "convex codegen",
     "test": "vitest run",
     "typecheck": "tsc -p convex/tsconfig.json --noEmit"

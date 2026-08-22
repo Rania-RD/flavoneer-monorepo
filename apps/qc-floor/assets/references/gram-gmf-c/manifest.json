@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "gram-gmf-c",
+  "rootNode": "machine.gmf-c",
+  "manufacturer": "Gram Equipment A/S",
+  "model": "GMF-C",
+  "description": "Approximate, reference-led exterior model of the current Gram GMF-C modular in-line ice-cream filling machine.",
+  "dimensionsMeters": {
+    "lengthX": 6.2,
+    "widthZ": 1.6,
+    "heightY": 3.3
+  },
+  "dimensionBasis": "No public GMF-C dimension drawing was found. The 6.2 x 1.6 x 3.3 m installed envelope is estimated from the current manufacturer render using the HMI, working-height conveyor, leveling feet, frame tubing, and product cups as scale references. The tall utility stack establishes the maximum height; the main frame is approximately 2.25 m high.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "lineAssignments": ["GMF"],
+  "references": [
+    {
+      "id": "official-gmf-c-product-page",
+      "type": "manufacturer product page",
+      "url": "https://www.gram-equipment.com/gram-equipment-products/gmf-c",
+      "use": "Current machine identity, configuration, product types, modular stations, open two-side access, HMI, integrated washing, servo motion, and current exterior views.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "official-gmf-c-three-quarter-image",
+      "type": "manufacturer photograph processed as a line-art hero image",
+      "pageUrl": "https://www.gram-equipment.com/gram-equipment-products/gmf-c",
+      "imageUrl": "https://cdn.prod.website-files.com/68c961af17a16c5b680483b3/699591a74cdbab19967e859f_GMF.jpg",
+      "use": "Overall three-quarter silhouette, frame bay spacing, end housings, slat conveyor, cup magazine, HMI, process stations, top cabinet, feet, and stack.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "official-gmf-c-isolated-render",
+      "type": "manufacturer render",
+      "pageUrl": "https://www.gram-equipment.com/gram-equipment-products/gmf-c",
+      "imageUrl": "https://cdn.prod.website-files.com/68c961af17a16c5b680483b3/699591d96a43780cc231da05_GMF%20render%201.png",
+      "use": "Highest-detail source for the operator side: eight-wide cup magazine and filler bank, central HMI, dry-topping hopper, closing station, blue pneumatic parts, skid and access-panel construction.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "gram-product-range-2020",
+      "type": "manufacturer product-range PDF mirrored by Pumps & Accessories",
+      "url": "https://www.pumpsacc.co.za/wp-content/uploads/2023/01/Product-Range.pdf",
+      "page": 7,
+      "use": "Earlier complete GMF-C three-quarter view and confirmation that the electrical cabinet is integrated into the frame top and production equipment moves vertically by servo.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "gram-filling-machines-brochure",
+      "type": "manufacturer filling-machines brochure mirror",
+      "url": "https://e-matreshka.com/upload/bbr_files/pdf/Gram/%D0%A0%D0%B0%D0%B7%D0%BB%D0%B8%D0%B2%D0%BE%D1%87%D0%BD%D0%B0%D1%8F%20%D0%BC%D0%B0%D1%88%D0%B8%D0%BD%D0%B0_%D0%B0%D0%BD%D0%B3%D0%BB.pdf",
+      "use": "GMF-C station options, side-operated magazines, servo-controlled adjustments, eight-wide configuration, and filling/closing hardware vocabulary.",
+      "accessed": "2026-08-20",
+      "note": "Search-indexed text was available; the host denied direct PDF download during this asset build."
+    },
+    {
+      "id": "directindustry-legacy-gmf",
+      "type": "archived distributor product page",
+      "url": "https://www.directindustry.com/prod/gram-equipment/product-28108-792675.html",
+      "use": "Legacy GMF silhouette and confirmation of the eight-wide slatted conveyor, servo container insertion, filler, ejector, and double-size slat options.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "dairy-foods-gmf-2013",
+      "type": "trade publication product note",
+      "url": "https://www.dairyfoods.com/articles/89454-gram-equipments-gmf-in-line-filling-machine",
+      "use": "Installed-generation context for large-inclusion filling, spinner filling, and side-loaded magazines.",
+      "accessed": "2026-08-20"
+    }
+  ],
+  "recognizableFeatures": [
+    "Long open stainless skid with a slatted eight-wide conveyor and large end-drive covers.",
+    "Four primary uprights supporting a long integrated top electrical cabinet and station rail.",
+    "Side-loaded multi-rod cup or cone magazine at the infeed.",
+    "Bank of eight servo/pneumatic filler cylinders with blue product tubes.",
+    "Central operator HMI with emergency stop and push buttons.",
+    "Central multi-head filling or decoration station and a conical dry-topping hopper.",
+    "Downstream closing station, visible cups in slats, wash pan, adjustable feet, and tall utility stack."
+  ],
+  "confidence": [
+    {
+      "area": "Current operator-side silhouette and station identity",
+      "level": "medium-high",
+      "note": "The official isolated render is large and detailed, but it shows only one configured machine from a single three-quarter direction."
+    },
+    {
+      "area": "External envelope",
+      "level": "low-medium",
+      "note": "The dimensions are image-derived estimates. Replace them when an installation or general-arrangement drawing is available."
+    },
+    {
+      "area": "Conveyor, frame, magazine, HMI, filler bank, hopper, and closing station placement",
+      "level": "medium",
+      "note": "Relative placement follows the current manufacturer render. Small hardware and pipe routes are simplified for QC-floor readability."
+    },
+    {
+      "area": "Far side, internal mechanisms, exact lane count for the installed factory revision, and utilities",
+      "level": "low",
+      "note": "No on-site photographs or configuration sheet were available. Hidden areas remain open-frame schematic geometry."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and GMF line selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset, not a fabrication, installation, process-piping, guarding, maintenance, or safety model."
+  }
+}

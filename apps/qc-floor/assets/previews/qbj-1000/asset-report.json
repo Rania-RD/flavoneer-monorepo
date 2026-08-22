@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "qbj-1000-chocolate-holding-tank.glb",
+  "sourceBlend": "assets/blender/qbj-1000.blend",
+  "referenceManifest": "assets/references/qbj-1000/manifest.json",
+  "format": "glTF 2.0 binary",
+  "nominalDimensionsMeters": {
+    "tankDiameter": 1.25,
+    "height": 1.7
+  },
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "operatorSideAxis": "+X",
+    "origin": "tank footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -0.625,
+      0,
+      -0.70498126745224
+    ],
+    "max": [
+      0.8525000088469477,
+      1.702349066734314,
+      0.625
+    ],
+    "size": [
+      1.4775000088469477,
+      1.702349066734314,
+      1.32998126745224
+    ]
+  },
+  "budget": {
+    "fileBytes": 740056,
+    "triangles": 31530,
+    "vertices": 23578,
+    "meshes": 85,
+    "materials": 13,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.agitator_drive",
+    "inspection.control_cabinet",
+    "inspection.sanitary_outlet",
+    "inspection.split_dust_cover",
+    "structure.jacketed_tank",
+    "utilities.heating_and_water"
+  ],
+  "requiredNodeChecks": {
+    "machine.qbj-1000": true,
+    "structure.jacketed_tank": true,
+    "inspection.split_dust_cover": true,
+    "inspection.agitator_drive": true,
+    "inspection.control_cabinet": true,
+    "inspection.sanitary_outlet": true,
+    "utilities.heating_and_water": true
+  },
+  "limits": {
+    "maxFileBytes": 2000000,
+    "maxTriangles": 40000,
+    "maxMaterials": 16,
+    "maxTextures": 0
+  },
+  "errors": []
+}

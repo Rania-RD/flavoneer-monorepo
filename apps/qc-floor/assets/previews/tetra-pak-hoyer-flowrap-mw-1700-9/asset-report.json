@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "tetra-pak-hoyer-flowrap-mw-1700-9.glb",
+  "sourceBlend": "assets/blender/tetra-pak-hoyer-flowrap-mw-1700-9.blend",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -3.181999921798706,
+      0,
+      -1.525000024586916
+    ],
+    "max": [
+      3.181999921798706,
+      2.4500000923871994,
+      1.525000024586916
+    ],
+    "size": [
+      6.363999843597412,
+      2.4500000923871994,
+      3.050000049173832
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -3.182,
+      0,
+      -1.525
+    ],
+    "max": [
+      3.182,
+      2.45,
+      1.525
+    ],
+    "size": [
+      6.364,
+      2.45,
+      3.05
+    ]
+  },
+  "budget": {
+    "fileBytes": 2935692,
+    "triangles": 98194,
+    "vertices": 100620,
+    "meshes": 456,
+    "materials": 12,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.control_panel",
+    "inspection.cross_seal_jaws",
+    "inspection.film_roll_bank",
+    "inspection.forming_and_long_seal",
+    "inspection.nine_lane_infeed",
+    "inspection.nine_lane_outfeed",
+    "safety.guarding"
+  ],
+  "requiredNodeChecks": {
+    "machine.hoyer-flowrap-mw-1700-9": true,
+    "structure.frame": true,
+    "inspection.nine_lane_infeed": true,
+    "inspection.film_roll_bank": true,
+    "inspection.forming_and_long_seal": true,
+    "inspection.cross_seal_jaws": true,
+    "inspection.nine_lane_outfeed": true,
+    "inspection.control_panel": true,
+    "safety.guarding": true,
+    "utilities.drives_and_pneumatics": true
+  },
+  "limits": {
+    "maxFileBytes": 8000000,
+    "maxTriangles": 140000,
+    "maxMaterials": 14,
+    "maxTextures": 0
+  }
+}

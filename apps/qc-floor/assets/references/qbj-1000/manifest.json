@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "qbj-1000",
+  "rootNode": "machine.qbj-1000",
+  "manufacturer": "Taizhou HULK Food Machinery / Suzhou Golden Eagle product family",
+  "model": "QBJ1000 chocolate holding tank",
+  "revisionBasis": "User-supplied HULK exterior photograph with QBJ series manufacturer data",
+  "description": "Approximate exterior Blender model of the 1000 L QBJ chocolate holding, storage, melting, and heating tank shown in the supplied photograph.",
+  "dimensionsMeters": {
+    "nominalTankDiameter": 1.25,
+    "nominalHeight": 1.7,
+    "note": "The side control cabinet projects beyond the published tank diameter. The 1.25 m figure controls the circular floor-plan footprint."
+  },
+  "technicalData": {
+    "capacityLiters": 1000,
+    "mainAxleSpeedRpm": 22.5,
+    "mainMotorPowerKw": 1.5,
+    "electricalHeatingPowerKw": 7.5,
+    "heatHoldingPowerKw": 2.5,
+    "weightKg": 785,
+    "material": "SS304",
+    "dischargeValveInches": 1.5
+  },
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "operatorSideAxis": "+X",
+    "origin": "tank footprint center at floor level"
+  },
+  "lineAssignments": ["AI QC floor chocolate process equipment"],
+  "references": [
+    {
+      "id": "user-supplied-target",
+      "type": "user-supplied product photograph",
+      "localFile": "photos/user-reference.jpg",
+      "use": "Primary target for the right-front control cabinet, blue motor, cylindrical brushed shell, four legs, heater terminals, low outlet, and cable routing.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "hulk-qbj1000-product",
+      "type": "manufacturer product page",
+      "url": "https://hulkpackaging.com/Chocolate-Holding-Storage-Melting-Tank-pd49824951.html",
+      "use": "Exact QBJ1000 identity, SS304 material, capacity, speed, motor and heating ratings, weight, published dimensions, jacket heating method, and 1.5-inch outlet.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "golden-eagle-qbj-series",
+      "type": "manufacturer QBJ series page",
+      "url": "https://www.szgoldeneagle.com/product/qbj-series-chocolate-holding-tank/qbj-series-chocolate-holding-tank-chocolate-storage-tank.html",
+      "use": "Independent 1000 L dimensions and ratings plus installed tank, lid, valve, motor, and piping context.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "qbj-operation-manual",
+      "type": "QBJ series operation manual and component drawings",
+      "url": "https://www.toolots.com/media/attachment/file/k/i/king_chocolate_holding_tank.pdf",
+      "localFile": "QBJ-series-chocolate-holding-tank-manual.pdf",
+      "use": "Split dust cover, lid clamps, central agitator drive, overflow pipe, water level, jacket heating, mixer, base, and control-box drawing.",
+      "accessed": "2026-08-21"
+    }
+  ],
+  "photos": [
+    {
+      "localFile": "photos/hulk-qbj1000-overall.jpg",
+      "source": "hulk-qbj1000-product",
+      "subject": "Isolated QBJ1000 overall view",
+      "used": true
+    },
+    {
+      "localFile": "photos/hulk-installed.jpg",
+      "source": "hulk-qbj1000-product",
+      "subject": "Installed HULK revision with control cabinet and sanitary piping",
+      "used": true
+    },
+    {
+      "localFile": "photos/golden-eagle-qbj.png",
+      "source": "golden-eagle-qbj-series",
+      "subject": "Front QBJ series tank with control box",
+      "used": true
+    },
+    {
+      "localFile": "photos/golden-eagle-qbj-series.png",
+      "source": "golden-eagle-qbj-series",
+      "subject": "Alternate QBJ series exterior and sanitary valve",
+      "used": true
+    },
+    {
+      "localFile": "photos/golden-eagle-qbj-detail.png",
+      "source": "golden-eagle-qbj-series",
+      "subject": "Installed multi-tank system showing scale and utility piping",
+      "used": true
+    },
+    {
+      "localFile": "photos/golden-eagle-flickr.jpg",
+      "source": "https://www.flickr.com/photos/goldeneaglemachinery/54534752604",
+      "subject": "Golden Eagle QBJ product image duplicate retained for provenance",
+      "used": false
+    }
+  ],
+  "recognizableFeatures": [
+    "Brushed cylindrical 1000 L jacket with rolled top lip and open lower skirt.",
+    "Four stainless tube legs with round floor pads and triangular shell gussets.",
+    "Top blue horizontal motor and gearbox driving the central agitator.",
+    "Projecting right-front stainless control cabinet with temperature controller, selector, start-stop buttons, and emergency stop.",
+    "Low sanitary outlet, three yellow electric-heater terminals, water-jacket fittings, and visible black cable runs."
+  ],
+  "confidence": [
+    {
+      "area": "Tank diameter, height, capacity, and ratings",
+      "level": "high",
+      "note": "Two manufacturer pages and the QBJ manual agree on the published 1000 L specification."
+    },
+    {
+      "area": "Attached revision exterior",
+      "level": "medium-high",
+      "note": "The supplied isolated view and a HULK installed photo agree on the cabinet, motor, outlet, legs, heater terminals, and cable placement."
+    },
+    {
+      "area": "Hidden vessel, mixer, and jacket construction",
+      "level": "low",
+      "note": "The manual identifies these systems, but the asset models only the visible exterior and cover."
+    }
+  ],
+  "usage": {
+    "purpose": "AI QC floor visualization and machine placement",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "Do not use this asset for fabrication, structural loading, lifting, utility routing, guarding, maintenance clearance, or food-safety validation."
+  }
+}

@@ -15,3 +15,5 @@ logs/
 !.env.*.example
 
 .DS_Store
+
+tmp

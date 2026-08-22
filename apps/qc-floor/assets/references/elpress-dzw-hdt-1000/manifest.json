@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "elpress-dzw-hdt-1000",
+  "rootNode": "machine.elpress-dzw-hdt-1000",
+  "manufacturer": "Elpress",
+  "model": "DZW-HDT-1000-R family",
+  "revisionBasis": "User-supplied older twin-tower product render with current and installed DZW-HDT references",
+  "description": "Approximate exterior Blender model of a combined sole-cleaning and two-hand disinfection hygiene station.",
+  "dimensionsMeters": {
+    "lengthX": 2.125,
+    "widthZ": 0.918,
+    "heightY": 1.513
+  },
+  "dimensionBasis": "AES Food Equipment publishes 2125 x 918 x 1513 mm for the DZW-HDT-1000-R/L. The model uses that envelope as hard external bounds. The supplied older revision has different control enclosures, so individual part proportions are image-derived.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "published footprint center at floor level"
+  },
+  "lineAssignments": ["Hall services hygiene entrance"],
+  "references": [
+    {
+      "id": "user-supplied-target",
+      "type": "user-supplied isolated product render",
+      "localFile": "photos/user-reference.png",
+      "use": "Primary geometry reference for the twin control towers, three hand-port groups, orange dispenser module, green chemical can, blue-white roller brushes, grated deck, rails, turnstile, and adjustable feet.",
+      "accessed": "2026-08-22"
+    },
+    {
+      "id": "elpress-product-page",
+      "type": "manufacturer product page",
+      "url": "https://www.elpress.com/products/personal-hygiene/hygienic-entrances/sole-cleaning-and-hand-disinfection/",
+      "use": "Machine-family identity, stainless construction, automatic humidified rollers, sensor-controlled two-sided hand dosing, turnstile release, chemical-level indication, and current product photographs.",
+      "accessed": "2026-08-22"
+    },
+    {
+      "id": "aes-dzw-hdt-listing",
+      "type": "specialist distributor product page",
+      "url": "https://www.aesfoodequipment.com/product/hygiene-equipment/hygiene-entrances/chemical-dispesers-turnstiles/sole-cleaning-and-hand-disinfection-dzw-hdt/",
+      "use": "Published DZW-HDT-1000-R/L dimensions, brush length, voltage, frequency, power, and feature list.",
+      "accessed": "2026-08-22"
+    },
+    {
+      "id": "phs-installed-reference",
+      "type": "specialist distributor installed-machine photograph",
+      "url": "https://phshygiene.com/shop/hygienic-entrances/sole-cleaning-and-hand-disinfection/",
+      "use": "Older DZW-HDT installed context, brush trough construction, rail proportions, turnstile geometry, hand-port size, and chemical hose routing.",
+      "accessed": "2026-08-22"
+    }
+  ],
+  "photos": [
+    {
+      "localFile": "photos/elpress-product.png",
+      "source": "elpress-product-page",
+      "subject": "Current isolated DZW-HDT-1000-R product view",
+      "used": true
+    },
+    {
+      "localFile": "photos/elpress-installed.jpg",
+      "source": "elpress-product-page",
+      "subject": "Current DZW-HDT installed view showing the brush deck, cabinet, rails, chemical can, and turnstile",
+      "used": true
+    },
+    {
+      "localFile": "photos/phs-older-installed.jpg",
+      "source": "phs-installed-reference",
+      "subject": "Older DZW-HDT installed view with a 1000 mm two-roller brush bed",
+      "used": true
+    }
+  ],
+  "recognizableFeatures": [
+    "Low stainless pass-through wash trough with entry and exit tread plates.",
+    "Two long blue-and-white rotating sole brushes followed by an open stainless drain grate.",
+    "Twin stainless control towers with recessed black hand ports and red-green status lights.",
+    "Orange auxiliary dispenser module, green external chemical can, blue dosing hose, and yellow coupling.",
+    "Tripod release turnstile, full-length tubular handrails, and round adjustable floor feet."
+  ],
+  "confidence": [
+    {
+      "area": "DZW-HDT-1000 exterior envelope and 1000 mm brush length",
+      "level": "high",
+      "note": "The specialist distributor publishes all three dimensions and the exact brush length."
+    },
+    {
+      "area": "Supplied older-revision silhouette, colors, and visible accessories",
+      "level": "medium-high",
+      "note": "The supplied render clearly shows the visible arrangement. Current and older installed DZW-HDT photos confirm the underlying platform, brushes, turnstile, and chemical-feed layout."
+    },
+    {
+      "area": "Hidden pump, spray nozzles, wiring, drains, and internal controls",
+      "level": "low",
+      "note": "The asset models only visible exterior volumes and does not infer internal sanitary or electrical construction."
+    }
+  ],
+  "floorPlanFit": {
+    "planObject": "washing-station",
+    "publishedMachineEnvelopeMeters": [2.125, 0.918, 1.513],
+    "previousServiceZoneEnvelopeMeters": [2.533, 11.375, 3.1],
+    "note": "The previous floor-plan facility volume described a service zone. It was replaced by this machine-scale asset at the same plan center; the adjacent exit lane remains separate."
+  },
+  "usage": {
+    "purpose": "AI QC floor visualization and machine placement",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is an exterior visualization. Do not use it for fabrication, installation clearances, drainage, electrical design, maintenance access, chemical compatibility, or hygiene validation."
+  }
+}

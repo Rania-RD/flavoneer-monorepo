@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "danxiao-rxgj-6",
+  "rootNode": "machine.rxgj-6",
+  "manufacturer": "Wuxi Danxiao Machinery Co., Ltd.",
+  "brand": "Runyu",
+  "model": "RXGJ-6",
+  "configuration": "Three-mould-per-row rotary stick ice cream machine",
+  "description": "Approximate, reference-led exterior model of the RXGJ-6 rotary stick ice cream machine for the AI QC floor.",
+  "dimensionsMeters": {
+    "lengthX": 4.5,
+    "widthZ": 2.6,
+    "heightY": 1.82
+  },
+  "dimensionBasis": "The current manufacturer product page publishes 4500 x 2600 x 1820 mm. The model uses these dimensions as hard external bounds. A localized Made-in-China page reports 4500 x 2700 x 1820 mm, so installed width should be checked before this asset is used for clearance planning.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "capacityPiecesPerHour": 6000,
+  "mouldsPerRow": 3,
+  "publishedMouldLines": 100,
+  "lineAssignments": ["Rollo A", "Rollo B"],
+  "references": [
+    {
+      "id": "danxiao-official-rxgj-6",
+      "type": "manufacturer product page",
+      "url": "https://www.wuxi-danxiao.com/rxgj-6-rotary-stick-ice-cream-machine.html",
+      "use": "Exact-model identity, 6000 pieces per hour capacity, double annular tank description, station list, three moulds per row, 100 mould lines, utilities, weight, and 4500 x 2600 x 1820 mm published envelope.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "danxiao-made-in-china-rxgj-6",
+      "type": "manufacturer marketplace listing",
+      "url": "https://danxiao.en.made-in-china.com/product/VXJnbDoYCiWF/China-Rxgj-6-Rotary-Bar-Ice-Cream-Machine.html",
+      "imagePageUrl": "https://danxiao.en.made-in-china.com/productimage/VXJnbDoYCiWF-2f1j00NLKYHPByZDqE/China-Rxgj-6-Rotary-Bar-Ice-Cream-Machine.html",
+      "use": "Five listing images, including the overall machine, open annular deck, process hardware, product examples, and a related RXGJ-3 pickup module. The RXGJ-3-labelled view is series context only.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "qc-floor-plan",
+      "type": "project design plan",
+      "localFile": "../../../../../.plan/2026-08-19-ai-assisted-qc-floor.html",
+      "use": "Asset key, two line assignments, 4.5 x 2.6 x 1.82 m target envelope, root-node convention, and acceptance criteria for the annular tank and control area."
+    }
+  ],
+  "collectedViews": [
+    {
+      "localFile": "photos/manufacturer-overall-front.jpg",
+      "imageUrl": "https://img01.71360.com/w3/ogg8qq/20240408/daeb417d409bba823fe257689709a594.jpg",
+      "sha256": "2615ff4c3a6e7fee17c87deb8a6b147689db258c2296676c4bfbff6a0ec53ce6",
+      "subject": "Exact-model isolated overall view; main silhouette, control cabinet, pump, circular tank, process stations, and transfer shroud",
+      "usedForGeometry": true
+    },
+    {
+      "localFile": "photos/manufacturer-filling-head.jpg",
+      "imageUrl": "https://img01.71360.com/w3/ogg8qq/20240406/8ba38ca1199aa2a6fea77cbd00829e12.jpg",
+      "sha256": "ed88ff8e56297239e8a02c7bf348164c38d1866f0c967bb21db773a72d29a4c4",
+      "subject": "Close view of the rectangular process box, six lower tubes, valve handles, posts, and mould pockets",
+      "usedForGeometry": true
+    },
+    {
+      "localFile": "photos/manufacturer-process-station.jpg",
+      "imageUrl": "https://img01.71360.com/w3/ogg8qq/20240406/e3319c5808f263000aec8d9d7fb5b6ab.jpg",
+      "sha256": "c0bfd16ed9d5420c2a2e78d2bc5af99599ff27c65979deb45cf66cc923bd056b",
+      "subject": "Close view of a pneumatic process station, white product grips, long pins, frame, and clear air tubes",
+      "usedForGeometry": true
+    },
+    {
+      "localFile": "photos/manufacturer-product-lineup.jpg",
+      "imageUrl": "https://img03.71360.com/w3/ogg8qq/20240321/848a6dc4c2fa13c563d063ae7b668a05.jpg",
+      "sha256": "3707e659964e3e5168b76e1dc60baf0aa741f43dfba2f8753a04152b9d183ec5",
+      "subject": "Manufacturer product examples only",
+      "usedForGeometry": false
+    },
+    {
+      "localFile": "photos/marketplace-overall.webp",
+      "imageUrl": "https://image.made-in-china.com/2f0j00DnPELjuqAiom/Rxgj-6-Rotary-Bar-Ice-Cream-Machine.webp",
+      "sha256": "3a7b9c2b5b6cce01a5c2dbc53c8d0a9647e6e47ba0b6cf634a6f6171c203f64c",
+      "subject": "Low-resolution duplicate of the exact-model overall view",
+      "usedForGeometry": false
+    },
+    {
+      "localFile": "photos/marketplace-annular-deck.webp",
+      "imageUrl": "https://image.made-in-china.com/2f0j00NDsfHYeBHLkT/Rxgj-6-Rotary-Bar-Ice-Cream-Machine.webp",
+      "sha256": "b52c72caabe55e34d2b41735317ab6ebd7e5c1aa6aae365ce8f2daca9c574354",
+      "subject": "High-resolution top view of the open center, concentric three-row mould deck, station spacing, and perimeter cabinets",
+      "usedForGeometry": true
+    },
+    {
+      "localFile": "photos/marketplace-product-bars.webp",
+      "imageUrl": "https://image.made-in-china.com/2f0j00NLKYHPByZDqE/Rxgj-6-Rotary-Bar-Ice-Cream-Machine.webp",
+      "sha256": "7f887c1540a1537226c90c4f6dec8dd5ef0ea217c6dd2de6e8ac39de904daac5",
+      "subject": "Product examples only",
+      "usedForGeometry": false
+    },
+    {
+      "localFile": "photos/marketplace-rxgj-3-pickup-reference.webp",
+      "imageUrl": "https://image.made-in-china.com/2f0j00nLZUIpBjbHkt/Rxgj-6-Rotary-Bar-Ice-Cream-Machine.webp",
+      "sha256": "cbf9a399fc7c1a2aa9b8f7b2d7f7693b4331988282aacdc4b4e9fa48f6ba11ff",
+      "subject": "Related RXGJ-3-labelled pickup tower, clamp arms, curved discharge tray, and deck detail",
+      "usedForGeometry": true,
+      "caveat": "The listing includes this image on the RXGJ-6 page, but the machine label reads RXGJ-3. Only product-family hardware form was used."
+    },
+    {
+      "localFile": "photos/marketplace-multi-nozzle-station.webp",
+      "imageUrl": "https://image.made-in-china.com/365f3j00PcpoQHutJbqd/Rxgj-6-Rotary-Bar-Ice-Cream-Machine.webp",
+      "sha256": "d64fcf4cc9f15b143eda2856af1e6ef20c1d47096789f5abe1cfc0ad5ee7d080",
+      "subject": "High-resolution close view of the multi-nozzle pneumatic bank, clear tube manifold, sloped frame, deck pockets, and rotary support column",
+      "usedForGeometry": true
+    },
+    {
+      "localFile": "photos/marketplace-product-chocolate-bars.webp",
+      "imageUrl": "https://image.made-in-china.com/2f0j00yDjRLlvhhPqQ/Rxgj-6-Rotary-Bar-Ice-Cream-Machine.webp",
+      "sha256": "29b6fc1da38d6ffb4d2b4cda90c9ed6a60dc40de298d179a8b10ac61e704e2e3",
+      "subject": "Product examples only",
+      "usedForGeometry": false
+    }
+  ],
+  "recognizableFeatures": [
+    "Broad stainless circular jacket with two raised annular waist bands and adjustable feet.",
+    "Open-center annular mould deck with three concentric rows of repeated rectangular pockets.",
+    "Several tall pneumatic filling, stick, and demould stations placed around the rotary deck.",
+    "Long elevated rectangular transfer shroud with an open multi-tier carrier path.",
+    "Separate stainless control cabinet with a cyan Runyu fascia, HMI, and pushbuttons.",
+    "External blue brine-pump motor, sanitary return pipe, valves, and pale pneumatic tubing."
+  ],
+  "confidence": [
+    {
+      "area": "Overall length, width, and height",
+      "level": "high",
+      "note": "The manufacturer publishes 4500 x 2600 x 1820 mm, and the exported mesh is checked against those bounds. Another listing gives 2700 mm width, so the 2600 mm value follows the current official English page and project plan."
+    },
+    {
+      "area": "Tank silhouette, deck layout, control cabinet, pump, and transfer shroud",
+      "level": "medium-high",
+      "note": "The exact-model overall image and high-resolution deck photograph show these parts clearly from complementary directions."
+    },
+    {
+      "area": "Visible station hardware and air tubing",
+      "level": "medium",
+      "note": "Close views show the main frame, cylinders, tubes, heads, and grips, but do not give station dimensions or a complete station sequence."
+    },
+    {
+      "area": "Hidden brine tank construction, transfer mechanism, far-side equipment, and exact pipe routes",
+      "level": "low",
+      "note": "No general-arrangement drawing, walkaround, or service manual was found. Hidden volumes remain simple and pipe routes are representative."
+    },
+    {
+      "area": "Installed factory revision",
+      "level": "low",
+      "note": "The model follows current catalog photos. Replace provisional details when on-site images or factory measurements are available."
+    }
+  ],
+  "usage": {
+    "purpose": "AI QC floor visualization and machine selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset, not a fabrication, installation, clearance, process-piping, cleaning-validation, maintenance, or safety model. Source photographs remain only in the reference bundle."
+  }
+}

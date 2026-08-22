@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "gram-hsw-c-10-lane",
+  "rootNode": "machine.hsw-c-10-lane",
+  "manufacturer": "Gram Equipment A/S",
+  "model": "HSW-C",
+  "configuration": "10 lanes",
+  "description": "Approximate, reference-led exterior model of the current Gram HSW-C compact multi-lane heat-seal wrapper in the ten-lane QC-floor configuration.",
+  "dimensionsMeters": {
+    "lengthX": 5.8,
+    "widthZ": 3.168,
+    "heightY": 3.1
+  },
+  "closedFootprintMeters": {
+    "lengthX": 5.8,
+    "widthZ": 2.7
+  },
+  "dimensionBasis": "No public HSW-C general-arrangement drawing or installed dimensions were found. The 5.8 x 2.7 m closed footprint and 3.1 m height are estimated from the supplied current render using a 1.05 m product working height, 0.18 m lane pitch, leveling feet, and common sanitary frame sections. The 3.168 m open-service width includes the raised far-side hatches and near-side operator panel modeled from the same view. Replace this scale when measured or GA dimensions are available.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "lineAssignments": ["BTC 1", "BTC 2"],
+  "references": [
+    {
+      "id": "user-reference",
+      "type": "supplied current product render",
+      "file": "photos/user-reference.png",
+      "use": "Primary target for the ten-lane configuration, overall silhouette, separate infeed and foil-roll bank, transfer bed, guard cage, open service hatches, top cabinets, support frame, and stainless finish.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "official-hsw-c-product-page",
+      "type": "manufacturer product page",
+      "url": "https://www.gram-equipment.com/gram-equipment-products/hsw-c",
+      "use": "Current product identity, up-to-16-lane range, compact line integration, servo-driven foil transport, linear rail motion, pneumatic knife movement, PIP control, tool-free format components, and roof-mounted pneumatic/electrical equipment.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "official-hsw-c-blueprint",
+      "type": "manufacturer line-art product image",
+      "pageUrl": "https://www.gram-equipment.com/gram-equipment-products/hsw-c",
+      "imageUrl": "https://cdn.prod.website-files.com/68c961af17a16c5b680483b3/69945c6538b82a29d9eeddc3_6992d0f2a0bf48dd7322ad83_HSW-C.jpeg",
+      "file": "photos/official-hsw-c-hero.jpeg",
+      "use": "Second official copy of the current overall configuration. The high-contrast edge treatment clarifies frame, guard, and station boundaries.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "official-hsw-c-isolated-render",
+      "type": "manufacturer isolated product render",
+      "pageUrl": "https://www.gram-equipment.com/gram-equipment-products/hsw-c",
+      "imageUrl": "https://cdn.prod.website-files.com/68c961af17a16c5b680483b3/699efc115b7462391afc5850_HSW-C.jpg",
+      "file": "photos/official-hsw-c-detail.jpg",
+      "use": "Highest-resolution source for lane hardware, foil rolls, transfer slats, guarded cell, roof cabinets, opened mesh hatches, and leveling feet.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "making-hsw-c",
+      "type": "equipment marketplace summary",
+      "url": "https://making.com/equipment/multi-lane-ice-cream-wrapping-system",
+      "use": "Confirms up to 25 strokes per minute, paper or film use, automatic operation, hermetic heat sealing, and integration between frozen-product transfer and outfeed.",
+      "accessed": "2026-08-21"
+    }
+  ],
+  "recognizableFeatures": [
+    "Ten side-by-side product lanes with a separate foil-roll and format-box bank.",
+    "Long open transfer bed leading into a tall rectangular wrapping cell.",
+    "Black square-grid safety guards with two raised service hatches.",
+    "Two large stainless pneumatic and electrical cabinets above the guarded cell.",
+    "Banks of linear sealing and pneumatic knife hardware across all ten lanes.",
+    "Open stainless lower skid with cross braces and adjustable sanitary feet."
+  ],
+  "confidence": [
+    {
+      "area": "Current ten-lane silhouette and visible operator-side components",
+      "level": "medium-high",
+      "note": "The supplied image and two manufacturer downloads show the same configured render at high resolution, but from one perspective."
+    },
+    {
+      "area": "External envelope",
+      "level": "low",
+      "note": "The dimensions are image-derived. No public GA drawing or installed measurement was found."
+    },
+    {
+      "area": "Lane count, foil bank, transfer bed, guard cage, roof cabinets, and open hatch placement",
+      "level": "medium-high",
+      "note": "These items are clear in the supplied render and match the floor-plan requirement for ten lanes."
+    },
+    {
+      "area": "Far side, internal film routing, knife profile, drives, and controls",
+      "level": "low",
+      "note": "Hidden systems remain schematic and should not guide fabrication, installation, maintenance, or safety work."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and BTC wrapper selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset, not a fabrication, installation, guarding, controls, maintenance, or safety model."
+  }
+}

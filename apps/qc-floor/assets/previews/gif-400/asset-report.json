@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "gram-gif-400.glb",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -0.7250000264314337,
+      0,
+      -0.30000001285225153
+    ],
+    "max": [
+      0.7250000325991293,
+      1.5999999903142452,
+      0.30000001285225153
+    ],
+    "size": [
+      1.4500000590305628,
+      1.5999999903142452,
+      0.6000000257045031
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -0.725,
+      0,
+      -0.3
+    ],
+    "max": [
+      0.725,
+      1.6,
+      0.3
+    ],
+    "size": [
+      1.45,
+      1.6,
+      0.6
+    ]
+  },
+  "budget": {
+    "fileBytes": 1029880,
+    "triangles": 28420,
+    "vertices": 36246,
+    "meshes": 82,
+    "materials": 7,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.control_panel",
+    "inspection.mix_inlet",
+    "inspection.product_outlet"
+  ],
+  "requiredNodeChecks": {
+    "machine.gif-400": true,
+    "structure.cabinet": true,
+    "inspection.control_panel": true,
+    "inspection.product_outlet": true,
+    "inspection.mix_inlet": true,
+    "utilities.sanitary_piping": true
+  },
+  "limits": {
+    "maxFileBytes": 1250000,
+    "maxTriangles": 32000,
+    "maxMaterials": 8,
+    "maxTextures": 0
+  }
+}

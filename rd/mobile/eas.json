@@ -9,12 +9,21 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://rare-toad-730.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://rare-toad-730.convex.site",
+        "EXPO_PUBLIC_HOT_UPDATER_URL": "https://rare-toad-730.convex.site/hot-updater",
         "APP_VARIANT": "development"
       }
     },
     "preview": {
       "environment": "preview",
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://rare-toad-730.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://rare-toad-730.convex.site",
+        "EXPO_PUBLIC_HOT_UPDATER_URL": "https://rare-toad-730.convex.site/hot-updater",
+        "APP_VARIANT": "preview"
+      }
     },
     "production": {
       "environment": "production",

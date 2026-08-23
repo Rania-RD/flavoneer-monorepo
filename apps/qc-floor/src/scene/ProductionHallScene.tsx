@@ -1,6 +1,6 @@
 import { ContactShadows, Html, OrbitControls, useProgress } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { MOUSE, Vector3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { PRODUCTION_HALL_1 } from "../floor/factory-layout";
@@ -184,6 +184,8 @@ function ProductionLineLabel({ line }: { line: string }) {
 }
 
 function HallContents({ onSelect, selectedLine }: Omit<SceneProps, "cameraRequest">) {
+  const [hoveredLine, setHoveredLine] = useState<string | null>(null);
+
   return (
     <>
       <HallArchitecture layout={PRODUCTION_HALL_1} />
@@ -202,8 +204,12 @@ function HallContents({ onSelect, selectedLine }: Omit<SceneProps, "cameraReques
           <EquipmentModel
             equipment={equipment}
             key={equipment.id}
+            onHoverLine={setHoveredLine}
             onSelect={onSelect}
-            selected={equipment.selectable !== false && selectedLine === equipment.line}
+            selected={
+              equipment.selectable !== false &&
+              (selectedLine === equipment.line || hoveredLine === equipment.line)
+            }
           />
         );
       })}

@@ -46,6 +46,9 @@ node apps/qc-floor/assets/parametric/verify-tetra-pak-hoyer-flowrap-mw-1700-9.mj
 node apps/qc-floor/assets/parametric/tetra-pak-hoyer-frigus-sf-600.mjs # invokes Blender for Frigus SF 600
 node apps/qc-floor/assets/parametric/verify-tetra-pak-hoyer-frigus-sf-600.mjs
 
+node apps/qc-floor/assets/parametric/tetra-pak-hoyer-dino-n2.mjs # invokes Blender for Dino N2
+node apps/qc-floor/assets/parametric/verify-tetra-pak-hoyer-dino-n2.mjs
+
 node apps/qc-floor/assets/parametric/danxiao-gta450-120.mjs # invokes Blender for GTA450-120
 node apps/qc-floor/assets/parametric/verify-danxiao-gta450-120.mjs
 
@@ -102,6 +105,11 @@ exports GLB/STL files, and renders front, side, and three-quarter PNG previews. 
 bundle contains the supplied target photograph, the exact Frigus 600 manual, and six consistent
 photos of one 2004 SF 600.
 
+Set `DINO_N2_BLENDER_BINARY` to override Blender for the Hoyer Dino N2 rebuild. Its source
+script saves an editable `assets/blender/tetra-pak-hoyer-dino-n2.blend` file, exports GLB/STL
+files, and renders front, side, and three-quarter PNG previews. The reference bundle contains the
+Hoyer Dino C manual and three exact installed-condition photographs of the 2008 Dino N2.
+
 Set `GTA450_BLENDER_BINARY` to override Blender for the Danxiao GTA450-120 rebuild. Its source
 script saves an editable `assets/blender/danxiao-gta450-120.blend` file, exports GLB/STL files,
 and renders front, side, and three-quarter PNG previews.
@@ -157,6 +165,13 @@ The attached image fixes the viewer-left control-panel and S-pipe configuration.
 2004 listing photographs define the finish, panel graphics, fittings, and fascia typography, but
 their operator panel is on the opposite side and their pump option differs. Hidden refrigeration
 components and installed utility routing remain cabinet volume.
+The Hoyer Dino N2 uses a 3.326 x 6.520 m installed footprint derived from Tetra Pak drawing
+B59404537876. Its 1.350 m product working height is explicit on the drawing; the 2.450 m maximum
+height is scaled against the drawing's 3.630 m tunnel height. Three exact-machine photographs
+define the stainless gantry, overhead cabinet bank, blue Hoyer Dino fascia, mobile chocolate tank,
+HMI, guards, and line interfaces. The related Dino C manual publishes a smaller 1.800 x 2.640 x
+2.160 m envelope and supplies mechanism detail only. Hidden N2 drive parts and exact gripper
+geometry remain approximate.
 The Danxiao GTA450-120 uses the exact-model marketplace listing's published 5.05 x 0.96 x 1.55 m
 complete-line envelope. Twenty collected listing images define the long infeed, compact transfer
 head, two-roll film carriage, operator panel, sealing rollers, end-seal head, and short discharge.

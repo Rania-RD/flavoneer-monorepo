@@ -41,6 +41,11 @@ export const MACHINE_CATALOG: Record<string, MachineAsset> = {
     source: "manual",
     visualScale: 1.75,
   },
+  "dino-n2": {
+    dimensions: { length: 3.326, width: 6.52, height: 2.45 },
+    modelUrl: "/models/tetra-pak-hoyer-dino-n2.glb",
+    source: "reference estimate",
+  },
   "gta450-120": {
     dimensions: { length: 5.05, width: 0.96, height: 1.55 },
     modelUrl: "/models/danxiao-gta450-120.glb",

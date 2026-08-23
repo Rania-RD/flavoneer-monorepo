@@ -1,5 +1,5 @@
 import { useGLTF } from "@react-three/drei";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { type Material, Mesh, type Object3D } from "three";
 import { getMachineVisualScale, MACHINE_CATALOG } from "../floor/machine-catalog";
 import type { EquipmentPlacement } from "../floor/types";
@@ -12,6 +12,7 @@ const STATUS_COLOR = {
 
 interface EquipmentModelProps {
   equipment: EquipmentPlacement;
+  onHoverLine: (line: string | null) => void;
   onSelect: (line: string) => void;
   selected: boolean;
 }
@@ -20,8 +21,12 @@ function cloneMaterial(material: Material | Material[]) {
   return Array.isArray(material) ? material.map((item) => item.clone()) : material.clone();
 }
 
-export function EquipmentModel({ equipment, onSelect, selected }: EquipmentModelProps) {
-  const [hovered, setHovered] = useState(false);
+export function EquipmentModel({
+  equipment,
+  onHoverLine,
+  onSelect,
+  selected,
+}: EquipmentModelProps) {
   const assetKey = equipment.assetKey;
   if (!assetKey) {
     throw new Error(`Machine ${equipment.id} does not define an asset key`);
@@ -42,7 +47,7 @@ export function EquipmentModel({ equipment, onSelect, selected }: EquipmentModel
     return next;
   }, [gltf.scene]);
 
-  const active = selectable && (selected || hovered);
+  const active = selectable && selected;
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: The WebGL group has a keyboard-accessible DOM list fallback.
@@ -60,11 +65,11 @@ export function EquipmentModel({ equipment, onSelect, selected }: EquipmentModel
         }
         event.stopPropagation();
         document.body.style.cursor = "pointer";
-        setHovered(true);
+        onHoverLine(equipment.line);
       }}
       onPointerLeave={() => {
         document.body.style.cursor = "default";
-        setHovered(false);
+        onHoverLine(null);
       }}
       position={equipment.position}
       rotation={[0, equipment.rotationY ?? 0, 0]}

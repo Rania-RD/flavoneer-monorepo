@@ -61,6 +61,16 @@ summary:focus-visible {
   outline-offset: 3px;
 }
 
+.visually-hidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .app-shell {
   min-height: 100dvh;
   isolation: isolate;
@@ -312,6 +322,7 @@ summary:focus-visible {
 }
 
 .canvas-heading,
+.hall-switcher,
 .view-controls,
 .canvas-footer {
   position: absolute;
@@ -343,6 +354,50 @@ summary:focus-visible {
   font-family: "Fraunces", Georgia, serif;
   font-size: 1.15rem;
   line-height: 1.05;
+}
+
+.hall-switcher {
+  backdrop-filter: blur(14px);
+  background: rgba(255, 253, 244, 0.86);
+  border: 1px solid rgba(28, 74, 60, 0.1);
+  border-radius: 1rem;
+  display: flex;
+  gap: 0.25rem;
+  inset-inline-end: 1.2rem;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0.28rem;
+  top: 1.2rem;
+}
+
+.hall-switcher button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0.72rem;
+  color: #41695c;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.7rem;
+  font-weight: 800;
+  height: 2.15rem;
+  justify-content: center;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+  width: 2.15rem;
+}
+
+.hall-switcher button:hover {
+  background: #d2f2d4;
+  color: #173e33;
+}
+
+.hall-switcher button[data-active] {
+  background: var(--amber);
+  color: #173e33;
+  transform: scale(1.04);
 }
 
 .view-controls {
@@ -867,7 +922,6 @@ summary:focus-visible {
   .inspector {
     min-height: 24rem;
   }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -879,7 +933,8 @@ summary:focus-visible {
 
   button,
   a,
-  .rail-tooltip {
+  .rail-tooltip,
+  .hall-switcher button {
     transition: none;
   }
 }

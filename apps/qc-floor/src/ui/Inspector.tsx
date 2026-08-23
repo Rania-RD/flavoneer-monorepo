@@ -1,27 +1,16 @@
 import { ArrowUpRight, ChevronDown, Cuboid, Factory, Ruler, ScanLine } from "lucide-react";
-import { PRODUCTION_HALL_1 } from "../floor/factory-layout";
+import { useMemo } from "react";
 import { getMachineVisualScale } from "../floor/machine-catalog";
-import type { EquipmentPlacement, EquipmentStatus } from "../floor/types";
+import type { EquipmentPlacement, EquipmentStatus, HallLayout } from "../floor/types";
 import { useI18n } from "../lib/i18n";
 
 const STATUS_ORDER: EquipmentStatus[] = ["attention", "pending", "normal"];
 
 interface InspectorProps {
+  layout: HallLayout;
   onSelect: (line: string) => void;
   selected: EquipmentPlacement[];
 }
-
-const PRODUCTION_LINES = Array.from(
-  PRODUCTION_HALL_1.equipment
-    .filter((equipment) => equipment.selectable !== false)
-    .reduce((groups, equipment) => {
-      const group = groups.get(equipment.line) ?? [];
-      group.push(equipment);
-      groups.set(equipment.line, group);
-      return groups;
-    }, new Map<string, EquipmentPlacement[]>()),
-  ([line, equipment]) => ({ line, equipment }),
-);
 
 function equipmentScale(equipment: EquipmentPlacement) {
   return equipment.kind === "machine"
@@ -67,10 +56,35 @@ function formatDimensions(equipment: EquipmentPlacement[]) {
   return `${(bounds.maxX - bounds.minX).toFixed(2)} × ${(bounds.maxZ - bounds.minZ).toFixed(2)} × ${bounds.height.toFixed(2)} m`;
 }
 
-export function Inspector({ onSelect, selected }: InspectorProps) {
-  const { t } = useI18n();
+export function Inspector({ layout, onSelect, selected }: InspectorProps) {
+  const { language, t } = useI18n();
+  const productionLines = useMemo(
+    () =>
+      Array.from(
+        layout.equipment
+          .filter((equipment) => equipment.selectable !== false)
+          .reduce((groups, equipment) => {
+            const group = groups.get(equipment.line) ?? [];
+            group.push(equipment);
+            groups.set(equipment.line, group);
+            return groups;
+          }, new Map<string, EquipmentPlacement[]>()),
+        ([line, equipment]) => ({ line, equipment }),
+      ),
+    [layout],
+  );
   const selectedLine = selected[0]?.line ?? null;
   const selectedStatus = groupStatus(selected);
+  const attentionCount = productionLines.filter(
+    (group) => groupStatus(group.equipment) === "attention",
+  ).length;
+  const pendingCount = productionLines.filter(
+    (group) => groupStatus(group.equipment) === "pending",
+  ).length;
+  const hallStatus =
+    language === "ar"
+      ? `${attentionCount} خارج الحدود · ${pendingCount} قيد المراجعة`
+      : `${attentionCount} ${attentionCount === 1 ? "exception" : "exceptions"} · ${pendingCount} ${pendingCount === 1 ? "pending line" : "pending lines"}`;
   const labUrl = import.meta.env.VITE_FORMULATION_LAB_URL ?? "http://localhost:3001";
   const recordUrl = `${labUrl}/quality/production-line-records${
     selectedLine ? `?line=${encodeURIComponent(selectedLine)}` : ""
@@ -140,17 +154,17 @@ export function Inspector({ onSelect, selected }: InspectorProps) {
           <p className="inspector__note">{t("hallOverviewNote")}</p>
           <div className="overview-metrics">
             <div>
-              <strong>{PRODUCTION_HALL_1.lineZones.length}</strong>
+              <strong>{productionLines.length}</strong>
               <span className="overview-metrics__label">{t("lines")}</span>
             </div>
             <div>
-              <strong>{PRODUCTION_HALL_1.equipment.length}</strong>
+              <strong>{layout.equipment.length}</strong>
               <span className="overview-metrics__label">{t("equipmentCount")}</span>
             </div>
           </div>
           <div className="hall-status-line">
             <span className="status-symbol" data-status="attention" aria-hidden="true" />
-            <span>{t("hallStatusValue")}</span>
+            <span>{hallStatus}</span>
           </div>
         </>
       )}
@@ -163,11 +177,11 @@ export function Inspector({ onSelect, selected }: InspectorProps) {
       <details className="equipment-list">
         <summary>
           <span>{t("productionLines")}</span>
-          <span>{PRODUCTION_LINES.length}</span>
+          <span>{productionLines.length}</span>
           <ChevronDown aria-hidden="true" size={16} />
         </summary>
         <div className="equipment-list__items">
-          {[...PRODUCTION_LINES]
+          {[...productionLines]
             .sort(
               (a, b) =>
                 STATUS_ORDER.indexOf(groupStatus(a.equipment)) -

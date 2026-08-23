@@ -33,6 +33,14 @@ export interface LineZone {
 export interface HallLayout {
   center?: [number, number];
   dimensions: EquipmentDimensions;
+  entrance?: {
+    side: "left" | "right";
+    width: number;
+  };
   equipment: EquipmentPlacement[];
   lineZones: LineZone[];
+  partitions?: Array<{
+    center: [number, number];
+    length: number;
+  }>;
 }

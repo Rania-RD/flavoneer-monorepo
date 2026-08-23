@@ -46,6 +46,11 @@ export const MACHINE_CATALOG: Record<string, MachineAsset> = {
     modelUrl: "/models/tetra-pak-hoyer-dino-n2.glb",
     source: "reference estimate",
   },
+  "comet-cl4": {
+    dimensions: { length: 5.65, width: 1.55, height: 2.2 },
+    modelUrl: "/models/tetra-pak-hoyer-comet-cl4.glb",
+    source: "manual",
+  },
   "gta450-120": {
     dimensions: { length: 5.05, width: 0.96, height: 1.55 },
     modelUrl: "/models/danxiao-gta450-120.glb",
@@ -54,6 +59,16 @@ export const MACHINE_CATALOG: Record<string, MachineAsset> = {
   "rxgj-6": {
     dimensions: { length: 4.5, width: 2.6, height: 1.82 },
     modelUrl: "/models/danxiao-rxgj-6.glb",
+    source: "manufacturer",
+  },
+  "rxgj-12": {
+    dimensions: { length: 5.5, width: 3.75, height: 1.88 },
+    modelUrl: "/models/danxiao-rxgj-12.glb",
+    source: "manufacturer",
+  },
+  "qbj-1000": {
+    dimensions: { length: 1.4775, width: 1.33, height: 1.702 },
+    modelUrl: "/models/qbj-1000-chocolate-holding-tank.glb",
     source: "manufacturer",
   },
 };

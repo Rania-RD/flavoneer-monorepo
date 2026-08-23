@@ -30,10 +30,17 @@ export function HallArchitecture({ layout }: { layout: HallLayout }) {
   const halfZ = layout.dimensions.width / 2;
   const backZ = centerZ - halfZ;
   const frontZ = centerZ + halfZ;
-  const entranceWidth = 4.6;
-  const entranceX = centerX + halfX - entranceWidth / 2;
+  const entranceSide = layout.entrance?.side ?? "right";
+  const entranceWidth = layout.entrance?.width ?? 4.6;
+  const entranceX =
+    entranceSide === "right"
+      ? centerX + halfX - entranceWidth / 2
+      : centerX - halfX + entranceWidth / 2;
   const frontWallWidth = layout.dimensions.length - entranceWidth;
-  const frontWallX = centerX - halfX + frontWallWidth / 2;
+  const frontWallX =
+    entranceSide === "right"
+      ? centerX - halfX + frontWallWidth / 2
+      : centerX + halfX - frontWallWidth / 2;
 
   return (
     <group>
@@ -68,6 +75,14 @@ export function HallArchitecture({ layout }: { layout: HallLayout }) {
             {zone.label.toUpperCase()}
           </Text>
         </group>
+      ))}
+
+      {layout.partitions?.map((partition) => (
+        <HallBeam
+          key={`${partition.center[0]}-${partition.center[1]}`}
+          position={[partition.center[0], 0.24, partition.center[1]]}
+          size={[partition.length, 0.48, 0.24]}
+        />
       ))}
 
       <HallBeam position={[centerX, 0.35, backZ]} size={[layout.dimensions.length, 0.7, 0.28]} />

@@ -1,6 +1,6 @@
 import { Box, Languages, Moon, PanelTopOpen, RotateCcw, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { PRODUCTION_HALL_1 } from "./floor/factory-layout";
+import { PRODUCTION_HALLS, type ProductionHallId } from "./floor/factory-layout";
 import { useI18n } from "./lib/i18n";
 import {
   type CameraMode,
@@ -22,6 +22,7 @@ function App() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
+  const [activeHallId, setActiveHallId] = useState<ProductionHallId>("hall1");
   const [cameraRequest, setCameraRequest] = useState<CameraRequest>({
     mode: "overview",
     nonce: 0,
@@ -33,14 +34,21 @@ function App() {
     window.localStorage.setItem("flavoneer.qc-floor-theme", theme);
   }, [theme]);
 
+  const activeLayout = PRODUCTION_HALLS[activeHallId];
+  const hallName = t(activeHallId);
+
+  useEffect(() => {
+    document.title = `${hallName} | Flavoneer QC`;
+  }, [hallName]);
+
   const selectedEquipment = useMemo(
     () =>
       selectedLine
-        ? PRODUCTION_HALL_1.equipment.filter(
+        ? activeLayout.equipment.filter(
             (equipment) => equipment.line === selectedLine && equipment.selectable !== false,
           )
         : [],
-    [selectedLine],
+    [activeLayout, selectedLine],
   );
 
   const requestCamera = (mode: CameraMode, line = selectedLine) => {
@@ -59,6 +67,19 @@ function App() {
     }
   };
 
+  const selectHall = (hallId: ProductionHallId) => {
+    if (hallId === activeHallId) {
+      return;
+    }
+    setActiveHallId(hallId);
+    setSelectedLine(null);
+    setCameraRequest((current) => ({
+      mode: "overview",
+      nonce: current.nonce + 1,
+      selectedLine: null,
+    }));
+  };
+
   return (
     <div className="app-shell">
       <div className="ambient-grid" aria-hidden="true" />
@@ -68,7 +89,7 @@ function App() {
         <header className="topbar">
           <div className="topbar__identity">
             <p>
-              {t("qualityControl")} <span className="topbar__separator">/</span> {t("hallTitle")}
+              {t("qualityControl")} <span className="topbar__separator">/</span> {hallName}
             </p>
             <h1>{t("hallSubtitle")}</h1>
           </div>
@@ -104,10 +125,11 @@ function App() {
           </div>
         </header>
 
-        <section className="hall-workspace" aria-label={t("hallTitle")}>
+        <section className="hall-workspace" aria-label={hallName}>
           <div className="canvas-panel">
             <ProductionHallScene
               cameraRequest={cameraRequest}
+              layout={activeLayout}
               onSelect={selectLine}
               selectedLine={selectedLine}
             />
@@ -117,9 +139,25 @@ function App() {
                 <Box aria-hidden="true" size={20} />
               </span>
               <span>
-                <strong>{t("hallTitle")}</strong>
+                <strong>{hallName}</strong>
               </span>
             </div>
+
+            <fieldset className="hall-switcher">
+              <legend className="visually-hidden">{t("switchHall")}</legend>
+              {(["hall1", "hall2"] as const).map((hallId, index) => (
+                <button
+                  aria-label={t(hallId)}
+                  aria-pressed={activeHallId === hallId}
+                  data-active={activeHallId === hallId || undefined}
+                  key={hallId}
+                  onClick={() => selectHall(hallId)}
+                  type="button"
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </fieldset>
 
             <div className="view-controls" aria-label={t("overview")} role="toolbar">
               <button onClick={() => requestCamera("overview", null)} type="button">
@@ -137,7 +175,7 @@ function App() {
             </div>
           </div>
 
-          <Inspector onSelect={selectLine} selected={selectedEquipment} />
+          <Inspector layout={activeLayout} onSelect={selectLine} selected={selectedEquipment} />
         </section>
       </main>
     </div>

@@ -295,3 +295,263 @@ export const PRODUCTION_HALL_1: HallLayout = {
     },
   ],
 };
+
+const HALL_2_CENTER_Z = -6;
+const HALL_2_LENGTH = 38.8;
+const HALL_2_WIDTH = 73.4;
+
+function hall2Machine(
+  id: string,
+  label: string,
+  line: string,
+  assetKey: keyof typeof MACHINE_CATALOG,
+  position: [number, number, number],
+  rotationY = 0,
+  status: EquipmentStatus = "normal",
+  visualScale?: number,
+): EquipmentPlacement {
+  return {
+    assetKey,
+    dimensions: MACHINE_CATALOG[assetKey].dimensions,
+    id,
+    kind: "machine",
+    label,
+    line,
+    position,
+    rotationY,
+    status,
+    visualScale,
+  };
+}
+
+function hall2FreezerBank(
+  prefix: string,
+  label: string,
+  line: string,
+  assetKey: "gif-600" | "gif-1200",
+  xPositions: number[],
+  z: number,
+  status: EquipmentStatus,
+  visualScale?: number,
+): EquipmentPlacement[] {
+  return xPositions.map((x, index) =>
+    hall2Machine(
+      `${prefix}-${index + 1}`,
+      `${label} · ${index + 1}`,
+      line,
+      assetKey,
+      [x, 0, z],
+      -Math.PI / 2,
+      status,
+      visualScale,
+    ),
+  );
+}
+
+export const PRODUCTION_HALL_2: HallLayout = {
+  center: [0, HALL_2_CENTER_Z],
+  dimensions: { length: HALL_2_LENGTH, width: HALL_2_WIDTH, height: 9.5 },
+  entrance: { side: "left", width: 6.1 },
+  lineZones: [
+    {
+      id: "chocolate-preparation",
+      label: "Chocolate preparation",
+      center: [-4.5, -34.1],
+      size: [8.5, 11],
+      status: "normal",
+    },
+    {
+      id: "rollo-c",
+      label: "Rollo C",
+      center: [-11.2, -19.7],
+      size: [16.4, 10.5],
+      status: "pending",
+    },
+    {
+      id: "straightline-dino",
+      label: "Straightline + Dino",
+      center: [-2.8, -8.5],
+      size: [31, 10.5],
+      status: "normal",
+    },
+    {
+      id: "comet",
+      label: "Hoyer Comet",
+      center: [-4.1, 1.1],
+      size: [29, 8.5],
+      status: "normal",
+    },
+    {
+      id: "slc",
+      label: "SLC",
+      center: [-6.3, 10.4],
+      size: [26.2, 10.5],
+      status: "attention",
+    },
+  ],
+  partitions: [
+    { center: [13.1, 19.2], length: 12.6 },
+    { center: [-4.1, 26], length: 30.6 },
+  ],
+  equipment: [
+    hall2Machine(
+      "hall2-qbj-1",
+      "QBJ1000 · 1",
+      "Chocolate preparation",
+      "qbj-1000",
+      [-4.5, 0, -36.5],
+      0,
+      "normal",
+      2.5,
+    ),
+    hall2Machine(
+      "hall2-qbj-2",
+      "QBJ1000 · 2",
+      "Chocolate preparation",
+      "qbj-1000",
+      [-4.5, 0, -31.6],
+      0,
+      "normal",
+      2.5,
+    ),
+
+    hall2Machine(
+      "rollo-c-rxgj",
+      "RXGJ-12",
+      "Rollo C",
+      "rxgj-12",
+      [-15, 0, -19.4],
+      0,
+      "pending",
+      ROLLO_VISUAL_SCALE,
+    ),
+    hall2Machine(
+      "rollo-c-gta-1",
+      "GTA450-120 · 1",
+      "Rollo C",
+      "gta450-120",
+      [-10.5, 0, -23.9],
+      0,
+      "pending",
+      ROLLO_VISUAL_SCALE,
+    ),
+    hall2Machine(
+      "rollo-c-gta-2",
+      "GTA450-120 · 2",
+      "Rollo C",
+      "gta450-120",
+      [-9.5, 0, -19.7],
+      Math.PI / 2,
+      "pending",
+      ROLLO_VISUAL_SCALE,
+    ),
+    hall2Machine(
+      "rollo-c-gta-3",
+      "GTA450-120 · 3",
+      "Rollo C",
+      "gta450-120",
+      [-6.4, 0, -19.7],
+      Math.PI / 2,
+      "pending",
+      ROLLO_VISUAL_SCALE,
+    ),
+
+    hall2Machine(
+      "hall2-straightline-dino",
+      "Hoyer Straightline 800 C",
+      "Straightline + Dino",
+      "straightline-800-c",
+      [-2.75, 0, -11],
+      Math.PI,
+    ),
+    hall2Machine(
+      "straightline-gta-1",
+      "GTA450-120 · 1",
+      "Straightline + Dino",
+      "gta450-120",
+      [-15.8, 0, -8.2],
+      Math.PI / 2,
+      "normal",
+      ROLLO_VISUAL_SCALE,
+    ),
+    hall2Machine(
+      "straightline-gta-2",
+      "GTA450-120 · 2",
+      "Straightline + Dino",
+      "gta450-120",
+      [-10.6, 0, -5.25],
+      0,
+      "normal",
+      ROLLO_VISUAL_SCALE,
+    ),
+    hall2Machine(
+      "straightline-dino",
+      "Hoyer Dino N2",
+      "Straightline + Dino",
+      "dino-n2",
+      [5.3, 0, -5.3],
+      Math.PI / 2,
+    ),
+
+    hall2Machine(
+      "hall2-comet",
+      "Hoyer Comet CL4",
+      "Hoyer Comet",
+      "comet-cl4",
+      [-11, 0, -0.9],
+      Math.PI,
+      "normal",
+      2.2,
+    ),
+    ...hall2FreezerBank(
+      "hall2-gif1200",
+      "GIF 1200",
+      "Hoyer Comet",
+      "gif-1200",
+      [-17.2, -14.5, -11.7, -9],
+      3,
+      "normal",
+      1.65,
+    ),
+    ...hall2FreezerBank(
+      "hall2-gif600",
+      "GIF 600",
+      "Hoyer Comet",
+      "gif-600",
+      [1.8, 4.1, 6.35, 8.65],
+      2.7,
+      "normal",
+    ),
+
+    hall2Machine(
+      "hall2-slc-straightline",
+      "Hoyer Straightline 800 C",
+      "SLC",
+      "straightline-800-c",
+      [-6.3, 0, 10.4],
+      Math.PI,
+      "attention",
+    ),
+
+    {
+      ...hall2Machine(
+        "hall2-washing-station",
+        "DZW-HDT Hygiene Station",
+        "Hall services",
+        "elpress-dzw-hdt-1000",
+        [2, 0, 24.3],
+        0,
+        "normal",
+        3.2,
+      ),
+      selectable: false,
+    },
+  ],
+};
+
+export const PRODUCTION_HALLS = {
+  hall1: PRODUCTION_HALL_1,
+  hall2: PRODUCTION_HALL_2,
+} as const;
+
+export type ProductionHallId = keyof typeof PRODUCTION_HALLS;

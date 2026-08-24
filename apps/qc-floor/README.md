@@ -21,6 +21,25 @@ Set `VITE_FORMULATION_LAB_URL` when the formulation lab is not available at
 `http://localhost:3001`. The inspector links directly to the latest real QC record for a selected
 line.
 
+## Deploy with Coolify
+
+Configure the Coolify resource from the repository root:
+
+```text
+Build Pack: Dockerfile
+Base Directory: /
+Dockerfile Location: /Dockerfile.qc-floor
+Exposed Port: 80
+Health Check Path: /health
+```
+
+Add `VITE_CONVEX_URL`, `VITE_CONVEX_SITE_URL`, and `VITE_FORMULATION_LAB_URL` as build variables.
+The two Convex variables are required. A change to any of these values requires a rebuild because
+Vite writes them into the browser bundle. Leave the start command empty.
+
+After assigning the QC floor domain, set the Convex deployment's `QC_FLOOR_SITE_URL` environment
+variable to that origin. Do not include a trailing slash.
+
 ## Live QC data
 
 The floor loads the signed-in user's active organization from the shared formulation-lab browser

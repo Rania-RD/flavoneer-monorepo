@@ -264,13 +264,18 @@ summary:focus-visible {
 }
 
 .live-dot {
-  background: #4f9a76;
-  border: 3px solid color-mix(in srgb, #4f9a76 18%, transparent);
+  background: #789087;
+  border: 3px solid color-mix(in srgb, #789087 18%, transparent);
   background-clip: padding-box;
   border-radius: 50%;
   display: inline-block;
   height: 0.75rem;
   width: 0.75rem;
+}
+
+.live-dot[data-live] {
+  background: #4f9a76;
+  border-color: color-mix(in srgb, #4f9a76 18%, transparent);
 }
 
 .icon-button {
@@ -538,6 +543,10 @@ summary:focus-visible {
   background: color-mix(in srgb, var(--orange) 13%, var(--cream));
 }
 
+.status-banner[data-status="unknown"] {
+  background: color-mix(in srgb, #789087 13%, var(--cream));
+}
+
 .status-symbol {
   background: #4f9a76;
   border-radius: 50%;
@@ -557,6 +566,11 @@ summary:focus-visible {
   background: var(--orange);
   border-radius: 0.12rem;
   transform: rotate(45deg);
+}
+
+.status-symbol[data-status="unknown"],
+.status-banner[data-status="unknown"] .status-symbol {
+  background: #789087;
 }
 
 .inspector__facts {
@@ -604,6 +618,10 @@ summary:focus-visible {
   display: grid;
   gap: 0.45rem;
   grid-template-columns: 1fr 1fr;
+}
+
+.overview-metrics--line {
+  margin-bottom: 1rem;
 }
 
 .overview-metrics div {
@@ -789,6 +807,10 @@ summary:focus-visible {
   background: #ff7738;
   border-radius: 1px;
   transform: rotate(45deg);
+}
+
+.scene-label__dot[data-status="unknown"] {
+  background: #789087;
 }
 
 .scene-loader {

@@ -9,6 +9,7 @@ const formulationLabEnvSchema = {
     protocols: httpProtocols,
   }),
   VITE_PUBLIC_POSTHOG_KEY: optionalString(),
+  VITE_QC_FLOOR_URL: optionalUrl({ protocols: httpProtocols }),
   VITE_SITE_URL: optionalUrl({ protocols: httpProtocols }),
 };
 
@@ -21,6 +22,7 @@ export function createFormulationLabEnv(source: FormulationLabEnvSource) {
     convexUrl: env.VITE_CONVEX_URL,
     posthogHost: env.VITE_PUBLIC_POSTHOG_HOST,
     posthogKey: env.VITE_PUBLIC_POSTHOG_KEY,
+    qcFloorUrl: env.VITE_QC_FLOOR_URL,
     siteUrl: env.VITE_SITE_URL,
   });
 }

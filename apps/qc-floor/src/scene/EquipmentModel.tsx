@@ -8,6 +8,7 @@ const STATUS_COLOR = {
   attention: "#ff7738",
   normal: "#3f8069",
   pending: "#f5a623",
+  unknown: "#789087",
 };
 
 interface EquipmentModelProps {

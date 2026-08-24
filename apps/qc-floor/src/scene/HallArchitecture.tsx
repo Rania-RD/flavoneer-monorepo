@@ -6,6 +6,7 @@ const STATUS_COLOR = {
   attention: "#ff7738",
   normal: "#6a9b88",
   pending: "#f5a623",
+  unknown: "#789087",
 };
 
 function HallBeam({
@@ -56,7 +57,7 @@ export function HallArchitecture({ layout }: { layout: HallLayout }) {
             <meshStandardMaterial
               color={STATUS_COLOR[zone.status]}
               transparent
-              opacity={zone.status === "normal" ? 0.055 : 0.1}
+              opacity={zone.status === "normal" || zone.status === "unknown" ? 0.055 : 0.1}
             />
           </mesh>
           <Text

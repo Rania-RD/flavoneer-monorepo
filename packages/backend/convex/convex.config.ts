@@ -17,6 +17,7 @@ const app = defineApp({
     INVITATION_EMAIL_WEBHOOK_SECRET: v.optional(v.string()),
     INVITATION_EMAIL_WEBHOOK_URL: v.optional(v.string()),
     MOBILE_SITE_URL: v.optional(v.string()),
+    QC_FLOOR_SITE_URL: v.optional(v.string()),
     REGULATORY_IMPORT_TOKEN: v.optional(v.string()),
     SITE_URL: v.optional(v.string()),
   },

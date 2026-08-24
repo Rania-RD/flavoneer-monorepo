@@ -1,6 +1,9 @@
+import { api } from "@flavoneer/backend/api";
+import { useConvexAuth, useQuery } from "convex/react";
 import { Box, Languages, Moon, PanelTopOpen, RotateCcw, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PRODUCTION_HALLS, type ProductionHallId } from "./floor/factory-layout";
+import { applyLiveStatuses } from "./floor/live-data";
 import { useI18n } from "./lib/i18n";
 import {
   type CameraMode,
@@ -11,9 +14,13 @@ import { Inspector } from "./ui/Inspector";
 import { SideRail } from "./ui/SideRail";
 
 type Theme = "light" | "dark";
+const ACTIVE_ORGANIZATION_STORAGE_KEY = "food-rd-lab-active-organization";
 
 function App() {
   const { language, setLanguage, t } = useI18n();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const organizations = useQuery(api.organizations.list, isAuthenticated ? {} : "skip");
+  const [now, setNow] = useState(() => Date.now());
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = window.localStorage.getItem("flavoneer.qc-floor-theme");
     if (saved === "light" || saved === "dark") {
@@ -30,12 +37,58 @@ function App() {
   });
 
   useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     window.localStorage.setItem("flavoneer.qc-floor-theme", theme);
   }, [theme]);
 
-  const activeLayout = PRODUCTION_HALLS[activeHallId];
+  const storedOrganizationId = window.localStorage.getItem(ACTIVE_ORGANIZATION_STORAGE_KEY);
+  const requestedOrganizationId = new URLSearchParams(window.location.search).get("organizationId");
+  const activeOrganization =
+    organizations?.find((organization) => organization._id === requestedOrganizationId) ??
+    organizations?.find((organization) => organization._id === storedOrganizationId) ??
+    organizations?.[0];
+  const overview = useQuery(
+    api.productionFloor.getOverview,
+    activeOrganization ? { organizationId: activeOrganization._id, now } : "skip",
+  );
+
+  useEffect(() => {
+    if (activeOrganization) {
+      window.localStorage.setItem(ACTIVE_ORGANIZATION_STORAGE_KEY, activeOrganization._id);
+      if (requestedOrganizationId) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("organizationId");
+        window.history.replaceState({}, "", url);
+      }
+    }
+  }, [activeOrganization, requestedOrganizationId]);
+
+  const activeLayout = useMemo(
+    () => applyLiveStatuses(PRODUCTION_HALLS[activeHallId], overview),
+    [activeHallId, overview],
+  );
   const hallName = t(activeHallId);
+  const dataState = authLoading
+    ? ("loading" as const)
+    : !isAuthenticated
+      ? ("signedOut" as const)
+      : organizations === undefined || (activeOrganization && overview === undefined)
+        ? ("loading" as const)
+        : !activeOrganization
+          ? ("noWorkspace" as const)
+          : ("live" as const);
+  const updatedLabel =
+    dataState === "live" && overview
+      ? new Intl.DateTimeFormat(language === "ar" ? "ar-PS" : "en", {
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(overview.generatedAt)
+      : t(dataState);
 
   useEffect(() => {
     document.title = `${hallName} | Flavoneer QC`;
@@ -95,10 +148,14 @@ function App() {
           </div>
           <div className="topbar__actions">
             <div className="shift-state">
-              <span className="live-dot" aria-hidden="true" />
+              <span
+                className="live-dot"
+                data-live={dataState === "live" || undefined}
+                aria-hidden="true"
+              />
               <span>
-                <strong>{t("shift")}</strong>
-                <small>{t("updated")}</small>
+                <strong>{activeOrganization?.name ?? t("shift")}</strong>
+                <small>{updatedLabel}</small>
               </span>
             </div>
             <button
@@ -175,7 +232,13 @@ function App() {
             </div>
           </div>
 
-          <Inspector layout={activeLayout} onSelect={selectLine} selected={selectedEquipment} />
+          <Inspector
+            dataState={dataState}
+            layout={activeLayout}
+            onSelect={selectLine}
+            overview={overview}
+            selected={selectedEquipment}
+          />
         </section>
       </main>
     </div>

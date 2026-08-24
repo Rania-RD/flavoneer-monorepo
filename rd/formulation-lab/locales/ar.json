@@ -1507,5 +1507,7 @@
   "qc_reports_first_review_support": "اعتماد دون دورة إعادة",
   "qc_reports_review_time_support": "من التسليم إلى القرار",
   "qc_reports_lab_coverage_support": "تغطية العينات {{rate}}",
-  "qc_reports_laboratory_scoped_description": "تستخدم نتائج المختبر الفترة والصنف المحددين. لا تنطبق فلاتر الصالة والخط والمفتش والحالة والمواصفة على هذا القسم."
+  "qc_reports_laboratory_scoped_description": "تستخدم نتائج المختبر الفترة والصنف المحددين. لا تنطبق فلاتر الصالة والخط والمفتش والحالة والمواصفة على هذا القسم.",
+  "qc_floor_handoff_loading": "جارٍ فتح صالة الإنتاج...",
+  "qc_floor_handoff_failed": "تعذر فتح جلسة صالة الإنتاج. أعد تحميل هذه الصفحة للمحاولة مرة أخرى."
 }

@@ -11,8 +11,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@convex-dev/better-auth": "^0.11.5",
+    "@flavoneer/backend": "workspace:*",
     "@react-three/drei": "9.122.0",
     "@react-three/fiber": "8.17.14",
+    "better-auth": "1.5.6",
+    "convex": "^1.41.0",
     "lucide-react": "0.363.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",

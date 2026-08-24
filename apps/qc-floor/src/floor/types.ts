@@ -1,4 +1,4 @@
-export type EquipmentStatus = "normal" | "pending" | "attention";
+export type EquipmentStatus = "normal" | "pending" | "attention" | "unknown";
 
 export type EquipmentKind = "machine" | "facility";
 

@@ -1507,5 +1507,7 @@
   "qc_reports_first_review_support": "Approved without a return cycle",
   "qc_reports_review_time_support": "Submission to decision",
   "qc_reports_lab_coverage_support": "{{rate}} sample coverage",
-  "qc_reports_laboratory_scoped_description": "Laboratory results use the selected period and product. Hall, line, inspector, status, and specification filters do not apply to this section."
+  "qc_reports_laboratory_scoped_description": "Laboratory results use the selected period and product. Hall, line, inspector, status, and specification filters do not apply to this section.",
+  "qc_floor_handoff_loading": "Opening the production floor...",
+  "qc_floor_handoff_failed": "The production floor session could not be opened. Reload this page to try again."
 }

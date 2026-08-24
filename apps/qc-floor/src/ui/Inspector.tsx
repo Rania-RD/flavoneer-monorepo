@@ -1,21 +1,23 @@
-import { ArrowUpRight, ChevronDown, Cuboid, Factory, Ruler, ScanLine } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Clock3, Cuboid, Factory, Gauge, Package } from "lucide-react";
 import { useMemo } from "react";
-import { getMachineVisualScale } from "../floor/machine-catalog";
+import {
+  findLineOverview,
+  normalizeLineName,
+  type ProductionFloorOverview,
+} from "../floor/live-data";
 import type { EquipmentPlacement, EquipmentStatus, HallLayout } from "../floor/types";
 import { useI18n } from "../lib/i18n";
 
-const STATUS_ORDER: EquipmentStatus[] = ["attention", "pending", "normal"];
+const STATUS_ORDER: EquipmentStatus[] = ["attention", "pending", "normal", "unknown"];
+
+type DataState = "loading" | "signedOut" | "noWorkspace" | "live";
 
 interface InspectorProps {
+  dataState: DataState;
   layout: HallLayout;
   onSelect: (line: string) => void;
+  overview: ProductionFloorOverview | undefined;
   selected: EquipmentPlacement[];
-}
-
-function equipmentScale(equipment: EquipmentPlacement) {
-  return equipment.kind === "machine"
-    ? (equipment.visualScale ?? getMachineVisualScale(equipment.assetKey))
-    : 1;
 }
 
 function groupStatus(equipment: EquipmentPlacement[]) {
@@ -26,37 +28,7 @@ function groupStatus(equipment: EquipmentPlacement[]) {
   );
 }
 
-function formatDimensions(equipment: EquipmentPlacement[]) {
-  const bounds = equipment.reduce(
-    (current, item) => {
-      const scale = equipmentScale(item);
-      const rotation = item.rotationY ?? 0;
-      const length = item.dimensions.length * scale;
-      const width = item.dimensions.width * scale;
-      const halfX =
-        (Math.abs(Math.cos(rotation)) * length + Math.abs(Math.sin(rotation)) * width) / 2;
-      const halfZ =
-        (Math.abs(Math.sin(rotation)) * length + Math.abs(Math.cos(rotation)) * width) / 2;
-      return {
-        height: Math.max(current.height, item.dimensions.height * scale),
-        maxX: Math.max(current.maxX, item.position[0] + halfX),
-        maxZ: Math.max(current.maxZ, item.position[2] + halfZ),
-        minX: Math.min(current.minX, item.position[0] - halfX),
-        minZ: Math.min(current.minZ, item.position[2] - halfZ),
-      };
-    },
-    {
-      height: 0,
-      maxX: Number.NEGATIVE_INFINITY,
-      maxZ: Number.NEGATIVE_INFINITY,
-      minX: Number.POSITIVE_INFINITY,
-      minZ: Number.POSITIVE_INFINITY,
-    },
-  );
-  return `${(bounds.maxX - bounds.minX).toFixed(2)} × ${(bounds.maxZ - bounds.minZ).toFixed(2)} × ${bounds.height.toFixed(2)} m`;
-}
-
-export function Inspector({ layout, onSelect, selected }: InspectorProps) {
+export function Inspector({ dataState, layout, onSelect, overview, selected }: InspectorProps) {
   const { language, t } = useI18n();
   const productionLines = useMemo(
     () =>
@@ -69,11 +41,16 @@ export function Inspector({ layout, onSelect, selected }: InspectorProps) {
             groups.set(equipment.line, group);
             return groups;
           }, new Map<string, EquipmentPlacement[]>()),
-        ([line, equipment]) => ({ line, equipment }),
+        ([line, equipment]) => ({
+          line,
+          equipment,
+          live: findLineOverview(overview, line),
+        }),
       ),
-    [layout],
+    [layout, overview],
   );
   const selectedLine = selected[0]?.line ?? null;
+  const selectedLineOverview = selectedLine ? findLineOverview(overview, selectedLine) : undefined;
   const selectedStatus = groupStatus(selected);
   const attentionCount = productionLines.filter(
     (group) => groupStatus(group.equipment) === "attention",
@@ -81,20 +58,69 @@ export function Inspector({ layout, onSelect, selected }: InspectorProps) {
   const pendingCount = productionLines.filter(
     (group) => groupStatus(group.equipment) === "pending",
   ).length;
+  const noDataCount = productionLines.filter(
+    (group) => groupStatus(group.equipment) === "unknown",
+  ).length;
+  const visibleLineKeys = new Set(productionLines.map((group) => normalizeLineName(group.line)));
+  const visibleLiveLines =
+    overview?.lines.filter((line) => visibleLineKeys.has(normalizeLineName(line.departmentName))) ??
+    [];
+  const hallInspections = visibleLiveLines.reduce(
+    (total, line) => total + line.statistics.inspections,
+    0,
+  );
+  const hallApproved = visibleLiveLines.reduce(
+    (total, line) => total + line.statistics.approved,
+    0,
+  );
+  const hallOutOfLimit = visibleLiveLines.reduce(
+    (total, line) => total + line.statistics.outOfLimit,
+    0,
+  );
+  const hallConformance =
+    hallInspections === 0
+      ? 0
+      : visibleLiveLines.reduce(
+          (total, line) => total + line.statistics.conformanceRate * line.statistics.inspections,
+          0,
+        ) / hallInspections;
   const hallStatus =
     language === "ar"
-      ? `${attentionCount} خارج الحدود · ${pendingCount} قيد المراجعة`
-      : `${attentionCount} ${attentionCount === 1 ? "exception" : "exceptions"} · ${pendingCount} ${pendingCount === 1 ? "pending line" : "pending lines"}`;
+      ? `${attentionCount} خارج الحدود · ${pendingCount} قيد المراجعة · ${noDataCount} بدون بيانات`
+      : `${attentionCount} ${attentionCount === 1 ? "exception" : "exceptions"} · ${pendingCount} pending · ${noDataCount} without data`;
+  const hallStatusTone: EquipmentStatus = attentionCount
+    ? "attention"
+    : pendingCount
+      ? "pending"
+      : noDataCount
+        ? "unknown"
+        : "normal";
   const labUrl = import.meta.env.VITE_FORMULATION_LAB_URL ?? "http://localhost:3001";
-  const recordUrl = `${labUrl}/quality/production-line-records${
-    selectedLine ? `?line=${encodeURIComponent(selectedLine)}` : ""
-  }`;
+  const recordUrl = selectedLineOverview
+    ? `${labUrl}/quality/production-line-records/${selectedLineOverview.latestInspection.recordId}`
+    : dataState === "signedOut"
+      ? `${labUrl}/quality/floor`
+      : `${labUrl}/quality/production-line-records`;
+  const actionLabel = selectedLineOverview
+    ? t("openLatestRecord")
+    : dataState === "signedOut"
+      ? t("signInToLoad")
+      : t("openRecords");
+  const formatInspectionTime = (timestamp: number) =>
+    new Intl.DateTimeFormat(language === "ar" ? "ar-PS" : "en", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(timestamp);
 
   return (
     <aside className="inspector" aria-live="polite">
       <div className="inspector__eyebrow">
         <span>{selectedLine ? t("selectedLine") : t("hallStatus")}</span>
-        <span className="live-dot" aria-hidden="true" />
+        <span
+          className="live-dot"
+          data-live={dataState === "live" || undefined}
+          aria-hidden="true"
+        />
       </div>
 
       {selectedLine ? (
@@ -126,19 +152,56 @@ export function Inspector({ layout, onSelect, selected }: InspectorProps) {
             </div>
             <div>
               <dt>
-                <Ruler aria-hidden="true" size={16} />
-                {t("dimensions")}
-              </dt>
-              <dd className="mono">{formatDimensions(selected)}</dd>
-            </div>
-            <div>
-              <dt>
-                <ScanLine aria-hidden="true" size={16} />
+                <Clock3 aria-hidden="true" size={16} />
                 {t("latestInspection")}
               </dt>
-              <dd>{t("latestInspectionValue")}</dd>
+              <dd>
+                {selectedLineOverview
+                  ? formatInspectionTime(selectedLineOverview.latestInspection.inspectionAt)
+                  : t("noInspectionData")}
+              </dd>
             </div>
+            {selectedLineOverview ? (
+              <>
+                <div>
+                  <dt>
+                    <Package aria-hidden="true" size={16} />
+                    {t("product")}
+                  </dt>
+                  <dd>{selectedLineOverview.latestInspection.productName}</dd>
+                </div>
+                <div>
+                  <dt>
+                    <Gauge aria-hidden="true" size={16} />
+                    {t("inspectedBy")}
+                  </dt>
+                  <dd>{selectedLineOverview.latestInspection.qcUserName}</dd>
+                </div>
+              </>
+            ) : null}
           </dl>
+          <div className="overview-metrics overview-metrics--line">
+            <div>
+              <strong>{selectedLineOverview?.statistics.inspections ?? 0}</strong>
+              <span className="overview-metrics__label">{t("inspections24h")}</span>
+            </div>
+            <div>
+              <strong>
+                {selectedLineOverview && selectedLineOverview.statistics.inspections > 0
+                  ? `${Math.round(selectedLineOverview.statistics.conformanceRate * 100)}%`
+                  : "—"}
+              </strong>
+              <span className="overview-metrics__label">{t("conformance")}</span>
+            </div>
+            <div>
+              <strong>{selectedLineOverview?.statistics.pending ?? 0}</strong>
+              <span className="overview-metrics__label">{t("pendingRecords")}</span>
+            </div>
+            <div>
+              <strong>{selectedLineOverview?.statistics.outOfLimit ?? 0}</strong>
+              <span className="overview-metrics__label">{t("outOfLimitRecords")}</span>
+            </div>
+          </div>
         </>
       ) : (
         <>
@@ -154,23 +217,31 @@ export function Inspector({ layout, onSelect, selected }: InspectorProps) {
           <p className="inspector__note">{t("hallOverviewNote")}</p>
           <div className="overview-metrics">
             <div>
-              <strong>{productionLines.length}</strong>
-              <span className="overview-metrics__label">{t("lines")}</span>
+              <strong>{hallInspections}</strong>
+              <span className="overview-metrics__label">{t("inspections24h")}</span>
             </div>
             <div>
-              <strong>{layout.equipment.length}</strong>
-              <span className="overview-metrics__label">{t("equipmentCount")}</span>
+              <strong>{hallInspections > 0 ? `${Math.round(hallConformance * 100)}%` : "—"}</strong>
+              <span className="overview-metrics__label">{t("conformance")}</span>
+            </div>
+            <div>
+              <strong>{hallApproved}</strong>
+              <span className="overview-metrics__label">{t("approvedRecords")}</span>
+            </div>
+            <div>
+              <strong>{hallOutOfLimit}</strong>
+              <span className="overview-metrics__label">{t("outOfLimitRecords")}</span>
             </div>
           </div>
           <div className="hall-status-line">
-            <span className="status-symbol" data-status="attention" aria-hidden="true" />
+            <span className="status-symbol" data-status={hallStatusTone} aria-hidden="true" />
             <span>{hallStatus}</span>
           </div>
         </>
       )}
 
       <a className="primary-action" href={recordUrl}>
-        <span>{t("openRecords")}</span>
+        <span>{actionLabel}</span>
         <ArrowUpRight aria-hidden="true" size={18} />
       </a>
 
@@ -202,7 +273,9 @@ export function Inspector({ layout, onSelect, selected }: InspectorProps) {
                   <span>
                     <strong>{group.line}</strong>
                     <small>
-                      {group.equipment.length} {t("equipmentCount")}
+                      {group.live
+                        ? `${group.live.statistics.inspections} ${t("inspections24h")}`
+                        : t("noInspectionData")}
                     </small>
                   </span>
                 </button>

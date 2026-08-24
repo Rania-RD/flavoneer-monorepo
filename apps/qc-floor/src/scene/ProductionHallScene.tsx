@@ -23,7 +23,7 @@ interface SceneProps {
   selectedLine: string | null;
 }
 
-const STATUS_PRIORITY: EquipmentStatus[] = ["attention", "pending", "normal"];
+const STATUS_PRIORITY: EquipmentStatus[] = ["attention", "pending", "normal", "unknown"];
 
 function equipmentScale(equipment: EquipmentPlacement) {
   return equipment.kind === "machine"
@@ -190,6 +190,7 @@ function ProductionLineLabel({ layout, line }: { layout: HallLayout; line: strin
 
 function HallContents({ layout, onSelect, selectedLine }: Omit<SceneProps, "cameraRequest">) {
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
+  const labeledLine = hoveredLine ?? selectedLine;
 
   return (
     <>
@@ -218,7 +219,7 @@ function HallContents({ layout, onSelect, selectedLine }: Omit<SceneProps, "came
           />
         );
       })}
-      {selectedLine ? <ProductionLineLabel layout={layout} line={selectedLine} /> : null}
+      {labeledLine ? <ProductionLineLabel layout={layout} line={labeledLine} /> : null}
       <ContactShadows
         blur={2.2}
         far={13}

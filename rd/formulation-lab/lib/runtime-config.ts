@@ -41,6 +41,10 @@ export const publicConfig = createFormulationLabEnv({
     runtimeConfig?.VITE_PUBLIC_POSTHOG_KEY,
     import.meta.env.VITE_PUBLIC_POSTHOG_KEY
   ),
+  VITE_QC_FLOOR_URL: readValue(
+    runtimeConfig?.VITE_QC_FLOOR_URL,
+    import.meta.env.VITE_QC_FLOOR_URL
+  ),
   VITE_SITE_URL: readValue(
     runtimeConfig?.VITE_SITE_URL,
     import.meta.env.VITE_SITE_URL

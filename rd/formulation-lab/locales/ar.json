@@ -1487,6 +1487,7 @@
   "qc_reports_out_of_spec_tests": "اختبارات خارج المواصفة",
   "qc_reports_view_report": "تقرير الإدارة",
   "qc_reports_view_audit": "سجل التدقيق",
+  "qc_reports_open_3d_view": "عرض ثلاثي الأبعاد",
   "qc_reports_open_audit": "فتح سجل التدقيق",
   "qc_reports_section_navigation": "أقسام التقرير",
   "qc_reports_section_summary": "الملخص",

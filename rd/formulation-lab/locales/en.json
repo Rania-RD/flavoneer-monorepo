@@ -1487,6 +1487,7 @@
   "qc_reports_out_of_spec_tests": "Out-of-spec tests",
   "qc_reports_view_report": "Management report",
   "qc_reports_view_audit": "Audit register",
+  "qc_reports_open_3d_view": "3D view",
   "qc_reports_open_audit": "Open audit register",
   "qc_reports_section_navigation": "Report sections",
   "qc_reports_section_summary": "Summary",

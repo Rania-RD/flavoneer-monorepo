@@ -24,7 +24,6 @@ import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 import { OrganizationProvider } from '@/contexts/organization-context';
 import { ThemePreferenceProvider, useThemePreference } from '@/contexts/theme-preference-context';
 import { authClient, convex } from '@/lib/backend';
-import { withHotUpdater } from '@/lib/hot-updater';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -117,8 +116,6 @@ function AppNavigator() {
   );
 }
 
-const HotUpdatedAppNavigator = withHotUpdater(AppNavigator);
-
 function ThemePreferenceBoundary({ children }: PropsWithChildren) {
   const { data: session } = authClient.useSession();
   return (
@@ -132,7 +129,7 @@ function RootLayout() {
   return (
     <ConvexBetterAuthProvider authClient={authClient} client={convex}>
       <ThemePreferenceBoundary>
-        <HotUpdatedAppNavigator />
+        <AppNavigator />
       </ThemePreferenceBoundary>
     </ConvexBetterAuthProvider>
   );

@@ -80,21 +80,6 @@ export function createHotUpdaterBackendEnv(source: HotUpdaterBackendEnvSource) {
   return Object.freeze(toHotUpdaterStorageEnv(source));
 }
 
-const hotUpdaterDeployEnvSchema = {
-  ...hotUpdaterStorageEnvSchema,
-  HOT_UPDATER_SERVER_URL: requiredUrl({ protocols: httpProtocols }),
-};
-
-export type HotUpdaterDeployEnvSource = EnvInput<typeof hotUpdaterDeployEnvSchema>;
-
-export function createHotUpdaterDeployEnv(source: HotUpdaterDeployEnvSource) {
-  const env = parseEnv(hotUpdaterDeployEnvSchema, source);
-  return Object.freeze({
-    ...toHotUpdaterStorageEnv(source),
-    serverUrl: env.HOT_UPDATER_SERVER_URL,
-  });
-}
-
 const playwrightEnvSchema = {
   CI: booleanWithDefault(false),
   PLAYWRIGHT_BASE_URL: urlWithDefault("http://localhost:3001", {

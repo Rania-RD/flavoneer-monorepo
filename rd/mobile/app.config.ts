@@ -1,6 +1,12 @@
 import type { ExpoConfig } from "expo/config";
 
 const isDevelopment = process.env.APP_VARIANT === "development";
+// xprem release channel baked into each native build.
+const updatesChannel =
+  process.env.APP_VARIANT === "development" ||
+  process.env.APP_VARIANT === "preview"
+    ? process.env.APP_VARIANT
+    : "production";
 
 const config: ExpoConfig = {
   name: isDevelopment ? "Flavoneer (Dev)" : "Flavoneer",
@@ -71,12 +77,6 @@ const config: ExpoConfig = {
         imageWidth: 192,
       },
     ],
-    [
-      "@hot-updater/react-native",
-      {
-        channel: "production",
-      },
-    ],
     "expo-secure-store",
     "expo-image",
     "expo-notifications",
@@ -105,13 +105,50 @@ const config: ExpoConfig = {
         barcodeScannerEnabled: false,
       },
     ],
+    "expo-sqlite",
+    "expo-background-task",
+    "expo-sharing",
+    "expo-screen-orientation",
+    [
+      "expo-local-authentication",
+      {
+        faceIDPermission:
+          "Allow Flavoneer to use Face ID to confirm quality approvals.",
+      },
+    ],
+    [
+      "react-native-nfc-manager",
+      {
+        nfcPermission:
+          "Allow Flavoneer to read NFC tags on production equipment.",
+        includeNdefEntitlement: false,
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
   },
+  runtimeVersion: {
+    policy: "appVersion",
+  },
   updates: {
-    enabled: false,
+    enabled: true,
+    url: "https://ota.synbiodiet.com/manifest",
+    // DISABLE_CODE_SIGNING=true lets `expo start` run without the private key.
+    codeSigningCertificate: process.env.DISABLE_CODE_SIGNING
+      ? undefined
+      : "./certs/certificate.pem",
+    codeSigningMetadata: process.env.DISABLE_CODE_SIGNING
+      ? undefined
+      : { keyid: "main", alg: "rsa-v1_5-sha256" },
+    // expo-updates only sends headers that exist at build time. Keep the
+    // channel a literal: an unset variable would drop the header.
+    requestHeaders: {
+      "expo-channel-name": updatesChannel,
+      "expo-app-id": "036ee8e3-ad1e-4f97-ba65-f431ee63767d",
+      "xprem-branch": "",
+    },
   },
   extra: {
     supportsRTL: true,

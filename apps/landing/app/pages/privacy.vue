@@ -90,7 +90,7 @@ const sections = [
     title: 'Your rights and choices',
     paragraphs: [
       'Depending on where you live, you may have the right to access, correct, export, or delete your personal information, and to object to or restrict certain processing. You can withdraw camera, photo, NFC, notification, and biometric permissions at any time in your device settings.',
-      'If your account was provided by an organization, we may refer your request to that organization. To make a request, contact us using the address below.',
+      'If your account was provided by an organization, we may refer your request to that organization. To make a request, contact us using the address below. To delete your account, use the account deletion page at flavoneer.com/delete-account.',
     ],
   },
   {
@@ -195,7 +195,16 @@ const sections = [
     <footer class="bg-[#102f27] px-5 py-8 text-xs text-[#7fa495] sm:px-8 lg:px-10">
       <div class="mx-auto flex max-w-[960px] flex-col gap-2 sm:flex-row sm:justify-between">
         <p>© {{ new Date().getFullYear() }} Flavoneer. Food innovation, structured.</p>
-        <NuxtLink to="/" class="font-semibold transition-colors hover:text-white">flavoneer.com</NuxtLink>
+        <div class="flex gap-5">
+          <NuxtLink
+            to="/delete-account"
+            class="font-semibold transition-colors hover:text-white"
+            @click="trackNavigation({ destination: '/delete-account', label: 'Delete account', placement: 'privacy_footer' })"
+          >
+            Delete account
+          </NuxtLink>
+          <NuxtLink to="/" class="font-semibold transition-colors hover:text-white">flavoneer.com</NuxtLink>
+        </div>
       </div>
     </footer>
   </div>

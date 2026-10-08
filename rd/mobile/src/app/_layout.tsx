@@ -24,6 +24,7 @@ import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 import { OrganizationProvider } from '@/contexts/organization-context';
 import { ThemePreferenceProvider, useThemePreference } from '@/contexts/theme-preference-context';
 import { authClient, convex } from '@/lib/backend';
+import { useClarityScreenTracking, useClarityUser } from '@/lib/clarity';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -101,6 +102,8 @@ function AppNavigator() {
     Fraunces_900Black,
   });
   const isDark = resolvedTheme === 'dark';
+  useClarityScreenTracking();
+  useClarityUser(session?.user.id);
 
   return (
     <LanguageProvider key={session?.user.email ?? 'signed-out'}>

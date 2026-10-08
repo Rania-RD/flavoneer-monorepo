@@ -485,6 +485,13 @@ function handleMobileNavigation(label: string, destination: string) {
           >
             Privacy
           </NuxtLink>
+          <NuxtLink
+            to="/delete-account"
+            class="transition-colors hover:text-white"
+            @click="trackNavigation({ destination: '/delete-account', label: 'Delete account', placement: 'footer' })"
+          >
+            Delete account
+          </NuxtLink>
         </div>
       </div>
       <div class="mx-auto flex max-w-[1280px] flex-col gap-2 pt-6 text-xs text-[#7fa495] sm:flex-row sm:justify-between">

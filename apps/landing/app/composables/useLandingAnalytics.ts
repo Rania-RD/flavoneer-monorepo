@@ -10,7 +10,9 @@ interface TrackedInteraction {
 }
 
 function destinationType(destination: string) {
-  return destination.startsWith('#') ? 'on_page' : 'workspace'
+  if (destination.startsWith('#')) return 'on_page'
+  if (destination.startsWith('/')) return 'landing_page'
+  return 'workspace'
 }
 
 export function useLandingAnalytics() {

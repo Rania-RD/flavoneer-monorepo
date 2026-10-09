@@ -126,6 +126,7 @@ const config: ExpoConfig = {
         includeNdefEntitlement: false,
       },
     ],
+    "./plugins/with-ios-scene-lifecycle",
   ],
   experiments: {
     typedRoutes: true,

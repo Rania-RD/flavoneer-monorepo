@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "tetra-pak-hoyer-frigus-sf-600",
+  "rootNode": "machine.hoyer-frigus-sf-600",
+  "manufacturer": "Tetra Pak Hoyer",
+  "model": "Hoyer Frigus SF 600",
+  "revisionBasis": "Frigus 600 manual F60 03 CB 04 and 2004 SF 600 serial FRI240608",
+  "description": "Approximate, reference-led exterior model of the Tetra Pak Hoyer Frigus SF 600 continuous ice-cream freezer shown in the supplied photograph.",
+  "dimensionsMeters": {
+    "lengthX": 1.33,
+    "widthZ": 0.755,
+    "heightY": 1.665
+  },
+  "dimensionBasis": "The Frigus 600 operation manual, technical-data section 3.2 and Fig. 3.6, publishes A 1330 mm, B 755 mm, and C 1665 +/- 25 mm. The exact-model 2004 Fincher listing independently publishes 133 x 75 x 165 cm. The model uses the manual dimensions as hard external bounds.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "lineAssignments": ["Unassigned AI QC floor freezer"],
+  "references": [
+    {
+      "id": "user-supplied-front-three-quarter",
+      "type": "user-supplied machine photograph",
+      "localFile": "photos/user-reference.png",
+      "use": "Primary geometry reference for cabinet proportions, viewer-left operator panel, upper pump, S-shaped product pipe, central flange, blue fascia stripe, decals, top cap, side panel, and adjustable feet.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "frigus-600-operation-manual",
+      "type": "manufacturer operation and spare-parts manual",
+      "url": "https://cdn.sigmaequipment.com/files/attachment/Tetra-Pak-Hoyer-Frigus-600%282%29.pdf",
+      "localFile": "Tetra-Pak-Hoyer-Frigus-600.pdf",
+      "use": "Exact external dimensions, Fig. 3.6 three-quarter silhouette, Fig. 3.5 control layout, control names, process connections, feet, and service-panel construction.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "fincher-jb902-listing",
+      "type": "used-equipment listing with six photographs of one exact-model machine",
+      "url": "https://www.fincherlimited.com/listings/7980082-used-tetra-pak-hoyer-frigus-sf-600-continuous-freezer",
+      "use": "Exact 2004 SF 600 identification, 133 x 75 x 165 cm dimensions, 525 kg weight, blue/yellow control graphics, stainless finish, sanitary fittings, fascia typography, and small hardware details. Its operator-panel handedness and front pump option differ from the supplied photograph.",
+      "accessed": "2026-08-21"
+    }
+  ],
+  "photos": [
+    {
+      "localFile": "photos/fincher-front.jpg",
+      "source": "fincher-jb902-listing",
+      "subject": "Straight front view of serial FRI240608",
+      "used": true
+    },
+    {
+      "localFile": "photos/fincher-view-02.jpg",
+      "source": "fincher-jb902-listing",
+      "subject": "Exact model and serial plate",
+      "used": true
+    },
+    {
+      "localFile": "photos/fincher-view-03.jpg",
+      "source": "fincher-jb902-listing",
+      "subject": "Lower sanitary outlet and pressure gauge detail",
+      "used": true
+    },
+    {
+      "localFile": "photos/fincher-view-04.jpg",
+      "source": "fincher-jb902-listing",
+      "subject": "Front three-quarter cabinet view",
+      "used": true
+    },
+    {
+      "localFile": "photos/fincher-view-05.jpg",
+      "source": "fincher-jb902-listing",
+      "subject": "Blue and yellow operator panel detail",
+      "used": true
+    },
+    {
+      "localFile": "photos/fincher-view-06.jpg",
+      "source": "fincher-jb902-listing",
+      "subject": "Pressure-regulator and gauge detail",
+      "used": true
+    }
+  ],
+  "recognizableFeatures": [
+    "Deep narrow stainless cabinet with removable side panels and four tapered adjustable feet.",
+    "Blue Hoyer Frigus SF fascia stripe across the upper front and long sides.",
+    "Projecting viewer-left blue operator panel with dark instrument bands, green selectors, three gauges, and a yellow emergency-stop block.",
+    "Upper front pump, large S-shaped polished sanitary pipe, and bolted central freezing-cylinder flange.",
+    "Raised rear top vent, side louvers, panel seams, and front service connections."
+  ],
+  "confidence": [
+    {
+      "area": "Exterior envelope",
+      "level": "high",
+      "note": "The manufacturer manual publishes all three dimensions and the used-machine listing independently agrees within 15 mm."
+    },
+    {
+      "area": "Front silhouette, control layout, and branding",
+      "level": "medium-high",
+      "note": "The supplied photograph and manual agree on the control-panel side and front process arrangement. Six exact-model photos define finishes and small hardware."
+    },
+    {
+      "area": "Side and rear service-panel detail",
+      "level": "medium",
+      "note": "Only one supplied three-quarter image clearly shows the target revision's side. Seams and louvers are image-scaled approximations."
+    },
+    {
+      "area": "Hidden refrigeration and process mechanisms",
+      "level": "low",
+      "note": "The model keeps hidden systems inside the cabinet volume and omits external installation hoses."
+    }
+  ],
+  "usage": {
+    "purpose": "AI QC floor visualization and machine placement",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is an exterior visualization. It is not a fabrication, installation, process-piping, maintenance, cleaning-validation, lifting, or safety model."
+  }
+}

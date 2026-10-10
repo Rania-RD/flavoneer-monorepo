@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "danxiao-rxgj-12",
+  "rootNode": "machine.rxgj-12",
+  "manufacturer": "Wuxi Danxiao Machinery Co., Ltd.",
+  "brand": "RUN YU",
+  "model": "RXGJ-12",
+  "configuration": "Twelve-mould-per-row rotary stick ice-cream machine",
+  "description": "Approximate, reference-led exterior model of the Danxiao RXGJ-12 rotary stick ice-cream machine.",
+  "dimensionsMeters": {
+    "lengthX": 5.5,
+    "widthZ": 3.75,
+    "heightY": 1.88
+  },
+  "dimensionBasis": "The current Danxiao RXGJ-12 product page publishes 5500 x 3750 x 1880 mm. The model uses those dimensions as hard external bounds. An older Made-in-China listing publishes 4900 x 3100 x 2100 mm, so installed revisions may differ.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "capacityPiecesPerHour": 14000,
+  "numberOfMouldsPerRow": 12,
+  "mouldLines": 140,
+  "weightTonnes": 7.8,
+  "lineAssignments": [
+    {
+      "status": "candidate",
+      "lines": ["Hall 1 / Rollo A", "Hall 1 / Rollo B"],
+      "note": "The approved AI QC floor plan still names RXGJ-6 on both lines. Do not replace that mapping until the factory confirms RXGJ-12 is installed."
+    }
+  ],
+  "references": [
+    {
+      "id": "danxiao-current-rxgj-12-page",
+      "type": "current manufacturer product page",
+      "url": "https://www.wuxi-danxiao.com/rxgj-12-rotary-stick-ice-cream-machine.html",
+      "use": "Current identity, isolated product view, installed view, filling detail, 5500 x 3750 x 1880 mm envelope, 12 moulds per row, 140 mould lines, 14,000 pieces per hour, 7.8 tonne weight, station list, and process description.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "danxiao-official-process-video",
+      "type": "manufacturer-hosted process video",
+      "url": "https://img03.71360.com/w3/ogg8qq/20260509/d6053daa74a4a4f49e24be2cc886bda8.mp4",
+      "durationSeconds": 222.04,
+      "use": "Close views of radial mould rows, filling nozzles, suction heads, stick insertion, demould pickup, product transfer, and discharge conveyor.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "made-in-china-rxgj-12-listing",
+      "type": "manufacturer marketplace listing",
+      "url": "https://danxiao.en.made-in-china.com/product/kSjmzgFLEDWV/China-Rxgj-12-Auotomatic-Stick-Ice-Cream-Rollo-Line-Machine.html",
+      "use": "Additional filling-station view, material and component claims, older 4900 x 3100 x 2100 mm envelope, and 10,000 to 12,000 pieces per hour revision data.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "made-in-china-rxgj-12-video-page",
+      "type": "public marketplace video and image gallery",
+      "url": "https://www.made-in-china.com/video-channel/danxiao_kSjmzgFLEDWV_Rxgj-12-Auotomatic-Stick-Ice-Cream-Rollo-Line-Machine.html",
+      "use": "Confirms the image gallery, RXGJ-12 identity, RUN YU trademark, certification claims, and 12,000-piece-per-hour listing capacity.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "danxiao-rotary-family-index",
+      "type": "manufacturer family page",
+      "url": "https://www.wuxi-danxiao.com/Rotary-Stick-Ice-Cream-Machine",
+      "use": "Confirms RXGJ-3, RXGJ-6, RXGJ-12, and RXGJ-18 as one rotary stick-machine family.",
+      "accessed": "2026-08-21"
+    }
+  ],
+  "collectedViews": [
+    {
+      "localFile": "photos/official-hero.png",
+      "sourceReference": "danxiao-current-rxgj-12-page",
+      "subject": "Isolated front three-quarter machine with tank, stations, outfeed, and control cabinet"
+    },
+    {
+      "localFile": "photos/official-installed-01.jpg",
+      "sourceReference": "danxiao-current-rxgj-12-page",
+      "subject": "Installed front three-quarter view with ring walkway, guard rail, tank services, and raised pickup path"
+    },
+    {
+      "localFile": "photos/official-installed-02.jpg",
+      "sourceReference": "danxiao-current-rxgj-12-page",
+      "subject": "Twelve-nozzle filling manifold, lift cylinder, valves, and mould openings"
+    },
+    {
+      "localFile": "photos/official-detail.jpg",
+      "sourceReference": "danxiao-current-rxgj-12-page",
+      "subject": "Manufacturer product examples; product appearance only"
+    },
+    {
+      "localFile": "photos/made-in-china-hero.webp",
+      "sourceReference": "made-in-china-rxgj-12-listing",
+      "subject": "Twelve-lane pneumatic manifold and sloped guide detail"
+    },
+    {
+      "localFile": "photos/official-video-contact-sheet.jpg",
+      "sourceReference": "danxiao-official-process-video",
+      "subject": "Sixteen evenly spaced frames covering filling, suction, stick insertion, and pickup"
+    },
+    {
+      "localFile": "photos/official-video-contact-sheet-110-215s.jpg",
+      "sourceReference": "danxiao-official-process-video",
+      "subject": "Sixteen frames covering demould, hanging product transfer, and discharge"
+    },
+    {
+      "localFilePattern": "photos/official-video-{0,10,20,...,220}s.jpg",
+      "sourceReference": "danxiao-official-process-video",
+      "count": 23,
+      "subject": "Full-resolution ten-second reference frames across the 222-second process video"
+    }
+  ],
+  "recognizableFeatures": [
+    "Low circular stainless body joined by visibly separate inner and outer annular brine decks.",
+    "Dense radial mould plate with twelve mould positions per indexed row and a dark central well.",
+    "Raised ring walkway with tubular outer guard rail, many short supports, perimeter boxes, pumps, and hoses.",
+    "Twelve-wide filling, suction, stick insertion, and demould pickup banks arranged around the carousel.",
+    "Tall cylindrical stick hopper with a blue RUN YU / RXGJ-12 band and a shallow conical cap.",
+    "Tangential pickup and roller outfeed on the right side, plus a separate stainless HMI cabinet.",
+    "Visible blue brine pump, coating vessel, pneumatic lines, red valve handles, and green hanging product samples."
+  ],
+  "confidence": [
+    {
+      "area": "Current catalog envelope, lane count, mould-line count, and maximum capacity",
+      "level": "high",
+      "note": "The current manufacturer page publishes these values. The GLB verifier enforces the external envelope and root metadata."
+    },
+    {
+      "area": "Overall silhouette, major station identity, operator cabinet, walkway, and outfeed form",
+      "level": "medium-high",
+      "note": "Two overall manufacturer views and the official process video consistently show these parts."
+    },
+    {
+      "area": "Relative station position and local proportions",
+      "level": "medium",
+      "note": "The sources provide one isolated overall angle and one installed angle. Several stations are clear only in close video views."
+    },
+    {
+      "area": "Exact 140-line carousel pitch, hidden brine geometry, drives, utilities, guarding revision, and installed accessories",
+      "level": "low-medium",
+      "note": "The runtime asset uses 48 visible radial sectors for the published 140 indexed lines and keeps hidden mechanisms simple."
+    },
+    {
+      "area": "Factory revision",
+      "level": "low",
+      "note": "Current and older listings publish different envelopes, capacities, power values, and weights. Confirm the installed serial revision before replacing the RXGJ-6 floor-plan mapping."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and machine selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset, not a fabrication, installation, process-piping, guarding, cleaning-validation, maintenance, or safety model. Manufacturer photographs remain only in the source reference bundle."
+  }
+}

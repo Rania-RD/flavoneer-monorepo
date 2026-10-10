@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "tetra-pak-hoyer-straightline-800-c",
+  "rootNode": "machine.hoyer-straightline-800-c",
+  "manufacturer": "Tetra Pak Hoyer",
+  "model": "Straightline 800 C",
+  "manualCode": "S8 02 D 12",
+  "configuration": "Medium-size tray-tunnel extrusion and hardening line",
+  "description": "Approximate, reference-led exterior model of the Tetra Pak Hoyer Straightline 800 C ice-cream extrusion line.",
+  "dimensionsMeters": {
+    "lengthX": 13.78,
+    "widthZ": 4.4,
+    "heightY": 2.5
+  },
+  "dimensionBasis": "Section 3.5 and Fig. 3.3 of the S8 02 D 12 operation manual publish overall installed dimensions A 13780 mm, B 4400 mm, C 8580 mm, and D 2500 mm. The model uses A as total length, B as total width, C as tunnel-module length, and D as total height.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "publishedTechnicalData": {
+    "totalTrays": 834,
+    "traysInsideTunnel": 800,
+    "workSurfaceHeightMeters": 1.12,
+    "tunnelNetWeightKgApprox": 5200,
+    "evaporatorNetWeightKgApprox": 3600,
+    "nominalCapacityProductsPerHour": 9000
+  },
+  "references": [
+    {
+      "id": "straightline-800c-manual-page",
+      "type": "used-equipment manual archive page",
+      "url": "https://www.machineryworld.com/machine_manuals/tetra-pak-hoyer-straightline-800c-spanish/",
+      "use": "Public access point and machine identity for the S8 02 D 12 operation and spare-parts manual.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "straightline-800c-manual",
+      "type": "manufacturer operation manual and spare-parts catalogue",
+      "url": "https://www.machineryworld.com/wp-content/uploads/2018/10/Tetra-Pak-Hoyer-Straightline-800C.pdf",
+      "localFile": "Tetra-Pak-Hoyer-Straightline-800C.pdf",
+      "pages": 280,
+      "use": "Published envelope, insulated tunnel and evaporator layout, five-fan bank, worktable, spiral tray path, control system, extrusion stations, dispensers, fillers, utilities, and installation heights.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "exapro-p90210006",
+      "type": "used-equipment listing with nine installed-condition photographs",
+      "url": "https://www.exapro.com/tetra-pakr-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006/",
+      "use": "Exact-model worktable, rounded tray return, filling heads, hoses, upper fascia, blue drive motor, power cabinet, HMI, tunnel interface, and internal multi-tier conveyor appearance.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "dairy-foods-2003-spotlight",
+      "type": "period trade publication",
+      "url": "https://www.dairyfoods.com/articles/82345-supplier-spotlight-tetra-pak-hoyer",
+      "use": "Confirms the 400 C, 600 C, and 800 C family; modular tray-tunnel construction; Freon or ammonia options; Dino C integration; product range; and capacity up to 9,000 products per hour.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "aer-straightline-600-installation",
+      "type": "ice-cream manufacturer production page",
+      "url": "https://aer.az/en/",
+      "use": "Independent family context for an installed Straightline 600 and a stated 5,000 to 9,000 products per hour range. It was not used for 800 C dimensions.",
+      "accessed": "2026-08-21"
+    }
+  ],
+  "collectedViews": [
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_2.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Operator-side filling station, horizontal extruder clamp, workbed and upper fascia"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_3.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Wide three-quarter view of rounded tray return and worktable"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_4.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Adjacent Hoyer Flowrap branding and conveyor interface"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_5.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Tray work surface, tunnel interface, drive motor and side guards"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_6.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Stainless power cabinet with meters, isolator and button rows"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_7.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Filler bodies, hoses, blue drive motor and HMI edge"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_8.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Blue and orange HMI control panel"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_9.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Interior multi-tier green chain and tray return system"
+    },
+    {
+      "localFile": "photos/tetra-pak-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006_10.jpe",
+      "source": "exapro-p90210006",
+      "subject": "Overall worktable and rounded return from the operator end"
+    },
+    {
+      "localFile": "photos/manual-pdf-page-11.jpg",
+      "manualPdfPage": 11,
+      "subject": "Fig. 3.1 cutaway overview of tunnel, evaporator, five-fan bank and worktable"
+    },
+    {
+      "localFile": "photos/manual-pdf-page-13.jpg",
+      "manualPdfPage": 13,
+      "subject": "Fig. 3.2 overall operating arrangement"
+    },
+    {
+      "localFile": "photos/manual-pdf-page-15.jpg",
+      "manualPdfPage": 15,
+      "subject": "Fig. 3.3 published installed dimensions"
+    },
+    {
+      "localFile": "photos/manual-pdf-page-20.jpg",
+      "manualPdfPage": 20,
+      "subject": "Fig. 4.5 tunnel and evaporator module appearance"
+    },
+    {
+      "localFile": "photos/manual-pdf-page-21.jpg",
+      "manualPdfPage": 21,
+      "subject": "Fig. 4.6 joined tunnel and evaporator construction"
+    },
+    {
+      "localFile": "photos/manual-pdf-page-22.jpg",
+      "manualPdfPage": 22,
+      "subject": "Fig. 4.7 worktable attachment and 1120 mm work height"
+    },
+    {
+      "localFiles": [
+        "photos/manual-pdf-page-76.jpg",
+        "photos/manual-pdf-page-77.jpg",
+        "photos/manual-pdf-page-78.jpg",
+        "photos/manual-pdf-page-79.jpg",
+        "photos/manual-pdf-page-80.jpg",
+        "photos/manual-pdf-page-81.jpg",
+        "photos/manual-pdf-page-82.jpg",
+        "photos/manual-pdf-page-83.jpg",
+        "photos/manual-pdf-page-84.jpg",
+        "photos/manual-pdf-page-85.jpg",
+        "photos/manual-pdf-page-86.jpg",
+        "photos/manual-pdf-page-87.jpg",
+        "photos/manual-pdf-page-88.jpg",
+        "photos/manual-pdf-page-89.jpg",
+        "photos/manual-pdf-page-90.jpg",
+        "photos/manual-pdf-page-91.jpg",
+        "photos/manual-pdf-page-92.jpg",
+        "photos/manual-pdf-page-93.jpg",
+        "photos/manual-pdf-page-94.jpg"
+      ],
+      "manualPdfPages": "76-94",
+      "subject": "Nineteen station drawings covering extrusion, cutting, stick insertion, cup and wafer dispensers, granulate, chocolate, syrup and filler modules"
+    }
+  ],
+  "recognizableFeatures": [
+    "Two joined full-height insulated modules forming the hardening tunnel and evaporator enclosure.",
+    "Five axial evaporator fans in a horizontal bank.",
+    "Long external stainless worktable with a broad rounded tray return and four product rows.",
+    "Multi-tier green chain and tray path visible through the end access opening.",
+    "Upper stainless station fascia above the external workbed.",
+    "Horizontal extruder clamp, four-head filler, product hoses, stick magazine and dry-ingredient hopper.",
+    "Blue drive motor and green pneumatic lines.",
+    "Blue and orange Tetra Pak Hoyer HMI plus a separate stainless power cabinet."
+  ],
+  "confidence": [
+    {
+      "area": "Overall installed length, width, height and tunnel-module length",
+      "level": "high",
+      "note": "The manufacturer manual publishes all four dimensions and the exported mesh is verified against them."
+    },
+    {
+      "area": "Tunnel, evaporator, worktable relationship, work height and fan count",
+      "level": "high",
+      "note": "Manufacturer cutaway and installation drawings show the module relationship, five fans and 1120 mm work height."
+    },
+    {
+      "area": "Operator-side worktable, station fascia, controls and visible mechanisms",
+      "level": "medium-high",
+      "note": "Nine exact-model listing photographs cover these parts from several positions."
+    },
+    {
+      "area": "Station choice and arrangement",
+      "level": "medium",
+      "note": "Straightline station packages were configured per product. The model combines parts visible in the listing with common stations documented in the manual."
+    },
+    {
+      "area": "Far side, hidden tray routing, exact purchased options and installed pipework",
+      "level": "low-medium",
+      "note": "The internal photo and manual explain the system, but no factory general-arrangement drawing or full walkaround was available."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and machine selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset. It is not a fabrication, refrigeration, installation, process-piping, guarding, cleaning-validation, maintenance, lifting, or safety model."
+  }
+}

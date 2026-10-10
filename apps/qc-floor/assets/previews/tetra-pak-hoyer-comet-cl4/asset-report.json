@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "tetra-pak-hoyer-comet-cl4.glb",
+  "sourceBlend": "assets/blender/tetra-pak-hoyer-comet-cl4.blend",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -2.825000047683716,
+      0,
+      -0.7749999761581421
+    ],
+    "max": [
+      2.825000047683716,
+      2.200000047683716,
+      0.7749999761581421
+    ],
+    "size": [
+      5.650000095367432,
+      2.200000047683716,
+      1.5499999523162842
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -2.825,
+      0,
+      -0.775
+    ],
+    "max": [
+      2.825,
+      2.2,
+      0.775
+    ],
+    "size": [
+      5.65,
+      2.2,
+      1.55
+    ]
+  },
+  "budget": {
+    "fileBytes": 1600504,
+    "triangles": 73172,
+    "vertices": 51146,
+    "meshes": 376,
+    "materials": 10,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.chocolate_sprayer",
+    "inspection.control_panel",
+    "inspection.cup_cone_dispenser",
+    "inspection.dry_ingredient_station",
+    "inspection.ejection_station",
+    "inspection.filling_station",
+    "inspection.four_lane_conveyor",
+    "inspection.lid_station",
+    "inspection.topping_station"
+  ],
+  "requiredNodeChecks": {
+    "machine.hoyer-comet-cl4": true,
+    "structure.frame": true,
+    "inspection.four_lane_conveyor": true,
+    "inspection.cup_cone_dispenser": true,
+    "inspection.chocolate_sprayer": true,
+    "inspection.filling_station": true,
+    "inspection.topping_station": true,
+    "inspection.dry_ingredient_station": true,
+    "inspection.lid_station": true,
+    "inspection.ejection_station": true,
+    "inspection.control_panel": true,
+    "utilities.drive_and_pneumatics": true
+  },
+  "limits": {
+    "maxFileBytes": 6000000,
+    "maxTriangles": 100000,
+    "maxMaterials": 12,
+    "maxTextures": 0
+  }
+}

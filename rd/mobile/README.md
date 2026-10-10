@@ -23,47 +23,46 @@ In the output, you'll find options to open the app in a
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-## Hot Updater
+## Over-the-air updates (xprem)
 
-The native app uses Hot Updater with the `appVersion` strategy and the
-`production` channel by default. Expo updates are disabled so that only Hot
-Updater controls over-the-air JavaScript updates.
+The native app receives JavaScript updates through `expo-updates` from the
+self-hosted [xprem](https://xprem.dev) server at `https://ota.synbiodiet.com`.
+The Flavoneer app on that server has the App ID
+`036ee8e3-ad1e-4f97-ba65-f431ee63767d`. Updates are signed by the server and
+verified against `certs/certificate.pem`.
 
-Create the local runtime and deploy configuration:
+Each native build is bound to a release channel taken from `APP_VARIANT`:
+`development`, `preview`, or `production` (the default). The runtime version
+uses the `appVersion` policy, so an update only reaches builds with the same
+`version` in `app.config.ts`. Bump `version` whenever native code changes.
 
-```bash
-cp rd/mobile/.env.example rd/mobile/.env.local
-cp rd/mobile/.env.hotupdater.example rd/mobile/.env.hotupdater
-```
+Server URL, certificate, channel, and runtime version are embedded at build
+time. Builds made before this setup still poll the Convex Hot Updater endpoint
+and need a new native build to receive xprem updates.
 
-`EXPO_PUBLIC_HOT_UPDATER_URL` and `HOT_UPDATER_SERVER_URL` must point to the
-same Convex `.site` URL under `/hot-updater`. Convex stores bundle metadata and
-exposes the standard update-check and bundle-management routes. The bundle
-archives remain in the S3-compatible storage configured by
-`hot-updater.config.ts`.
-
-The deploy process requires `HOT_UPDATER_S3_ACCESS_KEY_ID`,
-`HOT_UPDATER_S3_SECRET_ACCESS_KEY`, `HOT_UPDATER_S3_ENDPOINT`, and
-`HOT_UPDATER_API_TOKEN`. The API token must match the value configured on the
-target Convex deployment.
-
-Build a new native binary after adding or changing Hot Updater native
-configuration:
+Create the publish token file:
 
 ```bash
-pnpm --filter mobile exec expo prebuild
+cp rd/mobile/.env.xprem.example rd/mobile/.env.xprem
 ```
 
-Deploy JavaScript-only changes interactively:
+Set `EOO_TOKEN` to an API key from the Flavoneer app in the
+[xprem dashboard](https://ota.synbiodiet.com/dashboard). Without it, `eoas`
+falls back to Expo authentication and the server rejects the publish.
+
+Publish from a clean git tree:
 
 ```bash
-pnpm --filter mobile deploy
+pnpm --filter mobile ota:publish --branch production -m "Describe the change"
 ```
 
-Hot Updater is disabled in the JavaScript root when
-`EXPO_PUBLIC_HOT_UPDATER_URL` is absent. It does not apply updates in Expo Go
-or a development build; use an iOS or Android release build for end-to-end
-testing.
+In the dashboard, the `production` channel must point at the `production`
+branch. Use `--rollout-percentage` for a progressive rollout.
+
+New updates download on launch and apply on the next cold start. Updates are
+not applied in Expo Go or a development build; use a release build on a
+physical device for end-to-end testing. Set `DISABLE_CODE_SIGNING=true` when
+a local tool needs the config without the signing certificate.
 
 ## Bugsink
 

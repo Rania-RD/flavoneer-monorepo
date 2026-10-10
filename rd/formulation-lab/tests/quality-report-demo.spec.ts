@@ -145,6 +145,10 @@ test("seeds and displays representative hourly QC manager reports", async ({
   ).toBeVisible({
     timeout: 30_000,
   });
+  await expect(page.getByRole("link", { name: "3D view" })).toHaveAttribute(
+    "href",
+    "/quality/floor"
+  );
   await expect(
     page.getByRole("heading", { name: "QC management summary", level: 2 })
   ).toBeVisible({ timeout: 30_000 });

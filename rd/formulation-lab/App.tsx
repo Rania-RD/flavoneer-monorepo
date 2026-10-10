@@ -21,6 +21,7 @@ import Login from "./pages/login";
 import Materials from "./pages/materials";
 import ProductionLineRecordDetail from "./pages/production-line-record-detail";
 import ProductionLineRecords from "./pages/production-line-records";
+import QcFloorHandoff from "./pages/qc-floor-handoff";
 import QualityReports from "./pages/quality-reports";
 import ReportDetails from "./pages/report-details";
 import Reports from "./pages/reports";
@@ -109,6 +110,7 @@ const App: React.FC = () => {
               element={<ProductionLineRecords />}
               path="/quality/production-line-records"
             />
+            <Route element={<QcFloorHandoff />} path="/quality/floor" />
             <Route
               element={<ProductionLineRecordDetail />}
               path="/quality/production-line-records/:id"

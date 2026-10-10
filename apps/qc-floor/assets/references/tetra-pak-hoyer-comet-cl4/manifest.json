@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "tetra-pak-hoyer-comet-cl4",
+  "rootNode": "machine.hoyer-comet-cl4",
+  "manufacturer": "Tetra Laval Food Hoyer / Tetra Pak",
+  "model": "Comet CL 4",
+  "manualCode": "CL603B",
+  "configuration": "Four-lane cup/cone filling machine",
+  "description": "Approximate, reference-led exterior model of the Hoyer Comet CL4 four-lane ice-cream filling machine.",
+  "dimensionsMeters": {
+    "lengthX": 5.65,
+    "widthZ": 1.55,
+    "heightY": 2.2
+  },
+  "dimensionBasis": "Section 3.3 of the 2002 CL603B operation manual publishes overall dimensions of 5650 mm length, 1550 mm width, and 2200 mm height. The model uses those dimensions as hard external bounds.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "laneCount": 4,
+  "lineAssignments": [],
+  "references": [
+    {
+      "id": "machinery-world-cl4-manual-page",
+      "type": "used-equipment manual archive page",
+      "url": "https://www.machineryworld.com/machine_manuals/tetra-pak-hoyer-comet-cl4-filling-machine/",
+      "use": "Machine identity and public access point for the CL603B operation manual and spare-parts catalogue.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "cl603b-operation-manual",
+      "type": "manufacturer operation manual and spare-parts catalogue",
+      "url": "https://www.machineryworld.com/wp-content/uploads/2018/10/Tetra-Pak-Hoyer-Comet-CL4-Filling-Machine.pdf",
+      "localFile": "Tetra-Pak-Hoyer-Comet-CL4-Filling-Machine.pdf",
+      "pages": 93,
+      "use": "Published envelope, machine elevation and plan, control panel, indexing drive, conveyor, cup and cone dispensers, chocolate sprayer, topping station, dry-ingredient hopper, filler, lid dispenser, lid press, and ejection hardware.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "manuals-page-index",
+      "type": "manual archive index",
+      "url": "https://www.machineryworld.com/manuals-page/?do_search=yes&manufacturer=Tetra+Pak",
+      "use": "Confirms the CL4 manual in the archived Tetra Pak Hoyer Comet family alongside Comet C, CF2, N, RC, Calippo, and C140-210 manuals.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "cl4-production-context-patent",
+      "type": "patent application discussing commercial ice-cream filling equipment",
+      "url": "https://uspto.report/patent/app/20090250316",
+      "use": "Independent period context identifying the Hoyer Vicking CL4 as a cone machine and reporting typical commercial output around 100 to 200 products per minute.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "related-comet-c-manual",
+      "type": "related product-family manual",
+      "url": "https://www.manualslib.com/manual/1805662/Tetra-Pak-Hoyer-Comet-C.html",
+      "use": "Related Comet-family terminology and later-generation machine context only. It was not used for CL4 dimensions.",
+      "accessed": "2026-08-20"
+    }
+  ],
+  "collectedViews": [
+    {
+      "localFile": "photos/manual-overall-elevation.jpg",
+      "manualPdfPage": 10,
+      "subject": "Overall operator-side elevation and station order"
+    },
+    {
+      "localFile": "photos/manual-page-12.jpg",
+      "manualPdfPage": 12,
+      "subject": "Published dimensions and top view"
+    },
+    {
+      "localFile": "photos/manual-page-13.jpg",
+      "manualPdfPage": 13,
+      "subject": "Programmer and selector control-panel layout"
+    },
+    {
+      "localFile": "photos/manual-page-16.jpg",
+      "manualPdfPage": 16,
+      "subject": "Indexing mechanism close-up"
+    },
+    {
+      "localFile": "photos/manual-page-17.jpg",
+      "manualPdfPage": 17,
+      "subject": "Drive motor, belts, pulleys, and gearbox"
+    },
+    {
+      "localFile": "photos/manual-page-18.jpg",
+      "manualPdfPage": 18,
+      "subject": "Conveyor chain wheel and lamella seats"
+    },
+    {
+      "localFile": "photos/manual-page-20.jpg",
+      "manualPdfPage": 20,
+      "subject": "Four-lane cup dispenser, jaws, and suction cups"
+    },
+    {
+      "localFile": "photos/manual-page-21.jpg",
+      "manualPdfPage": 21,
+      "subject": "Four-lane cone dispenser and pneumatic blocks"
+    },
+    {
+      "localFile": "photos/manual-page-22.jpg",
+      "manualPdfPage": 22,
+      "subject": "Chocolate sprayer description and tank arrangement"
+    },
+    {
+      "localFile": "photos/manual-page-23.jpg",
+      "manualPdfPage": 23,
+      "subject": "Installed chocolate-sprayer head bank and hoses"
+    },
+    {
+      "localFile": "photos/manual-page-24.jpg",
+      "manualPdfPage": 24,
+      "subject": "Chocolate topping tank, actuator, and dosing plate"
+    },
+    {
+      "localFile": "photos/manual-page-25.jpg",
+      "manualPdfPage": 25,
+      "subject": "Dry-ingredient hopper, shaker, and chutes"
+    },
+    {
+      "localFile": "photos/manual-page-26.jpg",
+      "manualPdfPage": 26,
+      "subject": "Installed dual-flavour filler bodies and nozzles"
+    },
+    {
+      "localFile": "photos/manual-page-27.jpg",
+      "manualPdfPage": 27,
+      "subject": "Exploded filler head, body, shutter, and actuator"
+    },
+    {
+      "localFile": "photos/manual-page-28.jpg",
+      "manualPdfPage": 28,
+      "subject": "Four-lane lid magazines and rotating suction pistons"
+    },
+    {
+      "localFile": "photos/manual-page-29.jpg",
+      "manualPdfPage": 29,
+      "subject": "Lid pressing bridge, actuator, and plungers"
+    },
+    {
+      "localFile": "photos/manual-page-30.jpg",
+      "manualPdfPage": 30,
+      "subject": "Ejection plungers, pullers, and discharge chute"
+    },
+    {
+      "localFile": "photos/machinery-world-cl4-cover.jpg",
+      "subject": "Public archive cover image; identity only"
+    }
+  ],
+  "recognizableFeatures": [
+    "Long open stainless frame with detachable lower covers, cross bracing, adjustable feet, and end sprockets.",
+    "Four-lane lamella conveyor with repeated white cup or cone seats.",
+    "Tall four-tube cup or cone magazine at the infeed and a second four-tube lid magazine downstream.",
+    "Hose-heavy chocolate spray bank followed by a four-head dual-flavour filler.",
+    "Side chocolate tank and pump, topping tank, and large tapered dry-ingredient hopper.",
+    "Four-head lid suction and pressing stations followed by the puller and ejection chute.",
+    "Large operator control panel with programmer, selector-light grid, and emergency stop.",
+    "Visible indexing pulleys, pneumatic manifold, gauges, and utility hoses."
+  ],
+  "confidence": [
+    {
+      "area": "Overall length, width, and height",
+      "level": "high",
+      "note": "The manual publishes all three external dimensions. The exported mesh is verified against them."
+    },
+    {
+      "area": "Lane count, conveyor form, station identity, and station order",
+      "level": "high",
+      "note": "The manual elevation, plan, descriptions, and installed photographs consistently show the four-lane arrangement and station sequence."
+    },
+    {
+      "area": "Relative station scale and operator-side appearance",
+      "level": "medium",
+      "note": "The manual photographs and diagrams are clear enough for a close floor-view silhouette but do not provide fabrication dimensions for individual station parts."
+    },
+    {
+      "area": "Far side, exact purchased accessories, pipe routes, guards, and internal mechanisms",
+      "level": "low-medium",
+      "note": "The manual covers optional stations and several configurations. The model uses a representative cup/cone configuration and keeps hidden mechanisms simple."
+    },
+    {
+      "area": "Installed factory revision and current on-site condition",
+      "level": "low",
+      "note": "No on-site walkaround or factory general-arrangement drawing was supplied. Replace provisional details if factory photographs become available."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and machine selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset, not a fabrication, installation, process-piping, guarding, cleaning-validation, maintenance, or safety model. Reference pages remain only in the source asset bundle."
+  }
+}

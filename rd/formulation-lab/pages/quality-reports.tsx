@@ -2,11 +2,11 @@ import { api } from "@flavoneer/backend/api";
 import type { Id } from "@flavoneer/backend/data-model";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, FileSearch, Loader2, ShieldCheck } from "lucide-react";
+import { Activity, Box, FileSearch, Loader2, ShieldCheck } from "lucide-react";
 import { DateTime } from "luxon";
 import { type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AuditReport } from "../components/quality-reports/AuditReport";
 import { ManagerReport } from "../components/quality-reports/ManagerReport";
 import {
@@ -213,27 +213,36 @@ export default function QualityReports() {
             <div className="text-[#a9cbbb] text-xs">
               {t("qc_reports_timezone", { timezone: zone })}
             </div>
-            <div className="flex rounded-xl bg-white/8 p-1">
-              {(
-                [
-                  ["report", Activity, "qc_reports_view_report"],
-                  ["audit", FileSearch, "qc_reports_view_audit"],
-                ] as const
-              ).map(([view, Icon, label]) => (
-                <button
-                  className={`flex min-h-10 items-center gap-2 rounded-lg px-3 font-bold text-xs transition-colors ${
-                    activeView === view
-                      ? "bg-[#f7f4df] text-[#173e33]"
-                      : "text-[#c9ddcf] hover:bg-white/10 hover:text-white"
-                  }`}
-                  key={view}
-                  onClick={() => setView(view)}
-                  type="button"
-                >
-                  <Icon aria-hidden="true" size={15} />
-                  {t(label)}
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-xl bg-white/8 p-1">
+                {(
+                  [
+                    ["report", Activity, "qc_reports_view_report"],
+                    ["audit", FileSearch, "qc_reports_view_audit"],
+                  ] as const
+                ).map(([view, Icon, label]) => (
+                  <button
+                    className={`flex min-h-10 items-center gap-2 rounded-lg px-3 font-bold text-xs transition-colors ${
+                      activeView === view
+                        ? "bg-[#f7f4df] text-[#173e33]"
+                        : "text-[#c9ddcf] hover:bg-white/10 hover:text-white"
+                    }`}
+                    key={view}
+                    onClick={() => setView(view)}
+                    type="button"
+                  >
+                    <Icon aria-hidden="true" size={15} />
+                    {t(label)}
+                  </button>
+                ))}
+              </div>
+              <Link
+                className="flex min-h-10 items-center gap-2 rounded-xl bg-[#f5a623] px-4 font-bold text-[#173e33] text-xs shadow-[0_8px_22px_rgba(245,166,35,0.2)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#ffc760] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7738] focus-visible:ring-offset-2 focus-visible:ring-offset-[#173e33] active:translate-y-0"
+                to="/quality/floor"
+              >
+                <Box aria-hidden="true" size={16} />
+                {t("qc_reports_open_3d_view")}
+              </Link>
             </div>
           </div>
         </div>

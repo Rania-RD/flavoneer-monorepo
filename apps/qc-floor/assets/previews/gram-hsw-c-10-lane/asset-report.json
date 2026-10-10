@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "gram-hsw-c-10-lane.glb",
+  "sourceBlend": "assets/blender/gram-hsw-c-10-lane.blend",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -2.9000000059604645,
+      0,
+      -1.7480000257492065
+    ],
+    "max": [
+      2.900000125169754,
+      3.100000048056245,
+      1.4200000017881393
+    ],
+    "size": [
+      5.8000001311302185,
+      3.100000048056245,
+      3.168000027537346
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -2.9,
+      0,
+      -1.748
+    ],
+    "max": [
+      2.9,
+      3.1,
+      1.42
+    ],
+    "size": [
+      5.8,
+      3.1,
+      3.168
+    ]
+  },
+  "budget": {
+    "fileBytes": 1540688,
+    "triangles": 47396,
+    "vertices": 49614,
+    "meshes": 432,
+    "materials": 11,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.control_panel",
+    "inspection.foil_reels",
+    "inspection.heat_seal_station",
+    "inspection.knife_station",
+    "inspection.multi_lane_infeed",
+    "inspection.outfeed",
+    "inspection.transfer_bed",
+    "inspection.wrapping_station"
+  ],
+  "requiredNodeChecks": {
+    "machine.hsw-c-10-lane": true,
+    "structure.frame": true,
+    "inspection.multi_lane_infeed": true,
+    "inspection.foil_reels": true,
+    "inspection.transfer_bed": true,
+    "inspection.wrapping_station": true,
+    "inspection.heat_seal_station": true,
+    "inspection.knife_station": true,
+    "inspection.control_panel": true,
+    "inspection.outfeed": true,
+    "safety.guarding": true,
+    "utilities.top_cabinets": true
+  },
+  "limits": {
+    "maxFileBytes": 6000000,
+    "maxTriangles": 150000,
+    "maxMaterials": 12,
+    "maxTextures": 0
+  }
+}

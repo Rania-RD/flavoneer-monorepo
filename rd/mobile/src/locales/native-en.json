@@ -2,7 +2,9 @@
   "ios": {
     "CFBundleDisplayName": "Flavoneer",
     "NSCameraUsageDescription": "Allow Flavoneer to photograph printed production carton labels.",
-    "NSPhotoLibraryUsageDescription": "Allow Flavoneer to select production record photos from your library."
+    "NSPhotoLibraryUsageDescription": "Allow Flavoneer to select production record photos from your library.",
+    "NSFaceIDUsageDescription": "Allow Flavoneer to use Face ID to confirm quality approvals.",
+    "NFCReaderUsageDescription": "Allow Flavoneer to read NFC tags on production equipment."
   },
   "android": {
     "app_name": "Flavoneer"

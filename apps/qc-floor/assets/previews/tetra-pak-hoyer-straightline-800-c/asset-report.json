@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "tetra-pak-hoyer-straightline-800-c.glb",
+  "sourceBlend": "assets/blender/tetra-pak-hoyer-straightline-800-c.blend",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -6.889999747276306,
+      0,
+      -2.1999998980617823
+    ],
+    "max": [
+      6.889999866485596,
+      2.5,
+      2.199999933131039
+    ],
+    "size": [
+      13.779999613761902,
+      2.5,
+      4.3999998311928215
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -6.89,
+      0,
+      -2.2
+    ],
+    "max": [
+      6.89,
+      2.5,
+      2.2
+    ],
+    "size": [
+      13.78,
+      2.5,
+      4.4
+    ]
+  },
+  "budget": {
+    "fileBytes": 2857436,
+    "triangles": 106912,
+    "vertices": 96626,
+    "meshes": 494,
+    "materials": 11,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.control_panels",
+    "inspection.evaporator_module",
+    "inspection.extrusion_and_filling_stations",
+    "inspection.hardening_tunnel",
+    "inspection.internal_tray_path",
+    "inspection.transfer_and_discharge",
+    "inspection.worktable_conveyor"
+  ],
+  "requiredNodeChecks": {
+    "machine.hoyer-straightline-800-c": true,
+    "inspection.hardening_tunnel": true,
+    "inspection.evaporator_module": true,
+    "inspection.internal_tray_path": true,
+    "inspection.worktable_conveyor": true,
+    "inspection.extrusion_and_filling_stations": true,
+    "inspection.transfer_and_discharge": true,
+    "inspection.control_panels": true,
+    "utilities.refrigeration_and_pneumatics": true
+  },
+  "limits": {
+    "maxFileBytes": 8000000,
+    "maxTriangles": 150000,
+    "maxMaterials": 12,
+    "maxTextures": 0
+  }
+}

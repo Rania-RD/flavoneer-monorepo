@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "danxiao-gta450-120.glb",
+  "sourceBlend": "assets/blender/danxiao-gta450-120.blend",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -2.524999976158142,
+      -9.741017319153666e-9,
+      -0.47999998927116394
+    ],
+    "max": [
+      2.524999961256981,
+      1.5499999662861228,
+      0.47999998927116394
+    ],
+    "size": [
+      5.049999937415123,
+      1.5499999760271401,
+      0.9599999785423279
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -2.525,
+      0,
+      -0.48
+    ],
+    "max": [
+      2.525,
+      1.55,
+      0.48
+    ],
+    "size": [
+      5.05,
+      1.55,
+      0.96
+    ]
+  },
+  "budget": {
+    "fileBytes": 745356,
+    "triangles": 27416,
+    "vertices": 24230,
+    "meshes": 153,
+    "materials": 8,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.control_panel",
+    "inspection.end_seal",
+    "inspection.film_feed",
+    "inspection.infeed_conveyor",
+    "inspection.longitudinal_seal",
+    "inspection.product_transfer",
+    "safety.emergency_controls"
+  ],
+  "requiredNodeChecks": {
+    "machine.gta450-120": true,
+    "structure.frame": true,
+    "inspection.infeed_conveyor": true,
+    "inspection.product_transfer": true,
+    "inspection.film_feed": true,
+    "inspection.longitudinal_seal": true,
+    "inspection.end_seal": true,
+    "inspection.control_panel": true,
+    "safety.emergency_controls": true
+  },
+  "limits": {
+    "maxFileBytes": 3000000,
+    "maxTriangles": 65000,
+    "maxMaterials": 8,
+    "maxTextures": 0
+  }
+}

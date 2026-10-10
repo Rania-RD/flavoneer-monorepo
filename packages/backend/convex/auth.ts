@@ -4,6 +4,7 @@ import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { requireActionCtx } from "@convex-dev/better-auth/utils";
 import { createBackendAuthEnv } from "@flavoneer/config/env/server";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
+import { oneTimeToken } from "better-auth/plugins/one-time-token";
 import { organization } from "better-auth/plugins/organization";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
@@ -18,11 +19,19 @@ export const backendAuthEnv = createBackendAuthEnv({
   INVITATION_EMAIL_WEBHOOK_SECRET: env.INVITATION_EMAIL_WEBHOOK_SECRET,
   INVITATION_EMAIL_WEBHOOK_URL: env.INVITATION_EMAIL_WEBHOOK_URL,
   MOBILE_SITE_URL: env.MOBILE_SITE_URL,
+  QC_FLOOR_SITE_URL: env.QC_FLOOR_SITE_URL,
   SITE_URL: env.SITE_URL,
 });
-const { authBaseUrl, mobileSiteUrl, siteUrl } = backendAuthEnv;
+const { authBaseUrl, mobileSiteUrl, qcFloorSiteUrl, siteUrl } = backendAuthEnv;
 const trustedOrigins = Array.from(
-  new Set([siteUrl, mobileSiteUrl, "http://localhost:3000", "http://localhost:3001"]),
+  new Set([
+    siteUrl,
+    mobileSiteUrl,
+    qcFloorSiteUrl,
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+  ]),
 );
 
 const { invitationWebhookSecret, invitationWebhookUrl } = backendAuthEnv;
@@ -91,6 +100,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
           }
         },
       }),
+      oneTimeToken({ expiresIn: 3 }),
       crossDomain({ siteUrl }),
       convex({ authConfig }),
     ],

@@ -5,6 +5,7 @@
 **/dist
 **/.nuxt
 **/.output
+apps/qc-floor/assets
 **/.env
 **/.env.*
 !**/.env.example

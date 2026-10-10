@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "tetra-pak-hoyer-dino-n2.glb",
+  "sourceBlend": "assets/blender/tetra-pak-hoyer-dino-n2.blend",
+  "referenceManifest": "assets/references/tetra-pak-hoyer-dino-n2/manifest.json",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -1.6629999876022339,
+      0,
+      -3.259999990463257
+    ],
+    "max": [
+      1.6629999876022339,
+      2.4500001072883606,
+      3.259999990463257
+    ],
+    "size": [
+      3.3259999752044678,
+      2.4500001072883606,
+      6.519999980926514
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -1.663,
+      0,
+      -3.26
+    ],
+    "max": [
+      1.663,
+      2.45,
+      3.26
+    ],
+    "size": [
+      3.326,
+      2.45,
+      6.52
+    ]
+  },
+  "budget": {
+    "fileBytes": 2779876,
+    "triangles": 85572,
+    "vertices": 96722,
+    "meshes": 435,
+    "materials": 12,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "inspection.carrier_conveyor",
+    "inspection.chocolate_tank",
+    "inspection.control_panel",
+    "inspection.nine_lane_outfeed",
+    "inspection.pickup_head",
+    "safety.guarding"
+  ],
+  "requiredNodeChecks": {
+    "machine.hoyer-dino-n2": true,
+    "structure.frame": true,
+    "inspection.pickup_head": true,
+    "inspection.carrier_conveyor": true,
+    "inspection.chocolate_tank": true,
+    "inspection.nine_lane_outfeed": true,
+    "inspection.control_panel": true,
+    "safety.guarding": true,
+    "utilities.drives_and_pneumatics": true
+  },
+  "limits": {
+    "maxFileBytes": 8000000,
+    "maxTriangles": 140000,
+    "maxMaterials": 14,
+    "maxTextures": 0
+  }
+}

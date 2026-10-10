@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "danxiao-rxgj-12.glb",
+  "sourceBlend": "assets/blender/danxiao-rxgj-12.blend",
+  "format": "glTF 2.0 binary",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -2.75,
+      0,
+      -1.875
+    ],
+    "max": [
+      2.7500001192092896,
+      1.8799999505281448,
+      1.875
+    ],
+    "size": [
+      5.5000001192092896,
+      1.8799999505281448,
+      3.75
+    ]
+  },
+  "expectedBoundsMeters": {
+    "min": [
+      -2.75,
+      0,
+      -1.875
+    ],
+    "max": [
+      2.75,
+      1.88,
+      1.875
+    ],
+    "size": [
+      5.5,
+      1.88,
+      3.75
+    ]
+  },
+  "budget": {
+    "fileBytes": 2375612,
+    "triangles": 88672,
+    "vertices": 68850,
+    "meshes": 877,
+    "materials": 10,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "flow.outfeed",
+    "inspection.coating_station",
+    "inspection.control_panel",
+    "inspection.demould_pickup_station",
+    "inspection.double_annular_tank",
+    "inspection.filling_station",
+    "inspection.stick_insertion_station",
+    "inspection.suction_station",
+    "inspection.twelve_lane_mould_carousel"
+  ],
+  "dispenserAlignmentChecks": {
+    "suction.head": {
+      "mouldSector": 21,
+      "maximumHorizontalOffsetMeters": 0,
+      "pass": true
+    },
+    "filling.nozzle": {
+      "mouldSector": 29,
+      "maximumHorizontalOffsetMeters": 0,
+      "pass": true
+    },
+    "stick.guide": {
+      "mouldSector": 3,
+      "maximumHorizontalOffsetMeters": 0,
+      "pass": true
+    },
+    "demould.gripper_rod": {
+      "mouldSector": 10,
+      "maximumHorizontalOffsetMeters": 0,
+      "pass": true
+    }
+  },
+  "requiredNodeChecks": {
+    "machine.rxgj-12": true,
+    "structure.circular_frame": true,
+    "inspection.double_annular_tank": true,
+    "inspection.twelve_lane_mould_carousel": true,
+    "inspection.filling_station": true,
+    "inspection.suction_station": true,
+    "inspection.stick_insertion_station": true,
+    "inspection.demould_pickup_station": true,
+    "inspection.coating_station": true,
+    "flow.outfeed": true,
+    "inspection.control_panel": true,
+    "utilities.brine_pump_and_pneumatics": true,
+    "safety.operator_walkway": true
+  },
+  "limits": {
+    "maxFileBytes": 8000000,
+    "maxTriangles": 100000,
+    "maxMaterials": 12,
+    "maxTextures": 0
+  }
+}

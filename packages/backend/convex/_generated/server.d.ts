@@ -37,6 +37,7 @@ type Env = {
   readonly INVITATION_EMAIL_WEBHOOK_SECRET: string | undefined;
   readonly INVITATION_EMAIL_WEBHOOK_URL: string | undefined;
   readonly MOBILE_SITE_URL: string | undefined;
+  readonly QC_FLOOR_SITE_URL: string | undefined;
   readonly REGULATORY_IMPORT_TOKEN: string | undefined;
   readonly SITE_URL: string | undefined;
 };

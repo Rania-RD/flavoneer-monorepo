@@ -39,6 +39,7 @@ import type * as organizationInvites from "../organizationInvites.js";
 import type * as organizationMembers from "../organizationMembers.js";
 import type * as organizations from "../organizations.js";
 import type * as permissions from "../permissions.js";
+import type * as productionFloor from "../productionFloor.js";
 import type * as productionLineRecordHelpers from "../productionLineRecordHelpers.js";
 import type * as productionLineRecords from "../productionLineRecords.js";
 import type * as productionLineSettings from "../productionLineSettings.js";
@@ -107,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   organizationMembers: typeof organizationMembers;
   organizations: typeof organizations;
   permissions: typeof permissions;
+  productionFloor: typeof productionFloor;
   productionLineRecordHelpers: typeof productionLineRecordHelpers;
   productionLineRecords: typeof productionLineRecords;
   productionLineSettings: typeof productionLineSettings;

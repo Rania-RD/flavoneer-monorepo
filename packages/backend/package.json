@@ -22,6 +22,7 @@
   "scripts": {
     "dev": "convex dev",
     "deploy": "convex deploy",
+    "deploy:staging": "convex deploy --env-file .env.staging",
     "deploy:self-hosted": "node ../../scripts/validate-convex-targets.mjs --require-local && convex deploy --env-file .env.production.local",
     "deploy:self-hosted:dry-run": "node ../../scripts/validate-convex-targets.mjs --require-local && convex deploy --env-file .env.production.local --dry-run",
     "codegen": "convex codegen",

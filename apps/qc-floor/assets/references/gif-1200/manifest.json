@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "gram-gif-1200",
+  "rootNode": "machine.gif-1200",
+  "manufacturer": "Gram Equipment A/S",
+  "model": "GIF 1200",
+  "revisionBasis": "2015 self-contained R404A presentation revision",
+  "description": "Approximate, reference-led exterior model of the Gram GIF 1200 continuous ice-cream freezer.",
+  "dimensionsMeters": {
+    "lengthX": 1.95,
+    "widthZ": 0.69,
+    "heightY": 1.7
+  },
+  "dimensionBasis": "Gram Equipment's GIF 600 & 1200 presentation gives 1950 mm overall length, 690 mm width, and 1700 +/- 30 mm nominal height for GIF 1200. The elevation drawing separates a 1720 mm cabinet from the front process-hardware zone. The model uses the 1700 mm nominal height.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "lineAssignments": ["Rollo A", "Rollo B", "SLC"],
+  "references": [
+    {
+      "id": "gram-gif-600-1200-presentation",
+      "type": "manufacturer presentation mirrored by an equipment supplier",
+      "url": "https://icecreamprocesssolutions.com.au/wp-content/uploads/2017/10/GIF-600-1200.pdf",
+      "use": "Exact GIF 1200 envelope, cabinet-to-hardware proportions, front and side elevations, model-specific front photograph, pump placement, pipe route, adjustable feet, rear connections, and 2015 revision identification.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "official-freezer-brochure",
+      "type": "manufacturer brochure",
+      "url": "https://www.gram-equipment.com/wp-content/uploads/2021/10/Freezer-brochure-2021.pdf",
+      "use": "GIF 600/1200 family construction, full stainless cabinet, integrated electrical box and HMI, self-contained refrigeration, two compressors in GIF 1200, and current family description.",
+      "accessed": "2026-08-20"
+    },
+    {
+      "id": "directindustry-product-photo",
+      "type": "catalog photograph",
+      "pageUrl": "https://www.directindustry.com/prod/gram-equipment/product-28108-792537.html",
+      "imageUrl": "https://img.directindustry.com/images_di/photo-mg/28108-2410209.jpg",
+      "use": "GIF 600/1200 family front silhouette, dark control fascia, exposed sanitary pipe, stainless finish, and two-level process-hardware arrangement.",
+      "accessed": "2026-08-20"
+    }
+  ],
+  "recognizableFeatures": [
+    "Deep 1.72 m stainless cabinet with a 0.23 m front process-hardware zone.",
+    "Raised dark-grey operator fascia on the upper right with HMI, GIF 1200 label, status button, and emergency stop.",
+    "Upper discharge pump, central freezing-cylinder flange, and lower mix pump on the front face.",
+    "Polished sanitary transfer pipe joining the upper discharge pump to the central flange.",
+    "Long side service panels, high and low louver banks, recessed handles, tapered adjustable legs, and rear utility markers."
+  ],
+  "confidence": [
+    {
+      "area": "Exterior envelope",
+      "level": "high",
+      "note": "The exact-model manufacturer presentation supplies technical dimensions and front, side, and plan drawings."
+    },
+    {
+      "area": "Front silhouette and controls",
+      "level": "medium-high",
+      "note": "The presentation contains a labelled GIF 1200 product photograph plus detailed pump and piping close-ups."
+    },
+    {
+      "area": "Side service details",
+      "level": "medium",
+      "note": "Panel splits, handles, and louver locations are estimated from the presentation photographs and elevations."
+    },
+    {
+      "area": "Rear, hidden mechanisms, and installed utility routing",
+      "level": "low",
+      "note": "Hidden systems remain cabinet volume. Rear utility markers follow the elevation drawing, while plant hoses and cables are omitted."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and freezer selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a schematic exterior asset, not a fabrication, installation, maintenance, process-piping, or safety model."
+  }
+}

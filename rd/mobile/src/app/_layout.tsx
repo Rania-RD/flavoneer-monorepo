@@ -24,7 +24,7 @@ import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 import { OrganizationProvider } from '@/contexts/organization-context';
 import { ThemePreferenceProvider, useThemePreference } from '@/contexts/theme-preference-context';
 import { authClient, convex } from '@/lib/backend';
-import { withHotUpdater } from '@/lib/hot-updater';
+import { useClarityScreenTracking, useClarityUser } from '@/lib/clarity';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -102,6 +102,8 @@ function AppNavigator() {
     Fraunces_900Black,
   });
   const isDark = resolvedTheme === 'dark';
+  useClarityScreenTracking();
+  useClarityUser(session?.user.id);
 
   return (
     <LanguageProvider key={session?.user.email ?? 'signed-out'}>
@@ -117,8 +119,6 @@ function AppNavigator() {
   );
 }
 
-const HotUpdatedAppNavigator = withHotUpdater(AppNavigator);
-
 function ThemePreferenceBoundary({ children }: PropsWithChildren) {
   const { data: session } = authClient.useSession();
   return (
@@ -132,7 +132,7 @@ function RootLayout() {
   return (
     <ConvexBetterAuthProvider authClient={authClient} client={convex}>
       <ThemePreferenceBoundary>
-        <HotUpdatedAppNavigator />
+        <AppNavigator />
       </ThemePreferenceBoundary>
     </ConvexBetterAuthProvider>
   );

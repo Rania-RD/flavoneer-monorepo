@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Implementation plan for an AI-assisted schematic 3D QC production-floor application."
+    />
+    <title>AI-Assisted 3D QC Floor Plan</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #eef8eb;
+        --paper: #fffdf4;
+        --forest: #173e33;
+        --forest-deep: #102f27;
+        --mint: #d2f2d4;
+        --sage: #527568;
+        --amber: #f5a623;
+        --orange: #ff7738;
+        --red: #a43434;
+        --line: rgba(28, 74, 60, 0.14);
+        --shadow: 0 22px 70px rgba(16, 47, 39, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 15% 5%, rgba(210, 242, 212, 0.9), transparent 28rem),
+          var(--canvas);
+        color: var(--forest-deep);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      a:hover {
+        color: var(--orange);
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: minmax(13rem, 17rem) minmax(0, 56rem);
+        gap: 2.5rem;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      nav {
+        position: sticky;
+        top: 2rem;
+        align-self: start;
+        max-height: calc(100vh - 4rem);
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 1.75rem;
+        background: rgba(255, 253, 244, 0.84);
+        padding: 1.25rem;
+        box-shadow: 0 12px 35px rgba(16, 47, 39, 0.08);
+        backdrop-filter: blur(18px);
+      }
+
+      nav strong {
+        display: block;
+        margin-bottom: 0.75rem;
+        color: var(--sage);
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      nav a {
+        display: block;
+        border-radius: 0.8rem;
+        padding: 0.45rem 0.65rem;
+        text-decoration: none;
+      }
+
+      nav a:hover {
+        background: var(--mint);
+        color: var(--forest);
+      }
+
+      main {
+        min-width: 0;
+      }
+
+      header,
+      section {
+        margin-bottom: 1.25rem;
+        border: 1px solid var(--line);
+        border-radius: 2rem;
+        background: var(--paper);
+        padding: clamp(1.35rem, 3vw, 2.5rem);
+        box-shadow: var(--shadow);
+      }
+
+      header {
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 92% 12%, rgba(245, 166, 35, 0.3), transparent 15rem),
+          var(--forest);
+        color: #f7f4df;
+      }
+
+      .eyebrow {
+        margin: 0 0 0.6rem;
+        color: #a9cbbb;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin-top: 0;
+        line-height: 1.15;
+      }
+
+      h1 {
+        max-width: 13ch;
+        margin-bottom: 1rem;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2.4rem, 6vw, 4.8rem);
+        letter-spacing: -0.045em;
+      }
+
+      h2 {
+        margin-bottom: 1.2rem;
+        color: var(--forest);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        letter-spacing: -0.025em;
+      }
+
+      h3 {
+        margin-top: 1.7rem;
+        margin-bottom: 0.55rem;
+        color: var(--forest);
+        font-size: 1rem;
+      }
+
+      p:first-child {
+        margin-top: 0;
+      }
+
+      p:last-child {
+        margin-bottom: 0;
+      }
+
+      .lede {
+        max-width: 48rem;
+        color: #d8e7dc;
+        font-size: 1.05rem;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-top: 1.5rem;
+      }
+
+      .pill {
+        border: 1px solid rgba(247, 244, 223, 0.16);
+        border-radius: 999px;
+        background: rgba(247, 244, 223, 0.08);
+        padding: 0.45rem 0.75rem;
+        color: #f7f4df;
+        font-size: 0.78rem;
+        font-weight: 750;
+      }
+
+      .decision {
+        border-inline-start: 0.35rem solid var(--amber);
+        border-radius: 0 1.2rem 1.2rem 0;
+        background: #fff7df;
+        padding: 1rem 1.15rem;
+      }
+
+      .decision strong {
+        color: var(--forest);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 1.35rem;
+        background: rgba(238, 248, 235, 0.55);
+        padding: 1rem 1.1rem;
+      }
+
+      .panel h3 {
+        margin-top: 0;
+      }
+
+      ul,
+      ol {
+        padding-inline-start: 1.35rem;
+      }
+
+      li + li {
+        margin-top: 0.45rem;
+      }
+
+      code {
+        border-radius: 0.35rem;
+        background: rgba(28, 74, 60, 0.08);
+        padding: 0.1rem 0.3rem;
+        color: var(--forest);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.88em;
+      }
+
+      pre {
+        overflow-x: auto;
+        border-radius: 1.25rem;
+        background: var(--forest-deep);
+        padding: 1.1rem;
+        color: #e7f4e9;
+        line-height: 1.5;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+        color: inherit;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 1.25rem;
+      }
+
+      table {
+        width: 100%;
+        min-width: 48rem;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 0.8rem 0.9rem;
+        text-align: start;
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--forest);
+        color: #f7f4df;
+        font-size: 0.72rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      tbody tr:nth-child(even) {
+        background: rgba(210, 242, 212, 0.3);
+      }
+
+      .assignment {
+        background:
+          radial-gradient(circle at 88% 10%, rgba(255, 119, 56, 0.2), transparent 14rem),
+          #fff7df;
+      }
+
+      .assignment h2 {
+        color: var(--forest-deep);
+      }
+
+      .step-number {
+        display: inline-grid;
+        width: 2rem;
+        height: 2rem;
+        margin-inline-end: 0.45rem;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--amber);
+        color: var(--forest-deep);
+        font-weight: 900;
+      }
+
+      .risk strong {
+        color: var(--red);
+      }
+
+      .sources a {
+        overflow-wrap: anywhere;
+      }
+
+      footer {
+        padding: 1rem 0 3rem;
+        color: var(--sage);
+        font-size: 0.82rem;
+        text-align: center;
+      }
+
+      @media (max-width: 900px) {
+        .shell {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 1rem;
+        }
+
+        nav {
+          position: static;
+          max-height: none;
+        }
+
+        nav div {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.2rem;
+        }
+
+        .grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+
+        .shell {
+          display: block;
+          padding: 0;
+        }
+
+        nav {
+          display: none;
+        }
+
+        header,
+        section {
+          break-inside: avoid;
+          border-color: #ccd8d1;
+          box-shadow: none;
+        }
+
+        a {
+          text-decoration: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <nav aria-label="Plan sections">
+        <strong>Plan contents</strong>
+        <div>
+          <a href="#goal">Goal</a>
+          <a href="#equipment">Equipment map</a>
+          <a href="#premises">Premises</a>
+          <a href="#approach">Selected approach</a>
+          <a href="#workflow">Asset workflow</a>
+          <a href="#implementation">Implementation</a>
+          <a href="#interaction">Interaction</a>
+          <a href="#alternatives">Rejected alternatives</a>
+          <a href="#assignment">First assignment</a>
+          <a href="#risks">Risks and questions</a>
+          <a href="#sources">Sources</a>
+        </div>
+      </nav>
+
+      <main>
+        <header>
+          <p class="eyebrow">Flavoneer · QC production floor</p>
+          <h1>AI-assisted 3D floor plan</h1>
+          <p class="lede">
+            A desktop-browser application that turns QC state into a freely browsable,
+            schematic representation of two production halls. Approximate machine models
+            are generated from manufacturer references and known dimensions, while exact
+            QC evidence remains in accessible report panels.
+          </p>
+          <div class="meta" aria-label="Plan metadata">
+            <span class="pill">Date: 2026-08-19</span>
+            <span class="pill">Mode: Builder</span>
+            <span class="pill">Stage: Prototype definition</span>
+            <span class="pill">Status: Approved with open risks</span>
+          </div>
+        </header>
+
+        <section id="goal">
+          <h2>Goal</h2>
+          <p>
+            Build a fast, recognizable 3D operational overview without waiting for factory
+            CAD, exact hall measurements, or manually authored production-quality models.
+            A QC manager should identify the hall and line requiring attention, select it,
+            and open the existing detailed production record.
+          </p>
+          <div class="decision">
+            <strong>Chosen direction:</strong> Approach A with AI-assisted schematic
+            modeling. The AI agent writes editable procedural geometry from reference
+            images and measurements. It does not accept an opaque image-to-3D mesh as the
+            source of truth.
+          </div>
+        </section>
+
+        <section id="equipment">
+          <h2>Confirmed equipment map</h2>
+          <p>
+            Individual machinery should use its known or estimated metric size. Hall
+            boundaries, spacing, and placement remain schematic and configurable because
+            exact factory measurements are unavailable.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Hall</th>
+                  <th scope="col">Line</th>
+                  <th scope="col">Primary equipment</th>
+                  <th scope="col">Freezer</th>
+                  <th scope="col">Hardening or tunnel</th>
+                  <th scope="col">Wrapper</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Rollo A</td>
+                  <td>RXGJ-6 rotary stick machine</td>
+                  <td>GIF 600</td>
+                  <td>Double spiral</td>
+                  <td>Unconfirmed</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>Rollo B</td>
+                  <td>RXGJ-6 rotary stick machine</td>
+                  <td>GIF 600</td>
+                  <td>Double spiral</td>
+                  <td>Unconfirmed</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>GMF</td>
+                  <td>Gram GMF-C</td>
+                  <td>GIF 400</td>
+                  <td>Double spiral</td>
+                  <td>Unconfirmed</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>BTC 1 · sticks</td>
+                  <td>Gram BT-C, stick configuration</td>
+                  <td>GIF 400</td>
+                  <td>Double spiral</td>
+                  <td>HSW-C, 10 lanes</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>BTC 2 · sandwiches</td>
+                  <td>Gram BT-C, sandwich configuration</td>
+                  <td>GIF 400</td>
+                  <td>Double spiral</td>
+                  <td>HSW-C, 10 lanes</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>SLC</td>
+                  <td>DTB-880 extrusion and freezing line</td>
+                  <td>GIF 600</td>
+                  <td>DTB-880 integrated tunnel; no additional spiral</td>
+                  <td>Unconfirmed</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Relative hall layout</h3>
+          <p>
+            The first schematic uses a shared local axis rather than a north-aligned plan.
+            Hall 1 contains two adjacent, parallel rows. The order follows the confirmed
+            line grouping, while row spacing and exact offsets stay configurable. Hall 2
+            centers SLC as its only production line.
+          </p>
+          <pre aria-label="Schematic relative line layout"><code>PRODUCTION HALL 1 · schematic only
+
+Row A   [ GMF ]      [ BTC 1 · sticks ]      [ BTC 2 · sandwiches ]
+          → shared local product-flow axis
+
+Row B   [ Rollo A ]  [ Rollo B ]
+          → parallel to Row A
+
+PRODUCTION HALL 2 · schematic only
+
+        [ SLC · DTB-880 ]
+          → standalone line</code></pre>
+        </section>
+
+        <section id="premises">
+          <h2>Premises</h2>
+          <ol>
+            <li>
+              Version one represents this factory only. A customer-facing floor editor is
+              outside the prototype scope.
+            </li>
+            <li>
+              Recognizable silhouettes, machine-level scale, line identity, and product
+              flow matter more than hidden mechanical accuracy.
+            </li>
+            <li>
+              The hall arrangement is labeled as schematic. The application must not imply
+              engineering or safety-plan accuracy.
+            </li>
+            <li>
+              AI-generated assets must be deterministic and editable. A script, manifest,
+              preview, and runtime model are reviewed together.
+            </li>
+            <li>
+              The 3D view answers “where is the QC problem?” Exact readings, audit history,
+              filters, and actions remain normal DOM interfaces.
+            </li>
+            <li>
+              Existing Convex records remain the source of QC truth. Scene configuration
+              only maps visual nodes to halls and production lines.
+            </li>
+          </ol>
+        </section>
+
+        <section id="approach">
+          <h2>Selected approach</h2>
+          <h3>AI-assisted schematic 3D factory</h3>
+          <p>
+            For each machine, an AI agent receives manufacturer images, published
+            dimensions, installed-machine photographs when available, and a list of
+            visually important parts. It generates a deterministic Blender Python script
+            or parametric Three.js component from simple boxes, cylinders, tanks, rails,
+            belts, and panels.
+          </p>
+          <p>
+            The geometry is reviewed in a neutral viewer and corrected at source level.
+            Reusable standalone assets are exported as optimized GLB files. Unseen surfaces
+            remain deliberately simple instead of being presented as inferred mechanical
+            detail.
+          </p>
+          <div class="grid">
+            <div class="panel">
+              <h3>Why this path</h3>
+              <ul>
+                <li>Faster than artist-authored production assets.</li>
+                <li>More recognizable than generic labeled boxes.</li>
+                <li>Source scripts remain diffable and reproducible.</li>
+                <li>Repeated machines improve several lines at once.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Primary constraint</h3>
+              <p>
+                Generated geometry may look plausible while being spatially wrong. Every
+                asset therefore needs explicit dimensions, confidence notes, a model
+                budget, source attribution, and human approval.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="workflow">
+          <h2>AI asset workflow</h2>
+          <ol>
+            <li>
+              <strong>Collect references.</strong> At least three useful views, source URLs,
+              installed photographs when available, and known dimensions.
+            </li>
+            <li>
+              <strong>Write a manifest.</strong> Record manufacturer, model, dimensions,
+              confidence, line assignments, visually important features, and usage notes.
+            </li>
+            <li>
+              <strong>Generate procedural source.</strong> The agent creates a Blender Python
+              script or parametric Three.js component rather than an uneditable mesh.
+            </li>
+            <li>
+              <strong>Render neutral previews.</strong> Produce consistent front, side, and
+              three-quarter images for comparison with the references.
+            </li>
+            <li>
+              <strong>Review and correct.</strong> Check silhouette, external scale, product
+              direction, origin, material count, and selectable nodes.
+            </li>
+            <li>
+              <strong>Export and validate.</strong> Generate the GLB, measure bounds, record
+              polygon and texture budgets, and verify the asset in the browser viewer.
+            </li>
+          </ol>
+
+          <h3>Asset queue</h3>
+          <pre><code>danxiao-rxgj-6.glb
+gram-gmf-c.glb
+gram-bt-c.glb
+gram-hsw-c-10-lane.glb
+gram-gif-400.glb
+gram-gif-600.glb
+danxiao-dtb-880.glb
+danxiao-double-spiral-tunnel.glb</code></pre>
+
+          <h3>Common asset rules</h3>
+          <ul>
+            <li>Units are meters; origin is the footprint center at floor level.</li>
+            <li>A documented forward axis defines product flow.</li>
+            <li>Root nodes use stable keys such as <code>machine.rxgj-6</code>.</li>
+            <li>Manufacturer images guide shape but are not copied as runtime textures.</li>
+            <li>Selectable subnodes are limited to meaningful QC inspection points.</li>
+            <li>Every asset has a source script, manifest, preview, and rebuild command.</li>
+          </ul>
+        </section>
+
+        <section id="implementation">
+          <h2>Implementation shape</h2>
+          <h3>Application boundary</h3>
+          <p>
+            Create a separate deployable workspace at <code>apps/qc-floor</code>. Reuse
+            <code>@flavoneer/backend</code>, <code>@flavoneer/config</code>, and
+            <code>@flavoneer/ui</code> instead of duplicating authentication, permissions,
+            reporting logic, or design tokens.
+          </p>
+
+          <div class="grid">
+            <div class="panel">
+              <h3>Runtime stack</h3>
+              <ul>
+                <li>React 18, TypeScript, and Vite.</li>
+                <li>Three.js and React Three Fiber v8.</li>
+                <li><code>@react-three/drei</code> for controls and loading.</li>
+                <li>Tailwind CSS 4, React Router, and i18next.</li>
+                <li>Existing Convex and Better Auth deployment.</li>
+                <li>Desktop browsers are the version-one hardware target.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Verification stack</h3>
+              <ul>
+                <li>Vitest for layout mappings and geometry metadata.</li>
+                <li>Playwright for navigation, selection, and fallback behavior.</li>
+                <li>PostHog for line selection and time-to-record events.</li>
+                <li>Automated GLB bounds and asset-budget reports.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Proposed structure</h3>
+          <pre><code>apps/qc-floor/
+  assets-src/
+    references/&lt;machine-key&gt;/manifest.json
+    blender/&lt;machine-key&gt;.py
+  public/models/&lt;machine-key&gt;.glb
+  src/floor/factory-layout.ts
+  src/floor/machine-catalog.ts
+  src/scene/
+  src/panels/</code></pre>
+
+          <h3>Floor and QC mapping</h3>
+          <p>
+            <code>factory-layout.ts</code> stores schematic hall boundaries, camera bounds,
+            editable machine coordinates, product-flow direction, and asset keys. A
+            separate mapping connects each line to the existing
+            <code>productionHallCode</code> and <code>departmentName</code> values.
+          </p>
+          <p>
+            The floor-status query returns a bounded result for the selected date window
+            from existing quality inspection summaries. The scene consumes compact
+            per-line state: inspection count, pending count, returned count, out-of-limit
+            count, latest inspection time, and severity. No Convex layout table is needed
+            for the first vertical slice.
+          </p>
+        </section>
+
+        <section id="interaction">
+          <h2>Interaction and distribution</h2>
+          <ul>
+            <li>Start in a bounded elevated isometric view.</li>
+            <li>Provide reset, hall-focus, and “show all exceptions” controls.</li>
+            <li>Selecting a line frames it and opens an accessible DOM side panel.</li>
+            <li>Status uses labels and symbols in addition to color.</li>
+            <li>Selecting an exception opens the existing production-record route.</li>
+            <li>Filters stay URL-backed and outside the WebGL canvas.</li>
+            <li>Provide a keyboard-accessible list fallback and WebGL failure state.</li>
+            <li>Use demand-based rendering so an idle scene does not render continuously.</li>
+            <li>Desktop interaction is required; tablet and mobile QA are deferred.</li>
+          </ul>
+          <p>
+            Deploy the app as a separate Vite bundle through the existing Nginx and
+            Coolify pattern. It connects to the same Convex deployment, organization, and
+            identity as the formulation lab.
+          </p>
+          <p>
+            Evaluate the prototype by asking a QC manager to find a pending record and an
+            out-of-limit line using the current report, then repeat with the 3D overview.
+            Compare completion time, wrong selections, and whether the manager returns to
+            the list view.
+          </p>
+        </section>
+
+        <section id="alternatives">
+          <h2>Rejected alternatives</h2>
+          <div class="grid">
+            <div class="panel">
+              <h3>Generic primitive diagram</h3>
+              <p>
+                Fast, but machinery would not be recognizable. The selected approach keeps
+                primitive geometry while giving each model a reference-led silhouette.
+              </p>
+            </div>
+            <div class="panel">
+              <h3>Artist-authored low-poly twin</h3>
+              <p>
+                Better visual fidelity, but delays interaction testing. Procedural models
+                can become blockouts for artist replacements later.
+              </p>
+            </div>
+            <div class="panel">
+              <h3>Scan as the runtime scene</h3>
+              <p>
+                Captures placement but creates heavy, noisy geometry around reflective
+                stainless steel. A scan may be used privately as a placement reference.
+              </p>
+            </div>
+            <div class="panel">
+              <h3>Opaque image-to-3D generation</h3>
+              <p>
+                Invents unseen geometry and produces inconsistent topology and scale. It
+                is not accepted as the editable source of truth.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="assignment" id="assignment">
+          <h2><span class="step-number">1</span>First assignment</h2>
+          <p>
+            Build the RXGJ-6 reference bundle and AI-generated blockout specification.
+            Do not model the complete factory until this asset passes review.
+          </p>
+          <h3>Required inputs</h3>
+          <ul>
+            <li>Three or more useful reference views.</li>
+            <li>Published dimensions: 4.5 &#215; 2.6 &#215; 1.82 meters.</li>
+            <li>Five silhouette features that must remain recognizable.</li>
+            <li>Confidence notes for details that are not visible.</li>
+          </ul>
+          <h3>Required outputs</h3>
+          <ul>
+            <li>Reference manifest with source attribution.</li>
+            <li>Deterministic Blender or parametric Three.js source.</li>
+            <li>Optimized GLB with root node <code>machine.rxgj-6</code>.</li>
+            <li>Neutral preview renders and an asset-budget report.</li>
+            <li>Documented rebuild command.</li>
+          </ul>
+          <h3>Acceptance</h3>
+          <ul>
+            <li>The external bounds match the published dimensions.</li>
+            <li>The double annular tank and control area read clearly at floor-view scale.</li>
+            <li>Rollo A and Rollo B instantiate the same asset independently.</li>
+            <li>Selection uses stable node names, not mesh order.</li>
+            <li>A bounding-box fallback can replace the asset without breaking the scene.</li>
+          </ul>
+        </section>
+
+        <section id="risks">
+          <h2>Risks and open questions</h2>
+          <div class="risk">
+            <ul>
+              <li>
+                <strong>Invented geometry:</strong> keep unseen surfaces simple, record
+                confidence, and require human preview approval.
+              </li>
+              <li>
+                <strong>Installed revision differs from catalog:</strong> prefer on-site
+                photos and mark catalog-only details as provisional.
+              </li>
+              <li>
+                <strong>Reference licensing:</strong> retain source attribution and never
+                ship manufacturer photographs as model textures.
+              </li>
+              <li>
+                <strong>Schematic layout mistaken for a measured plan:</strong> label it,
+                omit measurement tools, and keep placement in replaceable configuration.
+              </li>
+              <li>
+                <strong>Mutable line names:</strong> keep mapping explicit and add stable
+                production-line IDs before supporting editable layouts.
+              </li>
+              <li>
+                <strong>Asset growth:</strong> enforce bounds, triangle, material, texture,
+                and compressed-file budgets after the RXGJ-6 baseline is known.
+              </li>
+            </ul>
+          </div>
+          <h3>Open questions</h3>
+          <ul>
+            <li>Should the schematic product-flow arrows be reversed for any line?</li>
+            <li>Which wrappers are installed on Rollo A, Rollo B, GMF, and SLC?</li>
+          </ul>
+        </section>
+
+        <section class="sources" id="sources">
+          <h2>Manufacturer sources</h2>
+          <ul>
+            <li>
+              <a href="https://en.wxdanxiao.com/productshow.php?cid=9&amp;id=9">
+                RXGJ-6 rotary stick ice cream machine
+              </a>
+            </li>
+            <li>
+              <a href="https://www.wuxi-danxiao.com/dtb-880-ice-cream-extrusion-line.html">
+                DTB-880 extrusion line
+              </a>
+            </li>
+            <li>
+              <a href="https://www.wuxi-danxiao.com/slx-1000-spiral-tunnel.html">
+                Double spiral frozen tunnel
+              </a>
+            </li>
+            <li>
+              <a href="https://www.gram-equipment.com/products-2">
+                Gram Equipment product catalog
+              </a>
+            </li>
+            <li>
+              <a href="https://www.gram-equipment.com/gram-equipment-products/gmf-c">
+                Gram GMF-C
+              </a>
+            </li>
+            <li>
+              <a href="https://www.gram-equipment.com/gram-equipment-products/bt-c">
+                Gram BT-C
+              </a>
+            </li>
+            <li>
+              <a href="https://www.gram-equipment.com/gram-equipment-products/hsw-c">
+                Gram HSW-C
+              </a>
+            </li>
+          </ul>
+          <p>
+            A broad competitive landscape search was not performed. External research was
+            limited to equipment verification from the supplied manufacturer sources.
+          </p>
+        </section>
+
+        <footer>
+          Flavoneer QC floor prototype plan · Standalone HTML · Updated 2026-08-19
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

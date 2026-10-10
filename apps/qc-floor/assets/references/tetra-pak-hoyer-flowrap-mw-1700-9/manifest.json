@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "tetra-pak-hoyer-flowrap-mw-1700-9",
+  "rootNode": "machine.hoyer-flowrap-mw-1700-9",
+  "manufacturer": "Tetra Pak Hoyer",
+  "model": "Flowrap MW 1700-9",
+  "drawingNumber": "59402424345",
+  "configuration": "Nine-lane high-speed ice-cream flow wrapper",
+  "description": "Approximate, reference-led exterior model of the 2007 Tetra Pak Hoyer Flowrap MW 1700-9 for the AI QC floor.",
+  "dimensionsMeters": {
+    "lengthX": 6.364,
+    "widthZ": 3.05,
+    "heightY": 2.45,
+    "productWorkingHeightY": 1.35
+  },
+  "dimensionBasis": "Tetra Pak 1:50 drawing B59404537876 gives 9690 mm from the tunnel outlet to the wrapper end and 3326 mm from the tunnel outlet to the Dino transfer centreline. Their difference gives a 6364 mm wrapper segment. The plan gives 1525 mm from the wrapper centreline to each side. The elevation explicitly gives a 1350 mm product working height. The 2450 mm maximum height is scaled from the same elevation against the published 3630 mm tunnel height and remains approximate.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "publishedTechnicalData": {
+    "lanes": 9,
+    "electricalSupply": "3 x 400 V, 50 Hz",
+    "lineCurrentAmps": 40,
+    "controlCurrentAmps": 5,
+    "shortCircuitRatingKiloamps": 25,
+    "yearOfManufacture": 2007,
+    "serialNumber": "Z4153939"
+  },
+  "references": [
+    {
+      "id": "machinery-world-sl1100-listing",
+      "type": "used-equipment listing with 29 installed-condition photographs",
+      "url": "https://www.machineryworld.com/product/tetra-pak-straightline-sl-1100-f2-ice-crem-extrusion-line-magnum-25-000-pcs-h-year-2008/",
+      "use": "Exact MW 1700-9 identity plate, drawing number, year, electrical data, upstream Hoyer Dino N2 interface, overall line context, controls, guarding, stainless construction and current installed condition.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "tetra-pak-layout-b59404537876",
+      "type": "Tetra Pak Hoyer 1:50 line elevation and plan",
+      "url": "https://www.machineryworld.com/wp-content/uploads/2026/04/b59404537876-1.pdf",
+      "localFile": "Tetra-Pak-layout-B59404537876.pdf",
+      "drawingNumber": "B59404537876",
+      "drawingDate": "2007-08-17",
+      "use": "Wrapper footprint, nine-lane top view, line relationship, product working height and image-scaled maximum height.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "aaron-86975",
+      "type": "used Tetra Pak Omni Hoyer novelty-line listing with three Flowrap MV photographs",
+      "url": "https://www.aaronequipment.com/usedequipment/complete-plants/plant-lines/tetrapak-86975",
+      "use": "Related multi-lane Flowrap family construction: open stainless frame, high wrapper portal, blue fascia stripe, repeated reel bank, HMI pedestal, mesh guards, belt layout and drive housings. The photographed MV configuration is not the exact MW 1700-9.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "flowrap-sw150c1-specification",
+      "type": "archived equipment specification for a related single-lane Hoyer Flowrap",
+      "url": "https://es.scribd.com/document/406841933/Complete-Icecream-Plant-TETRA-HOYER-1",
+      "use": "Related family process sequence only: inlet pocket conveyor, paper-roll suspension, former, drive and pressure rollers, flap folders, rotating cross-seal jaws with knife, outlet conveyor, PLC control and photo-mark registration.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "exapro-flowrep-sl80",
+      "type": "used-equipment listing with nine related Hoyer Flowrap SL 80 photographs",
+      "url": "https://www.exapro.com/tetra-pakr-hoyer-straightline-800-c-hoyer-flowrep-sl-80-p90210006/",
+      "existingReferenceBundle": "../tetra-pak-hoyer-straightline-800-c/",
+      "use": "Period Tetra Pak Hoyer branding, stainless panel finish, controls, pneumatic details and conveyor interfaces. The SL 80 is a different single-lane machine.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "qc-floor-plan",
+      "type": "local product plan",
+      "localFile": "../../../../../../.plan/2026-08-19-ai-assisted-qc-floor.html",
+      "use": "Asset coordinate system, floor-plan purpose, stable-node requirement, schematic placement rules and non-engineering-use constraint."
+    }
+  ],
+  "collectedViews": [
+    {
+      "source": "machinery-world-sl1100-listing",
+      "count": 29,
+      "localFiles": [
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line2-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line3-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line5-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line6-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line7-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line14-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line16-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line16-2.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line17-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line18-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line19-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line20-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line22-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line25-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line27-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line28-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line29-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line32-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line33-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line34-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line35-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line36-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line43-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line44-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line45-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line46-1.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line47.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line55.jpg",
+        "photos/22283_Tetra_Pak_Straightline_SL_1100_F2_Ice_Cream_Extrusion_Line600.jpg"
+      ],
+      "subject": "Complete listed line. The exact wrapper nameplate is in image 34-1; images 33-1 and 35-1 show the adjacent Dino transfer. The remaining views record installed materials, control hardware, guarding and line scale."
+    },
+    {
+      "source": "aaron-86975",
+      "count": 3,
+      "localFiles": [
+        "photos/aaron-flowrap-mv-overall-a.jpg",
+        "photos/aaron-flowrap-mv-overall-b.jpg",
+        "photos/aaron-flowrap-mv-overall-c.jpg"
+      ],
+      "imageUrls": [
+        "https://www.aaronequipment.com/images/itemimages/complete-plants/plant-lines/tetrapak_86975a.jpg",
+        "https://www.aaronequipment.com/images/itemimages/complete-plants/plant-lines/tetrapak_86975b.jpg",
+        "https://www.aaronequipment.com/images/itemimages/complete-plants/plant-lines/tetrapak_86975c.jpg"
+      ],
+      "subject": "Three useful overall views of a related multi-lane Hoyer Flowrap MV from the operator end, side and discharge end."
+    }
+  ],
+  "recognizableFeatures": [
+    "Wide nine-lane product path with separate infeed and discharge belts.",
+    "High stainless wrapper portal spanning the full lane bank.",
+    "Nine repeated film reels and guide rollers inside the open portal.",
+    "Tetra Pak Hoyer blue fascia stripe and operator-side HMI pedestal.",
+    "Per-lane forming collars, longitudinal seal rollers and rotary cross-seal jaws.",
+    "Open stainless tubular frame with X-bracing, adjustable feet and mesh guards."
+  ],
+  "confidence": [
+    {
+      "area": "Model identity, lane count, year, serial number, drawing number and electrical plate data",
+      "level": "high",
+      "note": "The current Machinery World photograph shows the exact MW1700-9 nameplate."
+    },
+    {
+      "area": "Wrapper footprint and 1.350 m product working height",
+      "level": "medium-high",
+      "note": "The footprint is derived from explicit dimensions on Tetra Pak drawing B59404537876, but the 6364 mm segment assumes the Dino transfer centreline is the wrapper start plane."
+    },
+    {
+      "area": "Maximum exterior height",
+      "level": "medium",
+      "note": "The 2.450 m height is scaled from the 1:50 elevation against the drawing's 3.630 m tunnel height."
+    },
+    {
+      "area": "Portal, frame, reel bank, HMI, guards and conveyor proportions",
+      "level": "medium",
+      "note": "The exact drawing supplies plan and side silhouettes. Three related Flowrap MV photos supply the visible construction language."
+    },
+    {
+      "area": "Hidden film path, drive train, cross-seal internals and purchased options",
+      "level": "low-medium",
+      "note": "No exact MW1700-9 manual or full walkaround was found. These parts follow related Flowrap specifications and standard horizontal wrapper practice."
+    }
+  ],
+  "usage": {
+    "purpose": "AI QC floor visualization and machine selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset. It is not a fabrication, installation, guarding, validation, maintenance, lifting, process, or safety model."
+  }
+}

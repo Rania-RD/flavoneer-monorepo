@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "asset": "elpress-dzw-hdt-1000-hygiene-station.glb",
+  "sourceBlend": "assets/blender/elpress-dzw-hdt-1000.blend",
+  "referenceManifest": "assets/references/elpress-dzw-hdt-1000/manifest.json",
+  "format": "glTF 2.0 binary",
+  "nominalDimensionsMeters": {
+    "length": 2.125,
+    "width": 0.918,
+    "height": 1.513
+  },
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "published footprint center at floor level"
+  },
+  "boundsMeters": {
+    "min": [
+      -1.0624999850988388,
+      0,
+      -0.458999989554286
+    ],
+    "max": [
+      1.0624999850988388,
+      1.5130000207573175,
+      0.458999989554286
+    ],
+    "size": [
+      2.1249999701976776,
+      1.5130000207573175,
+      0.917999979108572
+    ]
+  },
+  "budget": {
+    "fileBytes": 1003916,
+    "triangles": 32024,
+    "vertices": 35828,
+    "meshes": 175,
+    "materials": 16,
+    "textures": 0
+  },
+  "selectableNodes": [
+    "control.entry_hand_station",
+    "control.primary_hand_station",
+    "process.drain_grate",
+    "process.sole_brushes",
+    "safety.handrails",
+    "safety.release_turnstile",
+    "structure.wash_platform",
+    "utilities.chemical_dosing"
+  ],
+  "requiredNodeChecks": {
+    "machine.elpress-dzw-hdt-1000": true,
+    "structure.wash_platform": true,
+    "process.sole_brushes": true,
+    "process.drain_grate": true,
+    "safety.handrails": true,
+    "control.entry_hand_station": true,
+    "control.primary_hand_station": true,
+    "safety.release_turnstile": true,
+    "utilities.chemical_dosing": true
+  },
+  "limits": {
+    "maxFileBytes": 4000000,
+    "maxTriangles": 75000,
+    "maxMaterials": 18,
+    "maxTextures": 0
+  },
+  "errors": []
+}

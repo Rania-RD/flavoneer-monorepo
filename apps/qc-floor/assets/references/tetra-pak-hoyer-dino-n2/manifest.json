@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "tetra-pak-hoyer-dino-n2",
+  "rootNode": "machine.hoyer-dino-n2",
+  "manufacturer": "Tetra Pak Hoyer",
+  "model": "Hoyer Dino N2",
+  "drawingNumber": "5940242438",
+  "configuration": "Nine-lane transfer and dip unit with 18 carriers",
+  "description": "Approximate, reference-led exterior model of the 2008 Tetra Pak Hoyer Dino N2 installed between a Straightline SL 1100-F2 tunnel and a Flowrap MW 1700-9.",
+  "dimensionsMeters": {
+    "lengthX": 3.326,
+    "widthZ": 6.52,
+    "heightY": 2.45,
+    "productWorkingHeightY": 1.35
+  },
+  "dimensionBasis": "Tetra Pak drawing B59404537876 gives 3326 mm from the Straightline tunnel outlet to the Dino transfer centreline and a 6520 mm tunnel width. The exact installed N2 spans that cross-line width. The 2450 mm maximum height is image-scaled from the same elevation against the explicit 3630 mm tunnel height. These dimensions are installation-envelope estimates, not manufacturer-published N2 overall dimensions.",
+  "relatedDinoCDimensionsMeters": {
+    "length": 1.8,
+    "width": 2.64,
+    "height": 2.16,
+    "note": "Published in the 1998 Hoyer Dino C manual. The Dino C is a smaller related configuration and does not set the N2 asset envelope."
+  },
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "publishedTechnicalData": {
+    "lanes": 9,
+    "carrierCount": 18,
+    "dippingStationCoatingLength": "0-130 mm",
+    "electricalSupply": "380 V, 50 Hz, 3 phase",
+    "mainMotor": "1.4 kW servo",
+    "yearOfManufacture": 2008,
+    "serialNumber": "Z3231009",
+    "countryOfManufacture": "Denmark"
+  },
+  "references": [
+    {
+      "id": "tetra-pak-hoyer-dino-manual",
+      "type": "Tetra Pak Hoyer Dino C operation manual",
+      "url": "https://www.machineryworld.com/wp-content/uploads/2018/10/Tetra-Pak-Hoyer-Dino.pdf",
+      "localFile": "Tetra-Pak-Hoyer-Dino.pdf",
+      "use": "Related-machine construction, pick-up arm, roller carrier system, chocolate tank, HMI, mechanism sequence and published Dino C dimensions.",
+      "accessed": "2026-08-23"
+    },
+    {
+      "id": "machinery-world-sl1100-listing",
+      "type": "Used exact-line listing with installed-condition photographs",
+      "url": "https://www.machineryworld.com/product/tetra-pak-straightline-sl-1100-f2-ice-crem-extrusion-line-magnum-25-000-pcs-h-year-2008/",
+      "use": "Exact N2 identity, drawing number, serial number, year, electrical data, coating stroke, stainless gantry, blue Hoyer Dino fascia, overhead cabinet bank, mobile dip tank, HMI, guards and line interfaces.",
+      "accessed": "2026-08-23"
+    },
+    {
+      "id": "tetra-pak-layout-b59404537876",
+      "type": "Tetra Pak Hoyer 1:50 line elevation and plan",
+      "url": "https://www.machineryworld.com/wp-content/uploads/2026/04/b59404537876-1.pdf",
+      "existingReferenceBundle": "../tetra-pak-hoyer-flowrap-mw-1700-9/",
+      "drawingNumber": "B59404537876",
+      "drawingDate": "2007-08-17",
+      "use": "N2 18 identity, cross-line relationship, 3326 mm tunnel-to-transfer dimension, 6520 mm tunnel width, 1350 mm product height and image-scaled maximum height.",
+      "accessed": "2026-08-23"
+    },
+    {
+      "id": "manualslib-dino-c",
+      "type": "Searchable mirror of the Hoyer Dino C manual",
+      "url": "https://www.manualslib.com/manual/1834243/Tetra-Pak-Hoyer-Dino-C.html",
+      "use": "Cross-check of manual page labels and technical data.",
+      "accessed": "2026-08-23"
+    },
+    {
+      "id": "qc-floor-plan",
+      "type": "Local product plan",
+      "localFile": "../../../../../.plan/2026-08-19-ai-assisted-qc-floor.html",
+      "use": "Asset coordinate system, floor-plan purpose, stable-node requirement and non-engineering-use constraint."
+    }
+  ],
+  "collectedViews": [
+    {
+      "source": "machinery-world-sl1100-listing",
+      "count": 3,
+      "localFiles": [
+        "photos/machinery-world-dino-overall.jpg",
+        "photos/machinery-world-dino-transfer-end.jpg",
+        "photos/machinery-world-dino-line-context.jpg"
+      ],
+      "subject": "Exact installed Dino N2 overall view, transfer-end interface and full-line context."
+    }
+  ],
+  "recognizableFeatures": [
+    "Wide stainless gantry spanning the Straightline tunnel outlet.",
+    "Blue Hoyer Dino fascia with tall end cheeks and blue inspection insets.",
+    "Eighteen transverse carriers with nine repeated product grippers.",
+    "Tunnel-side rotating pick-up shaft and servo housings.",
+    "Mobile double-wall chocolate tank with visible pump and four casters.",
+    "Blue Siemens-style HMI, warning plates, status light and open wire guards."
+  ],
+  "confidence": [
+    {
+      "area": "Model identity, serial number, drawing number, year, coating stroke and main motor",
+      "level": "high",
+      "note": "The current Machinery World listing identifies the exact installed N2."
+    },
+    {
+      "area": "Installed length and cross-line width",
+      "level": "medium",
+      "note": "The dimensions are derived from the exact-line drawing, but the 3326 mm value is to the transfer centreline and the 6520 mm value is the tunnel width."
+    },
+    {
+      "area": "Maximum height and cabinet proportions",
+      "level": "medium",
+      "note": "The height and visible proportions are scaled from the drawing and exact-machine photographs."
+    },
+    {
+      "area": "Hidden carrier drive, gripper geometry, tank internals and purchased options",
+      "level": "low-medium",
+      "note": "The model uses the related Dino C manual and visible N2 exterior cues. No N2 fabrication drawing was found."
+    }
+  ],
+  "usage": {
+    "purpose": "AI QC floor visualization and machine selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a visual floor-plan asset. It is not a fabrication, installation, guarding, validation, maintenance, lifting, process, or safety model."
+  }
+}

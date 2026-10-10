@@ -18,6 +18,9 @@ const backendAuthEnvSchema = {
   INVITATION_EMAIL_WEBHOOK_SECRET: optionalString(),
   INVITATION_EMAIL_WEBHOOK_URL: optionalUrl({ protocols: httpProtocols }),
   MOBILE_SITE_URL: urlWithDefault("flavoneer://"),
+  QC_FLOOR_SITE_URL: urlWithDefault("http://localhost:3002", {
+    protocols: httpProtocols,
+  }),
   SITE_URL: urlWithDefault("http://localhost:3001", {
     protocols: httpProtocols,
   }),
@@ -32,6 +35,7 @@ export function createBackendAuthEnv(source: BackendAuthEnvSource) {
     invitationWebhookSecret: env.INVITATION_EMAIL_WEBHOOK_SECRET,
     invitationWebhookUrl: env.INVITATION_EMAIL_WEBHOOK_URL,
     mobileSiteUrl: env.MOBILE_SITE_URL,
+    qcFloorSiteUrl: env.QC_FLOOR_SITE_URL,
     siteUrl: env.SITE_URL,
   });
 }
@@ -74,21 +78,6 @@ function toHotUpdaterStorageEnv(source: HotUpdaterBackendEnvSource) {
 
 export function createHotUpdaterBackendEnv(source: HotUpdaterBackendEnvSource) {
   return Object.freeze(toHotUpdaterStorageEnv(source));
-}
-
-const hotUpdaterDeployEnvSchema = {
-  ...hotUpdaterStorageEnvSchema,
-  HOT_UPDATER_SERVER_URL: requiredUrl({ protocols: httpProtocols }),
-};
-
-export type HotUpdaterDeployEnvSource = EnvInput<typeof hotUpdaterDeployEnvSchema>;
-
-export function createHotUpdaterDeployEnv(source: HotUpdaterDeployEnvSource) {
-  const env = parseEnv(hotUpdaterDeployEnvSchema, source);
-  return Object.freeze({
-    ...toHotUpdaterStorageEnv(source),
-    serverUrl: env.HOT_UPDATER_SERVER_URL,
-  });
 }
 
 const playwrightEnvSchema = {

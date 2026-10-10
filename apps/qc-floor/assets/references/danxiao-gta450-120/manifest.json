@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "danxiao-gta450-120",
+  "rootNode": "machine.gta450-120",
+  "manufacturer": "Wuxi Danxiao Machinery Co., Ltd.",
+  "brand": "Runyu",
+  "model": "GTA450-120",
+  "description": "Approximate, reference-led exterior model of the GTA450-120 automatic horizontal ice-cream packing machine with its long infeed and compact automatic transfer head.",
+  "dimensionsMeters": {
+    "lengthX": 5.05,
+    "widthZ": 0.96,
+    "heightY": 1.55
+  },
+  "dimensionBasis": "Danxiao's exact-model Made-in-China listing publishes 5050 x 960 x 1550 and 1000 kg. The official product page does not publish an exterior envelope. A Bossgoo listing also states 2.2 x 1.05 x 1.8 m, which appears to describe a shorter core-wrapper configuration and conflicts with its own repeated 5050 x 960 x 1550 parameter table. The model uses the complete-line 5.05 x 0.96 x 1.55 m envelope.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "lineAssignments": ["Rollo A", "Rollo B", "GMF", "SLC"],
+  "references": [
+    {
+      "id": "danxiao-official-gta450",
+      "type": "manufacturer product page",
+      "url": "https://www.wuxi-danxiao.com/automatic-ice-cream-packing-machine.html",
+      "imageUrl": "https://img03.71360.com/w3/ogg8qq/20240406/6d568ba7bfa5a8124d9d88bfa2dcdab3.png",
+      "localFile": "photos/official-hero.png",
+      "use": "Core wrapper silhouette, two-roll film carriage, operator panel, sealing rollers, end-seal housing, short discharge belt, separate automatic infeed module, and official 30-150 pack/min range.",
+      "accessed": "2026-08-21"
+    },
+    {
+      "id": "danxiao-made-in-china-gta450",
+      "type": "manufacturer marketplace listing",
+      "url": "https://danxiao.en.made-in-china.com/product/YNRxMZprCskH/China-Ice-Cream-Sandwich-Packing-Machine.html",
+      "use": "Published 5050 x 960 x 1550 mm envelope, 1000 kg weight, complete welded skid, long infeed, cabinet proportions, controls, film routing, operator-side and installed views, and 30-180 pack/min variant specification.",
+      "accessed": "2026-08-21",
+      "localFiles": [
+        "photos/made-in-china-01.webp",
+        "photos/made-in-china-02.webp",
+        "photos/made-in-china-03.webp",
+        "photos/made-in-china-04.webp",
+        "photos/made-in-china-05.webp",
+        "photos/made-in-china-06.webp"
+      ],
+      "imageUrls": [
+        "https://image.made-in-china.com/203f0j00qCIRUOJnyDkA/Ice-Cream-Sandwich-Packing-Machine.webp",
+        "https://image.made-in-china.com/203f0j00rhMoyuUckdbn/Ice-Cream-Sandwich-Packing-Machine.webp",
+        "https://image.made-in-china.com/203f0j00rVCbOhRJGwoy/Ice-Cream-Sandwich-Packing-Machine.webp",
+        "https://image.made-in-china.com/203f0j00ghvcnMRYkAoN/Ice-Cream-Sandwich-Packing-Machine.webp",
+        "https://image.made-in-china.com/203f0j00pWCbNnUcGwkO/Ice-Cream-Sandwich-Packing-Machine.webp",
+        "https://image.made-in-china.com/203f0j00IlBoOafWLwqN/Ice-Cream-Sandwich-Packing-Machine.webp"
+      ]
+    },
+    {
+      "id": "danxiao-bossgoo-gta450",
+      "type": "manufacturer marketplace mirror",
+      "url": "https://th.bossgoo.com/product-detail/hot-sale-automatic-stick-ice-cream-60690990.html",
+      "use": "Core-wrapper front and reverse views, alternate automatic infeed assemblies, welded base, casters, control-panel revision, film-roll placement, and feeder detail.",
+      "accessed": "2026-08-21",
+      "localFiles": [
+        "photos/bossgoo-01.jpg",
+        "photos/bossgoo-02.jpg",
+        "photos/bossgoo-03.jpg",
+        "photos/bossgoo-04.jpg",
+        "photos/bossgoo-05.jpg",
+        "photos/bossgoo-06.jpg",
+        "photos/bossgoo-world-map.jpg"
+      ]
+    },
+    {
+      "id": "danxiao-simple-sandwich-line",
+      "type": "manufacturer marketplace listing",
+      "url": "https://danxiao.en.made-in-china.com/product/fswnJSodMChc/China-Simple-Sandwich-Ice-Cream-Packing-Machine.html",
+      "use": "High-resolution complete operator-side view plus close-ups of the transfer mechanism, discharge conveyors, and packaged-product path. Product-only images document intended use but do not drive geometry.",
+      "accessed": "2026-08-21",
+      "localFiles": [
+        "photos/simple-line-01.webp",
+        "photos/simple-line-02.webp",
+        "photos/simple-line-03.webp",
+        "photos/simple-line-04.webp",
+        "photos/simple-line-05.webp",
+        "photos/simple-line-06.webp"
+      ]
+    }
+  ],
+  "technicalParameters": {
+    "maximumFilmWidthMillimeters": 450,
+    "packCutLengthMillimeters": "75-350 official; 95-350 marketplace variant",
+    "productWidthMillimeters": "20-130",
+    "productHeightMillimeters": "10-45",
+    "power": "380 V, 4 kW",
+    "packingSpeedPacksPerMinute": "30-150 official; 30-180 marketplace variant"
+  },
+  "recognizableFeatures": [
+    "Five-meter low stainless infeed feeding a compact cabinet-mounted wrapper.",
+    "Sloped upper film carriage with two large roll spindles and several guide rollers.",
+    "Blue-framed HMI and button panel on the operator side.",
+    "Three exposed longitudinal sealing rollers and a large black adjustment handwheel below the HMI.",
+    "Tall end-seal and cutting housing followed by a short white discharge belt.",
+    "Welded rectangular floor skid with a mix of leveling feet and small cabinet casters."
+  ],
+  "confidence": [
+    {
+      "area": "Exterior envelope",
+      "level": "high",
+      "note": "The exact-model marketplace listing supplies the overall dimensions."
+    },
+    {
+      "area": "Core wrapper silhouette and operator controls",
+      "level": "medium-high",
+      "note": "Multiple official and marketplace views show the same film carriage, HMI, sealing rollers, cabinet, and end-seal head."
+    },
+    {
+      "area": "Automatic infeed configuration",
+      "level": "medium",
+      "note": "Danxiao shows several swappable infeed and sandwich-forming arrangements. The model uses the compact transfer-head version closest to the official page image."
+    },
+    {
+      "area": "Far side, internal drives, guards, and film web path",
+      "level": "low",
+      "note": "These surfaces are partly hidden or vary by revision. Internal mechanisms remain simple cabinet volume and the film itself is omitted."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization, machine placement, and wrapper selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is an exterior visualization. It is not a fabrication, installation, guarding, maintenance, cleaning-validation, process-control, or safety model. The collected photographs remain in the source asset bundle only."
+  }
+}

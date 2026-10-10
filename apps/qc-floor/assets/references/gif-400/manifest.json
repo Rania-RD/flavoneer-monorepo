@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "assetKey": "gram-gif-400",
+  "rootNode": "machine.gif-400",
+  "manufacturer": "Gram Equipment A/S",
+  "model": "GIF 400",
+  "description": "Approximate, reference-led exterior blockout of the legacy Gram GIF 400 continuous ice-cream freezer.",
+  "dimensionsMeters": {
+    "lengthX": 1.45,
+    "widthZ": 0.6,
+    "heightY": 1.6
+  },
+  "dimensionBasis": "The exact GIF 400 listing from ISF Industries publishes a 1450 x 600 x 1600 mm envelope, 700 kg weight, and 11 kW power rating. The model uses those exterior bounds.",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "+Y",
+    "productFlowAxis": "+X",
+    "origin": "footprint center at floor level"
+  },
+  "lineAssignments": ["GMF", "BTC 1 · sticks", "BTC 2 · sandwiches"],
+  "references": [
+    {
+      "id": "official-current-gif-series",
+      "type": "manufacturer product page",
+      "url": "https://www.gram-equipment.com/gram-equipment-products/gif-series?c32d9383_page=2",
+      "use": "GIF-series construction, self-contained layout, integrated HMI, controls, utility connections, and current family silhouette.",
+      "accessed": "2026-08-19"
+    },
+    {
+      "id": "official-legacy-freezer-brochure",
+      "type": "manufacturer brochure",
+      "url": "https://www.gram-equipment.com/wp-content/uploads/2021/10/Freezer-brochure-2021.pdf",
+      "use": "Legacy GIF-series cabinet construction and compact chassis dimensions documented for GIF 600/1200.",
+      "accessed": "2026-08-19"
+    },
+    {
+      "id": "gif-400-overall-reference",
+      "type": "third-party product image",
+      "pageUrl": "https://www.isfindustries.com/isf-products/isf-continuous-freezer",
+      "imageUrl": "https://cdn.prod.website-files.com/636b206c0c2b5e6ee5e54816/64be08e9491c490b41b55d0a_Dairy%20industry-Freezer.png",
+      "use": "Exact GIF 400 label and exterior silhouette: cabinet, HMI, pump housings, flange, front pipework, and adjustable feet.",
+      "note": "The pictured units are built by ISF Industries and marked Made in India. Treat the image as an installed/licensed-variant reference rather than proof of the Gram factory revision.",
+      "accessed": "2026-08-19"
+    },
+    {
+      "id": "gif-400-exact-listing-photo",
+      "type": "third-party listing photograph",
+      "pageUrl": "https://www.exportersindia.com/product-detail/ice-cream-freezer-5136418.htm",
+      "imageUrl": "https://img1.exportersindia.com/product_images/bc-full/2019/10/1919443/ice-cream-freezer-1572523782-5136418.jpeg",
+      "use": "Exact GIF 400 identification, cabinet proportions, control column placement, front process hardware, and tapered leveling legs.",
+      "accessed": "2026-08-19"
+    },
+    {
+      "id": "used-gram-gif-600-front",
+      "type": "used-equipment photographs",
+      "pageUrl": "https://www.fincherlimited.com/listings/8172857-used-gram-gif-600-continuous-freezer",
+      "imageUrl": "https://i.machineryhost.com/92262bf907af914b95a0fc33c3f33bf6/0c06839de17a3f946e72a40e648d93b5/large-used.jpg",
+      "use": "Gram control-panel layout, side access panels, front flange, sanitary pipework, and cabinet proportions on the adjacent GIF 600 model.",
+      "accessed": "2026-08-19"
+    },
+    {
+      "id": "gif-400-height-listing",
+      "type": "legacy equipment listing",
+      "url": "https://www.exportersindia.com/product-detail/ice-cream-freezer-5136418.htm",
+      "use": "Exact GIF 400 identification and published 1450 x 600 x 1600 mm dimensions, 700 kg weight, and 11 kW power listing.",
+      "accessed": "2026-08-19"
+    }
+  ],
+  "recognizableFeatures": [
+    "Tall, narrow stainless cabinet with a deeper refrigeration chassis.",
+    "Front-mounted HMI in the upper control area.",
+    "Upper and lower cylindrical sanitary pump or valve housings.",
+    "Large central circular process flange linked to the upper housing by exposed pipework.",
+    "Adjustable feet, front service seams, compact controls, and emergency stop."
+  ],
+  "confidence": [
+    {
+      "area": "Exterior envelope",
+      "level": "medium-high",
+      "note": "The exact GIF 400 equipment listing states 1450 x 600 x 1600 mm. Installed utility fittings and factory revisions may change local extents."
+    },
+    {
+      "area": "Cabinet proportions",
+      "level": "medium",
+      "note": "The total envelope is published for GIF 400. Cabinet-to-fitting proportions are estimated from the exact listing and licensed-variant photographs."
+    },
+    {
+      "area": "Front process equipment",
+      "level": "medium",
+      "note": "Locations and relative sizes follow the GIF 400 product image and used GIF 600 photographs. Pipe routes are simplified for floor-view readability."
+    },
+    {
+      "area": "Rear, internal refrigeration system, and installed factory revision",
+      "level": "low",
+      "note": "No on-site GIF 400 photographs or internal drawings were available. Hidden mechanisms are represented only by the cabinet volume."
+    }
+  ],
+  "usage": {
+    "purpose": "QC floor visualization and freezer selection",
+    "engineeringUse": false,
+    "referenceImagesEmbeddedInRuntime": false,
+    "notes": "This is a schematic visual asset, not a fabrication, installation, maintenance, process-piping, or safety model."
+  }
+}

@@ -163,7 +163,5 @@
   "showPassword": "Show password",
   "hidePassword": "Hide password",
   "signIn": "Sign in",
-  "sessionDescription": "Your mobile session uses the same account as formulation-rd.",
-  "updatingApp": "Updating app…",
-  "checkingUpdates": "Checking for updates…"
+  "sessionDescription": "Your mobile session uses the same account as formulation-rd."
 }

@@ -163,7 +163,5 @@
   "showPassword": "إظهار كلمة المرور",
   "hidePassword": "إخفاء كلمة المرور",
   "signIn": "تسجيل الدخول",
-  "sessionDescription": "يستخدم تطبيق الهاتف الحساب نفسه المستخدم في formulation-rd.",
-  "updatingApp": "جارٍ تحديث التطبيق…",
-  "checkingUpdates": "جارٍ البحث عن تحديثات…"
+  "sessionDescription": "يستخدم تطبيق الهاتف الحساب نفسه المستخدم في formulation-rd."
 }

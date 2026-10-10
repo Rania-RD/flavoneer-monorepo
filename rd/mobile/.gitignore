@@ -29,12 +29,14 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+!certs/certificate.pem
 
 # local env files
 .env*.local
 .env
 .env.hotupdater
-!.env.hotupdater.example
+.env.xprem
+!.env.xprem.example
 
 # Hot Updater build output
 .hot-updater/output/

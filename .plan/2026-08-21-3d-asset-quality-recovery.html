@@ -1,0 +1,1559 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Actionable recovery and prevention plan for the QC floor procedural 3D asset pipeline."
+    />
+    <title>3D asset quality recovery plan</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #102f27;
+        --forest: #173e33;
+        --forest-2: #244f42;
+        --paper: #fffdf4;
+        --canvas: #eaf3e9;
+        --muted: #60766d;
+        --line: rgba(23, 62, 51, 0.16);
+        --line-strong: rgba(23, 62, 51, 0.34);
+        --amber: #efa728;
+        --amber-pale: #f9e7bd;
+        --red: #a64236;
+        --green: #34785f;
+        --code: #0d261f;
+        --radius: 1.4rem;
+        --shadow: 0 24px 60px rgba(16, 47, 39, 0.11);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 1.5rem;
+      }
+
+      body {
+        margin: 0;
+        background:
+          linear-gradient(rgba(23, 62, 51, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(23, 62, 51, 0.035) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 2rem 2rem;
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.58;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(239, 167, 40, 0.72);
+        outline-offset: 3px;
+      }
+
+      .cover {
+        position: relative;
+        min-height: min(46rem, 92svh);
+        overflow: hidden;
+        background: var(--forest);
+        color: var(--paper);
+      }
+
+      .cover::before {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 77% 42%, transparent 0 7.8rem, rgba(239, 167, 40, 0.9) 7.9rem 8.2rem, transparent 8.3rem 11.8rem, rgba(255, 253, 244, 0.18) 11.9rem 12.05rem, transparent 12.15rem),
+          radial-gradient(circle at 77% 42%, rgba(239, 167, 40, 0.18), transparent 27rem),
+          linear-gradient(90deg, transparent 0 49.8%, rgba(255, 253, 244, 0.08) 50%, transparent 50.2%),
+          linear-gradient(transparent 0 49.8%, rgba(255, 253, 244, 0.08) 50%, transparent 50.2%);
+        content: "";
+        opacity: 0.92;
+      }
+
+      .cover::after {
+        position: absolute;
+        right: 7%;
+        bottom: 8%;
+        width: min(43vw, 34rem);
+        height: 6rem;
+        border-block: 1px solid rgba(255, 253, 244, 0.18);
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(255, 253, 244, 0.11) 0 0.3rem,
+          transparent 0.3rem 2.1rem
+        );
+        content: "";
+        transform: skewX(-18deg);
+      }
+
+      .cover-inner {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        min-height: inherit;
+        grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.95fr);
+        align-items: end;
+        gap: 3rem;
+        width: min(100% - 3rem, 82rem);
+        margin-inline: auto;
+        padding-block: clamp(5rem, 11vw, 9rem) 4rem;
+      }
+
+      .kicker,
+      .section-kicker {
+        margin: 0 0 0.75rem;
+        color: #a9cbbb;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin-top: 0;
+        line-height: 1.08;
+      }
+
+      h1 {
+        max-width: 12ch;
+        margin-bottom: 1.25rem;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(3.3rem, 8vw, 7rem);
+        font-weight: 500;
+        letter-spacing: -0.065em;
+      }
+
+      h2 {
+        max-width: 18ch;
+        margin-bottom: 1rem;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2rem, 4vw, 3.35rem);
+        font-weight: 500;
+        letter-spacing: -0.045em;
+      }
+
+      h3 {
+        margin-bottom: 0.55rem;
+        font-size: 1.05rem;
+      }
+
+      .cover-copy {
+        max-width: 41rem;
+        margin: 0;
+        color: #d9e7dd;
+        font-size: clamp(1rem, 1.7vw, 1.22rem);
+      }
+
+      .cover-meta {
+        align-self: end;
+        border-left: 1px solid rgba(255, 253, 244, 0.28);
+        padding-left: clamp(1.4rem, 4vw, 3rem);
+      }
+
+      .cover-meta dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.7rem 1rem;
+        margin: 0;
+      }
+
+      .cover-meta dt {
+        color: #a9cbbb;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .cover-meta dd {
+        margin: 0;
+        color: #fffdf4;
+        font-weight: 700;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 17rem minmax(0, 59rem);
+        justify-content: center;
+        gap: 3.5rem;
+        width: min(100% - 3rem, 84rem);
+        margin: 0 auto;
+        padding-block: 3rem 7rem;
+      }
+
+      .rail {
+        position: sticky;
+        top: 1.5rem;
+        align-self: start;
+        max-height: calc(100svh - 3rem);
+        overflow: auto;
+        border-top: 4px solid var(--amber);
+        background: rgba(255, 253, 244, 0.92);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .rail-title {
+        margin: 0 0 0.9rem;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .progress-copy {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.45rem;
+      }
+
+      .progress-copy strong {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.7rem;
+        font-weight: 500;
+      }
+
+      .progress-copy span {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .progress-track {
+        height: 0.45rem;
+        overflow: hidden;
+        background: #dce8dd;
+      }
+
+      .progress-fill {
+        width: 0;
+        height: 100%;
+        background: var(--amber);
+        transition: width 360ms ease;
+      }
+
+      nav {
+        margin-top: 1.25rem;
+      }
+
+      nav a {
+        display: grid;
+        grid-template-columns: 1.6rem 1fr;
+        gap: 0.6rem;
+        border-top: 1px solid var(--line);
+        padding-block: 0.68rem;
+        color: var(--muted);
+        font-size: 0.86rem;
+        text-decoration: none;
+        transition: color 160ms ease, transform 160ms ease;
+      }
+
+      nav a span {
+        color: var(--line-strong);
+        font-variant-numeric: tabular-nums;
+      }
+
+      nav a:hover,
+      nav a[aria-current="true"] {
+        color: var(--forest);
+        transform: translateX(0.2rem);
+      }
+
+      nav a[aria-current="true"] span {
+        color: var(--amber);
+      }
+
+      .reset {
+        width: 100%;
+        margin-top: 1rem;
+        border: 1px solid var(--line-strong);
+        background: transparent;
+        padding: 0.65rem 0.8rem;
+        color: var(--forest);
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-weight: 750;
+      }
+
+      .reset:hover {
+        background: var(--canvas);
+      }
+
+      main {
+        min-width: 0;
+      }
+
+      section {
+        padding-block: 3.4rem;
+        border-bottom: 1px solid var(--line-strong);
+      }
+
+      section:first-child {
+        padding-top: 0.5rem;
+      }
+
+      .section-kicker {
+        color: var(--green);
+      }
+
+      .lede {
+        max-width: 48rem;
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
+      .outcome {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        margin-top: 2.2rem;
+        border-block: 1px solid var(--line-strong);
+      }
+
+      .outcome div {
+        padding: 1.25rem 1.1rem 1.25rem 0;
+      }
+
+      .outcome div + div {
+        border-left: 1px solid var(--line);
+        padding-left: 1.1rem;
+      }
+
+      .outcome strong {
+        display: block;
+        color: var(--forest);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 2rem;
+        font-weight: 500;
+      }
+
+      .outcome span {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .evidence-list {
+        margin: 2rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .evidence-list li {
+        display: grid;
+        grid-template-columns: minmax(7rem, 0.27fr) minmax(0, 0.73fr);
+        gap: 1.4rem;
+        border-top: 1px solid var(--line);
+        padding-block: 1.05rem;
+      }
+
+      .evidence-list strong {
+        color: var(--forest);
+      }
+
+      .evidence-list p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .phase {
+        position: relative;
+        display: grid;
+        grid-template-columns: 7.5rem minmax(0, 1fr);
+        gap: 1.7rem;
+        margin-top: 2.4rem;
+      }
+
+      .phase + .phase {
+        margin-top: 3.2rem;
+      }
+
+      .phase-index {
+        position: sticky;
+        top: 2rem;
+        align-self: start;
+        color: var(--amber);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 4.4rem;
+        line-height: 0.9;
+      }
+
+      .phase-body {
+        min-width: 0;
+        border-top: 4px solid var(--forest);
+        padding-top: 1.2rem;
+      }
+
+      .phase-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem 1rem;
+        margin-bottom: 1rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .phase-body > p {
+        color: var(--muted);
+      }
+
+      .tasks {
+        margin-top: 1.5rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .task {
+        display: grid;
+        grid-template-columns: 1.4rem minmax(0, 1fr);
+        gap: 0.8rem;
+        border-top: 1px solid var(--line);
+        padding-block: 0.9rem;
+      }
+
+      .task input {
+        width: 1.08rem;
+        height: 1.08rem;
+        margin: 0.22rem 0 0;
+        accent-color: var(--green);
+        cursor: pointer;
+      }
+
+      .task label {
+        cursor: pointer;
+      }
+
+      .task label strong {
+        display: block;
+        color: var(--forest);
+      }
+
+      .task label span {
+        display: block;
+        margin-top: 0.1rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .task input:checked + label {
+        opacity: 0.55;
+      }
+
+      .task input:checked + label strong {
+        text-decoration: line-through;
+      }
+
+      .gate {
+        margin-top: 1.4rem;
+        border-left: 4px solid var(--amber);
+        background: rgba(249, 231, 189, 0.52);
+        padding: 1rem 1.1rem;
+      }
+
+      .gate strong {
+        color: var(--forest);
+      }
+
+      .gate p {
+        margin: 0.25rem 0 0;
+        color: #57685f;
+      }
+
+      .file-map {
+        width: 100%;
+        margin-top: 1.8rem;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .file-map th,
+      .file-map td {
+        border-bottom: 1px solid var(--line);
+        padding: 0.8rem 0.7rem;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .file-map th {
+        color: var(--muted);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.86em;
+      }
+
+      :not(pre) > code {
+        background: rgba(23, 62, 51, 0.08);
+        padding: 0.12rem 0.3rem;
+      }
+
+      .command {
+        position: relative;
+        margin-top: 1.2rem;
+        background: var(--code);
+        color: #d7e7dc;
+      }
+
+      .command pre {
+        margin: 0;
+        overflow: auto;
+        padding: 1.2rem 4.5rem 1.2rem 1.2rem;
+        line-height: 1.65;
+      }
+
+      .copy {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        border: 1px solid rgba(255, 253, 244, 0.24);
+        background: transparent;
+        padding: 0.38rem 0.55rem;
+        color: #fffdf4;
+        cursor: pointer;
+        font-size: 0.72rem;
+      }
+
+      .copy:hover {
+        border-color: var(--amber);
+        color: var(--amber);
+      }
+
+      .architecture {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: stretch;
+        gap: 0.7rem;
+        margin-top: 2rem;
+      }
+
+      .architecture > div:not(.arrow) {
+        min-height: 9rem;
+        border-top: 4px solid var(--forest);
+        background: var(--paper);
+        padding: 1rem;
+        box-shadow: 0 12px 35px rgba(16, 47, 39, 0.07);
+      }
+
+      .architecture strong,
+      .architecture span {
+        display: block;
+      }
+
+      .architecture span {
+        margin-top: 0.4rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .arrow {
+        align-self: center;
+        color: var(--amber);
+        font-size: 1.8rem;
+      }
+
+      .criteria {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 2rem;
+        margin: 1.8rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .criteria li {
+        position: relative;
+        border-top: 1px solid var(--line);
+        padding: 0.9rem 0 0.9rem 1.5rem;
+      }
+
+      .criteria li::before {
+        position: absolute;
+        top: 1rem;
+        left: 0;
+        width: 0.7rem;
+        height: 0.7rem;
+        border: 2px solid var(--green);
+        content: "";
+      }
+
+      .risk-high,
+      .risk-medium {
+        display: inline-block;
+        min-width: 4.5rem;
+        padding: 0.16rem 0.35rem;
+        color: white;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .risk-high {
+        background: var(--red);
+      }
+
+      .risk-medium {
+        background: #8a702f;
+      }
+
+      .decision-log {
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .decision {
+        display: grid;
+        grid-template-columns: 8rem 1fr;
+        gap: 1rem;
+        border-bottom: 1px solid var(--line);
+        padding-block: 0.9rem;
+      }
+
+      .decision strong {
+        color: var(--forest);
+      }
+
+      .decision p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .footer-note {
+        margin-top: 2rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(1rem);
+        transition: opacity 520ms ease, transform 520ms ease;
+      }
+
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 900px) {
+        .cover-inner {
+          grid-template-columns: 1fr;
+          align-items: end;
+        }
+
+        .cover-meta {
+          border-top: 1px solid rgba(255, 253, 244, 0.28);
+          border-left: 0;
+          padding-top: 1.4rem;
+          padding-left: 0;
+        }
+
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .rail {
+          position: relative;
+          top: auto;
+          max-height: none;
+        }
+
+        nav {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0 1rem;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .cover {
+          min-height: 42rem;
+        }
+
+        .cover-inner,
+        .layout {
+          width: min(100% - 2rem, 84rem);
+        }
+
+        h1 {
+          font-size: clamp(3rem, 17vw, 5rem);
+        }
+
+        nav,
+        .outcome,
+        .criteria,
+        .architecture {
+          grid-template-columns: 1fr;
+        }
+
+        .outcome div + div {
+          border-top: 1px solid var(--line);
+          border-left: 0;
+          padding-left: 0;
+        }
+
+        .evidence-list li,
+        .phase,
+        .decision {
+          grid-template-columns: 1fr;
+          gap: 0.45rem;
+        }
+
+        .phase-index {
+          position: static;
+          font-size: 3.2rem;
+        }
+
+        .arrow {
+          transform: rotate(90deg);
+          text-align: center;
+        }
+
+        .file-map {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+
+        .reveal {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+          color: black;
+        }
+
+        .cover {
+          min-height: auto;
+          background: white;
+          color: black;
+          border-bottom: 3px solid black;
+        }
+
+        .cover::before,
+        .cover::after,
+        .rail,
+        .copy {
+          display: none;
+        }
+
+        .cover-copy,
+        .cover-meta dd,
+        .kicker {
+          color: black;
+        }
+
+        .layout {
+          display: block;
+          width: 100%;
+          padding: 0;
+        }
+
+        section,
+        .phase {
+          break-inside: avoid;
+        }
+
+        .reveal {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="cover" id="top">
+      <div class="cover-inner">
+        <div>
+          <p class="kicker">QC floor · recovery plan · 21 August 2026</p>
+          <h1>Make spatial errors fail early.</h1>
+          <p class="cover-copy">
+            Replace thread memory and visual guesswork with ranked references, shared coordinate
+            helpers, relational tests, and isolated asset work.
+          </p>
+        </div>
+        <div class="cover-meta" aria-label="Plan summary">
+          <dl>
+            <dt>Scope</dt>
+            <dd>12 procedural machine assets</dd>
+            <dt>First target</dt>
+            <dd>RXGJ-6 and RXGJ-12</dd>
+            <dt>Recovery</dt>
+            <dd>Restore the BT-C source bundle</dd>
+            <dt>Duration</dt>
+            <dd>8 to 12 engineering days</dd>
+            <dt>Stop rule</dt>
+            <dd>No new models until phase 1 passes</dd>
+          </dl>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="rail" aria-label="Plan navigation and progress">
+        <p class="rail-title">Execution progress</p>
+        <div class="progress-copy">
+          <strong id="progress-percent">0%</strong>
+          <span id="progress-count">0 of 0 tasks</span>
+        </div>
+        <div
+          class="progress-track"
+          role="progressbar"
+          aria-label="Plan completion"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <nav aria-label="Sections">
+          <a href="#outcome"><span>01</span>Target state</a>
+          <a href="#evidence"><span>02</span>Failure evidence</a>
+          <a href="#execution"><span>03</span>Execution phases</a>
+          <a href="#architecture"><span>04</span>Pipeline shape</a>
+          <a href="#files"><span>05</span>File changes</a>
+          <a href="#acceptance"><span>06</span>Release gate</a>
+          <a href="#sprint"><span>07</span>First sprint</a>
+          <a href="#risks"><span>08</span>Risks and decisions</a>
+        </nav>
+        <button class="reset" id="reset-progress" type="button">Reset saved progress</button>
+      </aside>
+
+      <main>
+        <section id="outcome" class="reveal">
+          <p class="section-kicker">Target state</p>
+          <h2>One asset contract. Every model.</h2>
+          <p class="lede">
+            A model is complete only when its source, installed configuration, reference ranking,
+            relational constraints, previews, exports, and deterministic rebuild all agree.
+          </p>
+          <div class="outcome" aria-label="Plan targets">
+            <div>
+              <strong>0 mm</strong>
+              <span>allowed offset for declared mating points</span>
+            </div>
+            <div>
+              <strong>6 views</strong>
+              <span>front, rear, side, top, three-quarter, source angle</span>
+            </div>
+            <div>
+              <strong>1 commit</strong>
+              <span>per machine bundle, reviewed before integration</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="evidence" class="reveal">
+          <p class="section-kicker">Failure evidence</p>
+          <h2>Fix the mechanisms that produced the errors.</h2>
+          <ul class="evidence-list">
+            <li>
+              <strong>Repeated geometry bug</strong>
+              <p>
+                RXGJ-6 and RXGJ-12 independently placed radial dispenser banks along tangent
+                lines. Both passed the original verifier and needed user corrections.
+              </p>
+            </li>
+            <li>
+              <strong>Wrong topology</strong>
+              <p>
+                BT-C passed file and budget checks while its tunnel path, optional outfeed loop,
+                DIPCO placement, and wrapper order did not match the installed line.
+              </p>
+            </li>
+            <li>
+              <strong>Context pressure</strong>
+              <p>
+                Model threads ended with 138,000 to 218,000 input tokens. BT-C reached 235,927 of
+                258,400 tokens before compaction. Full logs and mixed photo sets displaced useful
+                spatial context.
+              </p>
+            </li>
+            <li>
+              <strong>Shared workspace loss</strong>
+              <p>
+                The complete BT-C source bundle existed in checkpoint <code>fd5109d</code>. By
+                checkpoint <code>0c044ce</code>, only its GLB and STL remained and its README
+                entries were gone.
+              </p>
+            </li>
+            <li>
+              <strong>Copied infrastructure</strong>
+              <p>
+                Twelve Blender generators and twelve verifiers contain about 9,328 lines. They
+                repeat coordinate, export, render, and GLB traversal logic instead of sharing it.
+              </p>
+            </li>
+          </ul>
+        </section>
+
+        <section id="execution" class="reveal">
+          <p class="section-kicker">Execution phases</p>
+          <h2>Recover first. Standardize second. Migrate last.</h2>
+          <p class="lede">
+            The sequence matters. New asset production stays paused until the repository has a
+            durable baseline and the shared verifier catches the known RXGJ failures.
+          </p>
+
+          <article class="phase" id="phase-0">
+            <div class="phase-index">0</div>
+            <div class="phase-body">
+              <div class="phase-meta">
+                <span>Duration: 0.5 to 1 day</span>
+                <span>Owner: repository maintainer</span>
+                <span>Blocks all later phases</span>
+              </div>
+              <h3>Freeze and recover the baseline</h3>
+              <p>
+                Stop concurrent writes to <code>apps/qc-floor</code>, save the current state, and
+                recover the missing BT-C source without overwriting newer machine work.
+              </p>
+              <div class="tasks">
+                <div class="task">
+                  <input id="t01" data-task type="checkbox" />
+                  <label for="t01">
+                    <strong>Create a dedicated recovery branch or worktree.</strong>
+                    <span>Do not restore BT-C directly into the current dirty worktree.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t02" data-task type="checkbox" />
+                  <label for="t02">
+                    <strong>Restore the BT-C source directories from checkpoint fd5109d.</strong>
+                    <span>Recover Blender source, manifest, previews, verifier, and wrapper script.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t03" data-task type="checkbox" />
+                  <label for="t03">
+                    <strong>Reconcile BT-C README entries with the current asset inventory.</strong>
+                    <span>Keep later RXGJ, Frigus, Flowrap, GTA450, and QBJ1000 documentation.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t04" data-task type="checkbox" />
+                  <label for="t04">
+                    <strong>Commit every current machine bundle.</strong>
+                    <span>Source, manifest, previews, reports, GLB, and STL must move together.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="command">
+                <button class="copy" type="button">Copy</button>
+                <pre><code>git worktree add ../flavoneer-qc-recovery -b qc/asset-recovery
+git -C ../flavoneer-qc-recovery restore --source=fd5109d -- \
+  apps/qc-floor/assets/blender/gram-bt-c.blend \
+  apps/qc-floor/assets/blender/gram-bt-c.py \
+  apps/qc-floor/assets/parametric/gram-bt-c.mjs \
+  apps/qc-floor/assets/parametric/verify-gram-bt-c.mjs \
+  apps/qc-floor/assets/previews/gram-bt-c \
+  apps/qc-floor/assets/references/gram-bt-c
+git -C ../flavoneer-qc-recovery status --short</code></pre>
+              </div>
+              <div class="gate">
+                <strong>Exit gate</strong>
+                <p>
+                  Every GLB in <code>public/models</code> has a source generator, specification or
+                  manifest, verifier, report, and preview directory in the same commit.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase" id="phase-1">
+            <div class="phase-index">1</div>
+            <div class="phase-body">
+              <div class="phase-meta">
+                <span>Duration: 2 days</span>
+                <span>Owner: asset pipeline engineer</span>
+              </div>
+              <h3>Define the machine specification</h3>
+              <p>
+                Move installed-machine facts out of prompts and into versioned JSON. Write the
+                specification before geometry work begins.
+              </p>
+              <div class="tasks">
+                <div class="task">
+                  <input id="t11" data-task type="checkbox" />
+                  <label for="t11">
+                    <strong>Add <code>machine-spec.schema.json</code>.</strong>
+                    <span>Validate dimensions, axes, revision, components, references, constraints, and views.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t12" data-task type="checkbox" />
+                  <label for="t12">
+                    <strong>Rank each reference by authority and permitted use.</strong>
+                    <span>Use exact installed, exact model, manufacturer family, related family, or reject.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t13" data-task type="checkbox" />
+                  <label for="t13">
+                    <strong>Record included and excluded configuration modules.</strong>
+                    <span>For BT-C, encode the short-end return, DIPCO, HSW-C order, and absent blue loop.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t14" data-task type="checkbox" />
+                  <label for="t14">
+                    <strong>Define attachment and alignment constraints.</strong>
+                    <span>Use named endpoints, lane centers, mould radii, station angles, and allowed tolerances.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="gate">
+                <strong>Exit gate</strong>
+                <p>
+                  RXGJ-6, RXGJ-12, and BT-C specifications validate against the schema without
+                  manual exceptions.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase" id="phase-2">
+            <div class="phase-index">2</div>
+            <div class="phase-body">
+              <div class="phase-meta">
+                <span>Duration: 2 to 3 days</span>
+                <span>Owner: Blender and tooling engineer</span>
+              </div>
+              <h3>Build shared geometry and verification libraries</h3>
+              <p>
+                Replace copied helpers with small modules that own coordinate frames, repeated
+                stations, render cameras, export settings, and GLB inspection.
+              </p>
+              <div class="tasks">
+                <div class="task">
+                  <input id="t21" data-task type="checkbox" />
+                  <label for="t21">
+                    <strong>Create shared Blender scene, geometry, coordinate, render, and export modules.</strong>
+                    <span>Generators should describe machines, not reimplement Blender setup.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t22" data-task type="checkbox" />
+                  <label for="t22">
+                    <strong>Add reusable radial and linear placement functions.</strong>
+                    <span>Generate mould rows, lane arrays, station frames, and mating points from one coordinate source.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t23" data-task type="checkbox" />
+                  <label for="t23">
+                    <strong>Replace twelve verifier copies with one runner.</strong>
+                    <span>Keep machine-specific constraints in specifications, not executable copies.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t24" data-task type="checkbox" />
+                  <label for="t24">
+                    <strong>Add six standard review cameras and optional source-matched cameras.</strong>
+                    <span>Top view is mandatory for rotary, multi-lane, and conveyor-layout assets.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t25" data-task type="checkbox" />
+                  <label for="t25">
+                    <strong>Make Blender logs quiet by default.</strong>
+                    <span>Retain the final file paths, bounds, budgets, constraints, warnings, and errors only.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="gate">
+                <strong>Exit gate</strong>
+                <p>
+                  A deliberately tangential RXGJ dispenser bank fails the shared verifier before
+                  rendering. A disconnected BT-C conveyor endpoint fails for the same reason.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase" id="phase-3">
+            <div class="phase-index">3</div>
+            <div class="phase-body">
+              <div class="phase-meta">
+                <span>Duration: 1 to 2 days</span>
+                <span>Owner: asset engineer and reviewer</span>
+              </div>
+              <h3>Migrate the RXGJ pair as the pilot</h3>
+              <p>
+                The pair reproduces the known failure and proves whether shared coordinate rules
+                stop it from returning.
+              </p>
+              <div class="tasks">
+                <div class="task">
+                  <input id="t31" data-task type="checkbox" />
+                  <label for="t31">
+                    <strong>Move all mould positions into specification data.</strong>
+                    <span>Station heads must reference the mould array instead of copying radii and angles.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t32" data-task type="checkbox" />
+                  <label for="t32">
+                    <strong>Generate filling, stick, suction, and demould banks from shared station helpers.</strong>
+                    <span>RXGJ-6 and RXGJ-12 should use the same placement implementation.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t33" data-task type="checkbox" />
+                  <label for="t33">
+                    <strong>Add top-view overlays that mark mould and head centers.</strong>
+                    <span>Use visible crosshairs and an offset table in the report.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t34" data-task type="checkbox" />
+                  <label for="t34">
+                    <strong>Run a negative regression test.</strong>
+                    <span>Shift one head by 10 mm and confirm CI rejects the asset.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="gate">
+                <strong>Exit gate</strong>
+                <p>
+                  Both RXGJ models rebuild deterministically, all declared head-to-mould offsets
+                  are within tolerance, and the top previews show the same result.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase" id="phase-4">
+            <div class="phase-index">4</div>
+            <div class="phase-body">
+              <div class="phase-meta">
+                <span>Duration: 2 to 4 days</span>
+                <span>Owner: one isolated machine branch at a time</span>
+              </div>
+              <h3>Migrate the remaining assets by risk</h3>
+              <p>
+                Move topology-heavy assets first. Compact cabinet machines can follow after the
+                shared pipeline is stable.
+              </p>
+              <div class="tasks">
+                <div class="task">
+                  <input id="t41" data-task type="checkbox" />
+                  <label for="t41">
+                    <strong>Migrate BT-C, Straightline, Flowrap, Comet CL4, and GMF-C.</strong>
+                    <span>Require conveyor continuity, lane equality, station order, and excluded-module checks.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t42" data-task type="checkbox" />
+                  <label for="t42">
+                    <strong>Migrate GTA450-120 and the GIF series.</strong>
+                    <span>Check infeed centerlines, process fittings, control handedness, and revision selection.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t43" data-task type="checkbox" />
+                  <label for="t43">
+                    <strong>Migrate Frigus 600 and QBJ1000.</strong>
+                    <span>Check front hardware mating points, support heights, and revision-specific controls.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t44" data-task type="checkbox" />
+                  <label for="t44">
+                    <strong>Generate the asset registry from specifications.</strong>
+                    <span>Stop editing the README inventory by hand in every model thread.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="gate">
+                <strong>Exit gate</strong>
+                <p>
+                  The generated inventory reports no orphan GLBs, missing sources, missing
+                  specifications, stale reports, or duplicate asset keys.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="phase" id="phase-5">
+            <div class="phase-index">5</div>
+            <div class="phase-body">
+              <div class="phase-meta">
+                <span>Duration: 0.5 day setup</span>
+                <span>Owner: repository maintainer</span>
+              </div>
+              <h3>Enforce isolated work and review</h3>
+              <p>
+                Each machine gets a worktree or branch. Shared library and registry changes land
+                separately before machine branches update to them.
+              </p>
+              <div class="tasks">
+                <div class="task">
+                  <input id="t51" data-task type="checkbox" />
+                  <label for="t51">
+                    <strong>Add a machine-task template.</strong>
+                    <span>Require asset key, exact revision, worktree path, specification, and reviewer.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t52" data-task type="checkbox" />
+                  <label for="t52">
+                    <strong>Reject unrelated files in a machine commit.</strong>
+                    <span>A RXGJ commit must not contain Frigus, Flowrap, GTA450, or shared README rewrites.</span>
+                  </label>
+                </div>
+                <div class="task">
+                  <input id="t53" data-task type="checkbox" />
+                  <label for="t53">
+                    <strong>Require visual approval before integration.</strong>
+                    <span>Review the contact sheet, constraint report, and source-matched view together.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="gate">
+                <strong>Exit gate</strong>
+                <p>
+                  Two machine branches can run at the same time without touching the same working
+                  directory or committing one another's outputs.
+                </p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="architecture" class="reveal">
+          <p class="section-kicker">Pipeline shape</p>
+          <h2>Facts drive geometry. Geometry does not invent facts.</h2>
+          <div class="architecture" aria-label="Proposed asset pipeline">
+            <div>
+              <strong>Machine specification</strong>
+              <span>Revision, dimensions, modules, references, axes, constraints, required views.</span>
+            </div>
+            <div class="arrow" aria-hidden="true">→</div>
+            <div>
+              <strong>Shared Blender library</strong>
+              <span>Coordinate frames, lane arrays, radial rows, attachments, cameras, export.</span>
+            </div>
+            <div class="arrow" aria-hidden="true">→</div>
+            <div>
+              <strong>One verifier and report</strong>
+              <span>Bounds, budgets, relationships, topology, deterministic hashes, inventory.</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="files" class="reveal">
+          <p class="section-kicker">File changes</p>
+          <h2>Proposed repository structure</h2>
+          <table class="file-map">
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th>Action</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>assets/schema/machine-spec.schema.json</code></td>
+                <td>Create</td>
+                <td>Machine contract and validation rules.</td>
+              </tr>
+              <tr>
+                <td><code>assets/specs/&lt;machine-key&gt;.json</code></td>
+                <td>Create</td>
+                <td>Installed configuration, ranked references, constraints, and cameras.</td>
+              </tr>
+              <tr>
+                <td><code>assets/blender/lib/scene.py</code></td>
+                <td>Create</td>
+                <td>Scene reset, units, collections, root metadata, and cleanup.</td>
+              </tr>
+              <tr>
+                <td><code>assets/blender/lib/coordinates.py</code></td>
+                <td>Create</td>
+                <td>Linear lanes, radial mould rows, station frames, and mating points.</td>
+              </tr>
+              <tr>
+                <td><code>assets/blender/lib/geometry.py</code></td>
+                <td>Create</td>
+                <td>Boxes, cylinders, pipes, rails, belts, supports, and repeated assemblies.</td>
+              </tr>
+              <tr>
+                <td><code>assets/blender/lib/render.py</code></td>
+                <td>Create</td>
+                <td>Six standard cameras, source-matched cameras, lighting, and overlays.</td>
+              </tr>
+              <tr>
+                <td><code>assets/verify/verify-machine.mjs</code></td>
+                <td>Create</td>
+                <td>Single GLB, budget, metadata, relation, and topology verifier.</td>
+              </tr>
+              <tr>
+                <td><code>assets/verify/verify-inventory.mjs</code></td>
+                <td>Create</td>
+                <td>Find orphan outputs, missing sources, stale reports, and duplicate keys.</td>
+              </tr>
+              <tr>
+                <td><code>assets/parametric/verify-*.mjs</code></td>
+                <td>Remove after migration</td>
+                <td>Retire duplicated verifier implementations.</td>
+              </tr>
+              <tr>
+                <td><code>assets/README.md</code></td>
+                <td>Generate inventory section</td>
+                <td>Stop last-writer-wins edits from model threads.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="acceptance" class="reveal">
+          <p class="section-kicker">Release gate</p>
+          <h2>A model cannot pass on appearance alone.</h2>
+          <ul class="criteria">
+            <li>Specification validates and names one exact target revision.</li>
+            <li>Every geometry-driving source has a rank and component mapping.</li>
+            <li>Included and excluded optional modules match the installed line.</li>
+            <li>Bounds match the specification within the declared tolerance.</li>
+            <li>All declared mating points and lane centers pass relational checks.</li>
+            <li>Conveyor endpoints connect in the specified station order.</li>
+            <li>Front, rear, side, top, three-quarter, and source-angle renders exist.</li>
+            <li>Source, GLB, STL, specification, report, and previews rebuild together.</li>
+            <li>Two clean rebuilds produce matching GLB and STL hashes.</li>
+            <li>A clean Blender import preserves required node names and groups.</li>
+            <li>The commit contains only the intended machine bundle or shared tooling change.</li>
+            <li>A human reviewer signs off on the contact sheet and constraint report.</li>
+          </ul>
+        </section>
+
+        <section id="sprint" class="reveal">
+          <p class="section-kicker">First sprint</p>
+          <h2>The first five working days</h2>
+          <div class="decision-log">
+            <div class="decision">
+              <strong>Day 1</strong>
+              <p>Freeze model work, create the recovery worktree, restore BT-C, and commit the asset inventory.</p>
+            </div>
+            <div class="decision">
+              <strong>Day 2</strong>
+              <p>Write the machine specification schema and complete RXGJ-6, RXGJ-12, and BT-C specifications.</p>
+            </div>
+            <div class="decision">
+              <strong>Day 3</strong>
+              <p>Build shared coordinate, geometry, render, export, and GLB inspection modules.</p>
+            </div>
+            <div class="decision">
+              <strong>Day 4</strong>
+              <p>Migrate RXGJ-6. Add top overlays and a negative 10 mm alignment regression test.</p>
+            </div>
+            <div class="decision">
+              <strong>Day 5</strong>
+              <p>Migrate RXGJ-12, run deterministic rebuilds, and review both contact sheets before resuming new assets.</p>
+            </div>
+          </div>
+          <div class="command">
+            <button class="copy" type="button">Copy</button>
+            <pre><code>node apps/qc-floor/assets/verify/validate-specs.mjs
+node apps/qc-floor/assets/build/build-machine.mjs rxgj-6
+node apps/qc-floor/assets/build/build-machine.mjs danxiao-rxgj-12
+node apps/qc-floor/assets/verify/verify-machine.mjs rxgj-6
+node apps/qc-floor/assets/verify/verify-machine.mjs danxiao-rxgj-12
+node apps/qc-floor/assets/verify/verify-inventory.mjs</code></pre>
+          </div>
+        </section>
+
+        <section id="risks" class="reveal">
+          <p class="section-kicker">Risks and decisions</p>
+          <h2>Decisions that should not drift between threads</h2>
+          <table class="file-map">
+            <thead>
+              <tr>
+                <th>Risk</th>
+                <th>Level</th>
+                <th>Control</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Restoring BT-C overwrites later assets.</td>
+                <td><span class="risk-high">High</span></td>
+                <td>Restore into a separate worktree and copy only reviewed BT-C paths.</td>
+              </tr>
+              <tr>
+                <td>Shared library migration changes rendered geometry.</td>
+                <td><span class="risk-high">High</span></td>
+                <td>Compare old and new bounds, nodes, contact sheets, and hashes per asset.</td>
+              </tr>
+              <tr>
+                <td>Reference ranking rejects useful family photos.</td>
+                <td><span class="risk-medium">Medium</span></td>
+                <td>Allow family sources for named components, never for dimensions or installed topology.</td>
+              </tr>
+              <tr>
+                <td>Strict constraints slow rough blockouts.</td>
+                <td><span class="risk-medium">Medium</span></td>
+                <td>Permit draft status, but prohibit draft assets from the runtime catalog.</td>
+              </tr>
+              <tr>
+                <td>Parallel work returns to one dirty directory.</td>
+                <td><span class="risk-high">High</span></td>
+                <td>Require a worktree path and branch in every machine task.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="decision-log" aria-label="Fixed decisions">
+            <div class="decision">
+              <strong>References</strong>
+              <p>Six strong exact-model views beat a large mixed photo archive.</p>
+            </div>
+            <div class="decision">
+              <strong>Coordinates</strong>
+              <p>Repeated parts derive from one lane or mould array. They do not copy coordinates.</p>
+            </div>
+            <div class="decision">
+              <strong>Validation</strong>
+              <p>Bounds and budgets remain necessary, but relational checks decide spatial correctness.</p>
+            </div>
+            <div class="decision">
+              <strong>Integration</strong>
+              <p>Machine work lands as an isolated bundle. Shared files change in separate commits.</p>
+            </div>
+          </div>
+
+          <p class="footer-note">
+            This plan improves the procedural asset pipeline only. It does not claim engineering,
+            fabrication, installation, guarding, process, or safety accuracy for the resulting models.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const storageKey = "qc-floor-3d-recovery-plan-v1";
+      const tasks = [...document.querySelectorAll("[data-task]")];
+      const progressFill = document.querySelector("#progress-fill");
+      const progressPercent = document.querySelector("#progress-percent");
+      const progressCount = document.querySelector("#progress-count");
+      const progressTrack = document.querySelector(".progress-track");
+
+      function loadProgress() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          tasks.forEach((task) => {
+            task.checked = Boolean(saved[task.id]);
+          });
+        } catch {
+          localStorage.removeItem(storageKey);
+        }
+      }
+
+      function updateProgress() {
+        const complete = tasks.filter((task) => task.checked).length;
+        const percent = tasks.length ? Math.round((complete / tasks.length) * 100) : 0;
+        const saved = Object.fromEntries(tasks.map((task) => [task.id, task.checked]));
+        localStorage.setItem(storageKey, JSON.stringify(saved));
+        progressFill.style.width = `${percent}%`;
+        progressPercent.textContent = `${percent}%`;
+        progressCount.textContent = `${complete} of ${tasks.length} tasks`;
+        progressTrack.setAttribute("aria-valuenow", String(percent));
+      }
+
+      loadProgress();
+      updateProgress();
+      tasks.forEach((task) => task.addEventListener("change", updateProgress));
+
+      document.querySelector("#reset-progress").addEventListener("click", () => {
+        tasks.forEach((task) => {
+          task.checked = false;
+        });
+        updateProgress();
+      });
+
+      document.querySelectorAll(".copy").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const code = button.nextElementSibling.textContent;
+          await navigator.clipboard.writeText(code);
+          const original = button.textContent;
+          button.textContent = "Copied";
+          window.setTimeout(() => {
+            button.textContent = original;
+          }, 1200);
+        });
+      });
+
+      const sections = [...document.querySelectorAll("main section[id]")];
+      const links = [...document.querySelectorAll("nav a")];
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add("visible");
+          });
+        },
+        { threshold: 0.08 },
+      );
+      sections.forEach((section) => revealObserver.observe(section));
+
+      const navObserver = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+          if (!visible) return;
+          links.forEach((link) => {
+            link.setAttribute("aria-current", String(link.hash === `#${visible.target.id}`));
+          });
+        },
+        { rootMargin: "-20% 0px -65% 0px", threshold: [0.05, 0.2, 0.5] },
+      );
+      sections.forEach((section) => navObserver.observe(section));
+    </script>
+  </body>
+</html>

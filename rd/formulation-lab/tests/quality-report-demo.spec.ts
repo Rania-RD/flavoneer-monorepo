@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
 
@@ -78,18 +79,30 @@ async function ensureEnglishInterface(page: Page) {
 }
 
 function seedDemoData() {
+  const packageManagerArgs = [
+    "exec",
+    "convex",
+    "run",
+    "e2eQualityReportSeedAction:seedQualityReports",
+    JSON.stringify({
+      organizationName: ORGANIZATION_NAME,
+      confirmation: "seed-e2e-qc-reporting-demo",
+    }),
+  ];
+  const pnpmScript =
+    process.platform === "win32"
+      ? join(
+          process.env.APPDATA ?? "",
+          "npm",
+          "node_modules",
+          "pnpm",
+          "bin",
+          "pnpm.mjs"
+        )
+      : undefined;
   const output = execFileSync(
-    "pnpm",
-    [
-      "exec",
-      "convex",
-      "run",
-      "e2eQualityReportSeedAction:seedQualityReports",
-      JSON.stringify({
-        organizationName: ORGANIZATION_NAME,
-        confirmation: "seed-e2e-qc-reporting-demo",
-      }),
-    ],
+    pnpmScript ? process.execPath : "pnpm",
+    [...(pnpmScript ? [pnpmScript] : []), ...packageManagerArgs],
     {
       cwd: BACKEND_DIRECTORY,
       encoding: "utf8",
@@ -110,7 +123,7 @@ function seedDemoData() {
 test("seeds and displays representative hourly QC manager reports", async ({
   page,
 }, testInfo) => {
-  test.setTimeout(240_000);
+  test.setTimeout(600_000);
   await signIn(page);
   await selectOrCreateDemoOrganization(page);
   await ensureEnglishInterface(page);
@@ -134,7 +147,7 @@ test("seeds and displays representative hourly QC manager reports", async ({
   });
   await expect(
     page.getByRole("heading", { name: "QC management summary", level: 2 })
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30_000 });
   const exportButton = page.getByRole("button", { name: "Export PDF" });
   const printButton = page.getByRole("button", { name: "Print report" });
   await expect(exportButton).toBeEnabled({ timeout: 30_000 });
@@ -149,6 +162,61 @@ test("seeds and displays representative hourly QC manager reports", async ({
     contentType: "application/pdf",
     path: pdfPath,
   });
+
+  await page.getByRole("button", { name: "Configure report sections" }).click();
+  const sectionDialog = page.getByRole("dialog", {
+    name: "Configure report sections",
+  });
+  await sectionDialog
+    .getByLabel("Section name: Summary")
+    .fill("Factory overview");
+  for (let move = 0; move < 6; move += 1) {
+    await sectionDialog
+      .getByRole("button", { name: "Move Laboratory up" })
+      .click();
+  }
+  await sectionDialog.getByLabel("Show or hide Operations").uncheck();
+  await sectionDialog.getByRole("button", { name: "Save sections" }).click();
+  await expect(sectionDialog).toBeHidden();
+
+  await page.reload();
+  const sectionNavigation = page.getByRole("navigation", {
+    name: "Report sections",
+  });
+  await expect(sectionNavigation.getByRole("link").first()).toHaveText(
+    "Laboratory"
+  );
+  await expect(
+    sectionNavigation.getByRole("link", { name: "Factory overview" })
+  ).toBeVisible();
+  await expect(
+    sectionNavigation.getByRole("link", { name: "Operations" })
+  ).toHaveCount(0);
+  await expect(page.locator("#operations")).toHaveCount(0);
+
+  const configuredDownloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export PDF" }).click();
+  const configuredDownload = await configuredDownloadPromise;
+  const configuredPdfPath = testInfo.outputPath(
+    `configured-${configuredDownload.suggestedFilename()}`
+  );
+  await configuredDownload.saveAs(configuredPdfPath);
+  await testInfo.attach("Configured QC management report PDF", {
+    contentType: "application/pdf",
+    path: configuredPdfPath,
+  });
+
+  await page.getByRole("button", { name: "Configure report sections" }).click();
+  await page
+    .getByRole("dialog", { name: "Configure report sections" })
+    .getByRole("button", { name: "Restore defaults" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Configure report sections" })
+    .getByRole("button", { name: "Save sections" })
+    .click();
+  await expect(page.locator("#operations")).toBeVisible();
+
   for (const removedCopy of REMOVED_REPORT_COPY) {
     await expect(page.getByText(removedCopy, { exact: true })).toHaveCount(0);
   }
@@ -266,7 +334,7 @@ test("seeds and displays representative hourly QC manager reports", async ({
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(
     page.getByRole("heading", { name: "QC management summary", level: 2 })
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30_000 });
   const viewport = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
     scrollWidth: document.documentElement.scrollWidth,

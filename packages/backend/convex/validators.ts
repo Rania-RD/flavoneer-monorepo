@@ -144,6 +144,22 @@ export const localizedStringValidator = v.object({
   ar: v.optional(v.string()),
 });
 
+export const qualityReportSectionKeyValidator = v.union(
+  v.literal("summary"),
+  v.literal("operations"),
+  v.literal("quality"),
+  v.literal("readiness"),
+  v.literal("comparison"),
+  v.literal("workflow"),
+  v.literal("laboratory"),
+);
+
+export const qualityReportSectionConfigValidator = v.object({
+  key: qualityReportSectionKeyValidator,
+  labelI18n: localizedStringValidator,
+  visible: v.boolean(),
+});
+
 export const runOutcomeValidator = v.union(v.literal("success"), v.literal("failure"));
 
 export const versionTagValidator = v.union(v.literal("current"), v.literal("previous"));

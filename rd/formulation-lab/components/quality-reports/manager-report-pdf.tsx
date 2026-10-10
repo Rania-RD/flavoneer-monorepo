@@ -1,4 +1,5 @@
 import type { api } from "@flavoneer/backend/api";
+import type { QualityReportSectionKey } from "@flavoneer/backend/quality-report-sections";
 import {
   Document,
   Font,
@@ -314,6 +315,7 @@ export function QualityManagerReportPdf({
   language,
   locale,
   report,
+  sections,
   timezone,
   to,
 }: {
@@ -324,6 +326,7 @@ export function QualityManagerReportPdf({
   language: string;
   locale: string;
   report: ManagerReportData;
+  sections: Array<{ key: QualityReportSectionKey; title: string }>;
   timezone: string;
   to: number;
 }) {
@@ -409,313 +412,400 @@ export function QualityManagerReportPdf({
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_management_summary")}
-          </Text>
-          <MetricGrid
-            items={[
-              {
-                label: t("qc_reports_inspections"),
-                value: report.overview.totals.inspections,
-              },
-              {
-                label: t("qc_reports_pending_queue"),
-                value: report.overview.totals.pending,
-              },
-              {
-                label: t("qc_reports_out_of_limit_records"),
-                value: report.overview.totals.outOfLimitRecords,
-              },
-              {
-                label: t("qc_reports_reading_conformance"),
-                value: percent(
-                  report.comparison.baseline.readingConformanceRate,
-                  locale
-                ),
-              },
-              { label: t("qc_reports_evidence_coverage"), value: coverage },
-              {
-                label: t("qc_reports_first_pass_approval"),
-                value: percent(
-                  report.comparison.baseline.firstPassApprovalRate,
-                  locale
-                ),
-              },
-              {
-                label: t("qc_reports_median_review_hhmm"),
-                value: duration(
-                  report.workflow.totals.medianReviewTimeMs,
-                  locale
-                ),
-              },
-              {
-                label: t("qc_reports_unreported_samples"),
-                value: laboratory.totals.unreportedSamples,
-              },
-            ]}
-            rtl={rtl}
-          />
-        </View>
+        {sections.map((section) => {
+          switch (section.key) {
+            case "summary":
+              return (
+                <View key="summary" style={styles.section} wrap={false}>
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  <MetricGrid
+                    items={[
+                      {
+                        label: t("qc_reports_inspections"),
+                        value: report.overview.totals.inspections,
+                      },
+                      {
+                        label: t("qc_reports_pending_queue"),
+                        value: report.overview.totals.pending,
+                      },
+                      {
+                        label: t("qc_reports_out_of_limit_records"),
+                        value: report.overview.totals.outOfLimitRecords,
+                      },
+                      {
+                        label: t("qc_reports_reading_conformance"),
+                        value: percent(
+                          report.comparison.baseline.readingConformanceRate,
+                          locale
+                        ),
+                      },
+                      {
+                        label: t("qc_reports_evidence_coverage"),
+                        value: coverage,
+                      },
+                      {
+                        label: t("qc_reports_first_pass_approval"),
+                        value: percent(
+                          report.comparison.baseline.firstPassApprovalRate,
+                          locale
+                        ),
+                      },
+                      {
+                        label: t("qc_reports_median_review_hhmm"),
+                        value: duration(
+                          report.workflow.totals.medianReviewTimeMs,
+                          locale
+                        ),
+                      },
+                      {
+                        label: t("qc_reports_unreported_samples"),
+                        value: laboratory.totals.unreportedSamples,
+                      },
+                    ]}
+                    rtl={rtl}
+                  />
+                </View>
+              );
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_section_operations")}
-          </Text>
-          <MetricGrid
-            items={[
-              {
-                label: t("qc_reports_inspections"),
-                value: report.overview.totals.inspections,
-              },
-              {
-                label: t("qc_reports_approved"),
-                value: report.overview.totals.approved,
-              },
-              {
-                label: t("qc_reports_pending_queue"),
-                value: report.overview.totals.pending,
-              },
-              {
-                label: t("qc_reports_returned"),
-                value: report.overview.totals.returned,
-              },
-            ]}
-            rtl={rtl}
-          />
-        </View>
+            case "operations":
+              return (
+                <View key="operations">
+                  <View style={styles.section} wrap={false}>
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                    <MetricGrid
+                      items={[
+                        {
+                          label: t("qc_reports_inspections"),
+                          value: report.overview.totals.inspections,
+                        },
+                        {
+                          label: t("qc_reports_approved"),
+                          value: report.overview.totals.approved,
+                        },
+                        {
+                          label: t("qc_reports_pending_queue"),
+                          value: report.overview.totals.pending,
+                        },
+                        {
+                          label: t("qc_reports_returned"),
+                          value: report.overview.totals.returned,
+                        },
+                      ]}
+                      rtl={rtl}
+                    />
+                  </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_action_queue")}
-          </Text>
-          <ReportTable
-            emptyLabel={t("qc_reports_no_exceptions")}
-            headers={[
-              t("form_serial"),
-              t("product_label"),
-              t("qc_reports_exception"),
-              t("status"),
-            ]}
-            rows={report.overview.exceptions.map((item) => ({
-              dangerColumns: item.outOfLimitReadingCount > 0 ? [2] : [],
-              values: [
-                item.displaySerial,
-                item.productName,
-                item.outOfLimitReadingCount,
-                t(`production_status_${item.status}`),
-              ],
-            }))}
-            rtl={rtl}
-            widths={[24, 34, 20, 22]}
-          />
-        </View>
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      {t("qc_reports_action_queue")}
+                    </Text>
+                    <ReportTable
+                      emptyLabel={t("qc_reports_no_exceptions")}
+                      headers={[
+                        t("form_serial"),
+                        t("product_label"),
+                        t("qc_reports_exception"),
+                        t("status"),
+                      ]}
+                      rows={report.overview.exceptions.map((item) => ({
+                        dangerColumns:
+                          item.outOfLimitReadingCount > 0 ? [2] : [],
+                        values: [
+                          item.displaySerial,
+                          item.productName,
+                          item.outOfLimitReadingCount,
+                          t(`production_status_${item.status}`),
+                        ],
+                      }))}
+                      rtl={rtl}
+                      widths={[24, 34, 20, 22]}
+                    />
+                  </View>
+                </View>
+              );
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("qc_reports_readiness")}</Text>
-          <MetricGrid
-            items={[
-              {
-                label: t("qc_reports_open_records"),
-                value: report.readiness.totals.openRecords,
-              },
-              {
-                label: t("qc_reports_photo_coverage"),
-                value: percent(report.readiness.totals.photoCoverage, locale),
-              },
-              {
-                label: t("qc_reports_measurement_coverage"),
-                value: percent(report.readiness.totals.readingCoverage, locale),
-              },
-              {
-                label: t("qc_reports_oldest_stalled_hhmm"),
-                value: duration(
-                  report.readiness.totals.oldestStalledAgeMs,
-                  locale
-                ),
-              },
-              {
-                label: t("qc_reports_batch_label_photo"),
-                value: report.readiness.missingRequirements.batchLabelPhoto,
-              },
-              {
-                label: t("qc_reports_batch_code_confirmation"),
-                value:
-                  report.readiness.missingRequirements.batchCodeConfirmation,
-              },
-              {
-                label: t("qc_reports_required_measurements"),
-                value:
-                  report.readiness.missingRequirements.requiredMeasurements,
-              },
-              {
-                label: t("qc_reports_compliance_confirmations"),
-                value: report.readiness.missingRequirements.complianceChecks,
-              },
-            ]}
-            rtl={rtl}
-          />
-        </View>
+            case "quality":
+              return (
+                <View key="quality" style={styles.section} wrap={false}>
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  <MetricGrid
+                    items={[
+                      {
+                        label: t("qc_reports_inspections"),
+                        value: report.comparison.baseline.inspections,
+                      },
+                      {
+                        label: t("qc_reports_ool_record_rate"),
+                        value: percent(
+                          report.comparison.baseline.outOfLimitRate,
+                          locale
+                        ),
+                      },
+                      {
+                        label: t("qc_reports_reading_conformance"),
+                        value: percent(
+                          report.comparison.baseline.readingConformanceRate,
+                          locale
+                        ),
+                      },
+                      {
+                        label: t("qc_reports_first_pass_approval"),
+                        value: percent(
+                          report.comparison.baseline.firstPassApprovalRate,
+                          locale
+                        ),
+                      },
+                    ]}
+                    rtl={rtl}
+                  />
+                </View>
+              );
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_stalled_records")}
-          </Text>
-          <ReportTable
-            emptyLabel={t("qc_reports_no_open_readiness_gaps")}
-            headers={[
-              t("form_serial"),
-              t("product_label"),
-              t("qc_reports_missing"),
-              t("qc_reports_unchanged_hhmm"),
-            ]}
-            rows={report.readiness.stalledRecords.map((item) => ({
-              values: [
-                item.displaySerial,
-                item.productName,
-                item.missing
-                  .map((key) => missingRequirementLabels[key] ?? key)
-                  .join(", "),
-                duration(item.ageMs, locale),
-              ],
-            }))}
-            rtl={rtl}
-            widths={[22, 28, 32, 18]}
-          />
-        </View>
+            case "readiness":
+              return (
+                <View key="readiness">
+                  <View style={styles.section} wrap={false}>
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                    <MetricGrid
+                      items={[
+                        {
+                          label: t("qc_reports_open_records"),
+                          value: report.readiness.totals.openRecords,
+                        },
+                        {
+                          label: t("qc_reports_photo_coverage"),
+                          value: percent(
+                            report.readiness.totals.photoCoverage,
+                            locale
+                          ),
+                        },
+                        {
+                          label: t("qc_reports_measurement_coverage"),
+                          value: percent(
+                            report.readiness.totals.readingCoverage,
+                            locale
+                          ),
+                        },
+                        {
+                          label: t("qc_reports_oldest_stalled_hhmm"),
+                          value: duration(
+                            report.readiness.totals.oldestStalledAgeMs,
+                            locale
+                          ),
+                        },
+                        {
+                          label: t("qc_reports_batch_label_photo"),
+                          value:
+                            report.readiness.missingRequirements
+                              .batchLabelPhoto,
+                        },
+                        {
+                          label: t("qc_reports_batch_code_confirmation"),
+                          value:
+                            report.readiness.missingRequirements
+                              .batchCodeConfirmation,
+                        },
+                        {
+                          label: t("qc_reports_required_measurements"),
+                          value:
+                            report.readiness.missingRequirements
+                              .requiredMeasurements,
+                        },
+                        {
+                          label: t("qc_reports_compliance_confirmations"),
+                          value:
+                            report.readiness.missingRequirements
+                              .complianceChecks,
+                        },
+                      ]}
+                      rtl={rtl}
+                    />
+                  </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("qc_reports_comparison")}</Text>
-          <ReportTable
-            emptyLabel={t("qc_reports_no_data")}
-            headers={[
-              t(`qc_reports_group_${groupBy}`),
-              t("qc_reports_inspections"),
-              t("qc_reports_ool_record_rate"),
-              t("qc_reports_reading_conformance"),
-              t("qc_reports_first_pass_approval"),
-            ]}
-            rows={report.comparison.groups.map((group) => ({
-              dangerColumns: group.outOfLimitRecords > 0 ? [2] : [],
-              values: [
-                group.label,
-                group.inspections,
-                percent(group.outOfLimitRate, locale),
-                percent(group.readingConformanceRate, locale),
-                percent(group.firstPassApprovalRate, locale),
-              ],
-            }))}
-            rtl={rtl}
-            widths={[28, 14, 18, 20, 20]}
-          />
-        </View>
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      {t("qc_reports_stalled_records")}
+                    </Text>
+                    <ReportTable
+                      emptyLabel={t("qc_reports_no_open_readiness_gaps")}
+                      headers={[
+                        t("form_serial"),
+                        t("product_label"),
+                        t("qc_reports_missing"),
+                        t("qc_reports_unchanged_hhmm"),
+                      ]}
+                      rows={report.readiness.stalledRecords.map((item) => ({
+                        values: [
+                          item.displaySerial,
+                          item.productName,
+                          item.missing
+                            .map((key) => missingRequirementLabels[key] ?? key)
+                            .join(", "),
+                          duration(item.ageMs, locale),
+                        ],
+                      }))}
+                      rtl={rtl}
+                      widths={[22, 28, 32, 18]}
+                    />
+                  </View>
+                </View>
+              );
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_inspector_workload")}
-          </Text>
-          <ReportTable
-            emptyLabel={t("qc_reports_no_data")}
-            headers={[
-              t("qc_inspector"),
-              t("qc_reports_assigned"),
-              t("qc_reports_submissions"),
-              t("qc_reports_returned"),
-              t("qc_reports_first_pass_approval"),
-            ]}
-            rows={report.workflow.inspectors.map((item) => ({
-              values: [
-                item.name,
-                item.assigned,
-                item.submitted,
-                item.returned,
-                percent(item.firstPassApprovalRate, locale),
-              ],
-            }))}
-            rtl={rtl}
-            widths={[32, 17, 17, 17, 17]}
-          />
-        </View>
+            case "comparison":
+              return (
+                <View key="comparison" style={styles.section}>
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  <ReportTable
+                    emptyLabel={t("qc_reports_no_data")}
+                    headers={[
+                      t(`qc_reports_group_${groupBy}`),
+                      t("qc_reports_inspections"),
+                      t("qc_reports_ool_record_rate"),
+                      t("qc_reports_reading_conformance"),
+                      t("qc_reports_first_pass_approval"),
+                    ]}
+                    rows={report.comparison.groups.map((group) => ({
+                      dangerColumns: group.outOfLimitRecords > 0 ? [2] : [],
+                      values: [
+                        group.label,
+                        group.inspections,
+                        percent(group.outOfLimitRate, locale),
+                        percent(group.readingConformanceRate, locale),
+                        percent(group.firstPassApprovalRate, locale),
+                      ],
+                    }))}
+                    rtl={rtl}
+                    widths={[28, 14, 18, 20, 20]}
+                  />
+                </View>
+              );
 
-        <View break style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_reviewer_workload")}
-          </Text>
-          <ReportTable
-            emptyLabel={t("qc_reports_no_review_decisions")}
-            headers={[
-              t("qc_reports_reviewer"),
-              t("qc_reports_decisions"),
-              t("qc_reports_approved"),
-              t("qc_reports_returned"),
-              t("qc_reports_median_review_hhmm"),
-            ]}
-            rows={report.workflow.reviewers.map((item) => ({
-              values: [
-                item.name,
-                item.decisions,
-                item.approvals,
-                item.returns,
-                duration(item.medianReviewTimeMs, locale),
-              ],
-            }))}
-            rtl={rtl}
-            widths={[32, 17, 17, 17, 17]}
-          />
-        </View>
+            case "workflow":
+              return (
+                <View key="workflow">
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                    <ReportTable
+                      emptyLabel={t("qc_reports_no_data")}
+                      headers={[
+                        t("qc_inspector"),
+                        t("qc_reports_assigned"),
+                        t("qc_reports_submissions"),
+                        t("qc_reports_returned"),
+                        t("qc_reports_first_pass_approval"),
+                      ]}
+                      rows={report.workflow.inspectors.map((item) => ({
+                        values: [
+                          item.name,
+                          item.assigned,
+                          item.submitted,
+                          item.returned,
+                          percent(item.firstPassApprovalRate, locale),
+                        ],
+                      }))}
+                      rtl={rtl}
+                      widths={[32, 17, 17, 17, 17]}
+                    />
+                  </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("qc_reports_laboratory")}</Text>
-          <MetricGrid
-            items={[
-              {
-                label: t("qc_reports_lab_reports"),
-                value: laboratory.totals.reports,
-              },
-              {
-                label: t("qc_reports_test_conformance"),
-                value: percent(laboratory.totals.testConformanceRate, locale),
-              },
-              {
-                label: t("qc_reports_sample_coverage"),
-                value: percent(laboratory.totals.sampleCoverageRate, locale),
-              },
-              {
-                label: t("qc_reports_unreported_samples"),
-                value: laboratory.totals.unreportedSamples,
-              },
-            ]}
-            rtl={rtl}
-          />
-        </View>
+                  <View break style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      {t("qc_reports_reviewer_workload")}
+                    </Text>
+                    <ReportTable
+                      emptyLabel={t("qc_reports_no_review_decisions")}
+                      headers={[
+                        t("qc_reports_reviewer"),
+                        t("qc_reports_decisions"),
+                        t("qc_reports_approved"),
+                        t("qc_reports_returned"),
+                        t("qc_reports_median_review_hhmm"),
+                      ]}
+                      rows={report.workflow.reviewers.map((item) => ({
+                        values: [
+                          item.name,
+                          item.decisions,
+                          item.approvals,
+                          item.returns,
+                          duration(item.medianReviewTimeMs, locale),
+                        ],
+                      }))}
+                      rtl={rtl}
+                      widths={[32, 17, 17, 17, 17]}
+                    />
+                  </View>
+                </View>
+              );
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("qc_reports_recent_lab_reports")}
-          </Text>
-          <ReportTable
-            emptyLabel={t("qc_reports_no_data")}
-            headers={[
-              t("report_id"),
-              t("product_label"),
-              t("batch_number"),
-              t("status"),
-              t("qc_reports_out_of_spec_tests"),
-            ]}
-            rows={laboratory.recentReports.map((item) => ({
-              dangerColumns: item.outOfSpecTestCount > 0 ? [4] : [],
-              values: [
-                item.reportId,
-                item.productName,
-                item.lotNumber,
-                t(`qc_reports_lab_status_${item.status.toLowerCase()}`),
-                item.outOfSpecTestCount,
-              ],
-            }))}
-            rtl={rtl}
-            widths={[22, 28, 20, 16, 14]}
-          />
-        </View>
+            case "laboratory":
+              return (
+                <View key="laboratory">
+                  <View style={styles.section} wrap={false}>
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                    <MetricGrid
+                      items={[
+                        {
+                          label: t("qc_reports_lab_reports"),
+                          value: laboratory.totals.reports,
+                        },
+                        {
+                          label: t("qc_reports_test_conformance"),
+                          value: percent(
+                            laboratory.totals.testConformanceRate,
+                            locale
+                          ),
+                        },
+                        {
+                          label: t("qc_reports_sample_coverage"),
+                          value: percent(
+                            laboratory.totals.sampleCoverageRate,
+                            locale
+                          ),
+                        },
+                        {
+                          label: t("qc_reports_unreported_samples"),
+                          value: laboratory.totals.unreportedSamples,
+                        },
+                      ]}
+                      rtl={rtl}
+                    />
+                  </View>
+
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      {t("qc_reports_recent_lab_reports")}
+                    </Text>
+                    <ReportTable
+                      emptyLabel={t("qc_reports_no_data")}
+                      headers={[
+                        t("report_id"),
+                        t("product_label"),
+                        t("batch_number"),
+                        t("status"),
+                        t("qc_reports_out_of_spec_tests"),
+                      ]}
+                      rows={laboratory.recentReports.map((item) => ({
+                        dangerColumns: item.outOfSpecTestCount > 0 ? [4] : [],
+                        values: [
+                          item.reportId,
+                          item.productName,
+                          item.lotNumber,
+                          t(
+                            `qc_reports_lab_status_${item.status.toLowerCase()}`
+                          ),
+                          item.outOfSpecTestCount,
+                        ],
+                      }))}
+                      rtl={rtl}
+                      widths={[22, 28, 20, 16, 14]}
+                    />
+                  </View>
+                </View>
+              );
+            default:
+              return null;
+          }
+        })}
       </Page>
     </Document>
   );

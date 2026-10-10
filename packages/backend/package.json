@@ -16,6 +16,7 @@
     "./system-role-access": "./lib/system-role-access.ts",
     "./production-line": "./convex/productionLineRecordHelpers.ts",
     "./lab-samples": "./convex/labSampleHelpers.ts",
+    "./quality-report-sections": "./lib/quality-report-sections.ts",
     "./units": "./convex/units.ts"
   },
   "scripts": {

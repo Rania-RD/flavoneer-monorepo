@@ -28,6 +28,7 @@ import {
   productionLineRecordStatusValidator,
   productionLineSpecificationStatusValidator,
   projectStatusValidator,
+  qualityReportSectionConfigValidator,
   runOutcomeValidator,
   servingSizeModeValidator,
   servingSizeUnitValidator,
@@ -558,6 +559,13 @@ export default defineSchema({
     organizationId: v.id("organizations"),
     timezone: v.string(),
     enabledHallCodes: v.array(productionHallCodeValidator),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_organizationId", ["organizationId"]),
+
+  qualityReportConfigurations: defineTable({
+    organizationId: v.id("organizations"),
+    sections: v.array(qualityReportSectionConfigValidator),
     updatedAt: v.number(),
     updatedBy: v.string(),
   }).index("by_organizationId", ["organizationId"]),

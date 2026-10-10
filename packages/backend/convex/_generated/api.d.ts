@@ -19,6 +19,8 @@ import type * as e2eQualityReportSeed from "../e2eQualityReportSeed.js";
 import type * as e2eQualityReportSeedAction from "../e2eQualityReportSeedAction.js";
 import type * as e2eQualityReportSeedSchedule from "../e2eQualityReportSeedSchedule.js";
 import type * as equipment from "../equipment.js";
+import type * as factoryLayoutValidators from "../factoryLayoutValidators.js";
+import type * as factoryLayouts from "../factoryLayouts.js";
 import type * as featureFlags from "../featureFlags.js";
 import type * as files from "../files.js";
 import type * as hotUpdater from "../hotUpdater.js";
@@ -88,6 +90,8 @@ declare const fullApi: ApiFromModules<{
   e2eQualityReportSeedAction: typeof e2eQualityReportSeedAction;
   e2eQualityReportSeedSchedule: typeof e2eQualityReportSeedSchedule;
   equipment: typeof equipment;
+  factoryLayoutValidators: typeof factoryLayoutValidators;
+  factoryLayouts: typeof factoryLayouts;
   featureFlags: typeof featureFlags;
   files: typeof files;
   hotUpdater: typeof hotUpdater;

@@ -19,6 +19,7 @@ import Invite from "./pages/invite";
 import LabSampleSubmission from "./pages/lab-sample-submission";
 import Login from "./pages/login";
 import Materials from "./pages/materials";
+import ProductionMonitoring from "./pages/production-monitoring";
 import ProductionLineRecordDetail from "./pages/production-line-record-detail";
 import ProductionLineRecords from "./pages/production-line-records";
 import QcFloorHandoff from "./pages/qc-floor-handoff";
@@ -105,6 +106,10 @@ const App: React.FC = () => {
             <Route
               element={<LabSampleSubmission />}
               path="/quality/lab-samples"
+            />
+            <Route
+              element={<ProductionMonitoring />}
+              path="/quality/production-monitoring"
             />
             <Route
               element={<ProductionLineRecords />}

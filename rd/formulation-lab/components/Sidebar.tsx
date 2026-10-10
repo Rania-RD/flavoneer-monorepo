@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               mobileName: t("monitor"),
               name: t("production_monitoring"),
               icon: Factory,
-              path: "/quality/production-line-records",
+              path: "/quality/production-monitoring",
             },
             {
               mobileName: t("samples"),

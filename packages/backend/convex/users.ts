@@ -5,7 +5,7 @@ import { getAuthenticatedUserWithRole, getEffectivePermissions } from "./permiss
 import { userReturnValidator, userWithRoleReturnValidator } from "./validators";
 import { workspaceRoleHasFullAccess } from "./workspaceAccess";
 
-const CREATOR_EMAIL = "fro@gmail.com";
+const CREATOR_EMAIL = "zeta.food@gmail.com";
 
 const normalizeEmail = (email: string | null | undefined) => email?.trim().toLowerCase() ?? "";
 

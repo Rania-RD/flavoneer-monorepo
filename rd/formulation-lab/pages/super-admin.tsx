@@ -13,6 +13,7 @@ import {
   CircleDot,
   Command,
   Flag,
+  Factory,
   Loader2,
   Plus,
   Search,
@@ -26,11 +27,16 @@ import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Switch } from "../components/ui/Switch";
+import { FactoryLayoutAdminView } from "../components/super-admin/FactoryLayoutAdminView";
 
 type AdminOverview = FunctionReturnType<typeof api.superAdmin.getOverview>;
 type OrganizationRow = AdminOverview["organizations"][number];
 type FeatureFlagRow = AdminOverview["featureFlags"][number];
-type AdminTab = "organizations" | "featureFlags" | "activity";
+type AdminTab =
+  | "organizations"
+  | "featureFlags"
+  | "factoryLayouts"
+  | "activity";
 type StatusFilter = "all" | "active" | "suspended";
 
 const panelClass =
@@ -1337,6 +1343,11 @@ const SuperAdmin = () => {
       label: t("super_admin_feature_flags"),
       count: overview.totals.activeFlags,
     },
+    {
+      id: "factoryLayouts",
+      icon: Factory,
+      label: t("factory_layout_admin_tab"),
+    },
     { id: "activity", icon: Activity, label: t("super_admin_activity") },
   ];
 
@@ -1458,6 +1469,9 @@ const SuperAdmin = () => {
           )}
           {activeTab === "featureFlags" && (
             <FeatureFlagsView overview={overview} />
+          )}
+          {activeTab === "factoryLayouts" && (
+            <FactoryLayoutAdminView organizations={overview.organizations} />
           )}
           {activeTab === "activity" && (
             <ActivityView logs={overview.auditLogs} />

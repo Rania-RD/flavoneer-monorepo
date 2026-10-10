@@ -44,6 +44,10 @@ import {
   versionSnapshotPhasesValidator,
   versionTagValidator,
 } from "./validators";
+import {
+  factoryConnectionKindValidator,
+  factoryMachineAssetKeyValidator,
+} from "./factoryLayoutValidators";
 
 export default defineSchema({
   hotUpdaterBundles: defineTable(hotUpdaterBundleDocumentValidator)
@@ -562,6 +566,71 @@ export default defineSchema({
     updatedAt: v.number(),
     updatedBy: v.string(),
   }).index("by_organizationId", ["organizationId"]),
+
+  // Organization-scoped 3D production-line layouts. Child records keep the
+  // scene extensible without growing a single unbounded layout document.
+  factoryLayouts: defineTable({
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    version: v.number(),
+    createdAt: v.number(),
+    createdBy: v.string(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_organizationId", ["organizationId"]),
+
+  factoryLayoutMachines: defineTable({
+    layoutId: v.id("factoryLayouts"),
+    organizationId: v.id("organizations"),
+    machineKey: v.string(),
+    assetKey: factoryMachineAssetKeyValidator,
+    label: v.string(),
+    color: v.string(),
+    positionX: v.number(),
+    positionY: v.number(),
+    positionZ: v.number(),
+    rotationY: v.number(),
+    scale: v.number(),
+    sortOrder: v.number(),
+    visible: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_layoutId", ["layoutId"])
+    .index("by_layoutId_and_machineKey", ["layoutId", "machineKey"])
+    .index("by_organizationId", ["organizationId"]),
+
+  factoryLayoutConnections: defineTable({
+    layoutId: v.id("factoryLayouts"),
+    organizationId: v.id("organizations"),
+    connectionKey: v.string(),
+    kind: factoryConnectionKindValidator,
+    fromMachineKey: v.string(),
+    toMachineKey: v.string(),
+    color: v.string(),
+    height: v.number(),
+    sortOrder: v.number(),
+    visible: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_layoutId", ["layoutId"])
+    .index("by_organizationId", ["organizationId"]),
+
+  factoryLayoutZones: defineTable({
+    layoutId: v.id("factoryLayouts"),
+    organizationId: v.id("organizations"),
+    zoneKey: v.string(),
+    label: v.string(),
+    color: v.string(),
+    positionX: v.number(),
+    positionZ: v.number(),
+    width: v.number(),
+    depth: v.number(),
+    sortOrder: v.number(),
+    visible: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_layoutId", ["layoutId"])
+    .index("by_organizationId", ["organizationId"]),
 
   qualityReportConfigurations: defineTable({
     organizationId: v.id("organizations"),
